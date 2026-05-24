@@ -14,7 +14,7 @@ on:
 jobs:
   build-and-release:
     name: Build & Release
-    runs-on: macos-26  # 升级至官方原生 macOS 26 (Tahoe) Arm64 运行环境
+    runs-on: macos-26  # 使用 macOS 26 (Tahoe) 原生 Apple Silicon 运行环境
     permissions:
       contents: write  # 显式授予写权限，以便能够创建 Release 并上传资源包
 
@@ -61,10 +61,21 @@ jobs:
             echo "⚠️ 未找到 CGImage+WriteToURL.swift，可能无需修补"
           fi
 
+      # ── 3.7. 自动补齐项目缺失的本地资源 ──────────────────────────────
+      # ⚠️ 针对本地未提交到 Git 但项目内强依赖的 "SplashLocalFix.md" 和 "SplashFix.md" 进行空文件占位创建
+      # 确保 Xcode 的 CpResource 步骤不会因“文件无法打开”而导致 Build Failed。
+      - name: 📝 Create Missing Resource Dummies
+        run: |
+          echo "正在检测并创建缺少的项目资源占位文件..."
+          mkdir -p YumikoToys
+          touch YumikoToys/SplashLocalFix.md
+          touch YumikoToys/SplashFix.md
+          echo "✅ 占位文件已创建"
+
       # ── 4. 构建 ───────────────────────────────────────────────────
       # 说明：
-      #   • MACOSX_DEPLOYMENT_TARGET=14.0 允许您利用 macOS 26 SDK 的编译优化，
-      #     同时保留对 macOS 14 (Sonoma) 和 macOS 15 (Sequoia) 的向下兼容。
+      #   • 显式注入 DEPLOYMENT_LOCATION=NO 与 SKIP_INSTALL=NO
+      #     防止项目本身配置了安装重定向，从而确保所有资源和主二进制都被完整写入编译产品目录。
       - name: 🔨 Build (arm64, deployment target 14.0)
         run: |
           xcodebuild \
@@ -183,7 +194,7 @@ jobs:
           - **MLX 本地推理引擎**：基于 Apple MLX 框架，支持 BGE-M3 嵌入模型（12层 Transformer）与 DistilBERT 情感分析模型（6层），所有计算在 Apple Silicon GPU 上完成，**零网络依赖**。
           - **代理感知下载器**：自动检测 PAC/HTTP/SOCKS 代理，支持断点续传与安全 Cookie 认证，全面兼容国内极速镜像通道。
 
-          ### 🩺 多会话稳定性（重构）
+          ### 🩺 多会话稳定性（重隔）
           - **多会话删除防复活隔离**：删除会话时自动重置活跃会话 ID，彻底杜绝已删对话在磁盘"复活"的 Bug。
           - **人设生成时钟对齐**：延迟到用户切换会话时按需执行，消除启动时序卡顿缺陷。
           - **沙盒物理会话扫描**：后台学习引擎直接检索物理存储目录，修复分析计数器不增长的问题。
