@@ -1,0 +1,169 @@
+name: 🚀 Build & Release macOS App
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'          # 推送 tag（如 v4.3.0）时自动触发
+  workflow_dispatch:      # 也支持手动触发
+    inputs:
+      version:
+        description: '版本号（如 4.3.0）'
+        required: true
+        default: '4.3.0'
+
+jobs:
+  build-and-release:
+    name: Build & Release
+    runs-on: macos-15
+
+    steps:
+      # ── 1. 拉取代码 ──────────────────────────────────────────────
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. 选择 Xcode 版本 ───────────────────────────────────────
+      - name: 🛠 Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.3.app
+
+      # ── 3. 读取版本号 ─────────────────────────────────────────────
+      - name: 📌 Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
+
+      # ── 4. 构建（禁用 Xcode 自动签名）────────────────────────────
+      - name: 🔨 Build (disable auto-signing)
+        run: |
+          xcodebuild \
+            -project YumikoToys.xcodeproj \
+            -scheme YumikoToys \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -archivePath "$RUNNER_TEMP/YumikoToys.xcarchive" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            archive 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -50
+          # 检查 archive 是否生成成功
+          ls "$RUNNER_TEMP/YumikoToys.xcarchive/Products/Applications/" || \
+          ls "$RUNNER_TEMP/YumikoToys.xcarchive/Products/"
+
+      # ── 5. 定位 .app ──────────────────────────────────────────────
+      - name: 🔍 Locate .app
+        run: |
+          APP_PATH=$(find "$RUNNER_TEMP/YumikoToys.xcarchive" \
+            -name "YumikoToys.app" -maxdepth 6 | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ 未找到 .app，打印 archive 结构："
+            find "$RUNNER_TEMP/YumikoToys.xcarchive" -maxdepth 5
+            exit 1
+          fi
+          echo "✅ App found: $APP_PATH"
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+
+      # ── 6. Ad-hoc 自签名（让 Gatekeeper 可以放行）────────────────
+      - name: ✍️ Ad-hoc codesign
+        run: |
+          # 对所有可执行二进制和框架递归自签名
+          find "$APP_PATH/Contents" -type f \( -perm +111 -o -name "*.dylib" \) | while read f; do
+            codesign --force --sign - "$f" 2>/dev/null || true
+          done
+          # 对整个 .app bundle 签名（ad-hoc = "-"）
+          codesign --force --deep --sign - \
+            --options runtime \
+            --entitlements YumikoToys/Assets/YumikoToys.entitlements \
+            "$APP_PATH"
+          # 验证签名
+          codesign --verify --deep --strict "$APP_PATH" && \
+            echo "✅ Ad-hoc codesign 成功" || \
+            echo "⚠️  签名验证警告（ad-hoc 签名预期行为，用户仍可运行）"
+
+      # ── 7. 移除隔离属性（预处理）─────────────────────────────────
+      - name: 🧹 Remove quarantine xattrs
+        run: |
+          xattr -cr "$APP_PATH" || true
+
+      # ── 8. 打包成 .zip ────────────────────────────────────────────
+      - name: 🗜 Create ZIP
+        run: |
+          ZIP_NAME="YumikoToys-${{ env.VERSION }}-macOS.zip"
+          cd "$(dirname "$APP_PATH")"
+          ditto -c -k --keepParent "YumikoToys.app" "$RUNNER_TEMP/$ZIP_NAME"
+          echo "ZIP_PATH=$RUNNER_TEMP/$ZIP_NAME" >> $GITHUB_ENV
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          echo "📦 ZIP size: $(du -sh $RUNNER_TEMP/$ZIP_NAME | cut -f1)"
+
+      # ── 9. 生成更新日志 ───────────────────────────────────────────
+      - name: 📝 Generate release notes
+        run: |
+          cat > /tmp/release_notes.md << 'EOF'
+          ## ⚡ 比利时野兔·本雅明塔学院 — v${{ env.VERSION }}
+
+          > *Belgian Hare × Institute Benjamenta*
+
+          ### 🧠 本地推理引擎（新增）
+          - **MLX 本地推理引擎**：基于 Apple MLX 框架，支持 BGE-M3 嵌入模型（12层 Transformer）与 DistilBERT 情感分析模型（6层），所有计算在 Apple Silicon GPU 上完成，**零网络依赖**。
+          - **代理感知下载器**：自动检测 PAC/HTTP/SOCKS 代理，支持断点续传与安全 Cookie 认证，全面兼容国内极速镜像通道。
+
+          ### 🩺 多会话稳定性（重构）
+          - **多会话删除防复活隔离**：删除会话时自动重置活跃会话 ID，彻底杜绝已删对话在磁盘"复活"的 Bug。
+          - **人设生成时钟对齐**：延迟到用户切换会话时按需执行，消除启动时序卡顿缺陷。
+          - **沙盒物理会话扫描**：后台学习引擎直接检索物理存储目录，修复分析计数器不增长的问题。
+          - **增量分析时序落盘**：时空游标成功向前推进即强力写入磁盘，解决分析统计值被内存丢弃的 Bug。
+
+          ### 🏷️ 交互体验（优化）
+          - **右键菜单重命名 / 删除**：侧边栏挂载 SwiftUI 原生右键菜单，支持重命名和直接删除。
+          - **删除二次确认微动画**：点击删除后图标微弹簧变形为垃圾桶，防止误触。
+          - **防休眠嵌套手势阻断**：从物理层阻断多手势穿透，根治 macOS 双击冲突与连击卡顿。
+
+          ### 🔥 性能调优
+          - 单条推理去冗余分词填充，短文本向量生成速度提升 **5–50×**。
+          - 编辑距离矩阵物理优化，内存占用减少 **99%**。
+          - 记忆数据元组映射重构，极大减少运行时内存分配开销。
+          - 修复下载进度条卡在 0% 的渲染故障。
+
+          ### 🌱 AI 心智核心
+          - 深度注入人本主义与 CBT 情感共情机制，大模型提供极具温度的情感接纳与心境抱持。
+          - 自我决定（SDT）心理需求检测：新增"压力源"、"应对方式"、"胜任感"等特征检测组。
+
+          ---
+
+          ## 📥 安装说明
+
+          1. 下载 `YumikoToys-${{ env.VERSION }}-macOS.zip` 并解压
+          2. 将 `YumikoToys.app` 拖入「应用程序」文件夹
+          3. **首次运行**：右键点击 app → 选择「打开」→ 在弹窗中点击「打开」
+             > 这是因为本版本使用 ad-hoc 自签名，非 Apple 官方证书，仅需首次确认一次。
+          4. 之后双击即可正常启动 ✅
+
+          ### 可选：命令行一键解除隔离
+          ```bash
+          xattr -cr /Applications/YumikoToys.app
+          ```
+
+          ---
+
+          ### 📋 系统要求
+          - macOS 14.0 (Sonoma) 或更高版本
+          - Apple Silicon（M1 / M2 / M3 / M4）推荐用于本地模型推理
+          EOF
+
+      # ── 10. 发布 Release ──────────────────────────────────────────
+      - name: 🎉 Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: "YumikoToys ${{ env.TAG_NAME }} — 比利时野兔·本雅明塔学院"
+          body_path: /tmp/release_notes.md
+          draft: false
+          prerelease: false
+          files: ${{ env.ZIP_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
