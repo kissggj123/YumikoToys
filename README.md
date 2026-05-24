@@ -62,9 +62,14 @@
 
 ## 📋 系统要求
 
-- macOS 14.0 (Sonoma) 或更高版本
-- Xcode 15.0 或更高版本
-- Swift 5.9+
+| 项目 | 要求 |
+|------|------|
+| macOS | **macOS 26 (Tahoe)** |
+| Xcode | 16.3+ |
+| Swift | 6.0+ |
+| 架构 | Apple Silicon (arm64) |
+
+> ⚠️ 本项目在 **macOS 26 Tahoe** 环境下开发与测试。
 
 ---
 

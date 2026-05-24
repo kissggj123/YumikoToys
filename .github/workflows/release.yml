@@ -3,8 +3,8 @@ name: 🚀 Build & Release macOS App
 on:
   push:
     tags:
-      - 'v*.*.*'          # 推送 tag（如 v4.3.0）时自动触发
-  workflow_dispatch:      # 也支持手动触发
+      - 'v*.*.*'
+  workflow_dispatch:
     inputs:
       version:
         description: '版本号（如 4.3.0）'
@@ -23,11 +23,12 @@ jobs:
 
       # ── 2. 选择 Xcode 版本 ───────────────────────────────────────
       - name: 🛠 Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.3.app
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.3.app
+          xcodebuild -version
 
       # ── 3. 读取版本号 ─────────────────────────────────────────────
       - name: 📌 Get version
-        id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.version }}"
@@ -37,16 +38,26 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
 
-      # ── 4. 构建（禁用 Xcode 自动签名，仅 arm64）────────────────────
-      - name: 🔨 Build arm64 (disable auto-signing)
+      # ── 4. 构建 ───────────────────────────────────────────────────
+      # 说明：
+      #   • 用 build 而非 archive，避免 archive 拉起 Splash 包内所有
+      #     可执行子目标（SplashImageGen/SplashHTMLGen）导致编译失败
+      #   • 强制覆写 MACOSX_DEPLOYMENT_TARGET=14.0：
+      #     项目本地设为 macOS 26 beta，但 Xcode 16.3 最高支持 15.4，
+      #     不覆写会导致 SDK 行为异常，CGImage 等 API 找不到
+      #   • CONFIGURATION_BUILD_DIR 指定输出路径，方便后续定位 .app
+      - name: 🔨 Build (arm64, deployment target 14.0)
         run: |
-          # macos-15 runner 是 Apple Silicon，只需 arm64，避免 x86_64 依赖包编译失败
+          BUILD_OUT="$RUNNER_TEMP/build_output"
+          mkdir -p "$BUILD_OUT"
+
           xcodebuild \
             -project YumikoToys.xcodeproj \
             -scheme YumikoToys \
             -configuration Release \
-            -destination 'generic/platform=macOS' \
-            -archivePath "$RUNNER_TEMP/YumikoToys.xcarchive" \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            MACOSX_DEPLOYMENT_TARGET=14.0 \
             ARCHS=arm64 \
             ONLY_ACTIVE_ARCH=NO \
             EXCLUDED_ARCHS='x86_64 i386' \
@@ -54,7 +65,8 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
-            archive 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -100
+            CONFIGURATION_BUILD_DIR="$BUILD_OUT" \
+            build 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -80
 
       # ── 5. 上传构建日志（仅失败时）────────────────────────────────
       - name: 📋 Upload build log on failure
@@ -68,51 +80,61 @@ jobs:
       # ── 6. 定位 .app ──────────────────────────────────────────────
       - name: 🔍 Locate .app
         run: |
-          APP_PATH=$(find "$RUNNER_TEMP/YumikoToys.xcarchive" \
-            -name "YumikoToys.app" -maxdepth 6 | head -1)
+          BUILD_OUT="$RUNNER_TEMP/build_output"
+          # 先在指定输出目录找
+          APP_PATH=$(find "$BUILD_OUT" -name "YumikoToys.app" -maxdepth 3 | head -1)
+          # 备用：在 DerivedData 里找（排除 SourcePackages）
           if [ -z "$APP_PATH" ]; then
-            echo "❌ 未找到 .app，打印 archive 结构："
-            find "$RUNNER_TEMP/YumikoToys.xcarchive" -maxdepth 5 || true
+            APP_PATH=$(find "$RUNNER_TEMP/DerivedData" \
+              -name "YumikoToys.app" \
+              -not -path "*/SourcePackages/*" \
+              -not -path "*/Index.noindex/*" \
+              -maxdepth 10 | head -1)
+          fi
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ 未找到 .app，打印构建输出目录结构："
+            find "$BUILD_OUT" -maxdepth 4 || true
             echo "--- 构建日志末尾 ---"
-            tail -80 "$RUNNER_TEMP/build.log" || true
+            tail -100 "$RUNNER_TEMP/build.log" || true
             exit 1
           fi
           echo "✅ App found: $APP_PATH"
           echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
 
-      # ── 7. Ad-hoc 自签名（让 Gatekeeper 可以放行）────────────────
+      # ── 7. Ad-hoc 自签名 ──────────────────────────────────────────
+      # ad-hoc 签名（使用 "-" 作为 identity），让用户右键→打开即可运行
       - name: ✍️ Ad-hoc codesign
         run: |
-          # 对所有可执行二进制和框架递归自签名
-          find "$APP_PATH/Contents" -type f \( -perm +111 -o -name "*.dylib" \) | while read f; do
-            codesign --force --sign - "$f" 2>/dev/null || true
-          done
-          # 对整个 .app bundle 签名（ad-hoc = "-"）
+          # 对所有内嵌的可执行文件和动态库先单独签名
+          find "$APP_PATH/Contents" \
+            \( -type f -perm +111 -o -name "*.dylib" -o -name "*.framework" \) \
+            | while read f; do
+              codesign --force --sign - "$f" 2>/dev/null || true
+            done
+          # 对整个 .app bundle 签名
           codesign --force --deep --sign - \
             --options runtime \
-            --entitlements YumikoToys/Assets/YumikoToys.entitlements \
             "$APP_PATH"
-          # 验证签名
-          codesign --verify --deep --strict "$APP_PATH" && \
-            echo "✅ Ad-hoc codesign 成功" || \
-            echo "⚠️  签名验证警告（ad-hoc 签名预期行为，用户仍可运行）"
+          # 验证
+          codesign --verify --deep --strict "$APP_PATH" \
+            && echo "✅ Ad-hoc 签名成功" \
+            || echo "⚠️  签名验证警告（ad-hoc 预期行为）"
 
-      # ── 8. 移除隔离属性（预处理）─────────────────────────────────
+      # ── 8. 移除 quarantine 隔离属性 ───────────────────────────────
       - name: 🧹 Remove quarantine xattrs
-        run: |
-          xattr -cr "$APP_PATH" || true
+        run: xattr -cr "$APP_PATH" || true
 
-      # ── 9. 打包成 .zip ────────────────────────────────────────────
+      # ── 9. 打包 .zip ──────────────────────────────────────────────
       - name: 🗜 Create ZIP
         run: |
-          ZIP_NAME="YumikoToys-${{ env.VERSION }}-macOS.zip"
+          ZIP_NAME="YumikoToys-${{ env.VERSION }}-macOS-arm64.zip"
           cd "$(dirname "$APP_PATH")"
           ditto -c -k --keepParent "YumikoToys.app" "$RUNNER_TEMP/$ZIP_NAME"
           echo "ZIP_PATH=$RUNNER_TEMP/$ZIP_NAME" >> $GITHUB_ENV
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
-          echo "📦 ZIP size: $(du -sh $RUNNER_TEMP/$ZIP_NAME | cut -f1)"
+          echo "📦 ZIP size: $(du -sh "$RUNNER_TEMP/$ZIP_NAME" | cut -f1)"
 
-      # ── 10. 生成更新日志 ──────────────────────────────────────────
+      # ── 10. 生成 Release Notes ────────────────────────────────────
       - name: 📝 Generate release notes
         run: |
           cat > /tmp/release_notes.md << 'EOF'
@@ -149,10 +171,10 @@ jobs:
 
           ## 📥 安装说明
 
-          1. 下载 `YumikoToys-${{ env.VERSION }}-macOS.zip` 并解压
+          1. 下载 `YumikoToys-${{ env.VERSION }}-macOS-arm64.zip` 并解压
           2. 将 `YumikoToys.app` 拖入「应用程序」文件夹
           3. **首次运行**：右键点击 app → 选择「打开」→ 在弹窗中点击「打开」
-             > 这是因为本版本使用 ad-hoc 自签名，非 Apple 官方证书，仅需首次确认一次。
+             > 本版本使用 ad-hoc 自签名，非 Apple 官方证书，仅需首次手动确认一次。
           4. 之后双击即可正常启动 ✅
 
           ### 可选：命令行一键解除隔离
@@ -163,8 +185,11 @@ jobs:
           ---
 
           ### 📋 系统要求
-          - macOS 14.0 (Sonoma) 或更高版本
-          - Apple Silicon（M1 / M2 / M3 / M4）推荐用于本地模型推理
+          | 项目 | 要求 |
+          |------|------|
+          | macOS | 14.0 (Sonoma) 或更高版本 |
+          | 架构 | Apple Silicon（arm64）|
+          | 本地模型推理 | M1 / M2 / M3 / M4 推荐 |
           EOF
 
       # ── 11. 发布 Release ──────────────────────────────────────────
