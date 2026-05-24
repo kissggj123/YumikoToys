@@ -1,0 +1,1574 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 90;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1E5B4D6A25FBFE4B00092422 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E5B4D6925FBFE4B00092422 /* Cocoa.framework */; };
+		1E5B4DE525FC24CA00092422 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 1E5B4DE425FC24CA00092422 /* LaunchAtLogin */; };
+		1E6FB254260A3B890074A382 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E6FB253260A3B890074A382 /* Security.framework */; };
+		FC0664732FC0914300CABB99 /* Splash in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664722FC0914300CABB99 /* Splash */; };
+		FC0664752FC0914300CABB99 /* SplashHTMLGen in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664742FC0914300CABB99 /* SplashHTMLGen */; };
+		FC0664772FC0914300CABB99 /* SplashImageGen in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664762FC0914300CABB99 /* SplashImageGen */; };
+		FC0664792FC0914300CABB99 /* SplashMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664782FC0914300CABB99 /* SplashMarkdown */; };
+		FC06647B2FC0914300CABB99 /* SplashTokenizer in Frameworks */ = {isa = PBXBuildFile; productRef = FC06647A2FC0914300CABB99 /* SplashTokenizer */; };
+		FC06647E2FC0916C00CABB99 /* Highlightr in Frameworks */ = {isa = PBXBuildFile; productRef = FC06647D2FC0916C00CABB99 /* Highlightr */; };
+		FC5F1B1D2FBEB15D004B2F34 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B1C2FBEB15D004B2F34 /* MLX */; };
+		FC5F1B1F2FBEB15D004B2F34 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B1E2FBEB15D004B2F34 /* MLXFFT */; };
+		FC5F1B212FBEB15D004B2F34 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B202FBEB15D004B2F34 /* MLXFast */; };
+		FC5F1B232FBEB15D004B2F34 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B222FBEB15D004B2F34 /* MLXLinalg */; };
+		FC5F1B252FBEB15D004B2F34 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B242FBEB15D004B2F34 /* MLXNN */; };
+		FCA5AF182FC0992D00E668DB /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = FCA5AF172FC0992D00E668DB /* CoreXLSX */; };
+		FCB283B32E43D77A00FA3D4A /* MediaKeyTap in Frameworks */ = {isa = PBXBuildFile; productRef = FCB283B22E43D77A00FA3D4A /* MediaKeyTap */; };
+		FCC24F1C2FBED23D00A64686 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = FCC24F1B2FBED23D00A64686 /* HuggingFace */; };
+		FCD03E152FC337C900F3B9DB /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA12FC337C900F3B9DB /* AppSettings.swift */; };
+		FCD03E162FC337C900F3B9DB /* AgentFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB22FC337C900F3B9DB /* AgentFileService.swift */; };
+		FCD03E172FC337C900F3B9DB /* GenderSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE92FC337C900F3B9DB /* GenderSelectorView.swift */; };
+		FCD03E182FC337C900F3B9DB /* PromptTemplateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC82FC337C900F3B9DB /* PromptTemplateService.swift */; };
+		FCD03E192FC337C900F3B9DB /* AgentStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DDC2FC337C900F3B9DB /* AgentStepView.swift */; };
+		FCD03E1A2FC337C900F3B9DB /* GLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBC2FC337C900F3B9DB /* GLMService.swift */; };
+		FCD03E1B2FC337C900F3B9DB /* PersonaServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD52FC337C900F3B9DB /* PersonaServiceProtocol.swift */; };
+		FCD03E1C2FC337C900F3B9DB /* ChatSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE22FC337C900F3B9DB /* ChatSettingsView.swift */; };
+		FCD03E1D2FC337C900F3B9DB /* PetProfileCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF42FC337C900F3B9DB /* PetProfileCardView.swift */; };
+		FCD03E1E2FC337C900F3B9DB /* PreventSleepService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC72FC337C900F3B9DB /* PreventSleepService.swift */; };
+		FCD03E1F2FC337C900F3B9DB /* FileUploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE82FC337C900F3B9DB /* FileUploadView.swift */; };
+		FCD03E202FC337C900F3B9DB /* ComponentLayoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB72FC337C900F3B9DB /* ComponentLayoutService.swift */; };
+		FCD03E212FC337C900F3B9DB /* UserAvatarServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD72FC337C900F3B9DB /* UserAvatarServiceProtocol.swift */; };
+		FCD03E222FC337C900F3B9DB /* OfficeDocumentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC52FC337C900F3B9DB /* OfficeDocumentParser.swift */; };
+		FCD03E232FC337C900F3B9DB /* EnhancedSearchSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE62FC337C900F3B9DB /* EnhancedSearchSourcesView.swift */; };
+		FCD03E242FC337C900F3B9DB /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBF2FC337C900F3B9DB /* LaunchAtLoginService.swift */; };
+		FCD03E252FC337C900F3B9DB /* SemanticDeduplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC92FC337C900F3B9DB /* SemanticDeduplicationService.swift */; };
+		FCD03E262FC337C900F3B9DB /* MenuList.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEE2FC337C900F3B9DB /* MenuList.swift */; };
+		FCD03E272FC337C900F3B9DB /* ConversationSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE42FC337C900F3B9DB /* ConversationSidebarView.swift */; };
+		FCD03E282FC337C900F3B9DB /* LocalSentimentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC12FC337C900F3B9DB /* LocalSentimentService.swift */; };
+		FCD03E292FC337C900F3B9DB /* AIProviderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD22FC337C900F3B9DB /* AIProviderProtocol.swift */; };
+		FCD03E2A2FC337C900F3B9DB /* PixelAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF62FC337C900F3B9DB /* PixelAvatarView.swift */; };
+		FCD03E2B2FC337C900F3B9DB /* PersonaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC62FC337C900F3B9DB /* PersonaService.swift */; };
+		FCD03E2C2FC337C900F3B9DB /* BackgroundLearningService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB62FC337C900F3B9DB /* BackgroundLearningService.swift */; };
+		FCD03E2D2FC337C900F3B9DB /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D892FC337C900F3B9DB /* ModelDownloadManager.swift */; };
+		FCD03E2E2FC337C900F3B9DB /* APISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA02FC337C900F3B9DB /* APISettings.swift */; };
+		FCD03E2F2FC337C900F3B9DB /* NVIDIAProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC42FC337C900F3B9DB /* NVIDIAProvider.swift */; };
+		FCD03E302FC337C900F3B9DB /* PsychologicalProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAB2FC337C900F3B9DB /* PsychologicalProfile.swift */; };
+		FCD03E312FC337C900F3B9DB /* UserAvatarSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAE2FC337C900F3B9DB /* UserAvatarSettings.swift */; };
+		FCD03E322FC337C900F3B9DB /* MarkdownContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DED2FC337C900F3B9DB /* MarkdownContentView.swift */; };
+		FCD03E332FC337C900F3B9DB /* ImageAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBD2FC337C900F3B9DB /* ImageAnalysisService.swift */; };
+		FCD03E342FC337C900F3B9DB /* KeychainAccessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBE2FC337C900F3B9DB /* KeychainAccessService.swift */; };
+		FCD03E352FC337C900F3B9DB /* SearchSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFA2FC337C900F3B9DB /* SearchSourcesView.swift */; };
+		FCD03E362FC337C900F3B9DB /* TimeSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCE2FC337C900F3B9DB /* TimeSyncService.swift */; };
+		FCD03E372FC337C900F3B9DB /* SettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCB2FC337C900F3B9DB /* SettingsService.swift */; };
+		FCD03E382FC337C900F3B9DB /* ThinkingProcessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFB2FC337C900F3B9DB /* ThinkingProcessView.swift */; };
+		FCD03E392FC337C900F3B9DB /* PetPersona.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA82FC337C900F3B9DB /* PetPersona.swift */; };
+		FCD03E3A2FC337C900F3B9DB /* SettingsMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCA2FC337C900F3B9DB /* SettingsMigrationService.swift */; };
+		FCD03E3B2FC337C900F3B9DB /* ComponentLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA42FC337C900F3B9DB /* ComponentLayout.swift */; };
+		FCD03E3C2FC337C900F3B9DB /* APISettingsServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD32FC337C900F3B9DB /* APISettingsServiceProtocol.swift */; };
+		FCD03E3D2FC337C900F3B9DB /* AIChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFF2FC337C900F3B9DB /* AIChatView.swift */; };
+		FCD03E3E2FC337C900F3B9DB /* PromptTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA92FC337C900F3B9DB /* PromptTemplate.swift */; };
+		FCD03E3F2FC337C900F3B9DB /* YumikoToysApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E132FC337C900F3B9DB /* YumikoToysApp.swift */; };
+		FCD03E402FC337C900F3B9DB /* AdvancedFeaturesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB12FC337C900F3B9DB /* AdvancedFeaturesService.swift */; };
+		FCD03E412FC337C900F3B9DB /* ChatModeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE12FC337C900F3B9DB /* ChatModeSelector.swift */; };
+		FCD03E422FC337C900F3B9DB /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCC2FC337C900F3B9DB /* StorageService.swift */; };
+		FCD03E432FC337C900F3B9DB /* UserAvatarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCF2FC337C900F3B9DB /* UserAvatarService.swift */; };
+		FCD03E442FC337C900F3B9DB /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D9E2FC337C900F3B9DB /* AIProvider.swift */; };
+		FCD03E452FC337C900F3B9DB /* ModelCompatibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E0D2FC337C900F3B9DB /* ModelCompatibilityManager.swift */; };
+		FCD03E462FC337C900F3B9DB /* SearchChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAC2FC337C900F3B9DB /* SearchChannel.swift */; };
+		FCD03E472FC337C900F3B9DB /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D842FC337C900F3B9DB /* AppState.swift */; };
+		FCD03E482FC337C900F3B9DB /* AgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB32FC337C900F3B9DB /* AgentService.swift */; };
+		FCD03E492FC337C900F3B9DB /* ModelPickerMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF22FC337C900F3B9DB /* ModelPickerMenu.swift */; };
+		FCD03E4A2FC337C900F3B9DB /* ChatMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA32FC337C900F3B9DB /* ChatMode.swift */; };
+		FCD03E4B2FC337C900F3B9DB /* GLMServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD42FC337C900F3B9DB /* GLMServiceProtocol.swift */; };
+		FCD03E4C2FC337C900F3B9DB /* MLXModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D882FC337C900F3B9DB /* MLXModelLoader.swift */; };
+		FCD03E4D2FC337C900F3B9DB /* LocalEmbeddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC02FC337C900F3B9DB /* LocalEmbeddingService.swift */; };
+		FCD03E4E2FC337C900F3B9DB /* AnniversaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DDD2FC337C900F3B9DB /* AnniversaryCard.swift */; };
+		FCD03E4F2FC337C900F3B9DB /* FilePreviewChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE72FC337C900F3B9DB /* FilePreviewChip.swift */; };
+		FCD03E502FC337C900F3B9DB /* EnhancedWebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBA2FC337C900F3B9DB /* EnhancedWebSearchService.swift */; };
+		FCD03E512FC337C900F3B9DB /* PetProfileCardModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E062FC337C900F3B9DB /* PetProfileCardModifier.swift */; };
+		FCD03E522FC337C900F3B9DB /* LearningResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA62FC337C900F3B9DB /* LearningResult.swift */; };
+		FCD03E532FC337C900F3B9DB /* ModelManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC22FC337C900F3B9DB /* ModelManagementService.swift */; };
+		FCD03E542FC337C900F3B9DB /* NTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA72FC337C900F3B9DB /* NTPServer.swift */; };
+		FCD03E552FC337C900F3B9DB /* ModelCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E0B2FC337C900F3B9DB /* ModelCapability.swift */; };
+		FCD03E562FC337C900F3B9DB /* Anniversary.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D9F2FC337C900F3B9DB /* Anniversary.swift */; };
+		FCD03E572FC337C900F3B9DB /* AIChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E002FC337C900F3B9DB /* AIChatViewModel.swift */; };
+		FCD03E582FC337C900F3B9DB /* HuggingFaceAuthSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEA2FC337C900F3B9DB /* HuggingFaceAuthSheet.swift */; };
+		FCD03E592FC337C900F3B9DB /* MessageContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEF2FC337C900F3B9DB /* MessageContextMenu.swift */; };
+		FCD03E5A2FC337C900F3B9DB /* AppHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DDE2FC337C900F3B9DB /* AppHeader.swift */; };
+		FCD03E5B2FC337C900F3B9DB /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E082FC337C900F3B9DB /* StatusBarView.swift */; };
+		FCD03E5C2FC337C900F3B9DB /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D852FC337C900F3B9DB /* DependencyContainer.swift */; };
+		FCD03E5D2FC337C900F3B9DB /* PixelIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF72FC337C900F3B9DB /* PixelIconView.swift */; };
+		FCD03E5E2FC337C900F3B9DB /* PromptTemplatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF82FC337C900F3B9DB /* PromptTemplatePicker.swift */; };
+		FCD03E5F2FC337C900F3B9DB /* WebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD02FC337C900F3B9DB /* WebSearchService.swift */; };
+		FCD03E602FC337C900F3B9DB /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFC2FC337C900F3B9DB /* ToastView.swift */; };
+		FCD03E612FC337C900F3B9DB /* ProxyAwareDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D8C2FC337C900F3B9DB /* ProxyAwareDownloader.swift */; };
+		FCD03E622FC337C900F3B9DB /* DataStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB92FC337C900F3B9DB /* DataStorageService.swift */; };
+		FCD03E632FC337C900F3B9DB /* TavilySearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCD2FC337C900F3B9DB /* TavilySearchService.swift */; };
+		FCD03E642FC337C900F3B9DB /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD62FC337C900F3B9DB /* ServiceProtocols.swift */; };
+		FCD03E652FC337C900F3B9DB /* ProviderConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAA2FC337C900F3B9DB /* ProviderConfig.swift */; };
+		FCD03E662FC337C900F3B9DB /* FileAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBB2FC337C900F3B9DB /* FileAnalysisService.swift */; };
+		FCD03E672FC337C900F3B9DB /* ModeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF02FC337C900F3B9DB /* ModeButton.swift */; };
+		FCD03E682FC337C900F3B9DB /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFE2FC337C900F3B9DB /* AboutView.swift */; };
+		FCD03E692FC337C900F3B9DB /* DataExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB82FC337C900F3B9DB /* DataExportService.swift */; };
+		FCD03E6A2FC337C900F3B9DB /* ModelMemoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D8A2FC337C900F3B9DB /* ModelMemoryManager.swift */; };
+		FCD03E6B2FC337C900F3B9DB /* StatusBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D8D2FC337C900F3B9DB /* StatusBarManager.swift */; };
+		FCD03E6C2FC337C900F3B9DB /* PetAgeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D8B2FC337C900F3B9DB /* PetAgeCalculator.swift */; };
+		FCD03E6D2FC337C900F3B9DB /* ModelStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF32FC337C900F3B9DB /* ModelStatusCard.swift */; };
+		FCD03E6E2FC337C900F3B9DB /* UploadedFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAD2FC337C900F3B9DB /* UploadedFile.swift */; };
+		FCD03E6F2FC337C900F3B9DB /* AnniversaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB42FC337C900F3B9DB /* AnniversaryService.swift */; };
+		FCD03E702FC337C900F3B9DB /* NTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC32FC337C900F3B9DB /* NTPClient.swift */; };
+		FCD03E712FC337C900F3B9DB /* AssistantConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA22FC337C900F3B9DB /* AssistantConfig.swift */; };
+		FCD03E722FC337C900F3B9DB /* AnniversaryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E012FC337C900F3B9DB /* AnniversaryManagementView.swift */; };
+		FCD03E732FC337C900F3B9DB /* HuggingFaceAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D872FC337C900F3B9DB /* HuggingFaceAuthService.swift */; };
+		FCD03E742FC337C900F3B9DB /* CodeHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE32FC337C900F3B9DB /* CodeHighlightView.swift */; };
+		FCD03E752FC337C900F3B9DB /* ButtonAnimations.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE02FC337C900F3B9DB /* ButtonAnimations.swift */; };
+		FCD03E762FC337C900F3B9DB /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E032FC337C900F3B9DB /* MainView.swift */; };
+		FCD03E772FC337C900F3B9DB /* ProviderPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF92FC337C900F3B9DB /* ProviderPicker.swift */; };
+		FCD03E782FC337C900F3B9DB /* AssistantToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DDF2FC337C900F3B9DB /* AssistantToolbar.swift */; };
+		FCD03E792FC337C900F3B9DB /* PixelArtIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF52FC337C900F3B9DB /* PixelArtIcons.swift */; };
+		FCD03E7A2FC337C900F3B9DB /* IconStyleSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEB2FC337C900F3B9DB /* IconStyleSystem.swift */; };
+		FCD03E7B2FC337C900F3B9DB /* ImageCropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEC2FC337C900F3B9DB /* ImageCropView.swift */; };
+		FCD03E7C2FC337C900F3B9DB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E042FC337C900F3B9DB /* SettingsView.swift */; };
+		FCD03E7D2FC337C900F3B9DB /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D862FC337C900F3B9DB /* FontManager.swift */; };
+		FCD03E7E2FC337C900F3B9DB /* AdaptiveLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D832FC337C900F3B9DB /* AdaptiveLayoutManager.swift */; };
+		FCD03E7F2FC337C900F3B9DB /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA52FC337C900F3B9DB /* Conversation.swift */; };
+		FCD03E802FC337C900F3B9DB /* ChangelogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E022FC337C900F3B9DB /* ChangelogView.swift */; };
+		FCD03E812FC337C900F3B9DB /* ModelManagementSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF12FC337C900F3B9DB /* ModelManagementSection.swift */; };
+		FCD03E822FC337C900F3B9DB /* CopyableMessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE52FC337C900F3B9DB /* CopyableMessageBubble.swift */; };
+		FCD03E832FC337C900F3B9DB /* APISettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB52FC337C900F3B9DB /* APISettingsService.swift */; };
+		FCD03E842FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D932FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md */; };
+		FCD03E852FC337C900F3B9DB /* SplashFix.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03E112FC337C900F3B9DB /* SplashFix.md */; };
+		FCD03E862FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D902FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md */; };
+		FCD03E872FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D972FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md */; };
+		FCD03E882FC337C900F3B9DB /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D7C2FC337C900F3B9DB /* Info.plist */; };
+		FCD03E892FC337C900F3B9DB /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D7D2FC337C900F3B9DB /* Main.storyboard */; };
+		FCD03E8A2FC337C900F3B9DB /* MAINTENANCE.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03E102FC337C900F3B9DB /* MAINTENANCE.md */; };
+		FCD03E8B2FC337C900F3B9DB /* SplashLocalFix.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03E122FC337C900F3B9DB /* SplashLocalFix.md */; };
+		FCD03E8C2FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D912FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md */; };
+		FCD03E8D2FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D942FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md */; };
+		FCD03E8E2FC337C900F3B9DB /* AaGXLZGKADS.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D9A2FC337C900F3B9DB /* AaGXLZGKADS.ttf */; };
+		FCD03E8F2FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D952FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md */; };
+		FCD03E902FC337C900F3B9DB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D7B2FC337C900F3B9DB /* Assets.xcassets */; };
+		FCD03E912FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D8F2FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md */; };
+		FCD03E922FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D962FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md */; };
+		FCEA9FEA2FBE9E020037F6B8 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = FCEA9FE92FBE9E020037F6B8 /* MarkdownUI */; };
+		FCF267442E114619007230B1 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = FCF267432E114619007230B1 /* ArgumentParser */; };
+		FCF267472E114668007230B1 /* YumikoCLI in CopyFiles */ = {isa = PBXBuildFile; fileRef = FCF267382E114015007230B1 /* YumikoCLI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		FCF35E812E3E56BD00793FBB /* NTPClient in Frameworks */ = {isa = PBXBuildFile; productRef = FCF35E802E3E56BD00793FBB /* NTPClient */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		1E5B4D3625FBFC4000092422 /* Embed XPC Services */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+			dstSubfolder = Product;
+			files = (
+			);
+			name = "Embed XPC Services";
+		};
+		1E5B4D6E25FBFE9100092422 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = Contents/Library/LaunchServices;
+			dstSubfolder = Wrapper;
+			files = (
+			);
+		};
+		FCF267362E114015007230B1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolder = None;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		FCF267462E114652007230B1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = Executables;
+			files = (
+				FCF267472E114668007230B1 /* YumikoCLI in CopyFiles */,
+			);
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1E5B4D6925FBFE4B00092422 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		1E6FB253260A3B890074A382 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		1EE4E20A24F97E240097C32C /* YumikoToys.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoToys.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC077BDC29DC8BA000914E98 /* IOBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOBluetooth.framework; path = System/Library/Frameworks/IOBluetooth.framework; sourceTree = SDKROOT; };
+		FC077BDE29DC8BDF00914E98 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoToysHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCD03D7B2FC337C900F3B9DB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FCD03D7C2FC337C900F3B9DB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FCD03D7D2FC337C900F3B9DB /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		FCD03D7E2FC337C900F3B9DB /* YumikoToys.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YumikoToys.entitlements; sourceTree = "<group>"; };
+		FCD03D7F2FC337C900F3B9DB /* YumikoToys-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YumikoToys-Bridging-Header.h"; sourceTree = "<group>"; };
+		FCD03D802FC337C900F3B9DB /* YumikoToysDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YumikoToysDebug.entitlements; sourceTree = "<group>"; };
+		FCD03D832FC337C900F3B9DB /* AdaptiveLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveLayoutManager.swift; sourceTree = "<group>"; };
+		FCD03D842FC337C900F3B9DB /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		FCD03D852FC337C900F3B9DB /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
+		FCD03D862FC337C900F3B9DB /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontManager.swift; sourceTree = "<group>"; };
+		FCD03D872FC337C900F3B9DB /* HuggingFaceAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthService.swift; sourceTree = "<group>"; };
+		FCD03D882FC337C900F3B9DB /* MLXModelLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLXModelLoader.swift; sourceTree = "<group>"; };
+		FCD03D892FC337C900F3B9DB /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
+		FCD03D8A2FC337C900F3B9DB /* ModelMemoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelMemoryManager.swift; sourceTree = "<group>"; };
+		FCD03D8B2FC337C900F3B9DB /* PetAgeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAgeCalculator.swift; sourceTree = "<group>"; };
+		FCD03D8C2FC337C900F3B9DB /* ProxyAwareDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyAwareDownloader.swift; sourceTree = "<group>"; };
+		FCD03D8D2FC337C900F3B9DB /* StatusBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarManager.swift; sourceTree = "<group>"; };
+		FCD03D8F2FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-mlx-model-management.md"; sourceTree = "<group>"; };
+		FCD03D902FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-enhancement-plan.md"; sourceTree = "<group>"; };
+		FCD03D912FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-mode-implementation.md"; sourceTree = "<group>"; };
+		FCD03D932FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-mlx-model-management-design.md"; sourceTree = "<group>"; };
+		FCD03D942FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-resumable-download-design.md"; sourceTree = "<group>"; };
+		FCD03D952FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-enhancement-design.md"; sourceTree = "<group>"; };
+		FCD03D962FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-mode-design.md"; sourceTree = "<group>"; };
+		FCD03D972FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-assistant-features-design.md"; sourceTree = "<group>"; };
+		FCD03D9A2FC337C900F3B9DB /* AaGXLZGKADS.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = AaGXLZGKADS.ttf; sourceTree = "<group>"; };
+		FCD03D9E2FC337C900F3B9DB /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
+		FCD03D9F2FC337C900F3B9DB /* Anniversary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Anniversary.swift; sourceTree = "<group>"; };
+		FCD03DA02FC337C900F3B9DB /* APISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettings.swift; sourceTree = "<group>"; };
+		FCD03DA12FC337C900F3B9DB /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		FCD03DA22FC337C900F3B9DB /* AssistantConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantConfig.swift; sourceTree = "<group>"; };
+		FCD03DA32FC337C900F3B9DB /* ChatMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMode.swift; sourceTree = "<group>"; };
+		FCD03DA42FC337C900F3B9DB /* ComponentLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayout.swift; sourceTree = "<group>"; };
+		FCD03DA52FC337C900F3B9DB /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
+		FCD03DA62FC337C900F3B9DB /* LearningResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningResult.swift; sourceTree = "<group>"; };
+		FCD03DA72FC337C900F3B9DB /* NTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPServer.swift; sourceTree = "<group>"; };
+		FCD03DA82FC337C900F3B9DB /* PetPersona.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPersona.swift; sourceTree = "<group>"; };
+		FCD03DA92FC337C900F3B9DB /* PromptTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplate.swift; sourceTree = "<group>"; };
+		FCD03DAA2FC337C900F3B9DB /* ProviderConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConfig.swift; sourceTree = "<group>"; };
+		FCD03DAB2FC337C900F3B9DB /* PsychologicalProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PsychologicalProfile.swift; sourceTree = "<group>"; };
+		FCD03DAC2FC337C900F3B9DB /* SearchChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchChannel.swift; sourceTree = "<group>"; };
+		FCD03DAD2FC337C900F3B9DB /* UploadedFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadedFile.swift; sourceTree = "<group>"; };
+		FCD03DAE2FC337C900F3B9DB /* UserAvatarSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarSettings.swift; sourceTree = "<group>"; };
+		FCD03DB12FC337C900F3B9DB /* AdvancedFeaturesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedFeaturesService.swift; sourceTree = "<group>"; };
+		FCD03DB22FC337C900F3B9DB /* AgentFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFileService.swift; sourceTree = "<group>"; };
+		FCD03DB32FC337C900F3B9DB /* AgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentService.swift; sourceTree = "<group>"; };
+		FCD03DB42FC337C900F3B9DB /* AnniversaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryService.swift; sourceTree = "<group>"; };
+		FCD03DB52FC337C900F3B9DB /* APISettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettingsService.swift; sourceTree = "<group>"; };
+		FCD03DB62FC337C900F3B9DB /* BackgroundLearningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundLearningService.swift; sourceTree = "<group>"; };
+		FCD03DB72FC337C900F3B9DB /* ComponentLayoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayoutService.swift; sourceTree = "<group>"; };
+		FCD03DB82FC337C900F3B9DB /* DataExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportService.swift; sourceTree = "<group>"; };
+		FCD03DB92FC337C900F3B9DB /* DataStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStorageService.swift; sourceTree = "<group>"; };
+		FCD03DBA2FC337C900F3B9DB /* EnhancedWebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedWebSearchService.swift; sourceTree = "<group>"; };
+		FCD03DBB2FC337C900F3B9DB /* FileAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAnalysisService.swift; sourceTree = "<group>"; };
+		FCD03DBC2FC337C900F3B9DB /* GLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMService.swift; sourceTree = "<group>"; };
+		FCD03DBD2FC337C900F3B9DB /* ImageAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnalysisService.swift; sourceTree = "<group>"; };
+		FCD03DBE2FC337C900F3B9DB /* KeychainAccessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAccessService.swift; sourceTree = "<group>"; };
+		FCD03DBF2FC337C900F3B9DB /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
+		FCD03DC02FC337C900F3B9DB /* LocalEmbeddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalEmbeddingService.swift; sourceTree = "<group>"; };
+		FCD03DC12FC337C900F3B9DB /* LocalSentimentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSentimentService.swift; sourceTree = "<group>"; };
+		FCD03DC22FC337C900F3B9DB /* ModelManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementService.swift; sourceTree = "<group>"; };
+		FCD03DC32FC337C900F3B9DB /* NTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPClient.swift; sourceTree = "<group>"; };
+		FCD03DC42FC337C900F3B9DB /* NVIDIAProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NVIDIAProvider.swift; sourceTree = "<group>"; };
+		FCD03DC52FC337C900F3B9DB /* OfficeDocumentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficeDocumentParser.swift; sourceTree = "<group>"; };
+		FCD03DC62FC337C900F3B9DB /* PersonaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaService.swift; sourceTree = "<group>"; };
+		FCD03DC72FC337C900F3B9DB /* PreventSleepService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreventSleepService.swift; sourceTree = "<group>"; };
+		FCD03DC82FC337C900F3B9DB /* PromptTemplateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplateService.swift; sourceTree = "<group>"; };
+		FCD03DC92FC337C900F3B9DB /* SemanticDeduplicationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticDeduplicationService.swift; sourceTree = "<group>"; };
+		FCD03DCA2FC337C900F3B9DB /* SettingsMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsMigrationService.swift; sourceTree = "<group>"; };
+		FCD03DCB2FC337C900F3B9DB /* SettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsService.swift; sourceTree = "<group>"; };
+		FCD03DCC2FC337C900F3B9DB /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
+		FCD03DCD2FC337C900F3B9DB /* TavilySearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TavilySearchService.swift; sourceTree = "<group>"; };
+		FCD03DCE2FC337C900F3B9DB /* TimeSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSyncService.swift; sourceTree = "<group>"; };
+		FCD03DCF2FC337C900F3B9DB /* UserAvatarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarService.swift; sourceTree = "<group>"; };
+		FCD03DD02FC337C900F3B9DB /* WebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchService.swift; sourceTree = "<group>"; };
+		FCD03DD22FC337C900F3B9DB /* AIProviderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderProtocol.swift; sourceTree = "<group>"; };
+		FCD03DD32FC337C900F3B9DB /* APISettingsServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettingsServiceProtocol.swift; sourceTree = "<group>"; };
+		FCD03DD42FC337C900F3B9DB /* GLMServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMServiceProtocol.swift; sourceTree = "<group>"; };
+		FCD03DD52FC337C900F3B9DB /* PersonaServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaServiceProtocol.swift; sourceTree = "<group>"; };
+		FCD03DD62FC337C900F3B9DB /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
+		FCD03DD72FC337C900F3B9DB /* UserAvatarServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarServiceProtocol.swift; sourceTree = "<group>"; };
+		FCD03DDC2FC337C900F3B9DB /* AgentStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStepView.swift; sourceTree = "<group>"; };
+		FCD03DDD2FC337C900F3B9DB /* AnniversaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryCard.swift; sourceTree = "<group>"; };
+		FCD03DDE2FC337C900F3B9DB /* AppHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHeader.swift; sourceTree = "<group>"; };
+		FCD03DDF2FC337C900F3B9DB /* AssistantToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantToolbar.swift; sourceTree = "<group>"; };
+		FCD03DE02FC337C900F3B9DB /* ButtonAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonAnimations.swift; sourceTree = "<group>"; };
+		FCD03DE12FC337C900F3B9DB /* ChatModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModeSelector.swift; sourceTree = "<group>"; };
+		FCD03DE22FC337C900F3B9DB /* ChatSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSettingsView.swift; sourceTree = "<group>"; };
+		FCD03DE32FC337C900F3B9DB /* CodeHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeHighlightView.swift; sourceTree = "<group>"; };
+		FCD03DE42FC337C900F3B9DB /* ConversationSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationSidebarView.swift; sourceTree = "<group>"; };
+		FCD03DE52FC337C900F3B9DB /* CopyableMessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopyableMessageBubble.swift; sourceTree = "<group>"; };
+		FCD03DE62FC337C900F3B9DB /* EnhancedSearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedSearchSourcesView.swift; sourceTree = "<group>"; };
+		FCD03DE72FC337C900F3B9DB /* FilePreviewChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewChip.swift; sourceTree = "<group>"; };
+		FCD03DE82FC337C900F3B9DB /* FileUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUploadView.swift; sourceTree = "<group>"; };
+		FCD03DE92FC337C900F3B9DB /* GenderSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenderSelectorView.swift; sourceTree = "<group>"; };
+		FCD03DEA2FC337C900F3B9DB /* HuggingFaceAuthSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthSheet.swift; sourceTree = "<group>"; };
+		FCD03DEB2FC337C900F3B9DB /* IconStyleSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconStyleSystem.swift; sourceTree = "<group>"; };
+		FCD03DEC2FC337C900F3B9DB /* ImageCropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
+		FCD03DED2FC337C900F3B9DB /* MarkdownContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownContentView.swift; sourceTree = "<group>"; };
+		FCD03DEE2FC337C900F3B9DB /* MenuList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuList.swift; sourceTree = "<group>"; };
+		FCD03DEF2FC337C900F3B9DB /* MessageContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageContextMenu.swift; sourceTree = "<group>"; };
+		FCD03DF02FC337C900F3B9DB /* ModeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeButton.swift; sourceTree = "<group>"; };
+		FCD03DF12FC337C900F3B9DB /* ModelManagementSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementSection.swift; sourceTree = "<group>"; };
+		FCD03DF22FC337C900F3B9DB /* ModelPickerMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPickerMenu.swift; sourceTree = "<group>"; };
+		FCD03DF32FC337C900F3B9DB /* ModelStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStatusCard.swift; sourceTree = "<group>"; };
+		FCD03DF42FC337C900F3B9DB /* PetProfileCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetProfileCardView.swift; sourceTree = "<group>"; };
+		FCD03DF52FC337C900F3B9DB /* PixelArtIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelArtIcons.swift; sourceTree = "<group>"; };
+		FCD03DF62FC337C900F3B9DB /* PixelAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarView.swift; sourceTree = "<group>"; };
+		FCD03DF72FC337C900F3B9DB /* PixelIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelIconView.swift; sourceTree = "<group>"; };
+		FCD03DF82FC337C900F3B9DB /* PromptTemplatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplatePicker.swift; sourceTree = "<group>"; };
+		FCD03DF92FC337C900F3B9DB /* ProviderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderPicker.swift; sourceTree = "<group>"; };
+		FCD03DFA2FC337C900F3B9DB /* SearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSourcesView.swift; sourceTree = "<group>"; };
+		FCD03DFB2FC337C900F3B9DB /* ThinkingProcessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkingProcessView.swift; sourceTree = "<group>"; };
+		FCD03DFC2FC337C900F3B9DB /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		FCD03DFE2FC337C900F3B9DB /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		FCD03DFF2FC337C900F3B9DB /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
+		FCD03E002FC337C900F3B9DB /* AIChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatViewModel.swift; sourceTree = "<group>"; };
+		FCD03E012FC337C900F3B9DB /* AnniversaryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryManagementView.swift; sourceTree = "<group>"; };
+		FCD03E022FC337C900F3B9DB /* ChangelogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogView.swift; sourceTree = "<group>"; };
+		FCD03E032FC337C900F3B9DB /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		FCD03E042FC337C900F3B9DB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FCD03E062FC337C900F3B9DB /* PetProfileCardModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetProfileCardModifier.swift; sourceTree = "<group>"; };
+		FCD03E082FC337C900F3B9DB /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
+		FCD03E0B2FC337C900F3B9DB /* ModelCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCapability.swift; sourceTree = "<group>"; };
+		FCD03E0D2FC337C900F3B9DB /* ModelCompatibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCompatibilityManager.swift; sourceTree = "<group>"; };
+		FCD03E102FC337C900F3B9DB /* MAINTENANCE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MAINTENANCE.md; sourceTree = "<group>"; };
+		FCD03E112FC337C900F3B9DB /* SplashFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashFix.md; sourceTree = "<group>"; };
+		FCD03E122FC337C900F3B9DB /* SplashLocalFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashLocalFix.md; sourceTree = "<group>"; };
+		FCD03E132FC337C900F3B9DB /* YumikoToysApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumikoToysApp.swift; sourceTree = "<group>"; };
+		FCF267382E114015007230B1 /* YumikoCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YumikoCLI; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YumikoToysHelper;
+			sourceTree = "<group>";
+		};
+		FCF267392E114015007230B1 /* YumikoCLI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YumikoCLI;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1EE4E20724F97E240097C32C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				FC0664732FC0914300CABB99 /* Splash in Frameworks */,
+				FCA5AF182FC0992D00E668DB /* CoreXLSX in Frameworks */,
+				FC5F1B252FBEB15D004B2F34 /* MLXNN in Frameworks */,
+				FC5F1B212FBEB15D004B2F34 /* MLXFast in Frameworks */,
+				1E5B4DE525FC24CA00092422 /* LaunchAtLogin in Frameworks */,
+				FC06647B2FC0914300CABB99 /* SplashTokenizer in Frameworks */,
+				1E6FB254260A3B890074A382 /* Security.framework in Frameworks */,
+				FCB283B32E43D77A00FA3D4A /* MediaKeyTap in Frameworks */,
+				FCEA9FEA2FBE9E020037F6B8 /* MarkdownUI in Frameworks */,
+				FC5F1B232FBEB15D004B2F34 /* MLXLinalg in Frameworks */,
+				FCF35E812E3E56BD00793FBB /* NTPClient in Frameworks */,
+				FC0664772FC0914300CABB99 /* SplashImageGen in Frameworks */,
+				FC0664752FC0914300CABB99 /* SplashHTMLGen in Frameworks */,
+				1E5B4D6A25FBFE4B00092422 /* Cocoa.framework in Frameworks */,
+				FC0664792FC0914300CABB99 /* SplashMarkdown in Frameworks */,
+				FC5F1B1D2FBEB15D004B2F34 /* MLX in Frameworks */,
+				FC5F1B1F2FBEB15D004B2F34 /* MLXFFT in Frameworks */,
+				FC06647E2FC0916C00CABB99 /* Highlightr in Frameworks */,
+				FCC24F1C2FBED23D00A64686 /* HuggingFace in Frameworks */,
+			);
+		};
+		FC3FCE172CB69C52008D8C7B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		FCF267352E114015007230B1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				FCF267442E114619007230B1 /* ArgumentParser in Frameworks */,
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1E5B4D0F25FBFA4800092422 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FC077BDE29DC8BDF00914E98 /* CoreGraphics.framework */,
+				FC077BDC29DC8BA000914E98 /* IOBluetooth.framework */,
+				1E6FB253260A3B890074A382 /* Security.framework */,
+				1E5B4D6925FBFE4B00092422 /* Cocoa.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		1EE4E20124F97E240097C32C = {
+			isa = PBXGroup;
+			children = (
+				FCD03E142FC337C900F3B9DB /* YumikoToys */,
+				FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */,
+				FCF267392E114015007230B1 /* YumikoCLI */,
+				1EE4E20B24F97E240097C32C /* Products */,
+				1E5B4D0F25FBFA4800092422 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		1EE4E20B24F97E240097C32C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1EE4E20A24F97E240097C32C /* YumikoToys.app */,
+				FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */,
+				FCF267382E114015007230B1 /* YumikoCLI */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FCD03D812FC337C900F3B9DB /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03D7B2FC337C900F3B9DB /* Assets.xcassets */,
+				FCD03D7C2FC337C900F3B9DB /* Info.plist */,
+				FCD03D7D2FC337C900F3B9DB /* Main.storyboard */,
+				FCD03D7E2FC337C900F3B9DB /* YumikoToys.entitlements */,
+				FCD03D7F2FC337C900F3B9DB /* YumikoToys-Bridging-Header.h */,
+				FCD03D802FC337C900F3B9DB /* YumikoToysDebug.entitlements */,
+			);
+			path = Assets;
+			sourceTree = "<group>";
+		};
+		FCD03D822FC337C900F3B9DB /* Config */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		FCD03D8E2FC337C900F3B9DB /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03D832FC337C900F3B9DB /* AdaptiveLayoutManager.swift */,
+				FCD03D842FC337C900F3B9DB /* AppState.swift */,
+				FCD03D852FC337C900F3B9DB /* DependencyContainer.swift */,
+				FCD03D862FC337C900F3B9DB /* FontManager.swift */,
+				FCD03D872FC337C900F3B9DB /* HuggingFaceAuthService.swift */,
+				FCD03D882FC337C900F3B9DB /* MLXModelLoader.swift */,
+				FCD03D892FC337C900F3B9DB /* ModelDownloadManager.swift */,
+				FCD03D8A2FC337C900F3B9DB /* ModelMemoryManager.swift */,
+				FCD03D8B2FC337C900F3B9DB /* PetAgeCalculator.swift */,
+				FCD03D8C2FC337C900F3B9DB /* ProxyAwareDownloader.swift */,
+				FCD03D8D2FC337C900F3B9DB /* StatusBarManager.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		FCD03D922FC337C900F3B9DB /* plans */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03D8F2FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md */,
+				FCD03D902FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md */,
+				FCD03D912FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md */,
+			);
+			path = plans;
+			sourceTree = "<group>";
+		};
+		FCD03D982FC337C900F3B9DB /* specs */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03D932FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md */,
+				FCD03D942FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md */,
+				FCD03D952FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md */,
+				FCD03D962FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md */,
+				FCD03D972FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md */,
+			);
+			path = specs;
+			sourceTree = "<group>";
+		};
+		FCD03D992FC337C900F3B9DB /* docs */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03D922FC337C900F3B9DB /* plans */,
+				FCD03D982FC337C900F3B9DB /* specs */,
+			);
+			path = docs;
+			sourceTree = "<group>";
+		};
+		FCD03D9B2FC337C900F3B9DB /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03D9A2FC337C900F3B9DB /* AaGXLZGKADS.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		FCD03D9C2FC337C900F3B9DB /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		FCD03D9D2FC337C900F3B9DB /* Model */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		FCD03DAF2FC337C900F3B9DB /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03D9E2FC337C900F3B9DB /* AIProvider.swift */,
+				FCD03D9F2FC337C900F3B9DB /* Anniversary.swift */,
+				FCD03DA02FC337C900F3B9DB /* APISettings.swift */,
+				FCD03DA12FC337C900F3B9DB /* AppSettings.swift */,
+				FCD03DA22FC337C900F3B9DB /* AssistantConfig.swift */,
+				FCD03DA32FC337C900F3B9DB /* ChatMode.swift */,
+				FCD03DA42FC337C900F3B9DB /* ComponentLayout.swift */,
+				FCD03DA52FC337C900F3B9DB /* Conversation.swift */,
+				FCD03DA62FC337C900F3B9DB /* LearningResult.swift */,
+				FCD03DA72FC337C900F3B9DB /* NTPServer.swift */,
+				FCD03DA82FC337C900F3B9DB /* PetPersona.swift */,
+				FCD03DA92FC337C900F3B9DB /* PromptTemplate.swift */,
+				FCD03DAA2FC337C900F3B9DB /* ProviderConfig.swift */,
+				FCD03DAB2FC337C900F3B9DB /* PsychologicalProfile.swift */,
+				FCD03DAC2FC337C900F3B9DB /* SearchChannel.swift */,
+				FCD03DAD2FC337C900F3B9DB /* UploadedFile.swift */,
+				FCD03DAE2FC337C900F3B9DB /* UserAvatarSettings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FCD03DB02FC337C900F3B9DB /* Plugins */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Plugins;
+			sourceTree = "<group>";
+		};
+		FCD03DD12FC337C900F3B9DB /* Implementations */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03DB12FC337C900F3B9DB /* AdvancedFeaturesService.swift */,
+				FCD03DB22FC337C900F3B9DB /* AgentFileService.swift */,
+				FCD03DB32FC337C900F3B9DB /* AgentService.swift */,
+				FCD03DB42FC337C900F3B9DB /* AnniversaryService.swift */,
+				FCD03DB52FC337C900F3B9DB /* APISettingsService.swift */,
+				FCD03DB62FC337C900F3B9DB /* BackgroundLearningService.swift */,
+				FCD03DB72FC337C900F3B9DB /* ComponentLayoutService.swift */,
+				FCD03DB82FC337C900F3B9DB /* DataExportService.swift */,
+				FCD03DB92FC337C900F3B9DB /* DataStorageService.swift */,
+				FCD03DBA2FC337C900F3B9DB /* EnhancedWebSearchService.swift */,
+				FCD03DBB2FC337C900F3B9DB /* FileAnalysisService.swift */,
+				FCD03DBC2FC337C900F3B9DB /* GLMService.swift */,
+				FCD03DBD2FC337C900F3B9DB /* ImageAnalysisService.swift */,
+				FCD03DBE2FC337C900F3B9DB /* KeychainAccessService.swift */,
+				FCD03DBF2FC337C900F3B9DB /* LaunchAtLoginService.swift */,
+				FCD03DC02FC337C900F3B9DB /* LocalEmbeddingService.swift */,
+				FCD03DC12FC337C900F3B9DB /* LocalSentimentService.swift */,
+				FCD03DC22FC337C900F3B9DB /* ModelManagementService.swift */,
+				FCD03DC32FC337C900F3B9DB /* NTPClient.swift */,
+				FCD03DC42FC337C900F3B9DB /* NVIDIAProvider.swift */,
+				FCD03DC52FC337C900F3B9DB /* OfficeDocumentParser.swift */,
+				FCD03DC62FC337C900F3B9DB /* PersonaService.swift */,
+				FCD03DC72FC337C900F3B9DB /* PreventSleepService.swift */,
+				FCD03DC82FC337C900F3B9DB /* PromptTemplateService.swift */,
+				FCD03DC92FC337C900F3B9DB /* SemanticDeduplicationService.swift */,
+				FCD03DCA2FC337C900F3B9DB /* SettingsMigrationService.swift */,
+				FCD03DCB2FC337C900F3B9DB /* SettingsService.swift */,
+				FCD03DCC2FC337C900F3B9DB /* StorageService.swift */,
+				FCD03DCD2FC337C900F3B9DB /* TavilySearchService.swift */,
+				FCD03DCE2FC337C900F3B9DB /* TimeSyncService.swift */,
+				FCD03DCF2FC337C900F3B9DB /* UserAvatarService.swift */,
+				FCD03DD02FC337C900F3B9DB /* WebSearchService.swift */,
+			);
+			path = Implementations;
+			sourceTree = "<group>";
+		};
+		FCD03DD82FC337C900F3B9DB /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03DD22FC337C900F3B9DB /* AIProviderProtocol.swift */,
+				FCD03DD32FC337C900F3B9DB /* APISettingsServiceProtocol.swift */,
+				FCD03DD42FC337C900F3B9DB /* GLMServiceProtocol.swift */,
+				FCD03DD52FC337C900F3B9DB /* PersonaServiceProtocol.swift */,
+				FCD03DD62FC337C900F3B9DB /* ServiceProtocols.swift */,
+				FCD03DD72FC337C900F3B9DB /* UserAvatarServiceProtocol.swift */,
+			);
+			path = Protocols;
+			sourceTree = "<group>";
+		};
+		FCD03DD92FC337C900F3B9DB /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03DD12FC337C900F3B9DB /* Implementations */,
+				FCD03DD82FC337C900F3B9DB /* Protocols */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FCD03DDA2FC337C900F3B9DB /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		FCD03DDB2FC337C900F3B9DB /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		FCD03DFD2FC337C900F3B9DB /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03DDC2FC337C900F3B9DB /* AgentStepView.swift */,
+				FCD03DDD2FC337C900F3B9DB /* AnniversaryCard.swift */,
+				FCD03DDE2FC337C900F3B9DB /* AppHeader.swift */,
+				FCD03DDF2FC337C900F3B9DB /* AssistantToolbar.swift */,
+				FCD03DE02FC337C900F3B9DB /* ButtonAnimations.swift */,
+				FCD03DE12FC337C900F3B9DB /* ChatModeSelector.swift */,
+				FCD03DE22FC337C900F3B9DB /* ChatSettingsView.swift */,
+				FCD03DE32FC337C900F3B9DB /* CodeHighlightView.swift */,
+				FCD03DE42FC337C900F3B9DB /* ConversationSidebarView.swift */,
+				FCD03DE52FC337C900F3B9DB /* CopyableMessageBubble.swift */,
+				FCD03DE62FC337C900F3B9DB /* EnhancedSearchSourcesView.swift */,
+				FCD03DE72FC337C900F3B9DB /* FilePreviewChip.swift */,
+				FCD03DE82FC337C900F3B9DB /* FileUploadView.swift */,
+				FCD03DE92FC337C900F3B9DB /* GenderSelectorView.swift */,
+				FCD03DEA2FC337C900F3B9DB /* HuggingFaceAuthSheet.swift */,
+				FCD03DEB2FC337C900F3B9DB /* IconStyleSystem.swift */,
+				FCD03DEC2FC337C900F3B9DB /* ImageCropView.swift */,
+				FCD03DED2FC337C900F3B9DB /* MarkdownContentView.swift */,
+				FCD03DEE2FC337C900F3B9DB /* MenuList.swift */,
+				FCD03DEF2FC337C900F3B9DB /* MessageContextMenu.swift */,
+				FCD03DF02FC337C900F3B9DB /* ModeButton.swift */,
+				FCD03DF12FC337C900F3B9DB /* ModelManagementSection.swift */,
+				FCD03DF22FC337C900F3B9DB /* ModelPickerMenu.swift */,
+				FCD03DF32FC337C900F3B9DB /* ModelStatusCard.swift */,
+				FCD03DF42FC337C900F3B9DB /* PetProfileCardView.swift */,
+				FCD03DF52FC337C900F3B9DB /* PixelArtIcons.swift */,
+				FCD03DF62FC337C900F3B9DB /* PixelAvatarView.swift */,
+				FCD03DF72FC337C900F3B9DB /* PixelIconView.swift */,
+				FCD03DF82FC337C900F3B9DB /* PromptTemplatePicker.swift */,
+				FCD03DF92FC337C900F3B9DB /* ProviderPicker.swift */,
+				FCD03DFA2FC337C900F3B9DB /* SearchSourcesView.swift */,
+				FCD03DFB2FC337C900F3B9DB /* ThinkingProcessView.swift */,
+				FCD03DFC2FC337C900F3B9DB /* ToastView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		FCD03E052FC337C900F3B9DB /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03DFE2FC337C900F3B9DB /* AboutView.swift */,
+				FCD03DFF2FC337C900F3B9DB /* AIChatView.swift */,
+				FCD03E002FC337C900F3B9DB /* AIChatViewModel.swift */,
+				FCD03E012FC337C900F3B9DB /* AnniversaryManagementView.swift */,
+				FCD03E022FC337C900F3B9DB /* ChangelogView.swift */,
+				FCD03E032FC337C900F3B9DB /* MainView.swift */,
+				FCD03E042FC337C900F3B9DB /* SettingsView.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		FCD03E072FC337C900F3B9DB /* Modifiers */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03E062FC337C900F3B9DB /* PetProfileCardModifier.swift */,
+			);
+			path = Modifiers;
+			sourceTree = "<group>";
+		};
+		FCD03E092FC337C900F3B9DB /* StatusBar */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03E082FC337C900F3B9DB /* StatusBarView.swift */,
+			);
+			path = StatusBar;
+			sourceTree = "<group>";
+		};
+		FCD03E0A2FC337C900F3B9DB /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03DFD2FC337C900F3B9DB /* Components */,
+				FCD03E052FC337C900F3B9DB /* Main */,
+				FCD03E072FC337C900F3B9DB /* Modifiers */,
+				FCD03E092FC337C900F3B9DB /* StatusBar */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FCD03E0C2FC337C900F3B9DB /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03E0B2FC337C900F3B9DB /* ModelCapability.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FCD03E0E2FC337C900F3B9DB /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03E0D2FC337C900F3B9DB /* ModelCompatibilityManager.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		FCD03E0F2FC337C900F3B9DB /* YumikoToys */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03E0C2FC337C900F3B9DB /* Models */,
+				FCD03E0E2FC337C900F3B9DB /* ViewModels */,
+			);
+			path = YumikoToys;
+			sourceTree = "<group>";
+		};
+		FCD03E142FC337C900F3B9DB /* YumikoToys */ = {
+			isa = PBXGroup;
+			children = (
+				FCD03D812FC337C900F3B9DB /* Assets */,
+				FCD03D822FC337C900F3B9DB /* Config */,
+				FCD03D8E2FC337C900F3B9DB /* Core */,
+				FCD03D992FC337C900F3B9DB /* docs */,
+				FCD03D9B2FC337C900F3B9DB /* Fonts */,
+				FCD03D9C2FC337C900F3B9DB /* Managers */,
+				FCD03D9D2FC337C900F3B9DB /* Model */,
+				FCD03DAF2FC337C900F3B9DB /* Models */,
+				FCD03DB02FC337C900F3B9DB /* Plugins */,
+				FCD03DD92FC337C900F3B9DB /* Services */,
+				FCD03DDA2FC337C900F3B9DB /* Utils */,
+				FCD03DDB2FC337C900F3B9DB /* ViewModels */,
+				FCD03E0A2FC337C900F3B9DB /* Views */,
+				FCD03E0F2FC337C900F3B9DB /* YumikoToys */,
+				FCD03E102FC337C900F3B9DB /* MAINTENANCE.md */,
+				FCD03E112FC337C900F3B9DB /* SplashFix.md */,
+				FCD03E122FC337C900F3B9DB /* SplashLocalFix.md */,
+				FCD03E132FC337C900F3B9DB /* YumikoToysApp.swift */,
+			);
+			path = YumikoToys;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1EE4E20924F97E240097C32C /* YumikoToys */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1EE4E21A24F97E250097C32C /* Build configuration list for PBXNativeTarget "YumikoToys" */;
+			buildPhases = (
+				1EE4E20624F97E240097C32C /* Sources */,
+				1EE4E20724F97E240097C32C /* Frameworks */,
+				1EE4E20824F97E240097C32C /* Resources */,
+				1E5B4D3625FBFC4000092422 /* Embed XPC Services */,
+				1E5B4D6E25FBFE9100092422 /* CopyFiles */,
+				1E5B4DE725FC25B000092422 /* ShellScript */,
+				FCF267462E114652007230B1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			name = YumikoToys;
+			packageProductDependencies = (
+				1E5B4DE425FC24CA00092422 /* LaunchAtLogin */,
+				FCF35E802E3E56BD00793FBB /* NTPClient */,
+				FCB283B22E43D77A00FA3D4A /* MediaKeyTap */,
+				FCEA9FE92FBE9E020037F6B8 /* MarkdownUI */,
+				FC5F1B1C2FBEB15D004B2F34 /* MLX */,
+				FC5F1B1E2FBEB15D004B2F34 /* MLXFFT */,
+				FC5F1B202FBEB15D004B2F34 /* MLXFast */,
+				FC5F1B222FBEB15D004B2F34 /* MLXLinalg */,
+				FC5F1B242FBEB15D004B2F34 /* MLXNN */,
+				FCC24F1B2FBED23D00A64686 /* HuggingFace */,
+				FC0664722FC0914300CABB99 /* Splash */,
+				FC0664742FC0914300CABB99 /* SplashHTMLGen */,
+				FC0664762FC0914300CABB99 /* SplashImageGen */,
+				FC0664782FC0914300CABB99 /* SplashMarkdown */,
+				FC06647A2FC0914300CABB99 /* SplashTokenizer */,
+				FC06647D2FC0916C00CABB99 /* Highlightr */,
+				FCA5AF172FC0992D00E668DB /* CoreXLSX */,
+			);
+			productName = keysmith;
+			productReference = 1EE4E20A24F97E240097C32C /* YumikoToys.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FC3FCE192CB69C52008D8C7B /* YumikoToysHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FC3FCE262CB69C53008D8C7B /* Build configuration list for PBXNativeTarget "YumikoToysHelper" */;
+			buildPhases = (
+				FC3FCE162CB69C52008D8C7B /* Sources */,
+				FC3FCE172CB69C52008D8C7B /* Frameworks */,
+				FC3FCE182CB69C52008D8C7B /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */,
+			);
+			name = YumikoToysHelper;
+			productName = YumikoToysHelper;
+			productReference = FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FCF267372E114015007230B1 /* YumikoCLI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FCF2673E2E114015007230B1 /* Build configuration list for PBXNativeTarget "YumikoCLI" */;
+			buildPhases = (
+				FCF267342E114015007230B1 /* Sources */,
+				FCF267352E114015007230B1 /* Frameworks */,
+				FCF267362E114015007230B1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				FCF267392E114015007230B1 /* YumikoCLI */,
+			);
+			name = YumikoCLI;
+			packageProductDependencies = (
+				FCF267432E114619007230B1 /* ArgumentParser */,
+			);
+			productName = YumikoCLI;
+			productReference = FCF267382E114015007230B1 /* YumikoCLI */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1EE4E20224F97E240097C32C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2630;
+				ORGANIZATIONNAME = Menglolita;
+				TargetAttributes = {
+					1EE4E20924F97E240097C32C = {
+						CreatedOnToolsVersion = 11.6;
+						LastSwiftMigration = 1240;
+					};
+					FC3FCE192CB69C52008D8C7B = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					FCF267372E114015007230B1 = {
+						CreatedOnToolsVersion = 26.0;
+						LastSwiftMigration = 2600;
+					};
+				};
+			};
+			buildConfigurationList = 1EE4E20524F97E240097C32C /* Build configuration list for PBXProject "YumikoToys" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 1EE4E20124F97E240097C32C;
+			packageReferences = (
+				1E5B4DE325FC24CA00092422 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
+				FCF2673F2E1140A9007230B1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+				FCF35E7F2E3E56BD00793FBB /* XCRemoteSwiftPackageReference "swift-ntp" */,
+				FCB283B12E43D77A00FA3D4A /* XCRemoteSwiftPackageReference "MediaKeyTap" */,
+				FCEA9FE82FBE9E020037F6B8 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */,
+				FCC24F1A2FBED23D00A64686 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
+				FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */,
+				FC06647C2FC0916C00CABB99 /* XCRemoteSwiftPackageReference "Highlightr" */,
+				FCA5AF162FC0992D00E668DB /* XCRemoteSwiftPackageReference "CoreXLSX" */,
+			);
+			preferredProjectObjectVersion = 90;
+			productRefGroup = 1EE4E20B24F97E240097C32C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1EE4E20924F97E240097C32C /* YumikoToys */,
+				FC3FCE192CB69C52008D8C7B /* YumikoToysHelper */,
+				FCF267372E114015007230B1 /* YumikoCLI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1EE4E20824F97E240097C32C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				FCD03E842FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md in Resources */,
+				FCD03E852FC337C900F3B9DB /* SplashFix.md in Resources */,
+				FCD03E862FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md in Resources */,
+				FCD03E872FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md in Resources */,
+				FCD03E882FC337C900F3B9DB /* Info.plist in Resources */,
+				FCD03E892FC337C900F3B9DB /* Main.storyboard in Resources */,
+				FCD03E8A2FC337C900F3B9DB /* MAINTENANCE.md in Resources */,
+				FCD03E8B2FC337C900F3B9DB /* SplashLocalFix.md in Resources */,
+				FCD03E8C2FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */,
+				FCD03E8D2FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md in Resources */,
+				FCD03E8E2FC337C900F3B9DB /* AaGXLZGKADS.ttf in Resources */,
+				FCD03E8F2FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md in Resources */,
+				FCD03E902FC337C900F3B9DB /* Assets.xcassets in Resources */,
+				FCD03E912FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md in Resources */,
+				FCD03E922FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md in Resources */,
+			);
+		};
+		FC3FCE182CB69C52008D8C7B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		1E5B4DE725FC25B000092422 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			shellPath = /bin/sh;
+			shellScript = (
+				"# Type a script or drag a script file from your workspace to insert its path.",
+				"\"${BUILT_PRODUCTS_DIR}/LaunchAtLogin_LaunchAtLogin.bundle/Contents/Resources/copy-helper-swiftpm.sh\"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+			);
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1EE4E20624F97E240097C32C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				FCD03E152FC337C900F3B9DB /* AppSettings.swift in Sources */,
+				FCD03E162FC337C900F3B9DB /* AgentFileService.swift in Sources */,
+				FCD03E172FC337C900F3B9DB /* GenderSelectorView.swift in Sources */,
+				FCD03E182FC337C900F3B9DB /* PromptTemplateService.swift in Sources */,
+				FCD03E192FC337C900F3B9DB /* AgentStepView.swift in Sources */,
+				FCD03E1A2FC337C900F3B9DB /* GLMService.swift in Sources */,
+				FCD03E1B2FC337C900F3B9DB /* PersonaServiceProtocol.swift in Sources */,
+				FCD03E1C2FC337C900F3B9DB /* ChatSettingsView.swift in Sources */,
+				FCD03E1D2FC337C900F3B9DB /* PetProfileCardView.swift in Sources */,
+				FCD03E1E2FC337C900F3B9DB /* PreventSleepService.swift in Sources */,
+				FCD03E1F2FC337C900F3B9DB /* FileUploadView.swift in Sources */,
+				FCD03E202FC337C900F3B9DB /* ComponentLayoutService.swift in Sources */,
+				FCD03E212FC337C900F3B9DB /* UserAvatarServiceProtocol.swift in Sources */,
+				FCD03E222FC337C900F3B9DB /* OfficeDocumentParser.swift in Sources */,
+				FCD03E232FC337C900F3B9DB /* EnhancedSearchSourcesView.swift in Sources */,
+				FCD03E242FC337C900F3B9DB /* LaunchAtLoginService.swift in Sources */,
+				FCD03E252FC337C900F3B9DB /* SemanticDeduplicationService.swift in Sources */,
+				FCD03E262FC337C900F3B9DB /* MenuList.swift in Sources */,
+				FCD03E272FC337C900F3B9DB /* ConversationSidebarView.swift in Sources */,
+				FCD03E282FC337C900F3B9DB /* LocalSentimentService.swift in Sources */,
+				FCD03E292FC337C900F3B9DB /* AIProviderProtocol.swift in Sources */,
+				FCD03E2A2FC337C900F3B9DB /* PixelAvatarView.swift in Sources */,
+				FCD03E2B2FC337C900F3B9DB /* PersonaService.swift in Sources */,
+				FCD03E2C2FC337C900F3B9DB /* BackgroundLearningService.swift in Sources */,
+				FCD03E2D2FC337C900F3B9DB /* ModelDownloadManager.swift in Sources */,
+				FCD03E2E2FC337C900F3B9DB /* APISettings.swift in Sources */,
+				FCD03E2F2FC337C900F3B9DB /* NVIDIAProvider.swift in Sources */,
+				FCD03E302FC337C900F3B9DB /* PsychologicalProfile.swift in Sources */,
+				FCD03E312FC337C900F3B9DB /* UserAvatarSettings.swift in Sources */,
+				FCD03E322FC337C900F3B9DB /* MarkdownContentView.swift in Sources */,
+				FCD03E332FC337C900F3B9DB /* ImageAnalysisService.swift in Sources */,
+				FCD03E342FC337C900F3B9DB /* KeychainAccessService.swift in Sources */,
+				FCD03E352FC337C900F3B9DB /* SearchSourcesView.swift in Sources */,
+				FCD03E362FC337C900F3B9DB /* TimeSyncService.swift in Sources */,
+				FCD03E372FC337C900F3B9DB /* SettingsService.swift in Sources */,
+				FCD03E382FC337C900F3B9DB /* ThinkingProcessView.swift in Sources */,
+				FCD03E392FC337C900F3B9DB /* PetPersona.swift in Sources */,
+				FCD03E3A2FC337C900F3B9DB /* SettingsMigrationService.swift in Sources */,
+				FCD03E3B2FC337C900F3B9DB /* ComponentLayout.swift in Sources */,
+				FCD03E3C2FC337C900F3B9DB /* APISettingsServiceProtocol.swift in Sources */,
+				FCD03E3D2FC337C900F3B9DB /* AIChatView.swift in Sources */,
+				FCD03E3E2FC337C900F3B9DB /* PromptTemplate.swift in Sources */,
+				FCD03E3F2FC337C900F3B9DB /* YumikoToysApp.swift in Sources */,
+				FCD03E402FC337C900F3B9DB /* AdvancedFeaturesService.swift in Sources */,
+				FCD03E412FC337C900F3B9DB /* ChatModeSelector.swift in Sources */,
+				FCD03E422FC337C900F3B9DB /* StorageService.swift in Sources */,
+				FCD03E432FC337C900F3B9DB /* UserAvatarService.swift in Sources */,
+				FCD03E442FC337C900F3B9DB /* AIProvider.swift in Sources */,
+				FCD03E452FC337C900F3B9DB /* ModelCompatibilityManager.swift in Sources */,
+				FCD03E462FC337C900F3B9DB /* SearchChannel.swift in Sources */,
+				FCD03E472FC337C900F3B9DB /* AppState.swift in Sources */,
+				FCD03E482FC337C900F3B9DB /* AgentService.swift in Sources */,
+				FCD03E492FC337C900F3B9DB /* ModelPickerMenu.swift in Sources */,
+				FCD03E4A2FC337C900F3B9DB /* ChatMode.swift in Sources */,
+				FCD03E4B2FC337C900F3B9DB /* GLMServiceProtocol.swift in Sources */,
+				FCD03E4C2FC337C900F3B9DB /* MLXModelLoader.swift in Sources */,
+				FCD03E4D2FC337C900F3B9DB /* LocalEmbeddingService.swift in Sources */,
+				FCD03E4E2FC337C900F3B9DB /* AnniversaryCard.swift in Sources */,
+				FCD03E4F2FC337C900F3B9DB /* FilePreviewChip.swift in Sources */,
+				FCD03E502FC337C900F3B9DB /* EnhancedWebSearchService.swift in Sources */,
+				FCD03E512FC337C900F3B9DB /* PetProfileCardModifier.swift in Sources */,
+				FCD03E522FC337C900F3B9DB /* LearningResult.swift in Sources */,
+				FCD03E532FC337C900F3B9DB /* ModelManagementService.swift in Sources */,
+				FCD03E542FC337C900F3B9DB /* NTPServer.swift in Sources */,
+				FCD03E552FC337C900F3B9DB /* ModelCapability.swift in Sources */,
+				FCD03E562FC337C900F3B9DB /* Anniversary.swift in Sources */,
+				FCD03E572FC337C900F3B9DB /* AIChatViewModel.swift in Sources */,
+				FCD03E582FC337C900F3B9DB /* HuggingFaceAuthSheet.swift in Sources */,
+				FCD03E592FC337C900F3B9DB /* MessageContextMenu.swift in Sources */,
+				FCD03E5A2FC337C900F3B9DB /* AppHeader.swift in Sources */,
+				FCD03E5B2FC337C900F3B9DB /* StatusBarView.swift in Sources */,
+				FCD03E5C2FC337C900F3B9DB /* DependencyContainer.swift in Sources */,
+				FCD03E5D2FC337C900F3B9DB /* PixelIconView.swift in Sources */,
+				FCD03E5E2FC337C900F3B9DB /* PromptTemplatePicker.swift in Sources */,
+				FCD03E5F2FC337C900F3B9DB /* WebSearchService.swift in Sources */,
+				FCD03E602FC337C900F3B9DB /* ToastView.swift in Sources */,
+				FCD03E612FC337C900F3B9DB /* ProxyAwareDownloader.swift in Sources */,
+				FCD03E622FC337C900F3B9DB /* DataStorageService.swift in Sources */,
+				FCD03E632FC337C900F3B9DB /* TavilySearchService.swift in Sources */,
+				FCD03E642FC337C900F3B9DB /* ServiceProtocols.swift in Sources */,
+				FCD03E652FC337C900F3B9DB /* ProviderConfig.swift in Sources */,
+				FCD03E662FC337C900F3B9DB /* FileAnalysisService.swift in Sources */,
+				FCD03E672FC337C900F3B9DB /* ModeButton.swift in Sources */,
+				FCD03E682FC337C900F3B9DB /* AboutView.swift in Sources */,
+				FCD03E692FC337C900F3B9DB /* DataExportService.swift in Sources */,
+				FCD03E6A2FC337C900F3B9DB /* ModelMemoryManager.swift in Sources */,
+				FCD03E6B2FC337C900F3B9DB /* StatusBarManager.swift in Sources */,
+				FCD03E6C2FC337C900F3B9DB /* PetAgeCalculator.swift in Sources */,
+				FCD03E6D2FC337C900F3B9DB /* ModelStatusCard.swift in Sources */,
+				FCD03E6E2FC337C900F3B9DB /* UploadedFile.swift in Sources */,
+				FCD03E6F2FC337C900F3B9DB /* AnniversaryService.swift in Sources */,
+				FCD03E702FC337C900F3B9DB /* NTPClient.swift in Sources */,
+				FCD03E712FC337C900F3B9DB /* AssistantConfig.swift in Sources */,
+				FCD03E722FC337C900F3B9DB /* AnniversaryManagementView.swift in Sources */,
+				FCD03E732FC337C900F3B9DB /* HuggingFaceAuthService.swift in Sources */,
+				FCD03E742FC337C900F3B9DB /* CodeHighlightView.swift in Sources */,
+				FCD03E752FC337C900F3B9DB /* ButtonAnimations.swift in Sources */,
+				FCD03E762FC337C900F3B9DB /* MainView.swift in Sources */,
+				FCD03E772FC337C900F3B9DB /* ProviderPicker.swift in Sources */,
+				FCD03E782FC337C900F3B9DB /* AssistantToolbar.swift in Sources */,
+				FCD03E792FC337C900F3B9DB /* PixelArtIcons.swift in Sources */,
+				FCD03E7A2FC337C900F3B9DB /* IconStyleSystem.swift in Sources */,
+				FCD03E7B2FC337C900F3B9DB /* ImageCropView.swift in Sources */,
+				FCD03E7C2FC337C900F3B9DB /* SettingsView.swift in Sources */,
+				FCD03E7D2FC337C900F3B9DB /* FontManager.swift in Sources */,
+				FCD03E7E2FC337C900F3B9DB /* AdaptiveLayoutManager.swift in Sources */,
+				FCD03E7F2FC337C900F3B9DB /* Conversation.swift in Sources */,
+				FCD03E802FC337C900F3B9DB /* ChangelogView.swift in Sources */,
+				FCD03E812FC337C900F3B9DB /* ModelManagementSection.swift in Sources */,
+				FCD03E822FC337C900F3B9DB /* CopyableMessageBubble.swift in Sources */,
+				FCD03E832FC337C900F3B9DB /* APISettingsService.swift in Sources */,
+			);
+		};
+		FC3FCE162CB69C52008D8C7B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		FCF267342E114015007230B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1EE4E21824F97E250097C32C /* Debug configuration for PBXProject "YumikoToys" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		1EE4E21924F97E250097C32C /* Release configuration for PBXProject "YumikoToys" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		1EE4E21B24F97E250097C32C /* Debug configuration for PBXNativeTarget "YumikoToys" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_SECURITY_KEYCHAIN_API = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = YumikoToys/Assets/YumikoToysDebug.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 19230919;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = YumikoToys/Assets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 4.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "YumikoToys/Assets/YumikoToys-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		1EE4E21C24F97E250097C32C /* Release configuration for PBXNativeTarget "YumikoToys" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_SECURITY_KEYCHAIN_API = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = YumikoToys/Assets/YumikoToys.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 19230919;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = YumikoToys/Assets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 4.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "YumikoToys/Assets/YumikoToys-Bridging-Header.h";
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		FC3FCE272CB69C53008D8C7B /* Debug configuration for PBXNativeTarget "YumikoToysHelper" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = YumikoToysHelper/YumikoToysHelper.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 Menglolita. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "YumikoToys.BunnyCC-Days.YumikoToysHelper";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FC3FCE282CB69C53008D8C7B /* Release configuration for PBXNativeTarget "YumikoToysHelper" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = YumikoToysHelper/YumikoToysHelper.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 Menglolita. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "YumikoToys.BunnyCC-Days.YumikoToysHelper";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		FCF2673C2E114015007230B1 /* Debug configuration for PBXNativeTarget "YumikoCLI" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FCF2673D2E114015007230B1 /* Release configuration for PBXNativeTarget "YumikoCLI" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1EE4E20524F97E240097C32C /* Build configuration list for PBXProject "YumikoToys" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1EE4E21824F97E250097C32C /* Debug configuration for PBXProject "YumikoToys" */,
+				1EE4E21924F97E250097C32C /* Release configuration for PBXProject "YumikoToys" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		1EE4E21A24F97E250097C32C /* Build configuration list for PBXNativeTarget "YumikoToys" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1EE4E21B24F97E250097C32C /* Debug configuration for PBXNativeTarget "YumikoToys" */,
+				1EE4E21C24F97E250097C32C /* Release configuration for PBXNativeTarget "YumikoToys" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		FC3FCE262CB69C53008D8C7B /* Build configuration list for PBXNativeTarget "YumikoToysHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC3FCE272CB69C53008D8C7B /* Debug configuration for PBXNativeTarget "YumikoToysHelper" */,
+				FC3FCE282CB69C53008D8C7B /* Release configuration for PBXNativeTarget "YumikoToysHelper" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		FCF2673E2E114015007230B1 /* Build configuration list for PBXNativeTarget "YumikoCLI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FCF2673C2E114015007230B1 /* Debug configuration for PBXNativeTarget "YumikoCLI" */,
+				FCF2673D2E114015007230B1 /* Release configuration for PBXNativeTarget "YumikoCLI" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1E5B4DE325FC24CA00092422 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.0;
+			};
+		};
+		FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/JohnSundell/Splash";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.16.0;
+			};
+		};
+		FC06647C2FC0916C00CABB99 /* XCRemoteSwiftPackageReference "Highlightr" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/raspu/Highlightr";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+		FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.31.3;
+			};
+		};
+		FCA5AF162FC0992D00E668DB /* XCRemoteSwiftPackageReference "CoreXLSX" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/CoreOffice/CoreXLSX";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.14.2;
+			};
+		};
+		FCB283B12E43D77A00FA3D4A /* XCRemoteSwiftPackageReference "MediaKeyTap" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nhurden/MediaKeyTap";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+		FCC24F1A2FBED23D00A64686 /* XCRemoteSwiftPackageReference "swift-huggingface" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-huggingface.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
+			};
+		};
+		FCEA9FE82FBE9E020037F6B8 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
+		FCF2673F2E1140A9007230B1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-argument-parser.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.1;
+			};
+		};
+		FCF35E7F2E3E56BD00793FBB /* XCRemoteSwiftPackageReference "swift-ntp" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-ntp.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1E5B4DE425FC24CA00092422 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1E5B4DE325FC24CA00092422 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */;
+			productName = LaunchAtLogin;
+		};
+		FC0664722FC0914300CABB99 /* Splash */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = Splash;
+		};
+		FC0664742FC0914300CABB99 /* SplashHTMLGen */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = SplashHTMLGen;
+		};
+		FC0664762FC0914300CABB99 /* SplashImageGen */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = SplashImageGen;
+		};
+		FC0664782FC0914300CABB99 /* SplashMarkdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = SplashMarkdown;
+		};
+		FC06647A2FC0914300CABB99 /* SplashTokenizer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = SplashTokenizer;
+		};
+		FC06647D2FC0916C00CABB99 /* Highlightr */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC06647C2FC0916C00CABB99 /* XCRemoteSwiftPackageReference "Highlightr" */;
+			productName = Highlightr;
+		};
+		FC5F1B1C2FBEB15D004B2F34 /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		FC5F1B1E2FBEB15D004B2F34 /* MLXFFT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFFT;
+		};
+		FC5F1B202FBEB15D004B2F34 /* MLXFast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFast;
+		};
+		FC5F1B222FBEB15D004B2F34 /* MLXLinalg */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXLinalg;
+		};
+		FC5F1B242FBEB15D004B2F34 /* MLXNN */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXNN;
+		};
+		FCA5AF172FC0992D00E668DB /* CoreXLSX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCA5AF162FC0992D00E668DB /* XCRemoteSwiftPackageReference "CoreXLSX" */;
+			productName = CoreXLSX;
+		};
+		FCB283B22E43D77A00FA3D4A /* MediaKeyTap */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCB283B12E43D77A00FA3D4A /* XCRemoteSwiftPackageReference "MediaKeyTap" */;
+			productName = MediaKeyTap;
+		};
+		FCC24F1B2FBED23D00A64686 /* HuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCC24F1A2FBED23D00A64686 /* XCRemoteSwiftPackageReference "swift-huggingface" */;
+			productName = HuggingFace;
+		};
+		FCEA9FE92FBE9E020037F6B8 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCEA9FE82FBE9E020037F6B8 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
+		};
+		FCF267432E114619007230B1 /* ArgumentParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCF2673F2E1140A9007230B1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
+			productName = ArgumentParser;
+		};
+		FCF35E802E3E56BD00793FBB /* NTPClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCF35E7F2E3E56BD00793FBB /* XCRemoteSwiftPackageReference "swift-ntp" */;
+			productName = NTPClient;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 1EE4E20224F97E240097C32C /* Project object */;
+}
