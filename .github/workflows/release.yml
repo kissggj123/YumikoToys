@@ -1,4 +1,4 @@
-name: 🚀 Build & Release macOS App
+name: ✍️ Sign & Release Pre-compiled macOS DMG
 
 on:
   push:
@@ -12,9 +12,9 @@ on:
         default: '4.3.0'
 
 jobs:
-  build-and-release:
-    name: Build & Release
-    runs-on: macos-26  # 使用 macOS 26 (Tahoe) 原生 Apple Silicon 运行环境
+  sign-and-release:
+    name: Sign & Release
+    runs-on: macos-26  # 使用 macOS 26 原生环境运行签名与 DMG 打包任务
     permissions:
       contents: write  # 显式授予写权限，以便能够创建 Release 并上传资源包
 
@@ -23,13 +23,7 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      # ── 2. 选择 Xcode 版本 ───────────────────────────────────────
-      - name: 🛠 Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '26.x'  # 自动选择最匹配的 Xcode 26.x 编译器，全面启用 macOS 26 原生 SDK
-
-      # ── 3. 读取版本号 ─────────────────────────────────────────────
+      # ── 2. 读取版本号 ─────────────────────────────────────────────
       - name: 📌 Get version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -40,122 +34,34 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
 
-      # ── 3.5. 解析并修补第三方依赖 ───────────────────────────────────
-      - name: 📦 Resolve and patch dependencies
+      # ── 3. 解压本地预编译包 ──────────────────────────────────────────
+      - name: 📂 Unzip local app
         run: |
-          echo "正在解析 Swift 包依赖..."
-          xcodebuild -resolvePackageDependencies \
-            -project YumikoToys.xcodeproj \
-            -scheme YumikoToys \
-            -derivedDataPath "$RUNNER_TEMP/DerivedData"
-
-          echo "正在定位并修复 SplashImageGen 的编译缺陷..."
-          TARGET_FILE=$(find "$RUNNER_TEMP/DerivedData" -name "CGImage+WriteToURL.swift" | head -1)
-          if [ -n "$TARGET_FILE" ]; then
-            echo "发现目标文件: $TARGET_FILE"
-            printf "import CoreGraphics\nimport Cocoa\n" > /tmp/patched.swift
-            cat "$TARGET_FILE" >> /tmp/patched.swift
-            mv /tmp/patched.swift "$TARGET_FILE"
-            echo "✅ 源码修补成功"
-          else
-            echo "⚠️ 未找到 CGImage+WriteToURL.swift，可能无需修补"
-          fi
-
-      # ── 3.7. 智能扫描并自动创建项目所有缺失的 Markdown 资源占位 ──────────────────
-      # 自动检索 project.pbxproj，提取所有被引用的 .md 文件并排重。如果在代码库中找不到，则自动在根目录与子目录创建空文件，
-      # 彻底解决由 SplashFix.md, SplashLocalFix.md, MAINTENANCE.md 等未提交文档引起的 CpResource 拷贝失败。
-      - name: 📝 Auto-detect and Touch Missing Markdown Resources
-        run: |
-          echo "🔍 正在扫描 Xcode 项目文件以搜寻所有引用的 .md 资源..."
-          PBXPROJ="YumikoToys.xcodeproj/project.pbxproj"
-          
-          if [ -f "$PBXPROJ" ]; then
-            mkdir -p YumikoToys
-            
-            # 使用正则匹配 project.pbxproj 中的所有 .md 资源文件名并进行唯一性排重
-            grep -oE "[a-zA-Z0-9_\.\-]+\.md" "$PBXPROJ" | sort -u | while read -r md_file; do
-              # 检测该资源文件是否已经在代码库或工作区中存在
-              found=$(find . -name "$md_file" 2>/dev/null | head -1)
-              if [ -z "$found" ]; then
-                echo "   👉 发现项目引用的缺失 Markdown 资源: $md_file，正在自动补齐占位符..."
-                touch "$md_file" 2>/dev/null || true
-                touch "YumikoToys/$md_file" 2>/dev/null || true
-              else
-                echo "   ✓ 资源已存在: $md_file"
-              fi
-            done
-            echo "✅ 所有缺失的 Markdown 资源占位符已成功补全"
-          else
-            echo "⚠️ 未找到 $PBXPROJ，跳过自动扫描"
-          fi
-
-      # ── 4. 构建 ───────────────────────────────────────────────────
-      - name: 🔨 Build (arm64, deployment target 14.0)
-        run: |
-          xcodebuild \
-            -project YumikoToys.xcodeproj \
-            -scheme YumikoToys \
-            -configuration Release \
-            -destination 'platform=macOS,arch=arm64' \
-            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
-            MACOSX_DEPLOYMENT_TARGET=14.0 \
-            ARCHS=arm64 \
-            ONLY_ACTIVE_ARCH=NO \
-            EXCLUDED_ARCHS='x86_64 i386' \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=YES \
-            CODE_SIGNING_ALLOWED=YES \
-            DEVELOPMENT_TEAM="" \
-            DEPLOYMENT_LOCATION=NO \
-            SKIP_INSTALL=NO \
-            build 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -80
-
-      # ── 5. 上传构建日志（仅失败时）────────────────────────────────
-      - name: 📋 Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: ${{ runner.temp }}/build.log
-          retention-days: 3
-
-      # ── 6. 定位 .app 并彻底清除扩展属性 ────────────────────────────
-      - name: 🔍 Locate .app and clean attributes
-        run: |
-          echo "🔍 开始在临时编译目录与工作区全局扫描所有的 YumikoToys.app..."
-          REAL_APP_PATH=""
-          max_count=0
-          
-          # 递归扫描可能的所有输出路径，统计其中真正包含的物理文件数量
-          for search_dir in "$RUNNER_TEMP" "$GITHUB_WORKSPACE"; do
-            while IFS= read -r -d '' dir; do
-              file_count=$(find "$dir" -type f 2>/dev/null | wc -l)
-              echo "📍 发现 App 路径: $dir (内部包含 $file_count 个物理文件)"
-              if [ "$file_count" -gt "$max_count" ]; then
-                max_count=$file_count
-                REAL_APP_PATH="$dir"
-              fi
-            done < <(find "$search_dir" -name "YumikoToys.app" -type d -print0 2>/dev/null)
-          done
-          
-          # 异常处理：如果全局找出的 App 包文件数量都为 0，则说明构建完全未生成产物，打印目录结构辅助排查
-          if [ -z "$REAL_APP_PATH" ] || [ "$max_count" -eq 0 ]; then
-            echo "❌ 全局未找到包含任何有效物理文件的 YumikoToys.app 目录！"
-            echo "📁 正在打印 DerivedData/Build/Products 目录树以供排查原因："
-            find "$RUNNER_TEMP/DerivedData/Build/Products" -maxdepth 5 2>/dev/null || true
-            echo "--- 构建日志末尾 ---"
-            tail -100 "$RUNNER_TEMP/build.log" || true
+          if [ ! -f "YumikoToys_unsigned.zip" ]; then
+            echo "❌ 未在仓库根目录下找到 YumikoToys_unsigned.zip 文件！"
+            echo "请确保您已在本地使用 ditto 命令打包并推送到 Git 仓库根目录。"
             exit 1
           fi
+          mkdir -p /tmp/sign_workspace
+          unzip -q "YumikoToys_unsigned.zip" -d /tmp/sign_workspace
           
-          echo "✅ 成功锁定文件最齐全的真实 App 包: $REAL_APP_PATH (文件总数: $max_count)"
-          echo "APP_PATH=$REAL_APP_PATH" >> $GITHUB_ENV
+          # 定位解压出来的 .app 路径
+          APP_PATH=$(find "/tmp/sign_workspace" -name "YumikoToys.app" -maxdepth 2 -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ 压缩包内未找到有效的 YumikoToys.app"
+            exit 1
+          fi
+          echo "✅ 成功解压并定位 App: $APP_PATH"
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
 
-          # ⚠️ 极其关键：必须在运行任何 codesign 之前清除所有的扩展属性 (Extended Attributes)
-          echo "🧹 正在清除 App 包的扩展属性与隔离属性..."
-          xattr -cr "$REAL_APP_PATH" || true
+      # ── 4. 彻底清除扩展属性 ─────────────────────────────────────────
+      # 在运行 codesign 之前剥离所有干扰签名的 xattr 属性（如 Finder 标记、隔离属性等）
+      - name: 🧹 Clean attributes
+        run: |
+          echo "🧹 正在清除 App 及其子文件的扩展属性与隔离属性..."
+          xattr -cr "$APP_PATH" || true
 
-      # ── 7. Ad-hoc 自签名 ──────────────────────────────────────────
+      # ── 5. Ad-hoc 自签名 ──────────────────────────────────────────
       - name: ✍️ Ad-hoc codesign
         run: |
           echo "1. 开始对内嵌的 Frameworks 签名..."
@@ -168,17 +74,14 @@ jobs:
 
           echo "2. 开始对内嵌的 dylib/so/可执行文件签名..."
           find "$APP_PATH/Contents" -type f \( -name "*.dylib" -o -name "*.so" -o -perm +111 \) -print0 2>/dev/null | while IFS= read -r -d '' f; do
-            echo "   正在签名二进制/库文件: $f"
             codesign --force --sign - "$f" 2>/dev/null || true
           done
 
           echo "3. 开始对标准的 App 整体进行深度签名..."
-          # 如果签名失败，将打印详细的错误信息，并递归显示整个包目录树结构以供直接诊断
+          # 启用 hardened runtime 并进行深度重签名
           if ! codesign --force --deep --sign - --options runtime "$APP_PATH" 2>/tmp/codesign_err.txt; then
             echo "❌ 签名失败！codesign 报错信息如下："
             cat /tmp/codesign_err.txt
-            echo "📁 诊断信息：正在递归展示该 .app 内部的结构与文件，以便排查污染源："
-            ls -R "$APP_PATH" || true
             exit 1
           fi
 
@@ -187,17 +90,36 @@ jobs:
             && echo "✅ Ad-hoc 签名成功" \
             || echo "⚠️  签名验证警告（ad-hoc 预期行为）"
 
-      # ── 8. 打包 .zip ──────────────────────────────────────────────
-      - name: 🗜 Create ZIP
+      # ── 6. 打包输出标准的磁盘映像 (.dmg) ──────────────────────────────
+      - name: 💿 Create DMG
         run: |
-          ZIP_NAME="YumikoToys-${{ env.VERSION }}-macOS-arm64.zip"
-          cd "$(dirname "$APP_PATH")"
-          ditto -c -k --keepParent "YumikoToys.app" "$RUNNER_TEMP/$ZIP_NAME"
-          echo "ZIP_PATH=$RUNNER_TEMP/$ZIP_NAME" >> $GITHUB_ENV
-          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
-          echo "📦 ZIP size: $(du -sh "$RUNNER_TEMP/$ZIP_NAME" | cut -f1)"
+          DMG_NAME="YumikoToys-${{ env.VERSION }}-macOS-arm64.dmg"
+          DMG_PATH="$RUNNER_TEMP/$DMG_NAME"
+          
+          echo "正在准备 DMG 临时打包目录结构..."
+          DMG_STAGE="/tmp/dmg_stage"
+          rm -rf "$DMG_STAGE"
+          mkdir -p "$DMG_STAGE"
+          
+          # 使用 ditto 拷贝 App 保证权限和签名不丢失
+          ditto "$APP_PATH" "$DMG_STAGE/YumikoToys.app"
+          
+          # 在 DMG 根目录下创建指向系统的 /Applications 快捷方式，实现拖拽安装
+          ln -s /Applications "$DMG_STAGE/Applications"
+          
+          echo "正在使用 hdiutil 生成只读压缩 DMG..."
+          hdiutil create \
+            -volname "YumikoToys-${{ env.VERSION }}" \
+            -srcfolder "$DMG_STAGE" \
+            -ov \
+            -format UDZO \
+            "$DMG_PATH"
+          
+          echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
+          echo "DMG_NAME=$DMG_NAME" >> $GITHUB_ENV
+          echo "📦 DMG 大小: $(du -sh "$DMG_PATH" | cut -f1)"
 
-      # ── 9. 生成 Release Notes ────────────────────────────────────
+      # ── 7. 生成 Release Notes ────────────────────────────────────
       - name: 📝 Generate release notes
         run: |
           cat > /tmp/release_notes.md << 'EOF'
@@ -205,11 +127,11 @@ jobs:
 
           > *Belgian Hare × Institute Benjamenta*
 
-          ### 🧠 本地推理引擎（新增）
+          ### 🧠 本地推理引擎
           - **MLX 本地推理引擎**：基于 Apple MLX 框架，支持 BGE-M3 嵌入模型（12层 Transformer）与 DistilBERT 情感分析模型（6层），所有计算在 Apple Silicon GPU 上完成，**零网络依赖**。
           - **代理感知下载器**：自动检测 PAC/HTTP/SOCKS 代理，支持断点续传与安全 Cookie 认证，全面兼容国内极速镜像通道。
 
-          ### 🩺 多会话稳定性（重隔）
+          ### 🩺 多会话稳定性（重构）
           - **多会话删除防复活隔离**：删除会话时自动重置活跃会话 ID，彻底杜绝已删对话在磁盘"复活"的 Bug。
           - **人设生成时钟对齐**：延迟到用户切换会话时按需执行，消除启动时序卡顿缺陷。
           - **沙盒物理会话扫描**：后台学习引擎直接检索物理存储目录，修复分析计数器不增长的问题。
@@ -220,23 +142,13 @@ jobs:
           - **删除二次确认微动画**：点击删除后图标微弹簧变形为垃圾桶，防止误触。
           - **防休眠嵌套手势阻断**：从物理层阻断多手势穿透，根治 macOS 双击冲突与连击卡顿。
 
-          ### 🔥 性能调优
-          - 单条推理去冗余分词填充，短文本向量生成速度提升 **5–50×**。
-          - 编辑距离矩阵物理优化，内存占用减少 **99%**。
-          - 记忆数据元组映射重构，极大减少运行时内存分配开销。
-          - 修复下载进度条卡在 0% 的渲染故障。
-
-          ### 🌱 AI 心智核心
-          - 深度注入人本主义与 CBT 情感共情机制，大模型提供极具温度的情感接纳与心境抱持。
-          - 自我决定（SDT）心理需求检测：新增"压力源"、"应对方式"、"胜任感"等特征检测组。
-
           ---
 
           ## 📥 安装说明
 
-          1. 下载 `YumikoToys-${{ env.VERSION }}-macOS-arm64.zip` 并解压
-          2. 将 `YumikoToys.app` 拖入「应用程序」文件夹
-          3. **首次运行**：右键点击 app → 选择「打开」→ 在弹窗中点击「打开」
+          1. 下载 `YumikoToys-${{ env.VERSION }}-macOS-arm64.dmg` 并双击打开
+          2. 将 **YumikoToys** 图标拖入右侧的 **Applications (应用程序)** 快捷文件夹中完成安装
+          3. **首次运行**：在「应用程序」中找到 YumikoToys → 右键点击图标 → 选择「打开」→ 在弹窗中点击「打开」
              > 本版本使用 ad-hoc 自签名，非 Apple 官方证书，仅需首次手动确认一次。
           4. 之后双击即可正常启动 ✅
 
@@ -255,7 +167,7 @@ jobs:
           | 本地模型推理 | M1 / M2 / M3 / M4 推荐 |
           EOF
 
-      # ── 10. 发布 Release ──────────────────────────────────────────
+      # ── 8. 发布 Release ──────────────────────────────────────────
       - name: 🎉 Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -264,6 +176,6 @@ jobs:
           body_path: /tmp/release_notes.md
           draft: false
           prerelease: false
-          files: ${{ env.ZIP_PATH }}
+          files: ${{ env.DMG_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
