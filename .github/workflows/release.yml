@@ -61,21 +61,35 @@ jobs:
             echo "⚠️ 未找到 CGImage+WriteToURL.swift，可能无需修补"
           fi
 
-      # ── 3.7. 自动补齐项目缺失的本地资源 ──────────────────────────────
-      # ⚠️ 针对本地未提交到 Git 但项目内强依赖的 "SplashLocalFix.md" 和 "SplashFix.md" 进行空文件占位创建
-      # 确保 Xcode 的 CpResource 步骤不会因“文件无法打开”而导致 Build Failed。
-      - name: 📝 Create Missing Resource Dummies
+      # ── 3.7. 智能扫描并自动创建项目所有缺失的 Markdown 资源占位 ──────────────────
+      # 自动检索 project.pbxproj，提取所有被引用的 .md 文件并排重。如果在代码库中找不到，则自动在根目录与子目录创建空文件，
+      # 彻底解决由 SplashFix.md, SplashLocalFix.md, MAINTENANCE.md 等未提交文档引起的 CpResource 拷贝失败。
+      - name: 📝 Auto-detect and Touch Missing Markdown Resources
         run: |
-          echo "正在检测并创建缺少的项目资源占位文件..."
-          mkdir -p YumikoToys
-          touch YumikoToys/SplashLocalFix.md
-          touch YumikoToys/SplashFix.md
-          echo "✅ 占位文件已创建"
+          echo "🔍 正在扫描 Xcode 项目文件以搜寻所有引用的 .md 资源..."
+          PBXPROJ="YumikoToys.xcodeproj/project.pbxproj"
+          
+          if [ -f "$PBXPROJ" ]; then
+            mkdir -p YumikoToys
+            
+            # 使用正则匹配 project.pbxproj 中的所有 .md 资源文件名并进行唯一性排重
+            grep -oE "[a-zA-Z0-9_\.\-]+\.md" "$PBXPROJ" | sort -u | while read -r md_file; do
+              # 检测该资源文件是否已经在代码库或工作区中存在
+              found=$(find . -name "$md_file" 2>/dev/null | head -1)
+              if [ -z "$found" ]; then
+                echo "   👉 发现项目引用的缺失 Markdown 资源: $md_file，正在自动补齐占位符..."
+                touch "$md_file" 2>/dev/null || true
+                touch "YumikoToys/$md_file" 2>/dev/null || true
+              else
+                echo "   ✓ 资源已存在: $md_file"
+              fi
+            done
+            echo "✅ 所有缺失的 Markdown 资源占位符已成功补全"
+          else
+            echo "⚠️ 未找到 $PBXPROJ，跳过自动扫描"
+          fi
 
       # ── 4. 构建 ───────────────────────────────────────────────────
-      # 说明：
-      #   • 显式注入 DEPLOYMENT_LOCATION=NO 与 SKIP_INSTALL=NO
-      #     防止项目本身配置了安装重定向，从而确保所有资源和主二进制都被完整写入编译产品目录。
       - name: 🔨 Build (arm64, deployment target 14.0)
         run: |
           xcodebuild \
@@ -154,6 +168,7 @@ jobs:
 
           echo "2. 开始对内嵌的 dylib/so/可执行文件签名..."
           find "$APP_PATH/Contents" -type f \( -name "*.dylib" -o -name "*.so" -o -perm +111 \) -print0 2>/dev/null | while IFS= read -r -d '' f; do
+            echo "   正在签名二进制/库文件: $f"
             codesign --force --sign - "$f" 2>/dev/null || true
           done
 
