@@ -58,7 +58,7 @@
 ### 克隆项目
 
 ```bash
-git clone https://github.com/your-username/YumikoToys.git
+git clone https://github.com/kissggj123/YumikoToys.git
 cd YumikoToys
 ```
 
