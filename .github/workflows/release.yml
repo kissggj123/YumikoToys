@@ -181,10 +181,26 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_NAME }}
-          name: "YumikoToys ${{ env.TAG_NAME }} — 比利时野兔·本雅明塔学院"
+          name: "${{ env.TAG_NAME }} — 比利时野兔·本雅明塔学院"
           body_path: /tmp/release_notes.md
           draft: false
           prerelease: false
           files: ${{ env.DMG_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 9. 清理仓库内的未签名包 ──────────────────────────────────
+      # Release 发布成功后立即删除 zip，避免大文件长期驻留在 git 历史中
+      - name: 🗑 Remove unsigned zip from repo
+        if: success()
+        run: |
+          if [ -f "YumikoToys_unsigned.zip" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git rm YumikoToys_unsigned.zip
+            git commit -m "chore: remove unsigned zip after release ${{ env.TAG_NAME }} [skip ci]"
+            git push origin HEAD:main
+            echo "✅ 已自动清除 YumikoToys_unsigned.zip"
+          else
+            echo "ℹ️  仓库中不存在 zip 文件，跳过清理"
+          fi
