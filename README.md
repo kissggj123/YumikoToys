@@ -226,9 +226,3 @@ xcodebuild test -scheme YumikoToys -destination 'platform=macOS'
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
-
----
-
-<p align="center">
-  Made with ❤️ by YumikoToys Team
-</p>
