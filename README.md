@@ -189,18 +189,6 @@ xcodebuild test -scheme YumikoToys -destination 'platform=macOS'
 - 使用 `Logger` 进行日志记录
 - UI 更新必须在主线程 (`@MainActor`)
 
----
-
-## 🤝 贡献指南
-
-欢迎贡献代码！请遵循以下步骤：
-
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'feat: add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
-
 ### Commit 规范
 
 使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
@@ -218,14 +206,6 @@ xcodebuild test -scheme YumikoToys -destination 'platform=macOS'
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
-
----
-
-## 🙏 致谢
-
-- [SwiftUI](https://developer.apple.com/xcode/swiftui/) - Apple 现代化 UI 框架
-- [GLM](https://open.bigmodel.cn/) - 智谱 AI 大语言模型
-- [Tavily](https://tavily.com/) - AI 搜索 API
 
 ---
 
