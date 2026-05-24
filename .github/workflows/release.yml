@@ -14,7 +14,7 @@ on:
 jobs:
   build-and-release:
     name: Build & Release
-    runs-on: macos-15
+    runs-on: macos-26  # 升级至官方原生 macOS 26 (Tahoe) Arm64 运行环境
     permissions:
       contents: write  # 显式授予写权限，以便能够创建 Release 并上传资源包
 
@@ -27,7 +27,7 @@ jobs:
       - name: 🛠 Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.3'
+          xcode-version: '26.x'  # 自动选择最匹配的 Xcode 26.x 编译器，全面启用 macOS 26 原生 SDK
 
       # ── 3. 读取版本号 ─────────────────────────────────────────────
       - name: 📌 Get version
@@ -63,8 +63,8 @@ jobs:
 
       # ── 4. 构建 ───────────────────────────────────────────────────
       # 说明：
-      #   • 将 CODE_SIGN_IDENTITY 改为 "-" 启用编译期 Ad-hoc 自签名
-      #   • 启用 CODE_SIGNING_ALLOWED=YES，让 Xcode 用系统标准管道生成合规的 Bundle
+      #   • MACOSX_DEPLOYMENT_TARGET=14.0 允许您利用 macOS 26 SDK 的编译优化，
+      #     同时保留对 macOS 14 (Sonoma) 和 macOS 15 (Sequoia) 的向下兼容。
       - name: 🔨 Build (arm64, deployment target 14.0)
         run: |
           xcodebuild \
@@ -81,6 +81,8 @@ jobs:
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
             DEVELOPMENT_TEAM="" \
+            DEPLOYMENT_LOCATION=NO \
+            SKIP_INSTALL=NO \
             build 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -80
 
       # ── 5. 上传构建日志（仅失败时）────────────────────────────────
@@ -95,32 +97,38 @@ jobs:
       # ── 6. 定位 .app 并彻底清除扩展属性 ────────────────────────────
       - name: 🔍 Locate .app and clean attributes
         run: |
-          # 优先在标准的 DerivedData 下的 Release 目录查找 clean 的 App Bundle
-          APP_PATH=$(find "$RUNNER_TEMP/DerivedData/Build/Products/Release" -maxdepth 3 -name "YumikoToys.app" 2>/dev/null | head -1)
+          echo "🔍 开始在临时编译目录与工作区全局扫描所有的 YumikoToys.app..."
+          REAL_APP_PATH=""
+          max_count=0
           
-          # 备用：在整个 DerivedData 目录里深层查找（排除 SourcePackages 缓存目录）
-          if [ -z "$APP_PATH" ]; then
-            APP_PATH=$(find "$RUNNER_TEMP/DerivedData" \
-              -maxdepth 10 \
-              -name "YumikoToys.app" \
-              -not -path "*/SourcePackages/*" \
-              -not -path "*/Index.noindex/*" 2>/dev/null | head -1)
-          fi
+          # 递归扫描可能的所有输出路径，统计其中真正包含的物理文件数量
+          for search_dir in "$RUNNER_TEMP" "$GITHUB_WORKSPACE"; do
+            while IFS= read -r -d '' dir; do
+              file_count=$(find "$dir" -type f 2>/dev/null | wc -l)
+              echo "📍 发现 App 路径: $dir (内部包含 $file_count 个物理文件)"
+              if [ "$file_count" -gt "$max_count" ]; then
+                max_count=$file_count
+                REAL_APP_PATH="$dir"
+              fi
+            done < <(find "$search_dir" -name "YumikoToys.app" -type d -print0 2>/dev/null)
+          done
           
-          if [ -z "$APP_PATH" ]; then
-            echo "❌ 未能在 DerivedData 中成功定位到标准的 YumikoToys.app"
+          # 异常处理：如果全局找出的 App 包文件数量都为 0，则说明构建完全未生成产物，打印目录结构辅助排查
+          if [ -z "$REAL_APP_PATH" ] || [ "$max_count" -eq 0 ]; then
+            echo "❌ 全局未找到包含任何有效物理文件的 YumikoToys.app 目录！"
+            echo "📁 正在打印 DerivedData/Build/Products 目录树以供排查原因："
+            find "$RUNNER_TEMP/DerivedData/Build/Products" -maxdepth 5 2>/dev/null || true
             echo "--- 构建日志末尾 ---"
             tail -100 "$RUNNER_TEMP/build.log" || true
             exit 1
           fi
-          echo "✅ 定位成功，标准的 App 目录位于: $APP_PATH"
-          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+          
+          echo "✅ 成功锁定文件最齐全的真实 App 包: $REAL_APP_PATH (文件总数: $max_count)"
+          echo "APP_PATH=$REAL_APP_PATH" >> $GITHUB_ENV
 
-          # ⚠️ 极其关键的修复：必须在运行任何 codesign 之前清除所有的扩展属性 (Extended Attributes)
-          # 如果 App 目录或子文件含有任何来自 Git、本地缓存的 xattr (如 com.apple.FinderInfo) 
-          # codesign 会直接抛出 "bundle format unrecognized, invalid, or unsuitable" 错误。
+          # ⚠️ 极其关键：必须在运行任何 codesign 之前清除所有的扩展属性 (Extended Attributes)
           echo "🧹 正在清除 App 包的扩展属性与隔离属性..."
-          xattr -cr "$APP_PATH" || true
+          xattr -cr "$REAL_APP_PATH" || true
 
       # ── 7. Ad-hoc 自签名 ──────────────────────────────────────────
       - name: ✍️ Ad-hoc codesign
@@ -182,7 +190,7 @@ jobs:
           - **增量分析时序落盘**：时空游标成功向前推进即强力写入磁盘，解决分析统计值被内存丢弃的 Bug。
 
           ### 🏷️ 交互体验（优化）
-          - **右键菜单重命名 / 删除**：侧边栏挂载 SwiftUI 原生右键菜单，支持重命名和直接删除。
+          - **右键菜单重命名 / 删除**：侧边栏挂载 SwiftUI 原生右键菜单，支持重命名 and 直接删除。
           - **删除二次确认微动画**：点击删除后图标微弹簧变形为垃圾桶，防止误触。
           - **防休眠嵌套手势阻断**：从物理层阻断多手势穿透，根治 macOS 双击冲突与连击卡顿。
 
