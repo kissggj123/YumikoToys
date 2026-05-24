@@ -24,7 +24,6 @@ jobs:
         uses: actions/checkout@v4
 
       # ── 2. 选择 Xcode 版本 ───────────────────────────────────────
-      # 使用标准 Action 切换 Xcode，比手动 sudo xcode-select 更加稳定
       - name: 🛠 Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -40,6 +39,28 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
+
+      # ── 3.5. 解析并修补第三方依赖 ───────────────────────────────────
+      # 本步骤提前拉取 Swift 依赖包，并修复 Splash 库在 Swift 6 下缺少显式导入的编译缺陷
+      - name: 📦 Resolve and patch dependencies
+        run: |
+          echo "正在解析 Swift 包依赖..."
+          xcodebuild -resolvePackageDependencies \
+            -project YumikoToys.xcodeproj \
+            -scheme YumikoToys \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData"
+
+          echo "正在定位并修复 SplashImageGen 的编译缺陷..."
+          TARGET_FILE=$(find "$RUNNER_TEMP/DerivedData" -name "CGImage+WriteToURL.swift" | head -1)
+          if [ -n "$TARGET_FILE" ]; then
+            echo "发现目标文件: $TARGET_FILE"
+            printf "import CoreGraphics\nimport Cocoa\n" > /tmp/patched.swift
+            cat "$TARGET_FILE" >> /tmp/patched.swift
+            mv /tmp/patched.swift "$TARGET_FILE"
+            echo "✅ 源码修补成功"
+          else
+            echo "⚠️ 未找到 CGImage+WriteToURL.swift，可能无需修补或路径有变"
+          fi
 
       # ── 4. 构建 ───────────────────────────────────────────────────
       - name: 🔨 Build (arm64, deployment target 14.0)
@@ -77,9 +98,7 @@ jobs:
       - name: 🔍 Locate .app
         run: |
           BUILD_OUT="$RUNNER_TEMP/build_output"
-          # 先在指定输出目录找（调整 -maxdepth 的位置以兼容 macOS BSD find 语法）
           APP_PATH=$(find "$BUILD_OUT" -maxdepth 3 -name "YumikoToys.app" 2>/dev/null | head -1)
-          # 备用：在 DerivedData 里找（排除 SourcePackages）
           if [ -z "$APP_PATH" ]; then
             APP_PATH=$(find "$RUNNER_TEMP/DerivedData" \
               -maxdepth 10 \
@@ -100,22 +119,18 @@ jobs:
       # ── 7. Ad-hoc 自签名 ──────────────────────────────────────────
       - name: ✍️ Ad-hoc codesign
         run: |
-          # 1. 优先对所有内嵌的 .framework 框架目录进行签名
           find "$APP_PATH/Contents/Frameworks" -maxdepth 3 -name "*.framework" -type d -print0 2>/dev/null | while IFS= read -r -d '' fw; do
             codesign --force --sign - "$fw" 2>/dev/null || true
           done
 
-          # 2. 对其他独立动态库或可执行文件进行签名（使用安全循环并兼容 macOS 权限匹配语法）
           find "$APP_PATH/Contents" -type f \( -name "*.dylib" -o -name "*.so" -o -perm +111 \) -print0 2>/dev/null | while IFS= read -r -d '' f; do
             codesign --force --sign - "$f" 2>/dev/null || true
           done
 
-          # 3. 对整个 .app 整体进行深度签名
           codesign --force --deep --sign - \
             --options runtime \
             "$APP_PATH"
 
-          # 4. 验证签名
           codesign --verify --deep --strict "$APP_PATH" \
             && echo "✅ Ad-hoc 签名成功" \
             || echo "⚠️  签名验证警告（ad-hoc 预期行为）"
