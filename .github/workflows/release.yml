@@ -35,16 +35,21 @@ jobs:
           echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
 
       # ── 3. 解压本地预编译包 ──────────────────────────────────────────
-      - name: 📂 Unzip local app
+      # 使用 ditto -xk 而非 unzip：ditto 会自动剥离 macOS AppleDouble
+      # 元数据文件（._* / __MACOSX），避免 codesign 报 "unsealed contents" 错误
+      - name: 📂 Extract app (ditto)
         run: |
           if [ ! -f "YumikoToys_unsigned.zip" ]; then
             echo "❌ 未在仓库根目录下找到 YumikoToys_unsigned.zip 文件！"
-            echo "请确保您已在本地使用 ditto 命令打包并推送到 Git 仓库根目录。"
             exit 1
           fi
           mkdir -p /tmp/sign_workspace
-          unzip -q "YumikoToys_unsigned.zip" -d /tmp/sign_workspace
-          
+          ditto -xk "YumikoToys_unsigned.zip" /tmp/sign_workspace
+
+          # 彻底清除残留的 AppleDouble 文件（._* 和 __MACOSX）
+          find /tmp/sign_workspace -name '._*' -delete
+          find /tmp/sign_workspace -name '__MACOSX' -type d -exec rm -rf {} + 2>/dev/null || true
+
           # 定位解压出来的 .app 路径
           APP_PATH=$(find "/tmp/sign_workspace" -name "YumikoToys.app" -maxdepth 2 -type d | head -1)
           if [ -z "$APP_PATH" ]; then
@@ -54,12 +59,16 @@ jobs:
           echo "✅ 成功解压并定位 App: $APP_PATH"
           echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
 
-      # ── 4. 彻底清除扩展属性 ─────────────────────────────────────────
-      # 在运行 codesign 之前剥离所有干扰签名的 xattr 属性（如 Finder 标记、隔离属性等）
-      - name: 🧹 Clean attributes
+      # ── 4. 清除扩展属性 ──────────────────────────────────────────────
+      # 剥离所有干扰签名的 xattr（Finder 标记、隔离属性等）
+      # 同时二次确认没有 ._ 文件残留在 bundle 内
+      - name: 🧹 Clean xattrs & hidden files
         run: |
-          echo "🧹 正在清除 App 及其子文件的扩展属性与隔离属性..."
+          echo "🧹 清除扩展属性..."
           xattr -cr "$APP_PATH" || true
+          echo "🧹 二次清理 ._ 残留文件..."
+          find "$APP_PATH" -name '._*' -delete
+          echo "✅ 清理完成"
 
       # ── 5. Ad-hoc 自签名 ──────────────────────────────────────────
       - name: ✍️ Ad-hoc codesign
