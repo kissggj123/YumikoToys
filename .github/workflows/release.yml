@@ -37,38 +37,50 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
 
-      # ── 4. 构建（禁用 Xcode 自动签名）────────────────────────────
-      - name: 🔨 Build (disable auto-signing)
+      # ── 4. 构建（禁用 Xcode 自动签名，仅 arm64）────────────────────
+      - name: 🔨 Build arm64 (disable auto-signing)
         run: |
+          # macos-15 runner 是 Apple Silicon，只需 arm64，避免 x86_64 依赖包编译失败
           xcodebuild \
             -project YumikoToys.xcodeproj \
             -scheme YumikoToys \
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -archivePath "$RUNNER_TEMP/YumikoToys.xcarchive" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            EXCLUDED_ARCHS='x86_64 i386' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
-            archive 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -50
-          # 检查 archive 是否生成成功
-          ls "$RUNNER_TEMP/YumikoToys.xcarchive/Products/Applications/" || \
-          ls "$RUNNER_TEMP/YumikoToys.xcarchive/Products/"
+            archive 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -100
 
-      # ── 5. 定位 .app ──────────────────────────────────────────────
+      # ── 5. 上传构建日志（仅失败时）────────────────────────────────
+      - name: 📋 Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ${{ runner.temp }}/build.log
+          retention-days: 3
+
+      # ── 6. 定位 .app ──────────────────────────────────────────────
       - name: 🔍 Locate .app
         run: |
           APP_PATH=$(find "$RUNNER_TEMP/YumikoToys.xcarchive" \
             -name "YumikoToys.app" -maxdepth 6 | head -1)
           if [ -z "$APP_PATH" ]; then
             echo "❌ 未找到 .app，打印 archive 结构："
-            find "$RUNNER_TEMP/YumikoToys.xcarchive" -maxdepth 5
+            find "$RUNNER_TEMP/YumikoToys.xcarchive" -maxdepth 5 || true
+            echo "--- 构建日志末尾 ---"
+            tail -80 "$RUNNER_TEMP/build.log" || true
             exit 1
           fi
           echo "✅ App found: $APP_PATH"
           echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
 
-      # ── 6. Ad-hoc 自签名（让 Gatekeeper 可以放行）────────────────
+      # ── 7. Ad-hoc 自签名（让 Gatekeeper 可以放行）────────────────
       - name: ✍️ Ad-hoc codesign
         run: |
           # 对所有可执行二进制和框架递归自签名
@@ -85,12 +97,12 @@ jobs:
             echo "✅ Ad-hoc codesign 成功" || \
             echo "⚠️  签名验证警告（ad-hoc 签名预期行为，用户仍可运行）"
 
-      # ── 7. 移除隔离属性（预处理）─────────────────────────────────
+      # ── 8. 移除隔离属性（预处理）─────────────────────────────────
       - name: 🧹 Remove quarantine xattrs
         run: |
           xattr -cr "$APP_PATH" || true
 
-      # ── 8. 打包成 .zip ────────────────────────────────────────────
+      # ── 9. 打包成 .zip ────────────────────────────────────────────
       - name: 🗜 Create ZIP
         run: |
           ZIP_NAME="YumikoToys-${{ env.VERSION }}-macOS.zip"
@@ -100,7 +112,7 @@ jobs:
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
           echo "📦 ZIP size: $(du -sh $RUNNER_TEMP/$ZIP_NAME | cut -f1)"
 
-      # ── 9. 生成更新日志 ───────────────────────────────────────────
+      # ── 10. 生成更新日志 ──────────────────────────────────────────
       - name: 📝 Generate release notes
         run: |
           cat > /tmp/release_notes.md << 'EOF'
@@ -155,7 +167,7 @@ jobs:
           - Apple Silicon（M1 / M2 / M3 / M4）推荐用于本地模型推理
           EOF
 
-      # ── 10. 发布 Release ──────────────────────────────────────────
+      # ── 11. 发布 Release ──────────────────────────────────────────
       - name: 🎉 Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
