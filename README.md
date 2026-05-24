@@ -45,6 +45,21 @@
 
 ---
 
+## 📸 截图展示
+
+<p align="center">
+  <img src="docs/screenshots/statusbar.png" alt="状态栏弹窗" width="260">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/main.png" alt="主界面" width="260">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/pet_card.png" alt="宠物名片" width="260">
+</p>
+<p align="center">
+  <em>状态栏弹窗 &nbsp;·&nbsp; 主界面 &nbsp;·&nbsp; 宠物名片</em>
+</p>
+
+---
+
 ## 📋 系统要求
 
 - macOS 14.0 (Sonoma) 或更高版本
