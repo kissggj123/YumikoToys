@@ -63,9 +63,8 @@ jobs:
 
       # ── 4. 构建 ───────────────────────────────────────────────────
       # 说明：
-      #   • 移除了原有的 CONFIGURATION_BUILD_DIR 自定义参数，
-      #     避免编译依赖包时混入垃圾文件导致 codesign 报 "bundle format unrecognized" 错误。
-      #     使构建产物生成于标准的 $RUNNER_TEMP/DerivedData 目录中。
+      #   • 将 CODE_SIGN_IDENTITY 改为 "-" 启用编译期 Ad-hoc 自签名
+      #   • 启用 CODE_SIGNING_ALLOWED=YES，让 Xcode 用系统标准管道生成合规的 Bundle
       - name: 🔨 Build (arm64, deployment target 14.0)
         run: |
           xcodebuild \
@@ -78,9 +77,9 @@ jobs:
             ARCHS=arm64 \
             ONLY_ACTIVE_ARCH=NO \
             EXCLUDED_ARCHS='x86_64 i386' \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES \
             DEVELOPMENT_TEAM="" \
             build 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -80
 
@@ -93,8 +92,8 @@ jobs:
           path: ${{ runner.temp }}/build.log
           retention-days: 3
 
-      # ── 6. 定位 .app ──────────────────────────────────────────────
-      - name: 🔍 Locate .app
+      # ── 6. 定位 .app 并彻底清除扩展属性 ────────────────────────────
+      - name: 🔍 Locate .app and clean attributes
         run: |
           # 优先在标准的 DerivedData 下的 Release 目录查找 clean 的 App Bundle
           APP_PATH=$(find "$RUNNER_TEMP/DerivedData/Build/Products/Release" -maxdepth 3 -name "YumikoToys.app" 2>/dev/null | head -1)
@@ -117,8 +116,13 @@ jobs:
           echo "✅ 定位成功，标准的 App 目录位于: $APP_PATH"
           echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
 
+          # ⚠️ 极其关键的修复：必须在运行任何 codesign 之前清除所有的扩展属性 (Extended Attributes)
+          # 如果 App 目录或子文件含有任何来自 Git、本地缓存的 xattr (如 com.apple.FinderInfo) 
+          # codesign 会直接抛出 "bundle format unrecognized, invalid, or unsuitable" 错误。
+          echo "🧹 正在清除 App 包的扩展属性与隔离属性..."
+          xattr -cr "$APP_PATH" || true
+
       # ── 7. Ad-hoc 自签名 ──────────────────────────────────────────
-      # 将被合并嵌套的循环重构为平铺逻辑，分别对 Frameworks、Dylibs 以及 App 自身独立签名
       - name: ✍️ Ad-hoc codesign
         run: |
           echo "1. 开始对内嵌的 Frameworks 签名..."
@@ -127,8 +131,6 @@ jobs:
               echo "   正在签名 Framework: $fw"
               codesign --force --sign - "$fw" 2>/dev/null || true
             done
-          else
-            echo "   未检测到内嵌 Frameworks 目录，跳过此步"
           fi
 
           echo "2. 开始对内嵌的 dylib/so/可执行文件签名..."
@@ -137,20 +139,21 @@ jobs:
           done
 
           echo "3. 开始对标准的 App 整体进行深度签名..."
-          codesign --force --deep --sign - \
-            --options runtime \
-            "$APP_PATH"
+          # 如果签名失败，将打印详细的错误信息，并递归显示整个包目录树结构以供直接诊断
+          if ! codesign --force --deep --sign - --options runtime "$APP_PATH" 2>/tmp/codesign_err.txt; then
+            echo "❌ 签名失败！codesign 报错信息如下："
+            cat /tmp/codesign_err.txt
+            echo "📁 诊断信息：正在递归展示该 .app 内部的结构与文件，以便排查污染源："
+            ls -R "$APP_PATH" || true
+            exit 1
+          fi
 
           echo "4. 验证签名完整性..."
           codesign --verify --deep --strict "$APP_PATH" \
             && echo "✅ Ad-hoc 签名成功" \
             || echo "⚠️  签名验证警告（ad-hoc 预期行为）"
 
-      # ── 8. 移除 quarantine 隔离属性 ───────────────────────────────
-      - name: 🧹 Remove quarantine xattrs
-        run: xattr -cr "$APP_PATH" || true
-
-      # ── 9. 打包 .zip ──────────────────────────────────────────────
+      # ── 8. 打包 .zip ──────────────────────────────────────────────
       - name: 🗜 Create ZIP
         run: |
           ZIP_NAME="YumikoToys-${{ env.VERSION }}-macOS-arm64.zip"
@@ -160,7 +163,7 @@ jobs:
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
           echo "📦 ZIP size: $(du -sh "$RUNNER_TEMP/$ZIP_NAME" | cut -f1)"
 
-      # ── 10. 生成 Release Notes ────────────────────────────────────
+      # ── 9. 生成 Release Notes ────────────────────────────────────
       - name: 📝 Generate release notes
         run: |
           cat > /tmp/release_notes.md << 'EOF'
@@ -218,7 +221,7 @@ jobs:
           | 本地模型推理 | M1 / M2 / M3 / M4 推荐 |
           EOF
 
-      # ── 11. 发布 Release ──────────────────────────────────────────
+      # ── 10. 发布 Release ──────────────────────────────────────────
       - name: 🎉 Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
