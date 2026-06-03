@@ -90,8 +90,7 @@ struct PromptTemplatePicker: View {
     private var categoryFilterView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(allCategories.indices, id: \.self) { index in
-                    let category = allCategories[index]
+                ForEach(Array(allCategories.enumerated()), id: \.offset) { _, category in
                     CategoryChip(
                         title: category?.displayName ?? "全部",
                         icon: category?.icon,

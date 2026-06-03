@@ -9,11 +9,10 @@ import Foundation
 
 /// 主界面组件类型
 enum ComponentType: String, CaseIterable, Identifiable, Codable, Sendable {
-    case header = "header"           // 应用头部
-    case daysDisplay = "daysDisplay" // 天数展示卡片
-    case milestones = "milestones"   // 里程碑列表
-    case modeButton = "modeButton"   // 模式切换按钮
-    case quickActions = "quickActions" // 快捷操作网格
+    case header = "header"                       // 应用头部
+    case daysDisplay = "daysDisplay"             // 天数展示卡片
+    case backgroundLearning = "backgroundLearning" // 后台学习日志卡片
+    case modelStatus = "modelStatus"             // 本地模型状态卡片
     
     var id: String { rawValue }
     
@@ -21,9 +20,8 @@ enum ComponentType: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .header: return "应用标题"
         case .daysDisplay: return "天数展示"
-        case .milestones: return "里程碑"
-        case .modeButton: return "模式切换"
-        case .quickActions: return "快捷操作"
+        case .backgroundLearning: return "心智建模与评估日志"
+        case .modelStatus: return "本地模型状态"
         }
     }
     
@@ -31,9 +29,8 @@ enum ComponentType: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .header: return "🐰"
         case .daysDisplay: return "📅"
-        case .milestones: return "🎯"
-        case .modeButton: return "🔄"
-        case .quickActions: return "⚡"
+        case .backgroundLearning: return "🧠"
+        case .modelStatus: return "🤖"
         }
     }
     
@@ -41,9 +38,8 @@ enum ComponentType: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .header: return "显示应用标题和图标"
         case .daysDisplay: return "显示已到来天数"
-        case .milestones: return "显示下一个里程碑"
-        case .modeButton: return "切换应用运行模式"
-        case .quickActions: return "快捷功能入口"
+        case .backgroundLearning: return "显示心智建模特征及后台分进度"
+        case .modelStatus: return "显示端侧SLM本地大模型运行状态"
         }
     }
     
@@ -52,7 +48,7 @@ enum ComponentType: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .header, .daysDisplay:
             return false  // 核心组件不可隐藏
-        case .milestones, .modeButton, .quickActions:
+        case .backgroundLearning, .modelStatus:
             return true
         }
     }
@@ -64,21 +60,35 @@ struct ComponentLayout: Codable, Identifiable, Sendable, Equatable {
     var isVisible: Bool
     var sortOrder: Int
     
+    // 自定义修饰属性
+    var customTitle: String?
+    var customFontSizeScale: Double?  // 字体大小缩放 (0.8 - 1.5)
+    var customColorHex: String?      // 自定义卡片背景/主题色 Hex
+    
     var id: String { type.rawValue }
     
-    init(type: ComponentType, isVisible: Bool = true, sortOrder: Int = 0) {
+    init(
+        type: ComponentType,
+        isVisible: Bool = true,
+        sortOrder: Int = 0,
+        customTitle: String? = nil,
+        customFontSizeScale: Double? = nil,
+        customColorHex: String? = nil
+    ) {
         self.type = type
         self.isVisible = isVisible
         self.sortOrder = sortOrder
+        self.customTitle = customTitle
+        self.customFontSizeScale = customFontSizeScale
+        self.customColorHex = customColorHex
     }
     
     /// 默认布局配置
     static let defaultLayout: [ComponentLayout] = [
         ComponentLayout(type: .header, isVisible: true, sortOrder: 0),
         ComponentLayout(type: .daysDisplay, isVisible: true, sortOrder: 1),
-        ComponentLayout(type: .milestones, isVisible: true, sortOrder: 2),
-        ComponentLayout(type: .modeButton, isVisible: true, sortOrder: 3),
-        ComponentLayout(type: .quickActions, isVisible: true, sortOrder: 4)
+        ComponentLayout(type: .backgroundLearning, isVisible: true, sortOrder: 2),
+        ComponentLayout(type: .modelStatus, isVisible: true, sortOrder: 3)
     ]
     
     /// 按排序顺序排列
@@ -98,8 +108,6 @@ extension AppSettings {
     /// 组件布局（存储在 UserDefaults 中）
     var componentLayouts: [ComponentLayout] {
         get {
-            // 从存储中读取，如果没有则返回默认布局
-            // 实际实现需要在 StorageService 中添加支持
             ComponentLayout.defaultLayout
         }
     }

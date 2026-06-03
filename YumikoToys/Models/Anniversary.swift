@@ -41,7 +41,7 @@ enum AppConfig {
         if let date = Bundle.main.infoDictionary?["CFBuildDate"] as? String {
             return date
         }
-        return "2026-05-22"
+        return "2026-06-02"
     }
 }
 
@@ -361,11 +361,9 @@ struct AnniversaryInfo: Sendable, Equatable {
     let milestones: [AnniversaryMilestone]
     
     static func == (lhs: AnniversaryInfo, rhs: AnniversaryInfo) -> Bool {
-        lhs.anniversary.id == rhs.anniversary.id
-        && lhs.calculation.days == rhs.calculation.days
-        && lhs.calculation.hours == rhs.calculation.hours
-        && lhs.calculation.minutes == rhs.calculation.minutes
-        && lhs.calculation.seconds == rhs.calculation.seconds
+        lhs.anniversary == rhs.anniversary
+        && lhs.calculation == rhs.calculation
+        && lhs.milestones == rhs.milestones
     }
     
     /// 仅计算时间（轻量，用于秒级更新）

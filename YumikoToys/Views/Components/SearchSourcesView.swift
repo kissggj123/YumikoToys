@@ -9,8 +9,18 @@ import SwiftUI
 
 struct SearchSourcesView: View {
     let sources: [SearchSource]
+    var chatMode: ChatMode = .petCompanion
 
     @State private var isExpanded = true
+
+    private var themeColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return Color(hex: "3B82F6")
+        case .aiAssistant:
+            return Color(hex: "059669")
+        }
+    }
 
     var body: some View {
         if !sources.isEmpty {
@@ -23,11 +33,11 @@ struct SearchSourcesView: View {
                     HStack(spacing: 6) {
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(Color(hex: "3B82F6"))
+                            .foregroundStyle(themeColor)
 
                         Text("🌐 搜索了 \(sources.count) 个来源")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(Color(hex: "3B82F6"))
+                            .foregroundStyle(themeColor)
                     }
                 }
                 .buttonStyle(.plain)
@@ -41,11 +51,11 @@ struct SearchSourcesView: View {
                     .padding(10)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(hex: "3B82F6").opacity(0.05))
+                            .fill(themeColor.opacity(0.05))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(hex: "3B82F6").opacity(0.15), lineWidth: 1)
+                            .stroke(themeColor.opacity(0.15), lineWidth: 1)
                     )
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }

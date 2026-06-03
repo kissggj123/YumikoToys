@@ -221,6 +221,27 @@ final class ModelManagementService: ObservableObject {
         // 刷新所有模型状态
         await refreshAllStatus()
 
+        // 自动加载所有已经下载但尚未加载的本地模型
+        for model in models {
+            if case .downloaded = downloadManager.state(for: model.id) {
+                let isLoaded: Bool
+                switch model.type {
+                case .embedding:
+                    isLoaded = embeddingService.isModelLoaded
+                case .sentiment:
+                    isLoaded = sentimentService.isModelLoaded
+                }
+                if !isLoaded {
+                    LoggerService.shared.info("[ModelManagementService] 发现已下载但未加载的模型 \(model.id)，执行自动加载...")
+                    do {
+                        try await loadModel(model.id)
+                    } catch {
+                        LoggerService.shared.error("[ModelManagementService] 自动加载模型 \(model.id) 失败: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+
         isInitialized = true
         LoggerService.shared.info("[ModelManagementService] 初始化完成")
     }

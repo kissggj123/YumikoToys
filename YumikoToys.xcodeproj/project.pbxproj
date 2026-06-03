@@ -21,135 +21,138 @@
 		FC5F1B212FBEB15D004B2F34 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B202FBEB15D004B2F34 /* MLXFast */; };
 		FC5F1B232FBEB15D004B2F34 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B222FBEB15D004B2F34 /* MLXLinalg */; };
 		FC5F1B252FBEB15D004B2F34 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B242FBEB15D004B2F34 /* MLXNN */; };
+		FC6552A42FC373980093B726 /* 2026-05-21-mlx-model-management-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552212FC373980093B726 /* 2026-05-21-mlx-model-management-design.md */; };
+		FC6552A52FC373980093B726 /* 2026-05-22-assistant-features-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552252FC373980093B726 /* 2026-05-22-assistant-features-design.md */; };
+		FC6552A62FC373980093B726 /* MAINTENANCE.md in Resources */ = {isa = PBXBuildFile; fileRef = FC65529F2FC373980093B726 /* MAINTENANCE.md */; };
+		FC6552A72FC373980093B726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FC65520A2FC373980093B726 /* Main.storyboard */; };
+		FC6552A82FC373980093B726 /* 2026-05-21-resumable-download-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552222FC373980093B726 /* 2026-05-21-resumable-download-design.md */; };
+		FC6552A92FC373980093B726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC6552082FC373980093B726 /* Assets.xcassets */; };
+		FC6552AA2FC373980093B726 /* SplashFix.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552A02FC373980093B726 /* SplashFix.md */; };
+		FC6552AB2FC373980093B726 /* PromptTemplates.json in Resources */ = {isa = PBXBuildFile; fileRef = FC65523F2FC373980093B726 /* PromptTemplates.json */; };
+		FC6552AC2FC373980093B726 /* SplashLocalFix.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552A12FC373980093B726 /* SplashLocalFix.md */; };
+		FC6552AD2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552232FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md */; };
+		FC6552AE2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md in Resources */ = {isa = PBXBuildFile; fileRef = FC65521E2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md */; };
+		FC6552AF2FC373980093B726 /* 2026-05-21-mlx-model-management.md in Resources */ = {isa = PBXBuildFile; fileRef = FC65521D2FC373980093B726 /* 2026-05-21-mlx-model-management.md */; };
+		FC6552B02FC373980093B726 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FC6552092FC373980093B726 /* Info.plist */; };
+		FC6552B12FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */ = {isa = PBXBuildFile; fileRef = FC65521F2FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md */; };
+		FC6552B22FC373980093B726 /* AaGXLZGKADS.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FC6552282FC373980093B726 /* AaGXLZGKADS.ttf */; };
+		FC6552B32FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552242FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md */; };
+		FC6552B42FC373980093B726 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552922FC373980093B726 /* MainView.swift */; };
+		FC6552B52FC373980093B726 /* UploadedFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65523B2FC373980093B726 /* UploadedFile.swift */; };
+		FC6552B62FC373980093B726 /* CopyableMessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552752FC373980093B726 /* CopyableMessageBubble.swift */; };
+		FC6552B72FC373980093B726 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552122FC373980093B726 /* Color+Hex.swift */; };
+		FC6552B82FC373980093B726 /* LocalSentimentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552522FC373980093B726 /* LocalSentimentService.swift */; };
+		FC6552B92FC373980093B726 /* ProxyAwareDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65521A2FC373980093B726 /* ProxyAwareDownloader.swift */; };
+		FC6552BA2FC373980093B726 /* AgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552432FC373980093B726 /* AgentService.swift */; };
+		FC6552BB2FC373980093B726 /* ModelCompatibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65529C2FC373980093B726 /* ModelCompatibilityManager.swift */; };
+		FC6552BC2FC373980093B726 /* ButtonAnimations.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552702FC373980093B726 /* ButtonAnimations.swift */; };
+		FC6552BD2FC373980093B726 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522F2FC373980093B726 /* AppSettings.swift */; };
+		FC6552BE2FC373980093B726 /* PromptTemplatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552882FC373980093B726 /* PromptTemplatePicker.swift */; };
+		FC6552BF2FC373980093B726 /* MLXModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552162FC373980093B726 /* MLXModelLoader.swift */; };
+		FC6552C02FC373980093B726 /* UserAvatarSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65523C2FC373980093B726 /* UserAvatarSettings.swift */; };
+		FC6552C12FC373980093B726 /* LearningResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552342FC373980093B726 /* LearningResult.swift */; };
+		FC6552C22FC373980093B726 /* APISettingsServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552632FC373980093B726 /* APISettingsServiceProtocol.swift */; };
+		FC6552C32FC373980093B726 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552332FC373980093B726 /* Conversation.swift */; };
+		FC6552C42FC373980093B726 /* APISettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552452FC373980093B726 /* APISettingsService.swift */; };
+		FC6552C52FC373980093B726 /* PixelArtIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552852FC373980093B726 /* PixelArtIcons.swift */; };
+		FC6552C62FC373980093B726 /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552662FC373980093B726 /* ServiceProtocols.swift */; };
+		FC6552C72FC373980093B726 /* GenderSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552792FC373980093B726 /* GenderSelectorView.swift */; };
+		FC6552C82FC373980093B726 /* ImageAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524E2FC373980093B726 /* ImageAnalysisService.swift */; };
+		FC6552C92FC373980093B726 /* ModelManagementSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552812FC373980093B726 /* ModelManagementSection.swift */; };
+		FC6552CA2FC373980093B726 /* AssistantConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552302FC373980093B726 /* AssistantConfig.swift */; };
+		FC6552CB2FC373980093B726 /* FileUploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552782FC373980093B726 /* FileUploadView.swift */; };
+		FC6552CC2FC373980093B726 /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522C2FC373980093B726 /* AIProvider.swift */; };
+		FC6552CD2FC373980093B726 /* OfficeDocumentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552562FC373980093B726 /* OfficeDocumentParser.swift */; };
+		FC6552CE2FC373980093B726 /* AssistantToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526F2FC373980093B726 /* AssistantToolbar.swift */; };
+		FC6552CF2FC373980093B726 /* HuggingFaceAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552152FC373980093B726 /* HuggingFaceAuthService.swift */; };
+		FC6552D02FC373980093B726 /* AppPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552462FC373980093B726 /* AppPromptService.swift */; };
+		FC6552D12FC373980093B726 /* TavilySearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525D2FC373980093B726 /* TavilySearchService.swift */; };
+		FC6552D22FC373980093B726 /* PromptTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552372FC373980093B726 /* PromptTemplate.swift */; };
+		FC6552D32FC373980093B726 /* KeychainAccessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524F2FC373980093B726 /* KeychainAccessService.swift */; };
+		FC6552D42FC373980093B726 /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552502FC373980093B726 /* LaunchAtLoginService.swift */; };
+		FC6552D52FC373980093B726 /* APISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522E2FC373980093B726 /* APISettings.swift */; };
+		FC6552D62FC373980093B726 /* EnhancedWebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */; };
+		FC6552D72FC373980093B726 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528B2FC373980093B726 /* ToastView.swift */; };
+		FC6552D82FC373980093B726 /* PersonaServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552652FC373980093B726 /* PersonaServiceProtocol.swift */; };
+		FC6552D92FC373980093B726 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552932FC373980093B726 /* SettingsView.swift */; };
+		FC6552DA2FC373980093B726 /* AppHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526E2FC373980093B726 /* AppHeader.swift */; };
+		FC6552DB2FC373980093B726 /* PetProfileCardModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552952FC373980093B726 /* PetProfileCardModifier.swift */; };
+		FC6552DC2FC373980093B726 /* YumikoToysApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552A22FC373980093B726 /* YumikoToysApp.swift */; };
+		FC6552DD2FC373980093B726 /* MenuList.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527E2FC373980093B726 /* MenuList.swift */; };
+		FC6552DE2FC373980093B726 /* AnniversaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526D2FC373980093B726 /* AnniversaryCard.swift */; };
+		FC6552DF2FC373980093B726 /* UserAvatarServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552672FC373980093B726 /* UserAvatarServiceProtocol.swift */; };
+		FC6552E02FC373980093B726 /* PetProfileCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552842FC373980093B726 /* PetProfileCardView.swift */; };
+		FC6552E12FC373980093B726 /* ModelStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552832FC373980093B726 /* ModelStatusCard.swift */; };
+		FC6552E22FC373980093B726 /* AdvancedFeaturesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */; };
+		FC6552E32FC373980093B726 /* ComponentLayoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552482FC373980093B726 /* ComponentLayoutService.swift */; };
+		FC6552E42FC373980093B726 /* MessageContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527F2FC373980093B726 /* MessageContextMenu.swift */; };
+		FC6552E52FC373980093B726 /* DataStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524A2FC373980093B726 /* DataStorageService.swift */; };
+		FC6552E62FC373980093B726 /* UserAvatarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525F2FC373980093B726 /* UserAvatarService.swift */; };
+		FC6552E72FC373980093B726 /* Anniversary.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522D2FC373980093B726 /* Anniversary.swift */; };
+		FC6552E82FC373980093B726 /* ModeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552802FC373980093B726 /* ModeButton.swift */; };
+		FC6552E92FC373980093B726 /* CodeHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552732FC373980093B726 /* CodeHighlightView.swift */; };
+		FC6552EA2FC373980093B726 /* ProviderConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552382FC373980093B726 /* ProviderConfig.swift */; };
+		FC6552EB2FC373980093B726 /* ChatMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552312FC373980093B726 /* ChatMode.swift */; };
+		FC6552EC2FC373980093B726 /* SettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525B2FC373980093B726 /* SettingsService.swift */; };
+		FC6552ED2FC373980093B726 /* NVIDIAProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552552FC373980093B726 /* NVIDIAProvider.swift */; };
+		FC6552EE2FC373980093B726 /* ChatModeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552712FC373980093B726 /* ChatModeSelector.swift */; };
+		FC6552EE2FC373980093B72A /* ChatIdentitySelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552712FC373980093B72A /* ChatIdentitySelector.swift */; };
+		FC6552EF2FC373980093B726 /* NTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552352FC373980093B726 /* NTPServer.swift */; };
+		FC6552F02FC373980093B726 /* ChangelogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552912FC373980093B726 /* ChangelogView.swift */; };
+		FC6552F12FC373980093B726 /* GLMServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552642FC373980093B726 /* GLMServiceProtocol.swift */; };
+		FC6552F22FC373980093B726 /* ModelMemoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552182FC373980093B726 /* ModelMemoryManager.swift */; };
+		FC6552F32FC373980093B726 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552112FC373980093B726 /* AppState.swift */; };
+		FC6552F42FC373980093B726 /* ChatSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552722FC373980093B726 /* ChatSettingsView.swift */; };
+		FC6552F52FC373980093B726 /* BackgroundLearningService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552472FC373980093B726 /* BackgroundLearningService.swift */; };
+		FC6552F62FC373980093B726 /* AIChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528F2FC373980093B726 /* AIChatViewModel.swift */; };
+		FC6552F72FC373980093B726 /* LocalEmbeddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552512FC373980093B726 /* LocalEmbeddingService.swift */; };
+		FC6552F82FC373980093B726 /* PixelIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552872FC373980093B726 /* PixelIconView.swift */; };
+		FC6552F92FC373980093B726 /* AnniversaryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552902FC373980093B726 /* AnniversaryManagementView.swift */; };
+		FC6552FA2FC373980093B726 /* FileAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524C2FC373980093B726 /* FileAnalysisService.swift */; };
+		FC6552FB2FC373980093B726 /* IconStyleSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527B2FC373980093B726 /* IconStyleSystem.swift */; };
+		FC6552FC2FC373980093B726 /* SemanticDeduplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552592FC373980093B726 /* SemanticDeduplicationService.swift */; };
+		FC6552FD2FC373980093B726 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528D2FC373980093B726 /* AboutView.swift */; };
+		FC6552FE2FC373980093B726 /* PetAgeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552192FC373980093B726 /* PetAgeCalculator.swift */; };
+		FC6552FF2FC373980093B726 /* GLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524D2FC373980093B726 /* GLMService.swift */; };
+		FC6553002FC373980093B726 /* PersonaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552572FC373980093B726 /* PersonaService.swift */; };
+		FC6553012FC373980093B726 /* SearchSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528A2FC373980093B726 /* SearchSourcesView.swift */; };
+		FC6553022FC373980093B726 /* AdaptiveLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */; };
+		FC6553032FC373980093B726 /* PetPersona.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552362FC373980093B726 /* PetPersona.swift */; };
+		FC6553042FC373980093B726 /* StatusBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65521B2FC373980093B726 /* StatusBarManager.swift */; };
+		FC6553052FC373980093B726 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552172FC373980093B726 /* ModelDownloadManager.swift */; };
+		FC6553062FC373980093B726 /* AnniversaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552442FC373980093B726 /* AnniversaryService.swift */; };
+		FC6553072FC373980093B726 /* ProviderPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552892FC373980093B726 /* ProviderPicker.swift */; };
+		FC6553082FC373980093B726 /* ModelPickerMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552822FC373980093B726 /* ModelPickerMenu.swift */; };
+		FC6553092FC373980093B726 /* SettingsMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525A2FC373980093B726 /* SettingsMigrationService.swift */; };
+		FC65530A2FC373980093B726 /* PixelAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552862FC373980093B726 /* PixelAvatarView.swift */; };
+		FC65530B2FC373980093B726 /* ImageCropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527C2FC373980093B726 /* ImageCropView.swift */; };
+		FC65530C2FC373980093B726 /* AIProviderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552622FC373980093B726 /* AIProviderProtocol.swift */; };
+		FC65530D2FC373980093B726 /* HuggingFaceAuthSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527A2FC373980093B726 /* HuggingFaceAuthSheet.swift */; };
+		FC65530E2FC373980093B726 /* PreventSleepService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552582FC373980093B726 /* PreventSleepService.swift */; };
+		FC65530F2FC373980093B726 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525C2FC373980093B726 /* StorageService.swift */; };
+		FC6553102FC373980093B726 /* MarkdownContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527D2FC373980093B726 /* MarkdownContentView.swift */; };
+		FC6553112FC373980093B726 /* ModelManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552532FC373980093B726 /* ModelManagementService.swift */; };
+		FC6553122FC373980093B726 /* ModelCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65529A2FC373980093B726 /* ModelCapability.swift */; };
+		FC6553132FC373980093B726 /* FilePreviewChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552772FC373980093B726 /* FilePreviewChip.swift */; };
+		FC6553142FC373980093B726 /* DataExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552492FC373980093B726 /* DataExportService.swift */; };
+		FC6553152FC373980093B726 /* WebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552602FC373980093B726 /* WebSearchService.swift */; };
+		FC6553162FC373980093B726 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552132FC373980093B726 /* DependencyContainer.swift */; };
+		FC6553172FC373980093B726 /* TimeSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525E2FC373980093B726 /* TimeSyncService.swift */; };
+		FC6553182FC373980093B726 /* AIChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528E2FC373980093B726 /* AIChatView.swift */; };
+		FC6553192FC373980093B726 /* ComponentLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552322FC373980093B726 /* ComponentLayout.swift */; };
+		FC65531A2FC373980093B726 /* EnhancedSearchSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552762FC373980093B726 /* EnhancedSearchSourcesView.swift */; };
+		FC65531B2FC373980093B726 /* SearchChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65523A2FC373980093B726 /* SearchChannel.swift */; };
+		FC65531C2FC373980093B726 /* PsychologicalProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552392FC373980093B726 /* PsychologicalProfile.swift */; };
+		FC65531D2FC373980093B726 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552972FC373980093B726 /* StatusBarView.swift */; };
+		FC65531E2FC373980093B726 /* ConversationSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552742FC373980093B726 /* ConversationSidebarView.swift */; };
+		FC65531F2FC373980093B726 /* NTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552542FC373980093B726 /* NTPClient.swift */; };
+		FC6553202FC373980093B726 /* AgentFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552422FC373980093B726 /* AgentFileService.swift */; };
+		FC6553212FC373980093B726 /* AgentStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526C2FC373980093B726 /* AgentStepView.swift */; };
+		FC6553222FC373980093B726 /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552142FC373980093B726 /* FontManager.swift */; };
+		FC6553FF0000000000000001 /* FullDiskAccessHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */; };
 		FCA5AF182FC0992D00E668DB /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = FCA5AF172FC0992D00E668DB /* CoreXLSX */; };
 		FCB283B32E43D77A00FA3D4A /* MediaKeyTap in Frameworks */ = {isa = PBXBuildFile; productRef = FCB283B22E43D77A00FA3D4A /* MediaKeyTap */; };
 		FCC24F1C2FBED23D00A64686 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = FCC24F1B2FBED23D00A64686 /* HuggingFace */; };
-		FCD03E152FC337C900F3B9DB /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA12FC337C900F3B9DB /* AppSettings.swift */; };
-		FCD03E162FC337C900F3B9DB /* AgentFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB22FC337C900F3B9DB /* AgentFileService.swift */; };
-		FCD03E172FC337C900F3B9DB /* GenderSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE92FC337C900F3B9DB /* GenderSelectorView.swift */; };
-		FCD03E182FC337C900F3B9DB /* PromptTemplateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC82FC337C900F3B9DB /* PromptTemplateService.swift */; };
-		FCD03E192FC337C900F3B9DB /* AgentStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DDC2FC337C900F3B9DB /* AgentStepView.swift */; };
-		FCD03E1A2FC337C900F3B9DB /* GLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBC2FC337C900F3B9DB /* GLMService.swift */; };
-		FCD03E1B2FC337C900F3B9DB /* PersonaServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD52FC337C900F3B9DB /* PersonaServiceProtocol.swift */; };
-		FCD03E1C2FC337C900F3B9DB /* ChatSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE22FC337C900F3B9DB /* ChatSettingsView.swift */; };
-		FCD03E1D2FC337C900F3B9DB /* PetProfileCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF42FC337C900F3B9DB /* PetProfileCardView.swift */; };
-		FCD03E1E2FC337C900F3B9DB /* PreventSleepService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC72FC337C900F3B9DB /* PreventSleepService.swift */; };
-		FCD03E1F2FC337C900F3B9DB /* FileUploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE82FC337C900F3B9DB /* FileUploadView.swift */; };
-		FCD03E202FC337C900F3B9DB /* ComponentLayoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB72FC337C900F3B9DB /* ComponentLayoutService.swift */; };
-		FCD03E212FC337C900F3B9DB /* UserAvatarServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD72FC337C900F3B9DB /* UserAvatarServiceProtocol.swift */; };
-		FCD03E222FC337C900F3B9DB /* OfficeDocumentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC52FC337C900F3B9DB /* OfficeDocumentParser.swift */; };
-		FCD03E232FC337C900F3B9DB /* EnhancedSearchSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE62FC337C900F3B9DB /* EnhancedSearchSourcesView.swift */; };
-		FCD03E242FC337C900F3B9DB /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBF2FC337C900F3B9DB /* LaunchAtLoginService.swift */; };
-		FCD03E252FC337C900F3B9DB /* SemanticDeduplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC92FC337C900F3B9DB /* SemanticDeduplicationService.swift */; };
-		FCD03E262FC337C900F3B9DB /* MenuList.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEE2FC337C900F3B9DB /* MenuList.swift */; };
-		FCD03E272FC337C900F3B9DB /* ConversationSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE42FC337C900F3B9DB /* ConversationSidebarView.swift */; };
-		FCD03E282FC337C900F3B9DB /* LocalSentimentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC12FC337C900F3B9DB /* LocalSentimentService.swift */; };
-		FCD03E292FC337C900F3B9DB /* AIProviderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD22FC337C900F3B9DB /* AIProviderProtocol.swift */; };
-		FCD03E2A2FC337C900F3B9DB /* PixelAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF62FC337C900F3B9DB /* PixelAvatarView.swift */; };
-		FCD03E2B2FC337C900F3B9DB /* PersonaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC62FC337C900F3B9DB /* PersonaService.swift */; };
-		FCD03E2C2FC337C900F3B9DB /* BackgroundLearningService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB62FC337C900F3B9DB /* BackgroundLearningService.swift */; };
-		FCD03E2D2FC337C900F3B9DB /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D892FC337C900F3B9DB /* ModelDownloadManager.swift */; };
-		FCD03E2E2FC337C900F3B9DB /* APISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA02FC337C900F3B9DB /* APISettings.swift */; };
-		FCD03E2F2FC337C900F3B9DB /* NVIDIAProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC42FC337C900F3B9DB /* NVIDIAProvider.swift */; };
-		FCD03E302FC337C900F3B9DB /* PsychologicalProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAB2FC337C900F3B9DB /* PsychologicalProfile.swift */; };
-		FCD03E312FC337C900F3B9DB /* UserAvatarSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAE2FC337C900F3B9DB /* UserAvatarSettings.swift */; };
-		FCD03E322FC337C900F3B9DB /* MarkdownContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DED2FC337C900F3B9DB /* MarkdownContentView.swift */; };
-		FCD03E332FC337C900F3B9DB /* ImageAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBD2FC337C900F3B9DB /* ImageAnalysisService.swift */; };
-		FCD03E342FC337C900F3B9DB /* KeychainAccessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBE2FC337C900F3B9DB /* KeychainAccessService.swift */; };
-		FCD03E352FC337C900F3B9DB /* SearchSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFA2FC337C900F3B9DB /* SearchSourcesView.swift */; };
-		FCD03E362FC337C900F3B9DB /* TimeSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCE2FC337C900F3B9DB /* TimeSyncService.swift */; };
-		FCD03E372FC337C900F3B9DB /* SettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCB2FC337C900F3B9DB /* SettingsService.swift */; };
-		FCD03E382FC337C900F3B9DB /* ThinkingProcessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFB2FC337C900F3B9DB /* ThinkingProcessView.swift */; };
-		FCD03E392FC337C900F3B9DB /* PetPersona.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA82FC337C900F3B9DB /* PetPersona.swift */; };
-		FCD03E3A2FC337C900F3B9DB /* SettingsMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCA2FC337C900F3B9DB /* SettingsMigrationService.swift */; };
-		FCD03E3B2FC337C900F3B9DB /* ComponentLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA42FC337C900F3B9DB /* ComponentLayout.swift */; };
-		FCD03E3C2FC337C900F3B9DB /* APISettingsServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD32FC337C900F3B9DB /* APISettingsServiceProtocol.swift */; };
-		FCD03E3D2FC337C900F3B9DB /* AIChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFF2FC337C900F3B9DB /* AIChatView.swift */; };
-		FCD03E3E2FC337C900F3B9DB /* PromptTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA92FC337C900F3B9DB /* PromptTemplate.swift */; };
-		FCD03E3F2FC337C900F3B9DB /* YumikoToysApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E132FC337C900F3B9DB /* YumikoToysApp.swift */; };
-		FCD03E402FC337C900F3B9DB /* AdvancedFeaturesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB12FC337C900F3B9DB /* AdvancedFeaturesService.swift */; };
-		FCD03E412FC337C900F3B9DB /* ChatModeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE12FC337C900F3B9DB /* ChatModeSelector.swift */; };
-		FCD03E422FC337C900F3B9DB /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCC2FC337C900F3B9DB /* StorageService.swift */; };
-		FCD03E432FC337C900F3B9DB /* UserAvatarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCF2FC337C900F3B9DB /* UserAvatarService.swift */; };
-		FCD03E442FC337C900F3B9DB /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D9E2FC337C900F3B9DB /* AIProvider.swift */; };
-		FCD03E452FC337C900F3B9DB /* ModelCompatibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E0D2FC337C900F3B9DB /* ModelCompatibilityManager.swift */; };
-		FCD03E462FC337C900F3B9DB /* SearchChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAC2FC337C900F3B9DB /* SearchChannel.swift */; };
-		FCD03E472FC337C900F3B9DB /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D842FC337C900F3B9DB /* AppState.swift */; };
-		FCD03E482FC337C900F3B9DB /* AgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB32FC337C900F3B9DB /* AgentService.swift */; };
-		FCD03E492FC337C900F3B9DB /* ModelPickerMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF22FC337C900F3B9DB /* ModelPickerMenu.swift */; };
-		FCD03E4A2FC337C900F3B9DB /* ChatMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA32FC337C900F3B9DB /* ChatMode.swift */; };
-		FCD03E4B2FC337C900F3B9DB /* GLMServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD42FC337C900F3B9DB /* GLMServiceProtocol.swift */; };
-		FCD03E4C2FC337C900F3B9DB /* MLXModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D882FC337C900F3B9DB /* MLXModelLoader.swift */; };
-		FCD03E4D2FC337C900F3B9DB /* LocalEmbeddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC02FC337C900F3B9DB /* LocalEmbeddingService.swift */; };
-		FCD03E4E2FC337C900F3B9DB /* AnniversaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DDD2FC337C900F3B9DB /* AnniversaryCard.swift */; };
-		FCD03E4F2FC337C900F3B9DB /* FilePreviewChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE72FC337C900F3B9DB /* FilePreviewChip.swift */; };
-		FCD03E502FC337C900F3B9DB /* EnhancedWebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBA2FC337C900F3B9DB /* EnhancedWebSearchService.swift */; };
-		FCD03E512FC337C900F3B9DB /* PetProfileCardModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E062FC337C900F3B9DB /* PetProfileCardModifier.swift */; };
-		FCD03E522FC337C900F3B9DB /* LearningResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA62FC337C900F3B9DB /* LearningResult.swift */; };
-		FCD03E532FC337C900F3B9DB /* ModelManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC22FC337C900F3B9DB /* ModelManagementService.swift */; };
-		FCD03E542FC337C900F3B9DB /* NTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA72FC337C900F3B9DB /* NTPServer.swift */; };
-		FCD03E552FC337C900F3B9DB /* ModelCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E0B2FC337C900F3B9DB /* ModelCapability.swift */; };
-		FCD03E562FC337C900F3B9DB /* Anniversary.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D9F2FC337C900F3B9DB /* Anniversary.swift */; };
-		FCD03E572FC337C900F3B9DB /* AIChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E002FC337C900F3B9DB /* AIChatViewModel.swift */; };
-		FCD03E582FC337C900F3B9DB /* HuggingFaceAuthSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEA2FC337C900F3B9DB /* HuggingFaceAuthSheet.swift */; };
-		FCD03E592FC337C900F3B9DB /* MessageContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEF2FC337C900F3B9DB /* MessageContextMenu.swift */; };
-		FCD03E5A2FC337C900F3B9DB /* AppHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DDE2FC337C900F3B9DB /* AppHeader.swift */; };
-		FCD03E5B2FC337C900F3B9DB /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E082FC337C900F3B9DB /* StatusBarView.swift */; };
-		FCD03E5C2FC337C900F3B9DB /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D852FC337C900F3B9DB /* DependencyContainer.swift */; };
-		FCD03E5D2FC337C900F3B9DB /* PixelIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF72FC337C900F3B9DB /* PixelIconView.swift */; };
-		FCD03E5E2FC337C900F3B9DB /* PromptTemplatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF82FC337C900F3B9DB /* PromptTemplatePicker.swift */; };
-		FCD03E5F2FC337C900F3B9DB /* WebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD02FC337C900F3B9DB /* WebSearchService.swift */; };
-		FCD03E602FC337C900F3B9DB /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFC2FC337C900F3B9DB /* ToastView.swift */; };
-		FCD03E612FC337C900F3B9DB /* ProxyAwareDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D8C2FC337C900F3B9DB /* ProxyAwareDownloader.swift */; };
-		FCD03E622FC337C900F3B9DB /* DataStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB92FC337C900F3B9DB /* DataStorageService.swift */; };
-		FCD03E632FC337C900F3B9DB /* TavilySearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DCD2FC337C900F3B9DB /* TavilySearchService.swift */; };
-		FCD03E642FC337C900F3B9DB /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DD62FC337C900F3B9DB /* ServiceProtocols.swift */; };
-		FCD03E652FC337C900F3B9DB /* ProviderConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAA2FC337C900F3B9DB /* ProviderConfig.swift */; };
-		FCD03E662FC337C900F3B9DB /* FileAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DBB2FC337C900F3B9DB /* FileAnalysisService.swift */; };
-		FCD03E672FC337C900F3B9DB /* ModeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF02FC337C900F3B9DB /* ModeButton.swift */; };
-		FCD03E682FC337C900F3B9DB /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DFE2FC337C900F3B9DB /* AboutView.swift */; };
-		FCD03E692FC337C900F3B9DB /* DataExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB82FC337C900F3B9DB /* DataExportService.swift */; };
-		FCD03E6A2FC337C900F3B9DB /* ModelMemoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D8A2FC337C900F3B9DB /* ModelMemoryManager.swift */; };
-		FCD03E6B2FC337C900F3B9DB /* StatusBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D8D2FC337C900F3B9DB /* StatusBarManager.swift */; };
-		FCD03E6C2FC337C900F3B9DB /* PetAgeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D8B2FC337C900F3B9DB /* PetAgeCalculator.swift */; };
-		FCD03E6D2FC337C900F3B9DB /* ModelStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF32FC337C900F3B9DB /* ModelStatusCard.swift */; };
-		FCD03E6E2FC337C900F3B9DB /* UploadedFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DAD2FC337C900F3B9DB /* UploadedFile.swift */; };
-		FCD03E6F2FC337C900F3B9DB /* AnniversaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB42FC337C900F3B9DB /* AnniversaryService.swift */; };
-		FCD03E702FC337C900F3B9DB /* NTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DC32FC337C900F3B9DB /* NTPClient.swift */; };
-		FCD03E712FC337C900F3B9DB /* AssistantConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA22FC337C900F3B9DB /* AssistantConfig.swift */; };
-		FCD03E722FC337C900F3B9DB /* AnniversaryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E012FC337C900F3B9DB /* AnniversaryManagementView.swift */; };
-		FCD03E732FC337C900F3B9DB /* HuggingFaceAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D872FC337C900F3B9DB /* HuggingFaceAuthService.swift */; };
-		FCD03E742FC337C900F3B9DB /* CodeHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE32FC337C900F3B9DB /* CodeHighlightView.swift */; };
-		FCD03E752FC337C900F3B9DB /* ButtonAnimations.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE02FC337C900F3B9DB /* ButtonAnimations.swift */; };
-		FCD03E762FC337C900F3B9DB /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E032FC337C900F3B9DB /* MainView.swift */; };
-		FCD03E772FC337C900F3B9DB /* ProviderPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF92FC337C900F3B9DB /* ProviderPicker.swift */; };
-		FCD03E782FC337C900F3B9DB /* AssistantToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DDF2FC337C900F3B9DB /* AssistantToolbar.swift */; };
-		FCD03E792FC337C900F3B9DB /* PixelArtIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF52FC337C900F3B9DB /* PixelArtIcons.swift */; };
-		FCD03E7A2FC337C900F3B9DB /* IconStyleSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEB2FC337C900F3B9DB /* IconStyleSystem.swift */; };
-		FCD03E7B2FC337C900F3B9DB /* ImageCropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DEC2FC337C900F3B9DB /* ImageCropView.swift */; };
-		FCD03E7C2FC337C900F3B9DB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E042FC337C900F3B9DB /* SettingsView.swift */; };
-		FCD03E7D2FC337C900F3B9DB /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D862FC337C900F3B9DB /* FontManager.swift */; };
-		FCD03E7E2FC337C900F3B9DB /* AdaptiveLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03D832FC337C900F3B9DB /* AdaptiveLayoutManager.swift */; };
-		FCD03E7F2FC337C900F3B9DB /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DA52FC337C900F3B9DB /* Conversation.swift */; };
-		FCD03E802FC337C900F3B9DB /* ChangelogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03E022FC337C900F3B9DB /* ChangelogView.swift */; };
-		FCD03E812FC337C900F3B9DB /* ModelManagementSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DF12FC337C900F3B9DB /* ModelManagementSection.swift */; };
-		FCD03E822FC337C900F3B9DB /* CopyableMessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DE52FC337C900F3B9DB /* CopyableMessageBubble.swift */; };
-		FCD03E832FC337C900F3B9DB /* APISettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD03DB52FC337C900F3B9DB /* APISettingsService.swift */; };
-		FCD03E842FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D932FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md */; };
-		FCD03E852FC337C900F3B9DB /* SplashFix.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03E112FC337C900F3B9DB /* SplashFix.md */; };
-		FCD03E862FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D902FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md */; };
-		FCD03E872FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D972FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md */; };
-		FCD03E882FC337C900F3B9DB /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D7C2FC337C900F3B9DB /* Info.plist */; };
-		FCD03E892FC337C900F3B9DB /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D7D2FC337C900F3B9DB /* Main.storyboard */; };
-		FCD03E8A2FC337C900F3B9DB /* MAINTENANCE.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03E102FC337C900F3B9DB /* MAINTENANCE.md */; };
-		FCD03E8B2FC337C900F3B9DB /* SplashLocalFix.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03E122FC337C900F3B9DB /* SplashLocalFix.md */; };
-		FCD03E8C2FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D912FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md */; };
-		FCD03E8D2FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D942FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md */; };
-		FCD03E8E2FC337C900F3B9DB /* AaGXLZGKADS.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D9A2FC337C900F3B9DB /* AaGXLZGKADS.ttf */; };
-		FCD03E8F2FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D952FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md */; };
-		FCD03E902FC337C900F3B9DB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D7B2FC337C900F3B9DB /* Assets.xcassets */; };
-		FCD03E912FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D8F2FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md */; };
-		FCD03E922FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FCD03D962FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md */; };
 		FCEA9FEA2FBE9E020037F6B8 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = FCEA9FE92FBE9E020037F6B8 /* MarkdownUI */; };
 		FCF267442E114619007230B1 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = FCF267432E114619007230B1 /* ArgumentParser */; };
 		FCF267472E114668007230B1 /* YumikoCLI in CopyFiles */ = {isa = PBXBuildFile; fileRef = FCF267382E114015007230B1 /* YumikoCLI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -197,135 +200,138 @@
 		FC077BDC29DC8BA000914E98 /* IOBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOBluetooth.framework; path = System/Library/Frameworks/IOBluetooth.framework; sourceTree = SDKROOT; };
 		FC077BDE29DC8BDF00914E98 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoToysHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FCD03D7B2FC337C900F3B9DB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		FCD03D7C2FC337C900F3B9DB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		FCD03D7D2FC337C900F3B9DB /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
-		FCD03D7E2FC337C900F3B9DB /* YumikoToys.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YumikoToys.entitlements; sourceTree = "<group>"; };
-		FCD03D7F2FC337C900F3B9DB /* YumikoToys-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YumikoToys-Bridging-Header.h"; sourceTree = "<group>"; };
-		FCD03D802FC337C900F3B9DB /* YumikoToysDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YumikoToysDebug.entitlements; sourceTree = "<group>"; };
-		FCD03D832FC337C900F3B9DB /* AdaptiveLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveLayoutManager.swift; sourceTree = "<group>"; };
-		FCD03D842FC337C900F3B9DB /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
-		FCD03D852FC337C900F3B9DB /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
-		FCD03D862FC337C900F3B9DB /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontManager.swift; sourceTree = "<group>"; };
-		FCD03D872FC337C900F3B9DB /* HuggingFaceAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthService.swift; sourceTree = "<group>"; };
-		FCD03D882FC337C900F3B9DB /* MLXModelLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLXModelLoader.swift; sourceTree = "<group>"; };
-		FCD03D892FC337C900F3B9DB /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
-		FCD03D8A2FC337C900F3B9DB /* ModelMemoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelMemoryManager.swift; sourceTree = "<group>"; };
-		FCD03D8B2FC337C900F3B9DB /* PetAgeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAgeCalculator.swift; sourceTree = "<group>"; };
-		FCD03D8C2FC337C900F3B9DB /* ProxyAwareDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyAwareDownloader.swift; sourceTree = "<group>"; };
-		FCD03D8D2FC337C900F3B9DB /* StatusBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarManager.swift; sourceTree = "<group>"; };
-		FCD03D8F2FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-mlx-model-management.md"; sourceTree = "<group>"; };
-		FCD03D902FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-enhancement-plan.md"; sourceTree = "<group>"; };
-		FCD03D912FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-mode-implementation.md"; sourceTree = "<group>"; };
-		FCD03D932FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-mlx-model-management-design.md"; sourceTree = "<group>"; };
-		FCD03D942FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-resumable-download-design.md"; sourceTree = "<group>"; };
-		FCD03D952FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-enhancement-design.md"; sourceTree = "<group>"; };
-		FCD03D962FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-mode-design.md"; sourceTree = "<group>"; };
-		FCD03D972FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-assistant-features-design.md"; sourceTree = "<group>"; };
-		FCD03D9A2FC337C900F3B9DB /* AaGXLZGKADS.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = AaGXLZGKADS.ttf; sourceTree = "<group>"; };
-		FCD03D9E2FC337C900F3B9DB /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
-		FCD03D9F2FC337C900F3B9DB /* Anniversary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Anniversary.swift; sourceTree = "<group>"; };
-		FCD03DA02FC337C900F3B9DB /* APISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettings.swift; sourceTree = "<group>"; };
-		FCD03DA12FC337C900F3B9DB /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
-		FCD03DA22FC337C900F3B9DB /* AssistantConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantConfig.swift; sourceTree = "<group>"; };
-		FCD03DA32FC337C900F3B9DB /* ChatMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMode.swift; sourceTree = "<group>"; };
-		FCD03DA42FC337C900F3B9DB /* ComponentLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayout.swift; sourceTree = "<group>"; };
-		FCD03DA52FC337C900F3B9DB /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
-		FCD03DA62FC337C900F3B9DB /* LearningResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningResult.swift; sourceTree = "<group>"; };
-		FCD03DA72FC337C900F3B9DB /* NTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPServer.swift; sourceTree = "<group>"; };
-		FCD03DA82FC337C900F3B9DB /* PetPersona.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPersona.swift; sourceTree = "<group>"; };
-		FCD03DA92FC337C900F3B9DB /* PromptTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplate.swift; sourceTree = "<group>"; };
-		FCD03DAA2FC337C900F3B9DB /* ProviderConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConfig.swift; sourceTree = "<group>"; };
-		FCD03DAB2FC337C900F3B9DB /* PsychologicalProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PsychologicalProfile.swift; sourceTree = "<group>"; };
-		FCD03DAC2FC337C900F3B9DB /* SearchChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchChannel.swift; sourceTree = "<group>"; };
-		FCD03DAD2FC337C900F3B9DB /* UploadedFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadedFile.swift; sourceTree = "<group>"; };
-		FCD03DAE2FC337C900F3B9DB /* UserAvatarSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarSettings.swift; sourceTree = "<group>"; };
-		FCD03DB12FC337C900F3B9DB /* AdvancedFeaturesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedFeaturesService.swift; sourceTree = "<group>"; };
-		FCD03DB22FC337C900F3B9DB /* AgentFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFileService.swift; sourceTree = "<group>"; };
-		FCD03DB32FC337C900F3B9DB /* AgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentService.swift; sourceTree = "<group>"; };
-		FCD03DB42FC337C900F3B9DB /* AnniversaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryService.swift; sourceTree = "<group>"; };
-		FCD03DB52FC337C900F3B9DB /* APISettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettingsService.swift; sourceTree = "<group>"; };
-		FCD03DB62FC337C900F3B9DB /* BackgroundLearningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundLearningService.swift; sourceTree = "<group>"; };
-		FCD03DB72FC337C900F3B9DB /* ComponentLayoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayoutService.swift; sourceTree = "<group>"; };
-		FCD03DB82FC337C900F3B9DB /* DataExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportService.swift; sourceTree = "<group>"; };
-		FCD03DB92FC337C900F3B9DB /* DataStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStorageService.swift; sourceTree = "<group>"; };
-		FCD03DBA2FC337C900F3B9DB /* EnhancedWebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedWebSearchService.swift; sourceTree = "<group>"; };
-		FCD03DBB2FC337C900F3B9DB /* FileAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAnalysisService.swift; sourceTree = "<group>"; };
-		FCD03DBC2FC337C900F3B9DB /* GLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMService.swift; sourceTree = "<group>"; };
-		FCD03DBD2FC337C900F3B9DB /* ImageAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnalysisService.swift; sourceTree = "<group>"; };
-		FCD03DBE2FC337C900F3B9DB /* KeychainAccessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAccessService.swift; sourceTree = "<group>"; };
-		FCD03DBF2FC337C900F3B9DB /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
-		FCD03DC02FC337C900F3B9DB /* LocalEmbeddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalEmbeddingService.swift; sourceTree = "<group>"; };
-		FCD03DC12FC337C900F3B9DB /* LocalSentimentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSentimentService.swift; sourceTree = "<group>"; };
-		FCD03DC22FC337C900F3B9DB /* ModelManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementService.swift; sourceTree = "<group>"; };
-		FCD03DC32FC337C900F3B9DB /* NTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPClient.swift; sourceTree = "<group>"; };
-		FCD03DC42FC337C900F3B9DB /* NVIDIAProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NVIDIAProvider.swift; sourceTree = "<group>"; };
-		FCD03DC52FC337C900F3B9DB /* OfficeDocumentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficeDocumentParser.swift; sourceTree = "<group>"; };
-		FCD03DC62FC337C900F3B9DB /* PersonaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaService.swift; sourceTree = "<group>"; };
-		FCD03DC72FC337C900F3B9DB /* PreventSleepService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreventSleepService.swift; sourceTree = "<group>"; };
-		FCD03DC82FC337C900F3B9DB /* PromptTemplateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplateService.swift; sourceTree = "<group>"; };
-		FCD03DC92FC337C900F3B9DB /* SemanticDeduplicationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticDeduplicationService.swift; sourceTree = "<group>"; };
-		FCD03DCA2FC337C900F3B9DB /* SettingsMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsMigrationService.swift; sourceTree = "<group>"; };
-		FCD03DCB2FC337C900F3B9DB /* SettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsService.swift; sourceTree = "<group>"; };
-		FCD03DCC2FC337C900F3B9DB /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
-		FCD03DCD2FC337C900F3B9DB /* TavilySearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TavilySearchService.swift; sourceTree = "<group>"; };
-		FCD03DCE2FC337C900F3B9DB /* TimeSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSyncService.swift; sourceTree = "<group>"; };
-		FCD03DCF2FC337C900F3B9DB /* UserAvatarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarService.swift; sourceTree = "<group>"; };
-		FCD03DD02FC337C900F3B9DB /* WebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchService.swift; sourceTree = "<group>"; };
-		FCD03DD22FC337C900F3B9DB /* AIProviderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderProtocol.swift; sourceTree = "<group>"; };
-		FCD03DD32FC337C900F3B9DB /* APISettingsServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettingsServiceProtocol.swift; sourceTree = "<group>"; };
-		FCD03DD42FC337C900F3B9DB /* GLMServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMServiceProtocol.swift; sourceTree = "<group>"; };
-		FCD03DD52FC337C900F3B9DB /* PersonaServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaServiceProtocol.swift; sourceTree = "<group>"; };
-		FCD03DD62FC337C900F3B9DB /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
-		FCD03DD72FC337C900F3B9DB /* UserAvatarServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarServiceProtocol.swift; sourceTree = "<group>"; };
-		FCD03DDC2FC337C900F3B9DB /* AgentStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStepView.swift; sourceTree = "<group>"; };
-		FCD03DDD2FC337C900F3B9DB /* AnniversaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryCard.swift; sourceTree = "<group>"; };
-		FCD03DDE2FC337C900F3B9DB /* AppHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHeader.swift; sourceTree = "<group>"; };
-		FCD03DDF2FC337C900F3B9DB /* AssistantToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantToolbar.swift; sourceTree = "<group>"; };
-		FCD03DE02FC337C900F3B9DB /* ButtonAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonAnimations.swift; sourceTree = "<group>"; };
-		FCD03DE12FC337C900F3B9DB /* ChatModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModeSelector.swift; sourceTree = "<group>"; };
-		FCD03DE22FC337C900F3B9DB /* ChatSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSettingsView.swift; sourceTree = "<group>"; };
-		FCD03DE32FC337C900F3B9DB /* CodeHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeHighlightView.swift; sourceTree = "<group>"; };
-		FCD03DE42FC337C900F3B9DB /* ConversationSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationSidebarView.swift; sourceTree = "<group>"; };
-		FCD03DE52FC337C900F3B9DB /* CopyableMessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopyableMessageBubble.swift; sourceTree = "<group>"; };
-		FCD03DE62FC337C900F3B9DB /* EnhancedSearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedSearchSourcesView.swift; sourceTree = "<group>"; };
-		FCD03DE72FC337C900F3B9DB /* FilePreviewChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewChip.swift; sourceTree = "<group>"; };
-		FCD03DE82FC337C900F3B9DB /* FileUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUploadView.swift; sourceTree = "<group>"; };
-		FCD03DE92FC337C900F3B9DB /* GenderSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenderSelectorView.swift; sourceTree = "<group>"; };
-		FCD03DEA2FC337C900F3B9DB /* HuggingFaceAuthSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthSheet.swift; sourceTree = "<group>"; };
-		FCD03DEB2FC337C900F3B9DB /* IconStyleSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconStyleSystem.swift; sourceTree = "<group>"; };
-		FCD03DEC2FC337C900F3B9DB /* ImageCropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
-		FCD03DED2FC337C900F3B9DB /* MarkdownContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownContentView.swift; sourceTree = "<group>"; };
-		FCD03DEE2FC337C900F3B9DB /* MenuList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuList.swift; sourceTree = "<group>"; };
-		FCD03DEF2FC337C900F3B9DB /* MessageContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageContextMenu.swift; sourceTree = "<group>"; };
-		FCD03DF02FC337C900F3B9DB /* ModeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeButton.swift; sourceTree = "<group>"; };
-		FCD03DF12FC337C900F3B9DB /* ModelManagementSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementSection.swift; sourceTree = "<group>"; };
-		FCD03DF22FC337C900F3B9DB /* ModelPickerMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPickerMenu.swift; sourceTree = "<group>"; };
-		FCD03DF32FC337C900F3B9DB /* ModelStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStatusCard.swift; sourceTree = "<group>"; };
-		FCD03DF42FC337C900F3B9DB /* PetProfileCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetProfileCardView.swift; sourceTree = "<group>"; };
-		FCD03DF52FC337C900F3B9DB /* PixelArtIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelArtIcons.swift; sourceTree = "<group>"; };
-		FCD03DF62FC337C900F3B9DB /* PixelAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarView.swift; sourceTree = "<group>"; };
-		FCD03DF72FC337C900F3B9DB /* PixelIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelIconView.swift; sourceTree = "<group>"; };
-		FCD03DF82FC337C900F3B9DB /* PromptTemplatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplatePicker.swift; sourceTree = "<group>"; };
-		FCD03DF92FC337C900F3B9DB /* ProviderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderPicker.swift; sourceTree = "<group>"; };
-		FCD03DFA2FC337C900F3B9DB /* SearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSourcesView.swift; sourceTree = "<group>"; };
-		FCD03DFB2FC337C900F3B9DB /* ThinkingProcessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkingProcessView.swift; sourceTree = "<group>"; };
-		FCD03DFC2FC337C900F3B9DB /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
-		FCD03DFE2FC337C900F3B9DB /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
-		FCD03DFF2FC337C900F3B9DB /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
-		FCD03E002FC337C900F3B9DB /* AIChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatViewModel.swift; sourceTree = "<group>"; };
-		FCD03E012FC337C900F3B9DB /* AnniversaryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryManagementView.swift; sourceTree = "<group>"; };
-		FCD03E022FC337C900F3B9DB /* ChangelogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogView.swift; sourceTree = "<group>"; };
-		FCD03E032FC337C900F3B9DB /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
-		FCD03E042FC337C900F3B9DB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		FCD03E062FC337C900F3B9DB /* PetProfileCardModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetProfileCardModifier.swift; sourceTree = "<group>"; };
-		FCD03E082FC337C900F3B9DB /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
-		FCD03E0B2FC337C900F3B9DB /* ModelCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCapability.swift; sourceTree = "<group>"; };
-		FCD03E0D2FC337C900F3B9DB /* ModelCompatibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCompatibilityManager.swift; sourceTree = "<group>"; };
-		FCD03E102FC337C900F3B9DB /* MAINTENANCE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MAINTENANCE.md; sourceTree = "<group>"; };
-		FCD03E112FC337C900F3B9DB /* SplashFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashFix.md; sourceTree = "<group>"; };
-		FCD03E122FC337C900F3B9DB /* SplashLocalFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashLocalFix.md; sourceTree = "<group>"; };
-		FCD03E132FC337C900F3B9DB /* YumikoToysApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumikoToysApp.swift; sourceTree = "<group>"; };
+		FC6552082FC373980093B726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FC6552092FC373980093B726 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FC65520A2FC373980093B726 /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		FC65520B2FC373980093B726 /* YumikoToys.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YumikoToys.entitlements; sourceTree = "<group>"; };
+		FC65520C2FC373980093B726 /* YumikoToys-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YumikoToys-Bridging-Header.h"; sourceTree = "<group>"; };
+		FC65520D2FC373980093B726 /* YumikoToysDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YumikoToysDebug.entitlements; sourceTree = "<group>"; };
+		FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveLayoutManager.swift; sourceTree = "<group>"; };
+		FC6552112FC373980093B726 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		FC6552122FC373980093B726 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		FC6552132FC373980093B726 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
+		FC6552142FC373980093B726 /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontManager.swift; sourceTree = "<group>"; };
+		FC6552152FC373980093B726 /* HuggingFaceAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthService.swift; sourceTree = "<group>"; };
+		FC6552162FC373980093B726 /* MLXModelLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLXModelLoader.swift; sourceTree = "<group>"; };
+		FC6552172FC373980093B726 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
+		FC6552182FC373980093B726 /* ModelMemoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelMemoryManager.swift; sourceTree = "<group>"; };
+		FC6552192FC373980093B726 /* PetAgeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAgeCalculator.swift; sourceTree = "<group>"; };
+		FC65521A2FC373980093B726 /* ProxyAwareDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyAwareDownloader.swift; sourceTree = "<group>"; };
+		FC65521B2FC373980093B726 /* StatusBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarManager.swift; sourceTree = "<group>"; };
+		FC65521D2FC373980093B726 /* 2026-05-21-mlx-model-management.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-mlx-model-management.md"; sourceTree = "<group>"; };
+		FC65521E2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-enhancement-plan.md"; sourceTree = "<group>"; };
+		FC65521F2FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-mode-implementation.md"; sourceTree = "<group>"; };
+		FC6552212FC373980093B726 /* 2026-05-21-mlx-model-management-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-mlx-model-management-design.md"; sourceTree = "<group>"; };
+		FC6552222FC373980093B726 /* 2026-05-21-resumable-download-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-resumable-download-design.md"; sourceTree = "<group>"; };
+		FC6552232FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-enhancement-design.md"; sourceTree = "<group>"; };
+		FC6552242FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-mode-design.md"; sourceTree = "<group>"; };
+		FC6552252FC373980093B726 /* 2026-05-22-assistant-features-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-assistant-features-design.md"; sourceTree = "<group>"; };
+		FC6552282FC373980093B726 /* AaGXLZGKADS.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = AaGXLZGKADS.ttf; sourceTree = "<group>"; };
+		FC65522C2FC373980093B726 /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
+		FC65522D2FC373980093B726 /* Anniversary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Anniversary.swift; sourceTree = "<group>"; };
+		FC65522E2FC373980093B726 /* APISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettings.swift; sourceTree = "<group>"; };
+		FC65522F2FC373980093B726 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		FC6552302FC373980093B726 /* AssistantConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantConfig.swift; sourceTree = "<group>"; };
+		FC6552312FC373980093B726 /* ChatMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMode.swift; sourceTree = "<group>"; };
+		FC6552322FC373980093B726 /* ComponentLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayout.swift; sourceTree = "<group>"; };
+		FC6552332FC373980093B726 /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
+		FC6552342FC373980093B726 /* LearningResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningResult.swift; sourceTree = "<group>"; };
+		FC6552352FC373980093B726 /* NTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPServer.swift; sourceTree = "<group>"; };
+		FC6552362FC373980093B726 /* PetPersona.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPersona.swift; sourceTree = "<group>"; };
+		FC6552372FC373980093B726 /* PromptTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplate.swift; sourceTree = "<group>"; };
+		FC6552382FC373980093B726 /* ProviderConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConfig.swift; sourceTree = "<group>"; };
+		FC6552392FC373980093B726 /* PsychologicalProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PsychologicalProfile.swift; sourceTree = "<group>"; };
+		FC65523A2FC373980093B726 /* SearchChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchChannel.swift; sourceTree = "<group>"; };
+		FC65523B2FC373980093B726 /* UploadedFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadedFile.swift; sourceTree = "<group>"; };
+		FC65523C2FC373980093B726 /* UserAvatarSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarSettings.swift; sourceTree = "<group>"; };
+		FC65523F2FC373980093B726 /* PromptTemplates.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = PromptTemplates.json; sourceTree = "<group>"; };
+		FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedFeaturesService.swift; sourceTree = "<group>"; };
+		FC6552422FC373980093B726 /* AgentFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFileService.swift; sourceTree = "<group>"; };
+		FC6552432FC373980093B726 /* AgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentService.swift; sourceTree = "<group>"; };
+		FC6552442FC373980093B726 /* AnniversaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryService.swift; sourceTree = "<group>"; };
+		FC6552452FC373980093B726 /* APISettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettingsService.swift; sourceTree = "<group>"; };
+		FC6552462FC373980093B726 /* AppPromptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPromptService.swift; sourceTree = "<group>"; };
+		FC6552472FC373980093B726 /* BackgroundLearningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundLearningService.swift; sourceTree = "<group>"; };
+		FC6552482FC373980093B726 /* ComponentLayoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayoutService.swift; sourceTree = "<group>"; };
+		FC6552492FC373980093B726 /* DataExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportService.swift; sourceTree = "<group>"; };
+		FC65524A2FC373980093B726 /* DataStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStorageService.swift; sourceTree = "<group>"; };
+		FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedWebSearchService.swift; sourceTree = "<group>"; };
+		FC65524C2FC373980093B726 /* FileAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAnalysisService.swift; sourceTree = "<group>"; };
+		FC65524D2FC373980093B726 /* GLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMService.swift; sourceTree = "<group>"; };
+		FC65524E2FC373980093B726 /* ImageAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnalysisService.swift; sourceTree = "<group>"; };
+		FC65524F2FC373980093B726 /* KeychainAccessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAccessService.swift; sourceTree = "<group>"; };
+		FC6552502FC373980093B726 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
+		FC6552512FC373980093B726 /* LocalEmbeddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalEmbeddingService.swift; sourceTree = "<group>"; };
+		FC6552522FC373980093B726 /* LocalSentimentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSentimentService.swift; sourceTree = "<group>"; };
+		FC6552532FC373980093B726 /* ModelManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementService.swift; sourceTree = "<group>"; };
+		FC6552542FC373980093B726 /* NTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPClient.swift; sourceTree = "<group>"; };
+		FC6552552FC373980093B726 /* NVIDIAProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NVIDIAProvider.swift; sourceTree = "<group>"; };
+		FC6552562FC373980093B726 /* OfficeDocumentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficeDocumentParser.swift; sourceTree = "<group>"; };
+		FC6552572FC373980093B726 /* PersonaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaService.swift; sourceTree = "<group>"; };
+		FC6552582FC373980093B726 /* PreventSleepService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreventSleepService.swift; sourceTree = "<group>"; };
+		FC6552592FC373980093B726 /* SemanticDeduplicationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticDeduplicationService.swift; sourceTree = "<group>"; };
+		FC65525A2FC373980093B726 /* SettingsMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsMigrationService.swift; sourceTree = "<group>"; };
+		FC65525B2FC373980093B726 /* SettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsService.swift; sourceTree = "<group>"; };
+		FC65525C2FC373980093B726 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
+		FC65525D2FC373980093B726 /* TavilySearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TavilySearchService.swift; sourceTree = "<group>"; };
+		FC65525E2FC373980093B726 /* TimeSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSyncService.swift; sourceTree = "<group>"; };
+		FC65525F2FC373980093B726 /* UserAvatarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarService.swift; sourceTree = "<group>"; };
+		FC6552602FC373980093B726 /* WebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchService.swift; sourceTree = "<group>"; };
+		FC6552622FC373980093B726 /* AIProviderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderProtocol.swift; sourceTree = "<group>"; };
+		FC6552632FC373980093B726 /* APISettingsServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettingsServiceProtocol.swift; sourceTree = "<group>"; };
+		FC6552642FC373980093B726 /* GLMServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMServiceProtocol.swift; sourceTree = "<group>"; };
+		FC6552652FC373980093B726 /* PersonaServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaServiceProtocol.swift; sourceTree = "<group>"; };
+		FC6552662FC373980093B726 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
+		FC6552672FC373980093B726 /* UserAvatarServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarServiceProtocol.swift; sourceTree = "<group>"; };
+		FC65526C2FC373980093B726 /* AgentStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStepView.swift; sourceTree = "<group>"; };
+		FC65526D2FC373980093B726 /* AnniversaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryCard.swift; sourceTree = "<group>"; };
+		FC65526E2FC373980093B726 /* AppHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHeader.swift; sourceTree = "<group>"; };
+		FC65526F2FC373980093B726 /* AssistantToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantToolbar.swift; sourceTree = "<group>"; };
+		FC6552702FC373980093B726 /* ButtonAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonAnimations.swift; sourceTree = "<group>"; };
+		FC6552712FC373980093B726 /* ChatModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModeSelector.swift; sourceTree = "<group>"; };
+		FC6552712FC373980093B72A /* ChatIdentitySelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatIdentitySelector.swift; sourceTree = "<group>"; };
+		FC6552722FC373980093B726 /* ChatSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSettingsView.swift; sourceTree = "<group>"; };
+		FC6552732FC373980093B726 /* CodeHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeHighlightView.swift; sourceTree = "<group>"; };
+		FC6552742FC373980093B726 /* ConversationSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationSidebarView.swift; sourceTree = "<group>"; };
+		FC6552752FC373980093B726 /* CopyableMessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopyableMessageBubble.swift; sourceTree = "<group>"; };
+		FC6552762FC373980093B726 /* EnhancedSearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedSearchSourcesView.swift; sourceTree = "<group>"; };
+		FC6552772FC373980093B726 /* FilePreviewChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewChip.swift; sourceTree = "<group>"; };
+		FC6552782FC373980093B726 /* FileUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUploadView.swift; sourceTree = "<group>"; };
+		FC6552792FC373980093B726 /* GenderSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenderSelectorView.swift; sourceTree = "<group>"; };
+		FC65527A2FC373980093B726 /* HuggingFaceAuthSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthSheet.swift; sourceTree = "<group>"; };
+		FC65527B2FC373980093B726 /* IconStyleSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconStyleSystem.swift; sourceTree = "<group>"; };
+		FC65527C2FC373980093B726 /* ImageCropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
+		FC65527D2FC373980093B726 /* MarkdownContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownContentView.swift; sourceTree = "<group>"; };
+		FC65527E2FC373980093B726 /* MenuList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuList.swift; sourceTree = "<group>"; };
+		FC65527F2FC373980093B726 /* MessageContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageContextMenu.swift; sourceTree = "<group>"; };
+		FC6552802FC373980093B726 /* ModeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeButton.swift; sourceTree = "<group>"; };
+		FC6552812FC373980093B726 /* ModelManagementSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementSection.swift; sourceTree = "<group>"; };
+		FC6552822FC373980093B726 /* ModelPickerMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPickerMenu.swift; sourceTree = "<group>"; };
+		FC6552832FC373980093B726 /* ModelStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStatusCard.swift; sourceTree = "<group>"; };
+		FC6552842FC373980093B726 /* PetProfileCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetProfileCardView.swift; sourceTree = "<group>"; };
+		FC6552852FC373980093B726 /* PixelArtIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelArtIcons.swift; sourceTree = "<group>"; };
+		FC6552862FC373980093B726 /* PixelAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarView.swift; sourceTree = "<group>"; };
+		FC6552872FC373980093B726 /* PixelIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelIconView.swift; sourceTree = "<group>"; };
+		FC6552882FC373980093B726 /* PromptTemplatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplatePicker.swift; sourceTree = "<group>"; };
+		FC6552892FC373980093B726 /* ProviderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderPicker.swift; sourceTree = "<group>"; };
+		FC65528A2FC373980093B726 /* SearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSourcesView.swift; sourceTree = "<group>"; };
+		FC65528B2FC373980093B726 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		FC65528D2FC373980093B726 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		FC65528E2FC373980093B726 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
+		FC65528F2FC373980093B726 /* AIChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatViewModel.swift; sourceTree = "<group>"; };
+		FC6552902FC373980093B726 /* AnniversaryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryManagementView.swift; sourceTree = "<group>"; };
+		FC6552912FC373980093B726 /* ChangelogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogView.swift; sourceTree = "<group>"; };
+		FC6552922FC373980093B726 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		FC6552932FC373980093B726 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FC6552952FC373980093B726 /* PetProfileCardModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetProfileCardModifier.swift; sourceTree = "<group>"; };
+		FC6552972FC373980093B726 /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
+		FC65529A2FC373980093B726 /* ModelCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCapability.swift; sourceTree = "<group>"; };
+		FC65529C2FC373980093B726 /* ModelCompatibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCompatibilityManager.swift; sourceTree = "<group>"; };
+		FC65529F2FC373980093B726 /* MAINTENANCE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MAINTENANCE.md; sourceTree = "<group>"; };
+		FC6552A02FC373980093B726 /* SplashFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashFix.md; sourceTree = "<group>"; };
+		FC6552A12FC373980093B726 /* SplashLocalFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashLocalFix.md; sourceTree = "<group>"; };
+		FC6552A22FC373980093B726 /* YumikoToysApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumikoToysApp.swift; sourceTree = "<group>"; };
+		FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessHelper.swift; sourceTree = "<group>"; };
 		FCF267382E114015007230B1 /* YumikoCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YumikoCLI; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -395,7 +401,7 @@
 		1EE4E20124F97E240097C32C = {
 			isa = PBXGroup;
 			children = (
-				FCD03E142FC337C900F3B9DB /* YumikoToys */,
+				FC6552A32FC373980093B726 /* YumikoToys */,
 				FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */,
 				FCF267392E114015007230B1 /* YumikoCLI */,
 				1EE4E20B24F97E240097C32C /* Products */,
@@ -413,330 +419,341 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		FCD03D812FC337C900F3B9DB /* Assets */ = {
+		FC65520E2FC373980093B726 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03D7B2FC337C900F3B9DB /* Assets.xcassets */,
-				FCD03D7C2FC337C900F3B9DB /* Info.plist */,
-				FCD03D7D2FC337C900F3B9DB /* Main.storyboard */,
-				FCD03D7E2FC337C900F3B9DB /* YumikoToys.entitlements */,
-				FCD03D7F2FC337C900F3B9DB /* YumikoToys-Bridging-Header.h */,
-				FCD03D802FC337C900F3B9DB /* YumikoToysDebug.entitlements */,
+				FC6552082FC373980093B726 /* Assets.xcassets */,
+				FC6552092FC373980093B726 /* Info.plist */,
+				FC65520A2FC373980093B726 /* Main.storyboard */,
+				FC65520B2FC373980093B726 /* YumikoToys.entitlements */,
+				FC65520C2FC373980093B726 /* YumikoToys-Bridging-Header.h */,
+				FC65520D2FC373980093B726 /* YumikoToysDebug.entitlements */,
 			);
 			path = Assets;
 			sourceTree = "<group>";
 		};
-		FCD03D822FC337C900F3B9DB /* Config */ = {
+		FC65520F2FC373980093B726 /* Config */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = Config;
 			sourceTree = "<group>";
 		};
-		FCD03D8E2FC337C900F3B9DB /* Core */ = {
+		FC65521C2FC373980093B726 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03D832FC337C900F3B9DB /* AdaptiveLayoutManager.swift */,
-				FCD03D842FC337C900F3B9DB /* AppState.swift */,
-				FCD03D852FC337C900F3B9DB /* DependencyContainer.swift */,
-				FCD03D862FC337C900F3B9DB /* FontManager.swift */,
-				FCD03D872FC337C900F3B9DB /* HuggingFaceAuthService.swift */,
-				FCD03D882FC337C900F3B9DB /* MLXModelLoader.swift */,
-				FCD03D892FC337C900F3B9DB /* ModelDownloadManager.swift */,
-				FCD03D8A2FC337C900F3B9DB /* ModelMemoryManager.swift */,
-				FCD03D8B2FC337C900F3B9DB /* PetAgeCalculator.swift */,
-				FCD03D8C2FC337C900F3B9DB /* ProxyAwareDownloader.swift */,
-				FCD03D8D2FC337C900F3B9DB /* StatusBarManager.swift */,
+				FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */,
+				FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */,
+				FC6552112FC373980093B726 /* AppState.swift */,
+				FC6552122FC373980093B726 /* Color+Hex.swift */,
+				FC6552132FC373980093B726 /* DependencyContainer.swift */,
+				FC6552142FC373980093B726 /* FontManager.swift */,
+				FC6552152FC373980093B726 /* HuggingFaceAuthService.swift */,
+				FC6552162FC373980093B726 /* MLXModelLoader.swift */,
+				FC6552172FC373980093B726 /* ModelDownloadManager.swift */,
+				FC6552182FC373980093B726 /* ModelMemoryManager.swift */,
+				FC6552192FC373980093B726 /* PetAgeCalculator.swift */,
+				FC65521A2FC373980093B726 /* ProxyAwareDownloader.swift */,
+				FC65521B2FC373980093B726 /* StatusBarManager.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
 		};
-		FCD03D922FC337C900F3B9DB /* plans */ = {
+		FC6552202FC373980093B726 /* plans */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03D8F2FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md */,
-				FCD03D902FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md */,
-				FCD03D912FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md */,
+				FC65521D2FC373980093B726 /* 2026-05-21-mlx-model-management.md */,
+				FC65521E2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md */,
+				FC65521F2FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md */,
 			);
 			path = plans;
 			sourceTree = "<group>";
 		};
-		FCD03D982FC337C900F3B9DB /* specs */ = {
+		FC6552262FC373980093B726 /* specs */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03D932FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md */,
-				FCD03D942FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md */,
-				FCD03D952FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md */,
-				FCD03D962FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md */,
-				FCD03D972FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md */,
+				FC6552212FC373980093B726 /* 2026-05-21-mlx-model-management-design.md */,
+				FC6552222FC373980093B726 /* 2026-05-21-resumable-download-design.md */,
+				FC6552232FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md */,
+				FC6552242FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md */,
+				FC6552252FC373980093B726 /* 2026-05-22-assistant-features-design.md */,
 			);
 			path = specs;
 			sourceTree = "<group>";
 		};
-		FCD03D992FC337C900F3B9DB /* docs */ = {
+		FC6552272FC373980093B726 /* docs */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03D922FC337C900F3B9DB /* plans */,
-				FCD03D982FC337C900F3B9DB /* specs */,
+				FC6552202FC373980093B726 /* plans */,
+				FC6552262FC373980093B726 /* specs */,
 			);
 			path = docs;
 			sourceTree = "<group>";
 		};
-		FCD03D9B2FC337C900F3B9DB /* Fonts */ = {
+		FC6552292FC373980093B726 /* Fonts */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03D9A2FC337C900F3B9DB /* AaGXLZGKADS.ttf */,
+				FC6552282FC373980093B726 /* AaGXLZGKADS.ttf */,
 			);
 			path = Fonts;
 			sourceTree = "<group>";
 		};
-		FCD03D9C2FC337C900F3B9DB /* Managers */ = {
+		FC65522A2FC373980093B726 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = Managers;
 			sourceTree = "<group>";
 		};
-		FCD03D9D2FC337C900F3B9DB /* Model */ = {
+		FC65522B2FC373980093B726 /* Model */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = Model;
 			sourceTree = "<group>";
 		};
-		FCD03DAF2FC337C900F3B9DB /* Models */ = {
+		FC65523D2FC373980093B726 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03D9E2FC337C900F3B9DB /* AIProvider.swift */,
-				FCD03D9F2FC337C900F3B9DB /* Anniversary.swift */,
-				FCD03DA02FC337C900F3B9DB /* APISettings.swift */,
-				FCD03DA12FC337C900F3B9DB /* AppSettings.swift */,
-				FCD03DA22FC337C900F3B9DB /* AssistantConfig.swift */,
-				FCD03DA32FC337C900F3B9DB /* ChatMode.swift */,
-				FCD03DA42FC337C900F3B9DB /* ComponentLayout.swift */,
-				FCD03DA52FC337C900F3B9DB /* Conversation.swift */,
-				FCD03DA62FC337C900F3B9DB /* LearningResult.swift */,
-				FCD03DA72FC337C900F3B9DB /* NTPServer.swift */,
-				FCD03DA82FC337C900F3B9DB /* PetPersona.swift */,
-				FCD03DA92FC337C900F3B9DB /* PromptTemplate.swift */,
-				FCD03DAA2FC337C900F3B9DB /* ProviderConfig.swift */,
-				FCD03DAB2FC337C900F3B9DB /* PsychologicalProfile.swift */,
-				FCD03DAC2FC337C900F3B9DB /* SearchChannel.swift */,
-				FCD03DAD2FC337C900F3B9DB /* UploadedFile.swift */,
-				FCD03DAE2FC337C900F3B9DB /* UserAvatarSettings.swift */,
+				FC65522C2FC373980093B726 /* AIProvider.swift */,
+				FC65522D2FC373980093B726 /* Anniversary.swift */,
+				FC65522E2FC373980093B726 /* APISettings.swift */,
+				FC65522F2FC373980093B726 /* AppSettings.swift */,
+				FC6552302FC373980093B726 /* AssistantConfig.swift */,
+				FC6552312FC373980093B726 /* ChatMode.swift */,
+				FC6552322FC373980093B726 /* ComponentLayout.swift */,
+				FC6552332FC373980093B726 /* Conversation.swift */,
+				FC6552342FC373980093B726 /* LearningResult.swift */,
+				FC6552352FC373980093B726 /* NTPServer.swift */,
+				FC6552362FC373980093B726 /* PetPersona.swift */,
+				FC6552372FC373980093B726 /* PromptTemplate.swift */,
+				FC6552382FC373980093B726 /* ProviderConfig.swift */,
+				FC6552392FC373980093B726 /* PsychologicalProfile.swift */,
+				FC65523A2FC373980093B726 /* SearchChannel.swift */,
+				FC65523B2FC373980093B726 /* UploadedFile.swift */,
+				FC65523C2FC373980093B726 /* UserAvatarSettings.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
 		};
-		FCD03DB02FC337C900F3B9DB /* Plugins */ = {
+		FC65523E2FC373980093B726 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = Plugins;
 			sourceTree = "<group>";
 		};
-		FCD03DD12FC337C900F3B9DB /* Implementations */ = {
+		FC6552402FC373980093B726 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03DB12FC337C900F3B9DB /* AdvancedFeaturesService.swift */,
-				FCD03DB22FC337C900F3B9DB /* AgentFileService.swift */,
-				FCD03DB32FC337C900F3B9DB /* AgentService.swift */,
-				FCD03DB42FC337C900F3B9DB /* AnniversaryService.swift */,
-				FCD03DB52FC337C900F3B9DB /* APISettingsService.swift */,
-				FCD03DB62FC337C900F3B9DB /* BackgroundLearningService.swift */,
-				FCD03DB72FC337C900F3B9DB /* ComponentLayoutService.swift */,
-				FCD03DB82FC337C900F3B9DB /* DataExportService.swift */,
-				FCD03DB92FC337C900F3B9DB /* DataStorageService.swift */,
-				FCD03DBA2FC337C900F3B9DB /* EnhancedWebSearchService.swift */,
-				FCD03DBB2FC337C900F3B9DB /* FileAnalysisService.swift */,
-				FCD03DBC2FC337C900F3B9DB /* GLMService.swift */,
-				FCD03DBD2FC337C900F3B9DB /* ImageAnalysisService.swift */,
-				FCD03DBE2FC337C900F3B9DB /* KeychainAccessService.swift */,
-				FCD03DBF2FC337C900F3B9DB /* LaunchAtLoginService.swift */,
-				FCD03DC02FC337C900F3B9DB /* LocalEmbeddingService.swift */,
-				FCD03DC12FC337C900F3B9DB /* LocalSentimentService.swift */,
-				FCD03DC22FC337C900F3B9DB /* ModelManagementService.swift */,
-				FCD03DC32FC337C900F3B9DB /* NTPClient.swift */,
-				FCD03DC42FC337C900F3B9DB /* NVIDIAProvider.swift */,
-				FCD03DC52FC337C900F3B9DB /* OfficeDocumentParser.swift */,
-				FCD03DC62FC337C900F3B9DB /* PersonaService.swift */,
-				FCD03DC72FC337C900F3B9DB /* PreventSleepService.swift */,
-				FCD03DC82FC337C900F3B9DB /* PromptTemplateService.swift */,
-				FCD03DC92FC337C900F3B9DB /* SemanticDeduplicationService.swift */,
-				FCD03DCA2FC337C900F3B9DB /* SettingsMigrationService.swift */,
-				FCD03DCB2FC337C900F3B9DB /* SettingsService.swift */,
-				FCD03DCC2FC337C900F3B9DB /* StorageService.swift */,
-				FCD03DCD2FC337C900F3B9DB /* TavilySearchService.swift */,
-				FCD03DCE2FC337C900F3B9DB /* TimeSyncService.swift */,
-				FCD03DCF2FC337C900F3B9DB /* UserAvatarService.swift */,
-				FCD03DD02FC337C900F3B9DB /* WebSearchService.swift */,
+				FC65523F2FC373980093B726 /* PromptTemplates.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		FC6552612FC373980093B726 /* Implementations */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */,
+				FC6552422FC373980093B726 /* AgentFileService.swift */,
+				FC6552432FC373980093B726 /* AgentService.swift */,
+				FC6552442FC373980093B726 /* AnniversaryService.swift */,
+				FC6552452FC373980093B726 /* APISettingsService.swift */,
+				FC6552462FC373980093B726 /* AppPromptService.swift */,
+				FC6552472FC373980093B726 /* BackgroundLearningService.swift */,
+				FC6552482FC373980093B726 /* ComponentLayoutService.swift */,
+				FC6552492FC373980093B726 /* DataExportService.swift */,
+				FC65524A2FC373980093B726 /* DataStorageService.swift */,
+				FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */,
+				FC65524C2FC373980093B726 /* FileAnalysisService.swift */,
+				FC65524D2FC373980093B726 /* GLMService.swift */,
+				FC65524E2FC373980093B726 /* ImageAnalysisService.swift */,
+				FC65524F2FC373980093B726 /* KeychainAccessService.swift */,
+				FC6552502FC373980093B726 /* LaunchAtLoginService.swift */,
+				FC6552512FC373980093B726 /* LocalEmbeddingService.swift */,
+				FC6552522FC373980093B726 /* LocalSentimentService.swift */,
+				FC6552532FC373980093B726 /* ModelManagementService.swift */,
+				FC6552542FC373980093B726 /* NTPClient.swift */,
+				FC6552552FC373980093B726 /* NVIDIAProvider.swift */,
+				FC6552562FC373980093B726 /* OfficeDocumentParser.swift */,
+				FC6552572FC373980093B726 /* PersonaService.swift */,
+				FC6552582FC373980093B726 /* PreventSleepService.swift */,
+				FC6552592FC373980093B726 /* SemanticDeduplicationService.swift */,
+				FC65525A2FC373980093B726 /* SettingsMigrationService.swift */,
+				FC65525B2FC373980093B726 /* SettingsService.swift */,
+				FC65525C2FC373980093B726 /* StorageService.swift */,
+				FC65525D2FC373980093B726 /* TavilySearchService.swift */,
+				FC65525E2FC373980093B726 /* TimeSyncService.swift */,
+				FC65525F2FC373980093B726 /* UserAvatarService.swift */,
+				FC6552602FC373980093B726 /* WebSearchService.swift */,
 			);
 			path = Implementations;
 			sourceTree = "<group>";
 		};
-		FCD03DD82FC337C900F3B9DB /* Protocols */ = {
+		FC6552682FC373980093B726 /* Protocols */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03DD22FC337C900F3B9DB /* AIProviderProtocol.swift */,
-				FCD03DD32FC337C900F3B9DB /* APISettingsServiceProtocol.swift */,
-				FCD03DD42FC337C900F3B9DB /* GLMServiceProtocol.swift */,
-				FCD03DD52FC337C900F3B9DB /* PersonaServiceProtocol.swift */,
-				FCD03DD62FC337C900F3B9DB /* ServiceProtocols.swift */,
-				FCD03DD72FC337C900F3B9DB /* UserAvatarServiceProtocol.swift */,
+				FC6552622FC373980093B726 /* AIProviderProtocol.swift */,
+				FC6552632FC373980093B726 /* APISettingsServiceProtocol.swift */,
+				FC6552642FC373980093B726 /* GLMServiceProtocol.swift */,
+				FC6552652FC373980093B726 /* PersonaServiceProtocol.swift */,
+				FC6552662FC373980093B726 /* ServiceProtocols.swift */,
+				FC6552672FC373980093B726 /* UserAvatarServiceProtocol.swift */,
 			);
 			path = Protocols;
 			sourceTree = "<group>";
 		};
-		FCD03DD92FC337C900F3B9DB /* Services */ = {
+		FC6552692FC373980093B726 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03DD12FC337C900F3B9DB /* Implementations */,
-				FCD03DD82FC337C900F3B9DB /* Protocols */,
+				FC6552612FC373980093B726 /* Implementations */,
+				FC6552682FC373980093B726 /* Protocols */,
 			);
 			path = Services;
 			sourceTree = "<group>";
 		};
-		FCD03DDA2FC337C900F3B9DB /* Utils */ = {
+		FC65526A2FC373980093B726 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = Utils;
 			sourceTree = "<group>";
 		};
-		FCD03DDB2FC337C900F3B9DB /* ViewModels */ = {
+		FC65526B2FC373980093B726 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		FCD03DFD2FC337C900F3B9DB /* Components */ = {
+		FC65528C2FC373980093B726 /* Components */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03DDC2FC337C900F3B9DB /* AgentStepView.swift */,
-				FCD03DDD2FC337C900F3B9DB /* AnniversaryCard.swift */,
-				FCD03DDE2FC337C900F3B9DB /* AppHeader.swift */,
-				FCD03DDF2FC337C900F3B9DB /* AssistantToolbar.swift */,
-				FCD03DE02FC337C900F3B9DB /* ButtonAnimations.swift */,
-				FCD03DE12FC337C900F3B9DB /* ChatModeSelector.swift */,
-				FCD03DE22FC337C900F3B9DB /* ChatSettingsView.swift */,
-				FCD03DE32FC337C900F3B9DB /* CodeHighlightView.swift */,
-				FCD03DE42FC337C900F3B9DB /* ConversationSidebarView.swift */,
-				FCD03DE52FC337C900F3B9DB /* CopyableMessageBubble.swift */,
-				FCD03DE62FC337C900F3B9DB /* EnhancedSearchSourcesView.swift */,
-				FCD03DE72FC337C900F3B9DB /* FilePreviewChip.swift */,
-				FCD03DE82FC337C900F3B9DB /* FileUploadView.swift */,
-				FCD03DE92FC337C900F3B9DB /* GenderSelectorView.swift */,
-				FCD03DEA2FC337C900F3B9DB /* HuggingFaceAuthSheet.swift */,
-				FCD03DEB2FC337C900F3B9DB /* IconStyleSystem.swift */,
-				FCD03DEC2FC337C900F3B9DB /* ImageCropView.swift */,
-				FCD03DED2FC337C900F3B9DB /* MarkdownContentView.swift */,
-				FCD03DEE2FC337C900F3B9DB /* MenuList.swift */,
-				FCD03DEF2FC337C900F3B9DB /* MessageContextMenu.swift */,
-				FCD03DF02FC337C900F3B9DB /* ModeButton.swift */,
-				FCD03DF12FC337C900F3B9DB /* ModelManagementSection.swift */,
-				FCD03DF22FC337C900F3B9DB /* ModelPickerMenu.swift */,
-				FCD03DF32FC337C900F3B9DB /* ModelStatusCard.swift */,
-				FCD03DF42FC337C900F3B9DB /* PetProfileCardView.swift */,
-				FCD03DF52FC337C900F3B9DB /* PixelArtIcons.swift */,
-				FCD03DF62FC337C900F3B9DB /* PixelAvatarView.swift */,
-				FCD03DF72FC337C900F3B9DB /* PixelIconView.swift */,
-				FCD03DF82FC337C900F3B9DB /* PromptTemplatePicker.swift */,
-				FCD03DF92FC337C900F3B9DB /* ProviderPicker.swift */,
-				FCD03DFA2FC337C900F3B9DB /* SearchSourcesView.swift */,
-				FCD03DFB2FC337C900F3B9DB /* ThinkingProcessView.swift */,
-				FCD03DFC2FC337C900F3B9DB /* ToastView.swift */,
+				FC65526C2FC373980093B726 /* AgentStepView.swift */,
+				FC65526D2FC373980093B726 /* AnniversaryCard.swift */,
+				FC65526E2FC373980093B726 /* AppHeader.swift */,
+				FC65526F2FC373980093B726 /* AssistantToolbar.swift */,
+				FC6552702FC373980093B726 /* ButtonAnimations.swift */,
+				FC6552712FC373980093B726 /* ChatModeSelector.swift */,
+				FC6552712FC373980093B72A /* ChatIdentitySelector.swift */,
+				FC6552722FC373980093B726 /* ChatSettingsView.swift */,
+				FC6552732FC373980093B726 /* CodeHighlightView.swift */,
+				FC6552742FC373980093B726 /* ConversationSidebarView.swift */,
+				FC6552752FC373980093B726 /* CopyableMessageBubble.swift */,
+				FC6552762FC373980093B726 /* EnhancedSearchSourcesView.swift */,
+				FC6552772FC373980093B726 /* FilePreviewChip.swift */,
+				FC6552782FC373980093B726 /* FileUploadView.swift */,
+				FC6552792FC373980093B726 /* GenderSelectorView.swift */,
+				FC65527A2FC373980093B726 /* HuggingFaceAuthSheet.swift */,
+				FC65527B2FC373980093B726 /* IconStyleSystem.swift */,
+				FC65527C2FC373980093B726 /* ImageCropView.swift */,
+				FC65527D2FC373980093B726 /* MarkdownContentView.swift */,
+				FC65527E2FC373980093B726 /* MenuList.swift */,
+				FC65527F2FC373980093B726 /* MessageContextMenu.swift */,
+				FC6552802FC373980093B726 /* ModeButton.swift */,
+				FC6552812FC373980093B726 /* ModelManagementSection.swift */,
+				FC6552822FC373980093B726 /* ModelPickerMenu.swift */,
+				FC6552832FC373980093B726 /* ModelStatusCard.swift */,
+				FC6552842FC373980093B726 /* PetProfileCardView.swift */,
+				FC6552852FC373980093B726 /* PixelArtIcons.swift */,
+				FC6552862FC373980093B726 /* PixelAvatarView.swift */,
+				FC6552872FC373980093B726 /* PixelIconView.swift */,
+				FC6552882FC373980093B726 /* PromptTemplatePicker.swift */,
+				FC6552892FC373980093B726 /* ProviderPicker.swift */,
+				FC65528A2FC373980093B726 /* SearchSourcesView.swift */,
+				FC65528B2FC373980093B726 /* ToastView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
 		};
-		FCD03E052FC337C900F3B9DB /* Main */ = {
+		FC6552942FC373980093B726 /* Main */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03DFE2FC337C900F3B9DB /* AboutView.swift */,
-				FCD03DFF2FC337C900F3B9DB /* AIChatView.swift */,
-				FCD03E002FC337C900F3B9DB /* AIChatViewModel.swift */,
-				FCD03E012FC337C900F3B9DB /* AnniversaryManagementView.swift */,
-				FCD03E022FC337C900F3B9DB /* ChangelogView.swift */,
-				FCD03E032FC337C900F3B9DB /* MainView.swift */,
-				FCD03E042FC337C900F3B9DB /* SettingsView.swift */,
+				FC65528D2FC373980093B726 /* AboutView.swift */,
+				FC65528E2FC373980093B726 /* AIChatView.swift */,
+				FC65528F2FC373980093B726 /* AIChatViewModel.swift */,
+				FC6552902FC373980093B726 /* AnniversaryManagementView.swift */,
+				FC6552912FC373980093B726 /* ChangelogView.swift */,
+				FC6552922FC373980093B726 /* MainView.swift */,
+				FC6552932FC373980093B726 /* SettingsView.swift */,
 			);
 			path = Main;
 			sourceTree = "<group>";
 		};
-		FCD03E072FC337C900F3B9DB /* Modifiers */ = {
+		FC6552962FC373980093B726 /* Modifiers */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03E062FC337C900F3B9DB /* PetProfileCardModifier.swift */,
+				FC6552952FC373980093B726 /* PetProfileCardModifier.swift */,
 			);
 			path = Modifiers;
 			sourceTree = "<group>";
 		};
-		FCD03E092FC337C900F3B9DB /* StatusBar */ = {
+		FC6552982FC373980093B726 /* StatusBar */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03E082FC337C900F3B9DB /* StatusBarView.swift */,
+				FC6552972FC373980093B726 /* StatusBarView.swift */,
 			);
 			path = StatusBar;
 			sourceTree = "<group>";
 		};
-		FCD03E0A2FC337C900F3B9DB /* Views */ = {
+		FC6552992FC373980093B726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03DFD2FC337C900F3B9DB /* Components */,
-				FCD03E052FC337C900F3B9DB /* Main */,
-				FCD03E072FC337C900F3B9DB /* Modifiers */,
-				FCD03E092FC337C900F3B9DB /* StatusBar */,
+				FC65528C2FC373980093B726 /* Components */,
+				FC6552942FC373980093B726 /* Main */,
+				FC6552962FC373980093B726 /* Modifiers */,
+				FC6552982FC373980093B726 /* StatusBar */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		FCD03E0C2FC337C900F3B9DB /* Models */ = {
+		FC65529B2FC373980093B726 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03E0B2FC337C900F3B9DB /* ModelCapability.swift */,
+				FC65529A2FC373980093B726 /* ModelCapability.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
 		};
-		FCD03E0E2FC337C900F3B9DB /* ViewModels */ = {
+		FC65529D2FC373980093B726 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03E0D2FC337C900F3B9DB /* ModelCompatibilityManager.swift */,
+				FC65529C2FC373980093B726 /* ModelCompatibilityManager.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		FCD03E0F2FC337C900F3B9DB /* YumikoToys */ = {
+		FC65529E2FC373980093B726 /* YumikoToys */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03E0C2FC337C900F3B9DB /* Models */,
-				FCD03E0E2FC337C900F3B9DB /* ViewModels */,
+				FC65529B2FC373980093B726 /* Models */,
+				FC65529D2FC373980093B726 /* ViewModels */,
 			);
 			path = YumikoToys;
 			sourceTree = "<group>";
 		};
-		FCD03E142FC337C900F3B9DB /* YumikoToys */ = {
+		FC6552A32FC373980093B726 /* YumikoToys */ = {
 			isa = PBXGroup;
 			children = (
-				FCD03D812FC337C900F3B9DB /* Assets */,
-				FCD03D822FC337C900F3B9DB /* Config */,
-				FCD03D8E2FC337C900F3B9DB /* Core */,
-				FCD03D992FC337C900F3B9DB /* docs */,
-				FCD03D9B2FC337C900F3B9DB /* Fonts */,
-				FCD03D9C2FC337C900F3B9DB /* Managers */,
-				FCD03D9D2FC337C900F3B9DB /* Model */,
-				FCD03DAF2FC337C900F3B9DB /* Models */,
-				FCD03DB02FC337C900F3B9DB /* Plugins */,
-				FCD03DD92FC337C900F3B9DB /* Services */,
-				FCD03DDA2FC337C900F3B9DB /* Utils */,
-				FCD03DDB2FC337C900F3B9DB /* ViewModels */,
-				FCD03E0A2FC337C900F3B9DB /* Views */,
-				FCD03E0F2FC337C900F3B9DB /* YumikoToys */,
-				FCD03E102FC337C900F3B9DB /* MAINTENANCE.md */,
-				FCD03E112FC337C900F3B9DB /* SplashFix.md */,
-				FCD03E122FC337C900F3B9DB /* SplashLocalFix.md */,
-				FCD03E132FC337C900F3B9DB /* YumikoToysApp.swift */,
+				FC65520E2FC373980093B726 /* Assets */,
+				FC65520F2FC373980093B726 /* Config */,
+				FC65521C2FC373980093B726 /* Core */,
+				FC6552272FC373980093B726 /* docs */,
+				FC6552292FC373980093B726 /* Fonts */,
+				FC65522A2FC373980093B726 /* Managers */,
+				FC65522B2FC373980093B726 /* Model */,
+				FC65523D2FC373980093B726 /* Models */,
+				FC65523E2FC373980093B726 /* Plugins */,
+				FC6552402FC373980093B726 /* Resources */,
+				FC6552692FC373980093B726 /* Services */,
+				FC65526A2FC373980093B726 /* Utils */,
+				FC65526B2FC373980093B726 /* ViewModels */,
+				FC6552992FC373980093B726 /* Views */,
+				FC65529E2FC373980093B726 /* YumikoToys */,
+				FC65529F2FC373980093B726 /* MAINTENANCE.md */,
+				FC6552A02FC373980093B726 /* SplashFix.md */,
+				FC6552A12FC373980093B726 /* SplashLocalFix.md */,
+				FC6552A22FC373980093B726 /* YumikoToysApp.swift */,
 			);
 			path = YumikoToys;
 			sourceTree = "<group>";
@@ -881,21 +898,22 @@
 		1EE4E20824F97E240097C32C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				FCD03E842FC337C900F3B9DB /* 2026-05-21-mlx-model-management-design.md in Resources */,
-				FCD03E852FC337C900F3B9DB /* SplashFix.md in Resources */,
-				FCD03E862FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-plan.md in Resources */,
-				FCD03E872FC337C900F3B9DB /* 2026-05-22-assistant-features-design.md in Resources */,
-				FCD03E882FC337C900F3B9DB /* Info.plist in Resources */,
-				FCD03E892FC337C900F3B9DB /* Main.storyboard in Resources */,
-				FCD03E8A2FC337C900F3B9DB /* MAINTENANCE.md in Resources */,
-				FCD03E8B2FC337C900F3B9DB /* SplashLocalFix.md in Resources */,
-				FCD03E8C2FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */,
-				FCD03E8D2FC337C900F3B9DB /* 2026-05-21-resumable-download-design.md in Resources */,
-				FCD03E8E2FC337C900F3B9DB /* AaGXLZGKADS.ttf in Resources */,
-				FCD03E8F2FC337C900F3B9DB /* 2026-05-22-ai-assistant-enhancement-design.md in Resources */,
-				FCD03E902FC337C900F3B9DB /* Assets.xcassets in Resources */,
-				FCD03E912FC337C900F3B9DB /* 2026-05-21-mlx-model-management.md in Resources */,
-				FCD03E922FC337C900F3B9DB /* 2026-05-22-ai-assistant-mode-design.md in Resources */,
+				FC6552A42FC373980093B726 /* 2026-05-21-mlx-model-management-design.md in Resources */,
+				FC6552A52FC373980093B726 /* 2026-05-22-assistant-features-design.md in Resources */,
+				FC6552A62FC373980093B726 /* MAINTENANCE.md in Resources */,
+				FC6552A72FC373980093B726 /* Main.storyboard in Resources */,
+				FC6552A82FC373980093B726 /* 2026-05-21-resumable-download-design.md in Resources */,
+				FC6552A92FC373980093B726 /* Assets.xcassets in Resources */,
+				FC6552AA2FC373980093B726 /* SplashFix.md in Resources */,
+				FC6552AB2FC373980093B726 /* PromptTemplates.json in Resources */,
+				FC6552AC2FC373980093B726 /* SplashLocalFix.md in Resources */,
+				FC6552AD2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md in Resources */,
+				FC6552AE2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md in Resources */,
+				FC6552AF2FC373980093B726 /* 2026-05-21-mlx-model-management.md in Resources */,
+				FC6552B02FC373980093B726 /* Info.plist in Resources */,
+				FC6552B12FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */,
+				FC6552B22FC373980093B726 /* AaGXLZGKADS.ttf in Resources */,
+				FC6552B32FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md in Resources */,
 			);
 		};
 		FC3FCE182CB69C52008D8C7B /* Resources */ = {
@@ -932,117 +950,119 @@
 		1EE4E20624F97E240097C32C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
-				FCD03E152FC337C900F3B9DB /* AppSettings.swift in Sources */,
-				FCD03E162FC337C900F3B9DB /* AgentFileService.swift in Sources */,
-				FCD03E172FC337C900F3B9DB /* GenderSelectorView.swift in Sources */,
-				FCD03E182FC337C900F3B9DB /* PromptTemplateService.swift in Sources */,
-				FCD03E192FC337C900F3B9DB /* AgentStepView.swift in Sources */,
-				FCD03E1A2FC337C900F3B9DB /* GLMService.swift in Sources */,
-				FCD03E1B2FC337C900F3B9DB /* PersonaServiceProtocol.swift in Sources */,
-				FCD03E1C2FC337C900F3B9DB /* ChatSettingsView.swift in Sources */,
-				FCD03E1D2FC337C900F3B9DB /* PetProfileCardView.swift in Sources */,
-				FCD03E1E2FC337C900F3B9DB /* PreventSleepService.swift in Sources */,
-				FCD03E1F2FC337C900F3B9DB /* FileUploadView.swift in Sources */,
-				FCD03E202FC337C900F3B9DB /* ComponentLayoutService.swift in Sources */,
-				FCD03E212FC337C900F3B9DB /* UserAvatarServiceProtocol.swift in Sources */,
-				FCD03E222FC337C900F3B9DB /* OfficeDocumentParser.swift in Sources */,
-				FCD03E232FC337C900F3B9DB /* EnhancedSearchSourcesView.swift in Sources */,
-				FCD03E242FC337C900F3B9DB /* LaunchAtLoginService.swift in Sources */,
-				FCD03E252FC337C900F3B9DB /* SemanticDeduplicationService.swift in Sources */,
-				FCD03E262FC337C900F3B9DB /* MenuList.swift in Sources */,
-				FCD03E272FC337C900F3B9DB /* ConversationSidebarView.swift in Sources */,
-				FCD03E282FC337C900F3B9DB /* LocalSentimentService.swift in Sources */,
-				FCD03E292FC337C900F3B9DB /* AIProviderProtocol.swift in Sources */,
-				FCD03E2A2FC337C900F3B9DB /* PixelAvatarView.swift in Sources */,
-				FCD03E2B2FC337C900F3B9DB /* PersonaService.swift in Sources */,
-				FCD03E2C2FC337C900F3B9DB /* BackgroundLearningService.swift in Sources */,
-				FCD03E2D2FC337C900F3B9DB /* ModelDownloadManager.swift in Sources */,
-				FCD03E2E2FC337C900F3B9DB /* APISettings.swift in Sources */,
-				FCD03E2F2FC337C900F3B9DB /* NVIDIAProvider.swift in Sources */,
-				FCD03E302FC337C900F3B9DB /* PsychologicalProfile.swift in Sources */,
-				FCD03E312FC337C900F3B9DB /* UserAvatarSettings.swift in Sources */,
-				FCD03E322FC337C900F3B9DB /* MarkdownContentView.swift in Sources */,
-				FCD03E332FC337C900F3B9DB /* ImageAnalysisService.swift in Sources */,
-				FCD03E342FC337C900F3B9DB /* KeychainAccessService.swift in Sources */,
-				FCD03E352FC337C900F3B9DB /* SearchSourcesView.swift in Sources */,
-				FCD03E362FC337C900F3B9DB /* TimeSyncService.swift in Sources */,
-				FCD03E372FC337C900F3B9DB /* SettingsService.swift in Sources */,
-				FCD03E382FC337C900F3B9DB /* ThinkingProcessView.swift in Sources */,
-				FCD03E392FC337C900F3B9DB /* PetPersona.swift in Sources */,
-				FCD03E3A2FC337C900F3B9DB /* SettingsMigrationService.swift in Sources */,
-				FCD03E3B2FC337C900F3B9DB /* ComponentLayout.swift in Sources */,
-				FCD03E3C2FC337C900F3B9DB /* APISettingsServiceProtocol.swift in Sources */,
-				FCD03E3D2FC337C900F3B9DB /* AIChatView.swift in Sources */,
-				FCD03E3E2FC337C900F3B9DB /* PromptTemplate.swift in Sources */,
-				FCD03E3F2FC337C900F3B9DB /* YumikoToysApp.swift in Sources */,
-				FCD03E402FC337C900F3B9DB /* AdvancedFeaturesService.swift in Sources */,
-				FCD03E412FC337C900F3B9DB /* ChatModeSelector.swift in Sources */,
-				FCD03E422FC337C900F3B9DB /* StorageService.swift in Sources */,
-				FCD03E432FC337C900F3B9DB /* UserAvatarService.swift in Sources */,
-				FCD03E442FC337C900F3B9DB /* AIProvider.swift in Sources */,
-				FCD03E452FC337C900F3B9DB /* ModelCompatibilityManager.swift in Sources */,
-				FCD03E462FC337C900F3B9DB /* SearchChannel.swift in Sources */,
-				FCD03E472FC337C900F3B9DB /* AppState.swift in Sources */,
-				FCD03E482FC337C900F3B9DB /* AgentService.swift in Sources */,
-				FCD03E492FC337C900F3B9DB /* ModelPickerMenu.swift in Sources */,
-				FCD03E4A2FC337C900F3B9DB /* ChatMode.swift in Sources */,
-				FCD03E4B2FC337C900F3B9DB /* GLMServiceProtocol.swift in Sources */,
-				FCD03E4C2FC337C900F3B9DB /* MLXModelLoader.swift in Sources */,
-				FCD03E4D2FC337C900F3B9DB /* LocalEmbeddingService.swift in Sources */,
-				FCD03E4E2FC337C900F3B9DB /* AnniversaryCard.swift in Sources */,
-				FCD03E4F2FC337C900F3B9DB /* FilePreviewChip.swift in Sources */,
-				FCD03E502FC337C900F3B9DB /* EnhancedWebSearchService.swift in Sources */,
-				FCD03E512FC337C900F3B9DB /* PetProfileCardModifier.swift in Sources */,
-				FCD03E522FC337C900F3B9DB /* LearningResult.swift in Sources */,
-				FCD03E532FC337C900F3B9DB /* ModelManagementService.swift in Sources */,
-				FCD03E542FC337C900F3B9DB /* NTPServer.swift in Sources */,
-				FCD03E552FC337C900F3B9DB /* ModelCapability.swift in Sources */,
-				FCD03E562FC337C900F3B9DB /* Anniversary.swift in Sources */,
-				FCD03E572FC337C900F3B9DB /* AIChatViewModel.swift in Sources */,
-				FCD03E582FC337C900F3B9DB /* HuggingFaceAuthSheet.swift in Sources */,
-				FCD03E592FC337C900F3B9DB /* MessageContextMenu.swift in Sources */,
-				FCD03E5A2FC337C900F3B9DB /* AppHeader.swift in Sources */,
-				FCD03E5B2FC337C900F3B9DB /* StatusBarView.swift in Sources */,
-				FCD03E5C2FC337C900F3B9DB /* DependencyContainer.swift in Sources */,
-				FCD03E5D2FC337C900F3B9DB /* PixelIconView.swift in Sources */,
-				FCD03E5E2FC337C900F3B9DB /* PromptTemplatePicker.swift in Sources */,
-				FCD03E5F2FC337C900F3B9DB /* WebSearchService.swift in Sources */,
-				FCD03E602FC337C900F3B9DB /* ToastView.swift in Sources */,
-				FCD03E612FC337C900F3B9DB /* ProxyAwareDownloader.swift in Sources */,
-				FCD03E622FC337C900F3B9DB /* DataStorageService.swift in Sources */,
-				FCD03E632FC337C900F3B9DB /* TavilySearchService.swift in Sources */,
-				FCD03E642FC337C900F3B9DB /* ServiceProtocols.swift in Sources */,
-				FCD03E652FC337C900F3B9DB /* ProviderConfig.swift in Sources */,
-				FCD03E662FC337C900F3B9DB /* FileAnalysisService.swift in Sources */,
-				FCD03E672FC337C900F3B9DB /* ModeButton.swift in Sources */,
-				FCD03E682FC337C900F3B9DB /* AboutView.swift in Sources */,
-				FCD03E692FC337C900F3B9DB /* DataExportService.swift in Sources */,
-				FCD03E6A2FC337C900F3B9DB /* ModelMemoryManager.swift in Sources */,
-				FCD03E6B2FC337C900F3B9DB /* StatusBarManager.swift in Sources */,
-				FCD03E6C2FC337C900F3B9DB /* PetAgeCalculator.swift in Sources */,
-				FCD03E6D2FC337C900F3B9DB /* ModelStatusCard.swift in Sources */,
-				FCD03E6E2FC337C900F3B9DB /* UploadedFile.swift in Sources */,
-				FCD03E6F2FC337C900F3B9DB /* AnniversaryService.swift in Sources */,
-				FCD03E702FC337C900F3B9DB /* NTPClient.swift in Sources */,
-				FCD03E712FC337C900F3B9DB /* AssistantConfig.swift in Sources */,
-				FCD03E722FC337C900F3B9DB /* AnniversaryManagementView.swift in Sources */,
-				FCD03E732FC337C900F3B9DB /* HuggingFaceAuthService.swift in Sources */,
-				FCD03E742FC337C900F3B9DB /* CodeHighlightView.swift in Sources */,
-				FCD03E752FC337C900F3B9DB /* ButtonAnimations.swift in Sources */,
-				FCD03E762FC337C900F3B9DB /* MainView.swift in Sources */,
-				FCD03E772FC337C900F3B9DB /* ProviderPicker.swift in Sources */,
-				FCD03E782FC337C900F3B9DB /* AssistantToolbar.swift in Sources */,
-				FCD03E792FC337C900F3B9DB /* PixelArtIcons.swift in Sources */,
-				FCD03E7A2FC337C900F3B9DB /* IconStyleSystem.swift in Sources */,
-				FCD03E7B2FC337C900F3B9DB /* ImageCropView.swift in Sources */,
-				FCD03E7C2FC337C900F3B9DB /* SettingsView.swift in Sources */,
-				FCD03E7D2FC337C900F3B9DB /* FontManager.swift in Sources */,
-				FCD03E7E2FC337C900F3B9DB /* AdaptiveLayoutManager.swift in Sources */,
-				FCD03E7F2FC337C900F3B9DB /* Conversation.swift in Sources */,
-				FCD03E802FC337C900F3B9DB /* ChangelogView.swift in Sources */,
-				FCD03E812FC337C900F3B9DB /* ModelManagementSection.swift in Sources */,
-				FCD03E822FC337C900F3B9DB /* CopyableMessageBubble.swift in Sources */,
-				FCD03E832FC337C900F3B9DB /* APISettingsService.swift in Sources */,
+				FC6553FF0000000000000001 /* FullDiskAccessHelper.swift in Sources */,
+				FC6552B42FC373980093B726 /* MainView.swift in Sources */,
+				FC6552B52FC373980093B726 /* UploadedFile.swift in Sources */,
+				FC6552B62FC373980093B726 /* CopyableMessageBubble.swift in Sources */,
+				FC6552B72FC373980093B726 /* Color+Hex.swift in Sources */,
+				FC6552B82FC373980093B726 /* LocalSentimentService.swift in Sources */,
+				FC6552B92FC373980093B726 /* ProxyAwareDownloader.swift in Sources */,
+				FC6552BA2FC373980093B726 /* AgentService.swift in Sources */,
+				FC6552BB2FC373980093B726 /* ModelCompatibilityManager.swift in Sources */,
+				FC6552BC2FC373980093B726 /* ButtonAnimations.swift in Sources */,
+				FC6552BD2FC373980093B726 /* AppSettings.swift in Sources */,
+				FC6552BE2FC373980093B726 /* PromptTemplatePicker.swift in Sources */,
+				FC6552BF2FC373980093B726 /* MLXModelLoader.swift in Sources */,
+				FC6552C02FC373980093B726 /* UserAvatarSettings.swift in Sources */,
+				FC6552C12FC373980093B726 /* LearningResult.swift in Sources */,
+				FC6552C22FC373980093B726 /* APISettingsServiceProtocol.swift in Sources */,
+				FC6552C32FC373980093B726 /* Conversation.swift in Sources */,
+				FC6552C42FC373980093B726 /* APISettingsService.swift in Sources */,
+				FC6552C52FC373980093B726 /* PixelArtIcons.swift in Sources */,
+				FC6552C62FC373980093B726 /* ServiceProtocols.swift in Sources */,
+				FC6552C72FC373980093B726 /* GenderSelectorView.swift in Sources */,
+				FC6552C82FC373980093B726 /* ImageAnalysisService.swift in Sources */,
+				FC6552C92FC373980093B726 /* ModelManagementSection.swift in Sources */,
+				FC6552CA2FC373980093B726 /* AssistantConfig.swift in Sources */,
+				FC6552CB2FC373980093B726 /* FileUploadView.swift in Sources */,
+				FC6552CC2FC373980093B726 /* AIProvider.swift in Sources */,
+				FC6552CD2FC373980093B726 /* OfficeDocumentParser.swift in Sources */,
+				FC6552CE2FC373980093B726 /* AssistantToolbar.swift in Sources */,
+				FC6552CF2FC373980093B726 /* HuggingFaceAuthService.swift in Sources */,
+				FC6552D02FC373980093B726 /* AppPromptService.swift in Sources */,
+				FC6552D12FC373980093B726 /* TavilySearchService.swift in Sources */,
+				FC6552D22FC373980093B726 /* PromptTemplate.swift in Sources */,
+				FC6552D32FC373980093B726 /* KeychainAccessService.swift in Sources */,
+				FC6552D42FC373980093B726 /* LaunchAtLoginService.swift in Sources */,
+				FC6552D52FC373980093B726 /* APISettings.swift in Sources */,
+				FC6552D62FC373980093B726 /* EnhancedWebSearchService.swift in Sources */,
+				FC6552D72FC373980093B726 /* ToastView.swift in Sources */,
+				FC6552D82FC373980093B726 /* PersonaServiceProtocol.swift in Sources */,
+				FC6552D92FC373980093B726 /* SettingsView.swift in Sources */,
+				FC6552DA2FC373980093B726 /* AppHeader.swift in Sources */,
+				FC6552DB2FC373980093B726 /* PetProfileCardModifier.swift in Sources */,
+				FC6552DC2FC373980093B726 /* YumikoToysApp.swift in Sources */,
+				FC6552DD2FC373980093B726 /* MenuList.swift in Sources */,
+				FC6552DE2FC373980093B726 /* AnniversaryCard.swift in Sources */,
+				FC6552DF2FC373980093B726 /* UserAvatarServiceProtocol.swift in Sources */,
+				FC6552E02FC373980093B726 /* PetProfileCardView.swift in Sources */,
+				FC6552E12FC373980093B726 /* ModelStatusCard.swift in Sources */,
+				FC6552E22FC373980093B726 /* AdvancedFeaturesService.swift in Sources */,
+				FC6552E32FC373980093B726 /* ComponentLayoutService.swift in Sources */,
+				FC6552E42FC373980093B726 /* MessageContextMenu.swift in Sources */,
+				FC6552E52FC373980093B726 /* DataStorageService.swift in Sources */,
+				FC6552E62FC373980093B726 /* UserAvatarService.swift in Sources */,
+				FC6552E72FC373980093B726 /* Anniversary.swift in Sources */,
+				FC6552E82FC373980093B726 /* ModeButton.swift in Sources */,
+				FC6552E92FC373980093B726 /* CodeHighlightView.swift in Sources */,
+				FC6552EA2FC373980093B726 /* ProviderConfig.swift in Sources */,
+				FC6552EB2FC373980093B726 /* ChatMode.swift in Sources */,
+				FC6552EC2FC373980093B726 /* SettingsService.swift in Sources */,
+				FC6552ED2FC373980093B726 /* NVIDIAProvider.swift in Sources */,
+				FC6552EE2FC373980093B726 /* ChatModeSelector.swift in Sources */,
+				FC6552EE2FC373980093B72A /* ChatIdentitySelector.swift in Sources */,
+				FC6552EF2FC373980093B726 /* NTPServer.swift in Sources */,
+				FC6552F02FC373980093B726 /* ChangelogView.swift in Sources */,
+				FC6552F12FC373980093B726 /* GLMServiceProtocol.swift in Sources */,
+				FC6552F22FC373980093B726 /* ModelMemoryManager.swift in Sources */,
+				FC6552F32FC373980093B726 /* AppState.swift in Sources */,
+				FC6552F42FC373980093B726 /* ChatSettingsView.swift in Sources */,
+				FC6552F52FC373980093B726 /* BackgroundLearningService.swift in Sources */,
+				FC6552F62FC373980093B726 /* AIChatViewModel.swift in Sources */,
+				FC6552F72FC373980093B726 /* LocalEmbeddingService.swift in Sources */,
+				FC6552F82FC373980093B726 /* PixelIconView.swift in Sources */,
+				FC6552F92FC373980093B726 /* AnniversaryManagementView.swift in Sources */,
+				FC6552FA2FC373980093B726 /* FileAnalysisService.swift in Sources */,
+				FC6552FB2FC373980093B726 /* IconStyleSystem.swift in Sources */,
+				FC6552FC2FC373980093B726 /* SemanticDeduplicationService.swift in Sources */,
+				FC6552FD2FC373980093B726 /* AboutView.swift in Sources */,
+				FC6552FE2FC373980093B726 /* PetAgeCalculator.swift in Sources */,
+				FC6552FF2FC373980093B726 /* GLMService.swift in Sources */,
+				FC6553002FC373980093B726 /* PersonaService.swift in Sources */,
+				FC6553012FC373980093B726 /* SearchSourcesView.swift in Sources */,
+				FC6553022FC373980093B726 /* AdaptiveLayoutManager.swift in Sources */,
+				FC6553032FC373980093B726 /* PetPersona.swift in Sources */,
+				FC6553042FC373980093B726 /* StatusBarManager.swift in Sources */,
+				FC6553052FC373980093B726 /* ModelDownloadManager.swift in Sources */,
+				FC6553062FC373980093B726 /* AnniversaryService.swift in Sources */,
+				FC6553072FC373980093B726 /* ProviderPicker.swift in Sources */,
+				FC6553082FC373980093B726 /* ModelPickerMenu.swift in Sources */,
+				FC6553092FC373980093B726 /* SettingsMigrationService.swift in Sources */,
+				FC65530A2FC373980093B726 /* PixelAvatarView.swift in Sources */,
+				FC65530B2FC373980093B726 /* ImageCropView.swift in Sources */,
+				FC65530C2FC373980093B726 /* AIProviderProtocol.swift in Sources */,
+				FC65530D2FC373980093B726 /* HuggingFaceAuthSheet.swift in Sources */,
+				FC65530E2FC373980093B726 /* PreventSleepService.swift in Sources */,
+				FC65530F2FC373980093B726 /* StorageService.swift in Sources */,
+				FC6553102FC373980093B726 /* MarkdownContentView.swift in Sources */,
+				FC6553112FC373980093B726 /* ModelManagementService.swift in Sources */,
+				FC6553122FC373980093B726 /* ModelCapability.swift in Sources */,
+				FC6553132FC373980093B726 /* FilePreviewChip.swift in Sources */,
+				FC6553142FC373980093B726 /* DataExportService.swift in Sources */,
+				FC6553152FC373980093B726 /* WebSearchService.swift in Sources */,
+				FC6553162FC373980093B726 /* DependencyContainer.swift in Sources */,
+				FC6553172FC373980093B726 /* TimeSyncService.swift in Sources */,
+				FC6553182FC373980093B726 /* AIChatView.swift in Sources */,
+				FC6553192FC373980093B726 /* ComponentLayout.swift in Sources */,
+				FC65531A2FC373980093B726 /* EnhancedSearchSourcesView.swift in Sources */,
+				FC65531B2FC373980093B726 /* SearchChannel.swift in Sources */,
+				FC65531C2FC373980093B726 /* PsychologicalProfile.swift in Sources */,
+				FC65531D2FC373980093B726 /* StatusBarView.swift in Sources */,
+				FC65531E2FC373980093B726 /* ConversationSidebarView.swift in Sources */,
+				FC65531F2FC373980093B726 /* NTPClient.swift in Sources */,
+				FC6553202FC373980093B726 /* AgentFileService.swift in Sources */,
+				FC6553212FC373980093B726 /* AgentStepView.swift in Sources */,
+				FC6553222FC373980093B726 /* FontManager.swift in Sources */,
 			);
 		};
 		FC3FCE162CB69C52008D8C7B /* Sources */ = {
@@ -1196,7 +1216,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 19230919;
+				CURRENT_PROJECT_VERSION = 195221235;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_APP_SANDBOX = NO;
@@ -1207,7 +1227,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 4.3.0;
+				MARKETING_VERSION = 4.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1229,7 +1249,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 19230919;
+				CURRENT_PROJECT_VERSION = 195221235;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1239,7 +1259,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 4.3.0;
+				MARKETING_VERSION = 4.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

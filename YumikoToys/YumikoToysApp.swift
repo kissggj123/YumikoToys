@@ -30,7 +30,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     nonisolated func applicationDidFinishLaunching(_ notification: Notification) {
         Task { @MainActor in
             await initializeApp()
+            
+            // 如果不是系统开机自启动，则显示主界面
+            if !launchedAsLogInItem {
+                showMainWindow()
+            }
         }
+    }
+    
+    /// 检测是否为开机自启动
+    private var launchedAsLogInItem: Bool {
+        guard let event = NSAppleEventManager.shared().currentAppleEvent else {
+            return false
+        }
+        // eventID 'oapp' = 0x6f617070, eventClass 'aevt' = 0x61657674
+        let isOapp = event.eventClass == 0x61657674 && event.eventID == 0x6f617070
+        guard isOapp else { return false }
+        
+        // keyAEPropData 'prpt' = 0x70727074
+        if let propData = event.paramDescriptor(forKeyword: 0x70727074) {
+            // 'lgin' = 0x6c67696e
+            return propData.enumCodeValue == 0x6c67696e
+        }
+        return false
     }
     
     nonisolated func applicationWillTerminate(_ notification: Notification) {

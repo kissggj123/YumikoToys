@@ -143,6 +143,9 @@ final class DependencyContainer: ObservableObject {
         await sentimentInit
         await modelManagementInit
 
+        // 确保在所有异步加载任务完成后重新校准模型状态
+        await modelManagementService.refreshAllStatus()
+
         // 初始化后台学习服务
         let backgroundLearningService = BackgroundLearningService(
             dataStorageService: dataStorageService,
@@ -251,26 +254,25 @@ enum WindowType: String, CaseIterable {
     
     var defaultSize: NSSize {
         switch self {
-        case .main: return NSSize(width: 450, height: 700)
-        case .settings: return NSSize(width: 450, height: 500)
+        case .main: return NSSize(width: 560, height: 720)
+        case .settings: return NSSize(width: 500, height: 720)
         case .anniversaryManager: return NSSize(width: 540, height: 500)
-        case .changelog: return NSSize(width: 450, height: 500)
+        case .changelog: return NSSize(width: 460, height: 550)
         case .about: return NSSize(width: 350, height: 450)
-        case .aiChat: return NSSize(width: 780, height: 600)
+        case .aiChat: return NSSize(width: 800, height: 600)
         }
     }
     
     var styleMask: NSWindow.StyleMask {
         switch self {
-        case .main: return [.titled, .closable, .miniaturizable, .resizable]
-        case .aiChat: return [.titled, .closable, .miniaturizable, .resizable]
-        default: return [.titled, .closable]
+        case .main: return [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        case .aiChat: return [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        default: return [.titled, .closable, .fullSizeContentView]
         }
     }
 }
 
 /// 窗口管理器
-// 👈【并发安全重构】：整体将 WindowManager 声明在 @MainActor 隔离区中，确保 UI 线程操作数据绝对安全
 @MainActor
 final class WindowManager {
     
@@ -278,6 +280,33 @@ final class WindowManager {
     
     fileprivate var windows: [WindowType: NSWindow] = [:]
     private let windowQueue = DispatchQueue(label: "com.yumikotoys.windowmanager", qos: .userInteractive)
+    private var cancellables = Set<AnyCancellable>()
+    
+    init() {
+        setupThemeObserver()
+    }
+    
+    private func setupThemeObserver() {
+        // 延迟监听以确保 settingsService 完全就绪
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            DependencyContainer.shared.settingsService.settingsPublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] settings in
+                    self?.updateAllWindowsTheme(settings.selectedThemeColor)
+                }
+                .store(in: &self.cancellables)
+        }
+    }
+    
+    func updateAllWindowsTheme(_ themeColor: ThemeColor) {
+        for window in windows.values {
+            window.backgroundColor = themeColor.nsBackgroundColor
+            window.appearance = themeColor.isDarkTheme ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+            window.hasShadow = true
+            window.invalidateShadow()
+        }
+    }
     
     // MARK: - Window Management
     
@@ -312,9 +341,17 @@ final class WindowManager {
                 return
             }
             
+            // 使用窗口类型的默认尺寸并限制不能大于屏幕工作区（留出一些边距）
+            let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+            let maxWidth = screenFrame.width - 40
+            let maxHeight = screenFrame.height - 40
+            
+            let targetWidth = min(type.defaultSize.width, maxWidth)
+            let targetHeight = min(type.defaultSize.height, maxHeight)
+            
             // 创建新窗口
             let window = NSWindow(
-                contentRect: NSRect(origin: .zero, size: type.defaultSize),
+                contentRect: NSRect(origin: .zero, size: NSSize(width: targetWidth, height: targetHeight)),
                 styleMask: type.styleMask,
                 backing: .buffered,
                 defer: false
@@ -322,6 +359,7 @@ final class WindowManager {
             
             window.title = type.title
             window.contentView = view
+            
             window.center()
             window.isReleasedWhenClosed = false
             window.delegate = WindowDelegate.shared
@@ -330,18 +368,31 @@ final class WindowManager {
             // 窗口美化设置
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
-            window.styleMask.insert(.fullSizeContentView)
-            window.backgroundColor = NSColor.windowBackgroundColor
+            
+            // 根据主题色设置背景和外观
+            let themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
+            window.backgroundColor = themeColor.nsBackgroundColor
+            window.appearance = themeColor.isDarkTheme ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+            window.hasShadow = true
+            
+            // 设定最小和最大窗口尺寸
+            if type.styleMask.contains(.resizable) {
+                window.contentMinSize = NSSize(width: min(type.defaultSize.width * 0.8, targetWidth),
+                                               height: min(type.defaultSize.height * 0.8, targetHeight))
+            } else {
+                window.contentMinSize = NSSize(width: targetWidth, height: targetHeight)
+                window.contentMaxSize = NSSize(width: targetWidth, height: targetHeight)
+            }
             
             // 配置标题栏按钮样式
             if let closeButton = window.standardWindowButton(.closeButton) {
                 closeButton.isHidden = false
             }
             if let miniaturizeButton = window.standardWindowButton(.miniaturizeButton) {
-                miniaturizeButton.isHidden = type != .main
+                miniaturizeButton.isHidden = !type.styleMask.contains(.miniaturizable)
             }
             if let zoomButton = window.standardWindowButton(.zoomButton) {
-                zoomButton.isHidden = type != .main
+                zoomButton.isHidden = !type.styleMask.contains(.resizable)
             }
             
             self.windows[type] = window
@@ -387,8 +438,6 @@ final class WindowManager {
 // MARK: - Window Delegate
 
 /// 窗口代理
-// 👈【并发安全重构】：整体将 WindowDelegate 声明在 @MainActor 隔离区中
-// 彻底解决由于 AppKit 代理闭包非隔离导致读取 DependencyContainer.shared 报数据竞争的问题
 @MainActor
 private class WindowDelegate: NSObject, NSWindowDelegate {
     static let shared = WindowDelegate()

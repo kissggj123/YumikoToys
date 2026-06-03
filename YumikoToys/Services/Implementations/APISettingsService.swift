@@ -37,8 +37,16 @@ final class APISettingsService: APISettingsServiceProtocol {
         let sentEstimate = estimateTokenCount(sent)
         let receivedEstimate = estimateTokenCount(received)
 
+        // 更新当前提供商的 Token
+        var currentConfig = settings.currentConfig
+        currentConfig.sentTokens += sentEstimate
+        currentConfig.receivedTokens += receivedEstimate
+        settings.currentConfig = currentConfig
+
+        // 同时也更新全局的 Token 作为总计
         settings.estimatedSentTokens += sentEstimate
         settings.estimatedReceivedTokens += receivedEstimate
+        
         Task { await saveSettings() }
 
         return (sentEstimate, receivedEstimate)

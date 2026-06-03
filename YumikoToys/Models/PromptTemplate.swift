@@ -43,7 +43,7 @@ struct PromptVariable: Codable, Identifiable, Hashable {
 
 /// 提示词模板模型
 @Model
-final class PromptTemplate: Identifiable, Hashable {
+final class PromptTemplate {
     @Attribute(.unique) let id: UUID
     let name: String
     let template: String
@@ -52,17 +52,14 @@ final class PromptTemplate: Identifiable, Hashable {
     let createdAt: Date
     let updatedAt: Date
 
-    // 使用原始值存储枚举和复杂类型
     private var categoryRawValue: String
     private var variablesData: Data
 
-    /// 分类（计算属性）
     var category: PromptCategory {
         get { PromptCategory(rawValue: categoryRawValue) ?? .custom }
         set { categoryRawValue = newValue.rawValue }
     }
 
-    /// 变量列表（计算属性）
     var variables: [PromptVariable] {
         get {
             (try? JSONDecoder().decode([PromptVariable].self, from: variablesData)) ?? []
@@ -92,9 +89,6 @@ final class PromptTemplate: Identifiable, Hashable {
         self.updatedAt = Date()
     }
 
-    // MARK: - 核心方法
-
-    /// 应用变量到模板
     func apply(variables: [String: String]) -> String {
         var result = template
         for (key, value) in variables {
@@ -103,7 +97,6 @@ final class PromptTemplate: Identifiable, Hashable {
         return result
     }
 
-    /// 验证变量是否完整
     func validate(variables: [String: String]) -> Bool {
         for variable in self.variables where variable.isRequired {
             if variables[variable.name]?.isEmpty ?? true {
@@ -113,11 +106,9 @@ final class PromptTemplate: Identifiable, Hashable {
         return true
     }
 
-    /// 从模板中提取变量名
     func extractVariableNames() -> [String] {
         let pattern = #"\{\{(\w+)\}\}"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
-
         let matches = regex.matches(in: template, range: NSRange(template.startIndex..., in: template))
         return matches.compactMap { match in
             if let range = Range(match.range(at: 1), in: template) {
@@ -126,145 +117,71 @@ final class PromptTemplate: Identifiable, Hashable {
             return nil
         }
     }
+}
 
-    // MARK: - Hashable
+// MARK: - 内置模板
 
-    static func == (lhs: PromptTemplate, rhs: PromptTemplate) -> Bool {
-        lhs.id == rhs.id
-    }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-
-    // MARK: - 内置模板
-
-    static var builtInTemplates: [PromptTemplate] {
-        [
-            // 写作类
-            PromptTemplate(
-                name: "文章润色",
-                category: .writing,
-                template: """
-请对以下文章进行润色和优化：
-
-{{content}}
-
-要求：
-1. 改善语言表达，使其更加流畅自然
-2. 修正语法和拼写错误
-3. 保持原文的核心意思和风格
-4. 适当优化段落结构
-""",
-                variables: [
-                    PromptVariable(name: "content", placeholder: "粘贴需要润色的文章内容", isRequired: true)
-                ],
-                description: "对文章进行润色、优化和纠错",
-                isBuiltIn: true
-            ),
-
-            // 编程类
-            PromptTemplate(
-                name: "代码审查",
-                category: .coding,
-                template: """
-请对以下{{language}}代码进行审查：
-
-```{{language}}
-{{code}}
-```
-
-请从以下方面进行分析：
-1. 代码质量和可读性
-2. 潜在的错误或漏洞
-3. 性能优化建议
-4. 最佳实践建议
-""",
-                variables: [
-                    PromptVariable(name: "language", placeholder: "编程语言，如 Swift、Python", isRequired: true),
-                    PromptVariable(name: "code", placeholder: "粘贴需要审查的代码", isRequired: true)
-                ],
-                description: "审查代码质量并提供改进建议",
-                isBuiltIn: true
-            ),
-
-            // 分析类
-            PromptTemplate(
-                name: "数据分析",
-                category: .analysis,
-                template: """
-请对以下数据进行分析和解读：
-
-{{data}}
-
-分析维度：
-1. 数据概况和关键指标
-2. 趋势和模式识别
-3. 异常值检测
-4. Actionable insights
-""",
-                variables: [
-                    PromptVariable(name: "data", placeholder: "粘贴需要分析的数据", isRequired: true)
-                ],
-                description: "分析数据并提供洞察",
-                isBuiltIn: true
-            ),
-
-            // 翻译类
-            PromptTemplate(
-                name: "专业翻译",
-                category: .translation,
-                template: """
-请将以下文本从{{sourceLanguage}}翻译为{{targetLanguage}}：
-
-{{text}}
-
-要求：
-1. 保持原文的语气和风格
-2. 使用地道自然的表达
-3. 专业术语准确
-4. 如有歧义，提供备选翻译
-""",
-                variables: [
-                    PromptVariable(name: "sourceLanguage", placeholder: "源语言", isRequired: true),
-                    PromptVariable(name: "targetLanguage", placeholder: "目标语言", isRequired: true),
-                    PromptVariable(name: "text", placeholder: "需要翻译的文本", isRequired: true)
-                ],
-                description: "提供专业准确的翻译服务",
-                isBuiltIn: true
-            ),
-
-            // 创意类
-            PromptTemplate(
-                name: "头脑风暴",
-                category: .creative,
-                template: """
-请围绕以下主题进行头脑风暴：
-
-主题：{{topic}}
-
-背景信息：{{context}}
-
-请提供：
-1. 10个创意点子
-2. 每个点子的简要说明
-3. 可行性评估
-4. 潜在风险和应对策略
-""",
-                variables: [
-                    PromptVariable(name: "topic", placeholder: "头脑风暴主题", isRequired: true),
-                    PromptVariable(name: "context", placeholder: "相关背景信息（可选）", isRequired: false)
-                ],
-                description: "围绕主题进行创意头脑风暴",
-                isBuiltIn: true
-            )
-        ]
-    }
+func builtInPromptTemplates() -> [PromptTemplate] {
+    [
+        PromptTemplate(
+            name: "文章润色",
+            category: .writing,
+            template: "请对以下文章进行润色和优化：\n\n{{content}}\n\n要求：\n1. 改善语言表达，使其更加流畅自然\n2. 修正语法和拼写错误\n3. 保持原文的核心意思和风格\n4. 适当优化段落结构\n",
+            variables: [
+                PromptVariable(name: "content", placeholder: "粘贴需要润色的文章内容", isRequired: true)
+            ],
+            description: "对文章进行润色、优化和纠错",
+            isBuiltIn: true
+        ),
+        PromptTemplate(
+            name: "代码审查",
+            category: .coding,
+            template: "请对以下{{language}}代码进行审查：\n\n```{{language}}\n{{code}}\n```\n\n请从以下方面进行分析：\n1. 代码质量和可读性\n2. 潜在的错误或漏洞\n3. 性能优化建议\n4. 最佳实践建议\n",
+            variables: [
+                PromptVariable(name: "language", placeholder: "编程语言，如 Swift、Python", isRequired: true),
+                PromptVariable(name: "code", placeholder: "粘贴需要审查的代码", isRequired: true)
+            ],
+            description: "审查代码质量并提供改进建议",
+            isBuiltIn: true
+        ),
+        PromptTemplate(
+            name: "数据分析",
+            category: .analysis,
+            template: "请对以下数据进行分析和解读：\n\n{{data}}\n\n分析维度：\n1. 数据概况和关键指标\n2. 趋势和模式识别\n3. 异常值检测\n4. Actionable insights\n",
+            variables: [
+                PromptVariable(name: "data", placeholder: "粘贴需要分析的数据", isRequired: true)
+            ],
+            description: "分析数据并提供洞察",
+            isBuiltIn: true
+        ),
+        PromptTemplate(
+            name: "专业翻译",
+            category: .translation,
+            template: "请将以下文本从{{sourceLanguage}}翻译为{{targetLanguage}}：\n\n{{text}}\n\n要求：\n1. 保持原文的语气和风格\n2. 使用地道自然的表达\n3. 专业术语准确\n4. 如有歧义，提供备选翻译\n",
+            variables: [
+                PromptVariable(name: "sourceLanguage", placeholder: "源语言", isRequired: true),
+                PromptVariable(name: "targetLanguage", placeholder: "目标语言", isRequired: true),
+                PromptVariable(name: "text", placeholder: "需要翻译的文本", isRequired: true)
+            ],
+            description: "提供专业准确的翻译服务",
+            isBuiltIn: true
+        ),
+        PromptTemplate(
+            name: "头脑风暴",
+            category: .creative,
+            template: "请围绕以下主题进行头脑风暴：\n\n主题：{{topic}}\n\n背景信息：{{context}}\n\n请提供：\n1. 10个创意点子\n2. 每个点子的简要说明\n3. 可行性评估\n4. 潜在风险和应对策略\n",
+            variables: [
+                PromptVariable(name: "topic", placeholder: "头脑风暴主题", isRequired: true),
+                PromptVariable(name: "context", placeholder: "相关背景信息（可选）", isRequired: false)
+            ],
+            description: "围绕主题进行创意头脑风暴",
+            isBuiltIn: true
+        )
+    ]
 }
 
 // MARK: - 数据传输对象
 
-/// 用于 Codable 持久化的数据结构
 struct PromptTemplateData: Codable {
     let id: UUID
     let name: String
@@ -298,5 +215,64 @@ struct PromptTemplateData: Codable {
             description: description,
             isBuiltIn: isBuiltIn
         )
+    }
+}
+
+// MARK: - Prompt Template Service
+
+@MainActor
+final class PromptTemplateService: ObservableObject {
+    @Published var selectedCategory: PromptCategory?
+    @Published var searchText: String = ""
+
+    private var modelContext: ModelContext?
+
+    init() {}
+
+    func configure(modelContext: ModelContext) {
+        self.modelContext = modelContext
+    }
+
+    var filteredTemplates: [PromptTemplate] {
+        var results: [PromptTemplate]
+
+        if let modelContext = modelContext {
+            let descriptor = FetchDescriptor<PromptTemplate>()
+            if let all = try? modelContext.fetch(descriptor) {
+                results = all
+            } else {
+                results = []
+            }
+        } else {
+            results = []
+        }
+
+        if let category = selectedCategory {
+            results = results.filter { $0.category == category }
+        }
+
+        if !searchText.isEmpty {
+            let query = searchText.lowercased()
+            results = results.filter {
+                $0.name.lowercased().contains(query) ||
+                $0.templateDescription.lowercased().contains(query)
+            }
+        }
+
+        return results.sorted { $0.name < $1.name }
+    }
+
+    func isFavorite(_ template: PromptTemplate) -> Bool {
+        return false
+    }
+
+    func toggleFavorite(_ template: PromptTemplate) {}
+
+    func apply(template: PromptTemplate, variables: [String: String]) -> String {
+        var result = template.template
+        for (key, value) in variables {
+            result = result.replacingOccurrences(of: "{{\(key)}}", with: value)
+        }
+        return result
     }
 }

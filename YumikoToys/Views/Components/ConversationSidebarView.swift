@@ -2,25 +2,105 @@
 //  ConversationSidebarView.swift
 //  YumikoToys
 //
-//  对话列表侧边栏（可爱像素风格 - 支持右键重命名与删除版）
+//  对话列表侧边栏（可爱像素风格 - 支持右键重命名与删除版 - 深度主题化适配）
 //
 
 import SwiftUI
 
 struct ConversationSidebarView: View {
     @ObservedObject var conversationService: ConversationService
+    let chatMode: ChatMode
+    let themeColor: ThemeColor
     let onSelectConversation: (UUID) -> Void
     let onNewConversation: () -> Void
     let onDeleteConversation: (UUID) -> Void
-    let onRenameConversation: (UUID, String) -> Void // 👈 新增重命名回调接口
+    let onRenameConversation: (UUID, String) -> Void
 
     @State private var hoveredConversationId: UUID?
     @State private var showDeleteConfirmation: UUID?
     
-    // MARK: - 重命名交互状态 [1]
+    // MARK: - 重命名交互状态
     @State private var showingRenameAlert = false
     @State private var conversationToRename: UUID?
     @State private var newConversationTitle = ""
+
+    private var filteredConversations: [Conversation] {
+        conversationService.conversations.filter { ($0.chatMode ?? .petCompanion) == chatMode }
+    }
+
+    // MARK: - 主题颜色计算属性
+    
+    private var sidebarBackgroundColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.backgroundColor
+        case .aiAssistant:
+            return Color(hex: "0A0F0D")
+        }
+    }
+    
+    private var dividerColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.dividerColor
+        case .aiAssistant:
+            return Color(hex: "059669").opacity(0.15)
+        }
+    }
+    
+    private var headerTextColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.textColor
+        case .aiAssistant:
+            return Color(hex: "E6F4EA")
+        }
+    }
+    
+    private var badgeTextColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.secondaryTextColor
+        case .aiAssistant:
+            return Color(hex: "81C784").opacity(0.8)
+        }
+    }
+    
+    private var badgeBackgroundColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.textColor.opacity(0.06)
+        case .aiAssistant:
+            return Color.white.opacity(0.05)
+        }
+    }
+    
+    private var newBtnColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.accentColor
+        case .aiAssistant:
+            return Color(hex: "059669")
+        }
+    }
+    
+    private var footerIconColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.accentColor.opacity(0.6)
+        case .aiAssistant:
+            return Color(hex: "059669").opacity(0.6)
+        }
+    }
+    
+    private var footerTextColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.secondaryTextColor
+        case .aiAssistant:
+            return Color.gray.opacity(0.8)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,19 +108,19 @@ struct ConversationSidebarView: View {
             headerView
 
             Divider()
-                .background(Color.white.opacity(0.05))
+                .background(dividerColor)
 
             // 对话列表
             conversationList
 
             Divider()
-                .background(Color.white.opacity(0.05))
+                .background(dividerColor)
 
             // 底部信息
             footerView
         }
-        .background(Color(hex: "141418"))
-        // 【核心新增】重命名对话的原生输入弹窗 [1]
+        .background(sidebarBackgroundColor)
+        // 重命名对话的原生输入弹窗
         .alert("重命名对话", isPresented: $showingRenameAlert) {
             TextField("对话新标题", text: $newConversationTitle)
             
@@ -70,28 +150,28 @@ struct ConversationSidebarView: View {
         HStack(spacing: 8) {
             Text("💬 对话")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(headerTextColor)
 
             Spacer()
 
-            Text("\(conversationService.conversations.count)")
+            Text("\(filteredConversations.count)")
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(badgeTextColor)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.05))
+                        .fill(badgeBackgroundColor)
                 )
 
             Button(action: onNewConversation) {
                 Image(systemName: "plus.message")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color(hex: "FF6B9D"))
+                    .foregroundStyle(newBtnColor)
                     .frame(width: 24, height: 24)
                     .background(
                         Circle()
-                            .fill(Color(hex: "FF6B9D").opacity(0.1))
+                            .fill(newBtnColor.opacity(0.1))
                     )
             }
             .buttonStyle(.plain)
@@ -106,7 +186,7 @@ struct ConversationSidebarView: View {
     private var conversationList: some View {
         ScrollView {
             LazyVStack(spacing: 2) {
-                ForEach(conversationService.conversations) { conversation in
+                ForEach(filteredConversations) { conversation in
                     let isConfirming = showDeleteConfirmation == conversation.id
                     
                     ConversationRow(
@@ -114,6 +194,8 @@ struct ConversationSidebarView: View {
                         isSelected: conversation.id == conversationService.currentConversationId,
                         isHovered: hoveredConversationId == conversation.id,
                         isConfirmingDelete: isConfirming,
+                        themeColor: themeColor,
+                        chatMode: chatMode,
                         onTap: { onSelectConversation(conversation.id) },
                         onDelete: {
                             if showDeleteConfirmation == conversation.id {
@@ -156,11 +238,11 @@ struct ConversationSidebarView: View {
         HStack(spacing: 4) {
             Image(systemName: "sparkles")
                 .font(.system(size: 9))
-                .foregroundStyle(Color(hex: "FF6B9D").opacity(0.6))
+                .foregroundStyle(footerIconColor)
 
             Text("AI 驱动 · 本地记忆")
                 .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(footerTextColor)
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
@@ -174,10 +256,68 @@ private struct ConversationRow: View {
     let isSelected: Bool
     let isHovered: Bool
     let isConfirmingDelete: Bool
+    let themeColor: ThemeColor
+    let chatMode: ChatMode
     let onTap: () -> Void
     let onDelete: () -> Void
     let onRightClickDelete: () -> Void
-    let onRename: () -> Void // 👈 新增重命名回调
+    let onRename: () -> Void
+
+    private var titleColor: Color {
+        if isSelected {
+            switch chatMode {
+            case .petCompanion:
+                return themeColor.textColor
+            case .aiAssistant:
+                return .white
+            }
+        } else {
+            switch chatMode {
+            case .petCompanion:
+                return themeColor.secondaryTextColor
+            case .aiAssistant:
+                return .gray
+            }
+        }
+    }
+    
+    private var metaColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.secondaryTextColor.opacity(0.8)
+        case .aiAssistant:
+            return .gray.opacity(0.8)
+        }
+    }
+    
+    private var selectedCircleColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.accentColor.opacity(0.15)
+        case .aiAssistant:
+            return Color(hex: "059669").opacity(0.15)
+        }
+    }
+    
+    private var rowBgColor: Color {
+        if isSelected {
+            switch chatMode {
+            case .petCompanion:
+                return themeColor.accentColor.opacity(0.08)
+            case .aiAssistant:
+                return Color(hex: "059669").opacity(0.08)
+            }
+        } else if isHovered {
+            switch chatMode {
+            case .petCompanion:
+                return themeColor.textColor.opacity(0.04)
+            case .aiAssistant:
+                return Color.white.opacity(0.03)
+            }
+        } else {
+            return .clear
+        }
+    }
 
     var body: some View {
         Button(action: onTap) {
@@ -186,7 +326,7 @@ private struct ConversationRow: View {
                 ZStack {
                     Circle()
                         .fill(isSelected
-                            ? AnyShapeStyle(Color(hex: "FF6B9D").opacity(0.15))
+                            ? AnyShapeStyle(selectedCircleColor)
                             : AnyShapeStyle(Color.clear))
                         .frame(width: 32, height: 32)
 
@@ -198,18 +338,18 @@ private struct ConversationRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(conversation.title)
                         .font(.system(size: 12, weight: isSelected ? .medium : .regular))
-                        .foregroundStyle(isSelected ? .white : .primary)
+                        .foregroundStyle(titleColor)
                         .lineLimit(1)
 
                     HStack(spacing: 4) {
                         Text(conversation.formattedUpdateTime)
                             .font(.system(size: 10))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(metaColor)
 
                         if conversation.messageCount > 0 {
                             Text("· \(conversation.messageCount)条")
                                 .font(.system(size: 10))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(metaColor)
                         }
                     }
                 }
@@ -234,16 +374,12 @@ private struct ConversationRow: View {
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected
-                        ? AnyShapeStyle(Color(hex: "FF6B9D").opacity(0.08))
-                        : isHovered
-                            ? AnyShapeStyle(Color.white.opacity(0.03))
-                            : AnyShapeStyle(Color.clear))
+                    .fill(AnyShapeStyle(rowBgColor))
             )
         }
         .buttonStyle(.plain)
         .contextMenu {
-            // 【核心新增】右键菜单中增加重命名按钮 [1]
+            // 右键菜单中增加重命名按钮
             Button(action: onRename) {
                 Label("重命名", systemImage: "pencil")
             }

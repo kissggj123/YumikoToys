@@ -15,9 +15,95 @@ struct CopyableMessageBubble: View {
     // 👈【核心新增】：支持从主视图传入当前激活的用户像素头像属性，解决头像不同步问题
     let userAvatarEmoji: String?
     let userAvatarPath: String?
+    
+    let chatMode: ChatMode
+    let themeColor: ThemeColor
 
     @State private var isHovered = false
     @State private var showCopied = false
+
+    // MARK: - 主题相关的色彩属性
+    
+    private var userBubbleColors: [Color] {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.iconGradient
+        case .aiAssistant:
+            return [Color(hex: "059669"), Color(hex: "0891B2")]
+        }
+    }
+    
+    private var userBubbleShadowColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.accentColor.opacity(0.25)
+        case .aiAssistant:
+            return Color(hex: "059669").opacity(0.25)
+        }
+    }
+    
+    private var assistantBorderColors: [Color] {
+        switch chatMode {
+        case .petCompanion:
+            return [themeColor.accentColor.opacity(0.2), Color(hex: "22D3EE").opacity(0.15)]
+        case .aiAssistant:
+            return [Color(hex: "059669").opacity(0.2), Color(hex: "0891B2").opacity(0.15)]
+        }
+    }
+    
+    private var userAvatarBgColors: [Color] {
+        switch chatMode {
+        case .petCompanion:
+            return [Color(hex: "FFE4EC"), Color(hex: "E8D6FF")]
+        case .aiAssistant:
+            return [Color(hex: "0E1A16"), Color(hex: "0A0F0D")]
+        }
+    }
+    
+    private var userAvatarBorderColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.accentColor.opacity(0.3)
+        case .aiAssistant:
+            return Color(hex: "059669").opacity(0.3)
+        }
+    }
+    
+    private var userAvatarShadowColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return themeColor.accentColor.opacity(0.15)
+        case .aiAssistant:
+            return Color(hex: "059669").opacity(0.15)
+        }
+    }
+    
+    private var aiAvatarBgColors: [Color] {
+        switch chatMode {
+        case .petCompanion:
+            return [Color(hex: "FFE4EC"), Color(hex: "E8D6FF")]
+        case .aiAssistant:
+            return [Color(hex: "0E1A16"), Color(hex: "0A0F0D")]
+        }
+    }
+    
+    private var aiAvatarBorderColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return Color(hex: "FF6B9D").opacity(0.3)
+        case .aiAssistant:
+            return Color(hex: "059669").opacity(0.3)
+        }
+    }
+    
+    private var aiAvatarShadowColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return Color(hex: "FF6B9D").opacity(0.15)
+        case .aiAssistant:
+            return Color(hex: "059669").opacity(0.15)
+        }
+    }
 
     private var isUser: Bool {
         message.role == "user"
@@ -40,31 +126,42 @@ struct CopyableMessageBubble: View {
         let formattedContent = isStructured ? formattedMarkdownContent : ""
 
         HStack(alignment: .top, spacing: 12) {
+            if isUser {
+                Spacer(minLength: 40)
+            }
+
             // AI 头像（仅 AI 消息显示）
             if !isUser {
-                BubblePixelAvatarView(emoji: aiAvatarEmoji, size: 36)
-                    .padding(.top, 4)
+                BubblePixelAvatarView(
+                    emoji: aiAvatarEmoji,
+                    size: 36,
+                    bgColors: aiAvatarBgColors,
+                    borderColor: aiAvatarBorderColor,
+                    shadowColor: aiAvatarShadowColor
+                )
+                .padding(.top, 4)
             }
 
             // 消息内容区
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: isUser ? .trailing : .leading, spacing: 8) {
                 // 结构化思考链
                 if let thinking = message.thinkingContent, !thinking.isEmpty {
                     BubbleThinkingProcessView(
                         thinkingContent: thinking,
                         duration: nil,
-                        hasSearchSources: message.searchSources != nil && !(message.searchSources?.isEmpty ?? true)
+                        hasSearchSources: message.searchSources != nil && !(message.searchSources?.isEmpty ?? true),
+                        chatMode: chatMode
                     )
                 }
 
                 // 搜索来源
                 if let sources = message.searchSources, !sources.isEmpty {
-                    SearchSourcesView(sources: sources)
+                    SearchSourcesView(sources: sources, chatMode: chatMode)
                 }
 
                 // 分流渲染普通内容与 Agent 步骤，消灭空白气泡
                 if message.isAgentStep {
-                    BubbleAgentStepView(content: message.content)
+                    BubbleAgentStepView(content: message.content, chatMode: chatMode)
                 } else {
                     if !displayedContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         messageContentView(isStructured: isStructured, formattedContent: formattedContent)
@@ -76,20 +173,36 @@ struct CopyableMessageBubble: View {
             if isUser {
                 Group {
                     if let emoji = userAvatarEmoji {
-                        // 使用带粉色渐变和像素描边的圆形头像框渲染用户 Emoji
-                        BubblePixelAvatarView(emoji: emoji, size: 36)
+                        // 使用带主题色渐变和像素描边的圆形头像框渲染用户 Emoji
+                        BubblePixelAvatarView(
+                            emoji: emoji,
+                            size: 36,
+                            bgColors: userAvatarBgColors,
+                            borderColor: userAvatarBorderColor,
+                            shadowColor: userAvatarShadowColor
+                        )
                     } else if let path = userAvatarPath, let image = NSImage(contentsOfFile: path) {
                         Image(nsImage: image)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: 36, height: 36)
                             .clipShape(Circle())
-                            .overlay(Circle().stroke(Color(hex: "FF6B9D").opacity(0.3), lineWidth: 2))
+                            .overlay(Circle().stroke(userAvatarBorderColor, lineWidth: 2))
                     } else {
-                        BubblePixelAvatarView(emoji: "👤", size: 36)
+                        BubblePixelAvatarView(
+                            emoji: "👤",
+                            size: 36,
+                            bgColors: userAvatarBgColors,
+                            borderColor: userAvatarBorderColor,
+                            shadowColor: userAvatarShadowColor
+                        )
                     }
                 }
                 .padding(.top, 4)
+            }
+
+            if !isUser {
+                Spacer(minLength: 40)
             }
         }
         .onHover { isHovered = $0 }
@@ -106,7 +219,7 @@ struct CopyableMessageBubble: View {
     @ViewBuilder
     private func messageContentView(isStructured: Bool, formattedContent: String) -> some View {
         if isUser {
-            VStack(alignment: .trailing, spacing: 4) {
+            VStack(alignment: .leading, spacing: 4) {
                 if isStructured {
                     Markdown(formattedContent)
                         .markdownTheme(.gitHub)
@@ -116,6 +229,7 @@ struct CopyableMessageBubble: View {
                     Text(displayedContent)
                         .font(.system(size: 14))
                         .foregroundStyle(.white)
+                        .lineLimit(nil)
                 }
             }
             .padding(.horizontal, 16)
@@ -124,13 +238,14 @@ struct CopyableMessageBubble: View {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
-                            colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                            colors: userBubbleColors,
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .shadow(color: Color(hex: "FF6B9D").opacity(0.25), radius: 8, x: 0, y: 4)
+                    .shadow(color: userBubbleShadowColor, radius: 8, x: 0, y: 4)
             )
+            .frame(maxWidth: 680, alignment: .trailing)
         } else {
             VStack(alignment: .leading, spacing: 8) {
                 if isStructured {
@@ -141,11 +256,11 @@ struct CopyableMessageBubble: View {
                     Text(displayedContent)
                         .font(.system(size: 14))
                         .foregroundStyle(.primary)
+                        .lineLimit(nil)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .frame(maxWidth: 680, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.primary.opacity(0.04))
@@ -153,7 +268,7 @@ struct CopyableMessageBubble: View {
                         RoundedRectangle(cornerRadius: 18)
                             .stroke(
                                 LinearGradient(
-                                    colors: [Color(hex: "FF6B9D").opacity(0.2), Color(hex: "22D3EE").opacity(0.15)],
+                                    colors: assistantBorderColors,
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -161,6 +276,7 @@ struct CopyableMessageBubble: View {
                             )
                     )
             )
+            .frame(maxWidth: 680, alignment: .leading)
         }
     }
 
@@ -242,22 +358,25 @@ struct CopyableMessageBubble: View {
 struct BubblePixelAvatarView: View {
     let emoji: String
     let size: CGFloat
+    let bgColors: [Color]
+    let borderColor: Color
+    let shadowColor: Color
 
     var body: some View {
         ZStack {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color(hex: "FFE4EC"), Color(hex: "E8D6FF")],
+                        colors: bgColors,
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .frame(width: size, height: size)
-                .shadow(color: Color(hex: "FF6B9D").opacity(0.15), radius: 4, x: 0, y: 2)
+                .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
 
             Circle()
-                .stroke(Color(hex: "FF6B9D").opacity(0.3), lineWidth: 2)
+                .stroke(borderColor, lineWidth: 2)
                 .frame(width: size, height: size)
 
             Text(emoji)
@@ -272,10 +391,20 @@ struct BubbleThinkingProcessView: View {
     let thinkingContent: String
     let duration: TimeInterval?
     let hasSearchSources: Bool
+    let chatMode: ChatMode
 
     @State private var isExpanded = false
     @State private var isPulsing = false
     @State private var cooldownWorkItem: DispatchWorkItem? = nil
+
+    private var accentColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return Color(hex: "8B5CF6")
+        case .aiAssistant:
+            return Color(hex: "059669")
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -288,11 +417,11 @@ struct BubbleThinkingProcessView: View {
 
                     Text(isPulsing ? (hasSearchSources ? "正在检索并消化网络数据..." : "深度思考中...") : (hasSearchSources ? "全网检索剖面" : "深度思考过程"))
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color(hex: "8B5CF6"))
+                        .foregroundStyle(accentColor)
 
                     if isPulsing {
                         Circle()
-                            .fill(Color(hex: "8B5CF6"))
+                            .fill(accentColor)
                             .frame(width: 5, height: 5)
                             .scaleEffect(isPulsing ? 1.4 : 1.0)
                             .opacity(isPulsing ? 0.8 : 0.4)
@@ -309,13 +438,13 @@ struct BubbleThinkingProcessView: View {
 
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(Color(hex: "8B5CF6"))
+                        .foregroundStyle(accentColor)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(hex: "8B5CF6").opacity(0.08))
+                        .fill(accentColor.opacity(0.08))
                 )
             }
             .buttonStyle(.plain)
@@ -341,7 +470,7 @@ struct BubbleThinkingProcessView: View {
                             .fill(Color.primary.opacity(0.02))
                     )
                     .transition(.opacity.combined(with: .move(edge: .top)))
-                    .onChange(of: thinkingContent) { newValue in
+                    .onChange(of: thinkingContent) { _, newValue in
                         if isPulsing {
                             withAnimation(.easeOut(duration: 0.15)) {
                                 scrollView.scrollTo("bottom_anchor", anchor: .bottom)
@@ -353,9 +482,9 @@ struct BubbleThinkingProcessView: View {
         }
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "8B5CF6").opacity(0.15), lineWidth: 1)
+                .stroke(accentColor.opacity(0.15), lineWidth: 1)
         )
-        .onChange(of: thinkingContent) { newValue in
+        .onChange(of: thinkingContent) { _, newValue in
             if !newValue.isEmpty {
                 if !isExpanded {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -390,7 +519,17 @@ struct BubbleThinkingProcessView: View {
 
 struct BubbleAgentStepView: View {
     let content: String
+    let chatMode: ChatMode
     @State private var isExpanded = false
+
+    private var accentColor: Color {
+        switch chatMode {
+        case .petCompanion:
+            return Color(hex: "8B5CF6")
+        case .aiAssistant:
+            return Color(hex: "059669")
+        }
+    }
 
     private var extractedContent: (prefix: String, json: String) {
         if let jsonStart = content.firstIndex(of: "{") {
@@ -450,7 +589,7 @@ struct BubbleAgentStepView: View {
 
                     Text(parsedHeader.title)
                         .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color(hex: "8B5CF6"))
+                        .foregroundStyle(accentColor)
 
                     if !parsedHeader.subtitle.isEmpty {
                         Text("· \(parsedHeader.subtitle)")
@@ -463,13 +602,13 @@ struct BubbleAgentStepView: View {
 
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(Color(hex: "8B5CF6"))
+                        .foregroundStyle(accentColor)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(hex: "8B5CF6").opacity(0.08))
+                        .fill(accentColor.opacity(0.08))
                 )
             }
             .buttonStyle(.plain)
@@ -488,55 +627,8 @@ struct BubbleAgentStepView: View {
         }
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "8B5CF6").opacity(0.15), lineWidth: 1)
+                .stroke(accentColor.opacity(0.15), lineWidth: 1)
         )
         .frame(maxWidth: 680, alignment: .leading)
-    }
-}
-
-// MARK: - Flow Layout
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
-        return result.size
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
-        for (index, subview) in subviews.enumerated() {
-            subview.place(at: CGPoint(x: bounds.minX + result.positions[index].x,
-                                      y: bounds.minY + result.positions[index].y),
-                         proposal: .unspecified)
-        }
-    }
-
-    struct FlowResult {
-        var size: CGSize = .zero
-        var positions: [CGPoint] = []
-
-        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
-            var x: CGFloat = 0
-            var y: CGFloat = 0
-            var rowHeight: CGFloat = 0
-
-            for subview in subviews {
-                let size = subview.sizeThatFits(.unspecified)
-
-                if x + size.width > maxWidth, x > 0 {
-                    x = 0
-                    y += rowHeight + spacing
-                    rowHeight = 0
-                }
-
-                positions.append(CGPoint(x: x, y: y))
-                rowHeight = max(rowHeight, size.height)
-                x += size.width + spacing
-            }
-
-            self.size = CGSize(width: maxWidth, height: y + rowHeight)
-        }
     }
 }

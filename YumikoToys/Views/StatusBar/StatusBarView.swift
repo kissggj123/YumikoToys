@@ -18,6 +18,7 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     case ocean      // 海洋蓝
     case sunset     // 日落橙
     case pixel      // 像素复古
+    case custom     // 自定义主题
     
     var id: String { rawValue }
     
@@ -30,6 +31,7 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         case .ocean: return "海洋"
         case .sunset: return "日落"
         case .pixel: return "像素"
+        case .custom: return "自定义"
         }
     }
     
@@ -42,7 +44,44 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         case .ocean: return "water.waves"
         case .sunset: return "sun.max.fill"
         case .pixel: return "gamecontroller.fill"
+        case .custom: return "paintpalette.fill"
         }
+    }
+    
+    // MARK: - 自定义颜色解析
+    
+    private static func getRGB(from hex: String) -> (r: Double, g: Double, b: Double) {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+        var rgb: UInt64 = 0
+        Scanner(string: hexSanitized).scanHexInt64(&rgb)
+        let r = Double((rgb & 0xFF0000) >> 16) / 255.0
+        let g = Double((rgb & 0x00FF00) >> 8) / 255.0
+        let b = Double(rgb & 0x0000FF) / 255.0
+        return (r, g, b)
+    }
+    
+    private static func isCustomLight(for hex: String) -> Bool {
+        let (r, g, b) = getRGB(from: hex)
+        let luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return luminance > 0.65
+    }
+    
+    var customColor: Color {
+        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
+        return Color(hex: hex)
+    }
+    
+    var isCustomLight: Bool {
+        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
+        return Self.isCustomLight(for: hex)
+    }
+    
+    var isCustomDarkBackground: Bool {
+        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
+        let (r, g, b) = Self.getRGB(from: hex)
+        let luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return luminance > 0.45
     }
     
     // MARK: - 基础颜色
@@ -50,19 +89,46 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     var backgroundColor: Color {
         switch self {
         case .dark:
-            return Color(red: 0.11, green: 0.11, blue: 0.12)  // #1c1c1e
+            return Color(red: 0.07, green: 0.07, blue: 0.08)  // #121214 premium dark
         case .pink:
-            return Color(red: 0.98, green: 0.93, blue: 0.94)  // 淡粉色
+            return Color(red: 1.0, green: 0.94, blue: 0.95)  // #FFF0F3 soft sweet pink
         case .lavender:
-            return Color(red: 0.94, green: 0.91, blue: 0.97)  // 薰衣草淡紫
+            return Color(red: 0.95, green: 0.94, blue: 0.99)  // #F3F0FC soft lavender
         case .mint:
-            return Color(red: 0.91, green: 0.97, blue: 0.95)  // 薄荷淡绿
+            return Color(red: 0.94, green: 0.99, blue: 0.96)  // #F0FDF4 crisp mint
         case .ocean:
-            return Color(red: 0.90, green: 0.94, blue: 0.98)  // 海洋淡蓝
+            return Color(red: 0.94, green: 0.98, blue: 1.0)   // #F0F9FF calm aqua
         case .sunset:
-            return Color(red: 0.98, green: 0.94, blue: 0.90)  // 日落暖橙
+            return Color(red: 1.0, green: 0.97, blue: 0.93)  // #FFF7ED warm apricot
         case .pixel:
-            return Color(red: 0.13, green: 0.14, blue: 0.18)  // 像素深灰蓝
+            return Color(red: 0.10, green: 0.10, blue: 0.12)  // retro console dark
+        case .custom:
+            return isCustomDarkBackground
+                ? Color(red: 0.07, green: 0.07, blue: 0.08)
+                : Color(red: 0.97, green: 0.98, blue: 0.99)
+        }
+    }
+    
+    var nsBackgroundColor: NSColor {
+        switch self {
+        case .dark:
+            return NSColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1.0)
+        case .pink:
+            return NSColor(red: 1.0, green: 0.94, blue: 0.95, alpha: 1.0)
+        case .lavender:
+            return NSColor(red: 0.95, green: 0.94, blue: 0.99, alpha: 1.0)
+        case .mint:
+            return NSColor(red: 0.94, green: 0.99, blue: 0.96, alpha: 1.0)
+        case .ocean:
+            return NSColor(red: 0.94, green: 0.98, blue: 1.0, alpha: 1.0)
+        case .sunset:
+            return NSColor(red: 1.0, green: 0.97, blue: 0.93, alpha: 1.0)
+        case .pixel:
+            return NSColor(red: 0.10, green: 0.10, blue: 0.12, alpha: 1.0)
+        case .custom:
+            return isCustomDarkBackground
+                ? NSColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1.0)
+                : NSColor(red: 0.97, green: 0.98, blue: 0.99, alpha: 1.0)
         }
     }
     
@@ -81,7 +147,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         case .sunset:
             return Color(hex: "F59E0B")
         case .pixel:
-            return Color(hex: "22D3EE")  // 像素霓虹青
+            return Color(hex: "22D3EE")
+        case .custom:
+            return customColor
         }
     }
     
@@ -100,87 +168,94 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         case .sunset:
             return [Color(hex: "FCD34D"), Color(hex: "F59E0B")]
         case .pixel:
-            return [Color(hex: "22D3EE"), Color(hex: "A78BFA")]  // 霓虹青到紫
+            return [Color(hex: "22D3EE"), Color(hex: "A78BFA")]
+        case .custom:
+            return [customColor, customColor.opacity(0.7)]
         }
     }
     
     // MARK: - 文字颜色系统
     
-    /// 主要文字颜色 - 高对比度确保可读性
     var textColor: Color {
         switch self {
         case .dark, .pixel:
             return .white
         case .pink:
-            return Color(red: 0.08, green: 0.04, blue: 0.06)  // 更深的粉色
+            return Color(red: 0.25, green: 0.05, blue: 0.12)
         case .lavender:
-            return Color(red: 0.06, green: 0.04, blue: 0.12)  // 更深的紫色
+            return Color(red: 0.18, green: 0.06, blue: 0.40)
         case .mint:
-            return Color(red: 0.04, green: 0.12, blue: 0.08)  // 更深的绿色
+            return Color(red: 0.02, green: 0.31, blue: 0.23)
         case .ocean:
-            return Color(red: 0.04, green: 0.08, blue: 0.15)  // 更深的蓝色
+            return Color(red: 0.05, green: 0.29, blue: 0.43)
         case .sunset:
-            return Color(red: 0.15, green: 0.08, blue: 0.04)  // 更深的棕色
+            return Color(red: 0.49, green: 0.18, blue: 0.07)
+        case .custom:
+            return isCustomDarkBackground
+                ? Color.white
+                : Color(red: 0.06, green: 0.09, blue: 0.16)
         }
     }
-
-    /// 次要文字颜色
+    
     var secondaryTextColor: Color {
         switch self {
         case .dark, .pixel:
-            return .secondary
+            return Color(hex: "9A9AAB")
         case .pink:
-            return Color(red: 0.25, green: 0.15, blue: 0.18)  // 更深的次要粉色
+            return Color(hex: "A75D74")
         case .lavender:
-            return Color(red: 0.22, green: 0.15, blue: 0.32)  // 更深的次要紫色
+            return Color(hex: "6D28D9").opacity(0.8)
         case .mint:
-            return Color(red: 0.15, green: 0.28, blue: 0.2)   // 更深的次要绿色
+            return Color(hex: "047857").opacity(0.8)
         case .ocean:
-            return Color(red: 0.15, green: 0.2, blue: 0.35)   // 更深的次要蓝色
+            return Color(hex: "0369A1").opacity(0.8)
         case .sunset:
-            return Color(red: 0.35, green: 0.2, blue: 0.12)   // 更深的次要棕色
+            return Color(hex: "C2410C").opacity(0.8)
+        case .custom:
+            return isCustomDarkBackground
+                ? Color(hex: "9CA3AF")
+                : Color(hex: "475569")
         }
     }
     
     var cardBackgroundColor: Color {
         switch self {
         case .dark, .pixel:
-            return Color.primary.opacity(0.05)
-        case .pink:
-            return Color(hex: "FFB6C1").opacity(0.2)
-        case .lavender:
-            return Color(hex: "C4B5FD").opacity(0.2)
-        case .mint:
-            return Color(hex: "6EE7B7").opacity(0.2)
-        case .ocean:
-            return Color(hex: "93C5FD").opacity(0.2)
-        case .sunset:
-            return Color(hex: "FCD34D").opacity(0.2)
+            return Color.white.opacity(0.05)
+        case .pink, .lavender, .mint, .ocean, .sunset:
+            return Color.white.opacity(0.6)
+        case .custom:
+            return isCustomDarkBackground
+                ? Color.white.opacity(0.05)
+                : Color.white.opacity(0.6)
         }
     }
     
     var buttonBackgroundColor: Color {
         switch self {
         case .dark, .pixel:
-            return Color.primary.opacity(0.08)
+            return Color.white.opacity(0.08)
         case .pink:
-            return Color(hex: "E85D75").opacity(0.1)
+            return Color(hex: "E85D75").opacity(0.08)
         case .lavender:
-            return Color(hex: "8B5CF6").opacity(0.1)
+            return Color(hex: "8B5CF6").opacity(0.08)
         case .mint:
-            return Color(hex: "10B981").opacity(0.1)
+            return Color(hex: "10B981").opacity(0.08)
         case .ocean:
-            return Color(hex: "3B82F6").opacity(0.1)
+            return Color(hex: "3B82F6").opacity(0.08)
         case .sunset:
-            return Color(hex: "F59E0B").opacity(0.1)
+            return Color(hex: "F59E0B").opacity(0.08)
+        case .custom:
+            return accentColor.opacity(0.08)
         }
     }
     
-    /// 是否为深色主题（影响 NSPopover 外观）
     var isDarkTheme: Bool {
         switch self {
         case .dark, .pixel:
             return true
+        case .custom:
+            return isCustomDarkBackground
         default:
             return false
         }
@@ -188,29 +263,10 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     
     // MARK: - 边框和分割线颜色
     
-    /// 边框颜色
     var borderColor: Color {
         switch self {
         case .dark, .pixel:
-            return Color.white.opacity(0.1)
-        case .pink:
-            return Color(hex: "E85D75").opacity(0.2)
-        case .lavender:
-            return Color(hex: "8B5CF6").opacity(0.2)
-        case .mint:
-            return Color(hex: "10B981").opacity(0.2)
-        case .ocean:
-            return Color(hex: "3B82F6").opacity(0.2)
-        case .sunset:
-            return Color(hex: "F59E0B").opacity(0.2)
-        }
-    }
-    
-    /// 分割线颜色
-    var dividerColor: Color {
-        switch self {
-        case .dark, .pixel:
-            return Color.white.opacity(0.08)
+            return Color.white.opacity(0.12)
         case .pink:
             return Color(hex: "E85D75").opacity(0.15)
         case .lavender:
@@ -221,39 +277,55 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return Color(hex: "3B82F6").opacity(0.15)
         case .sunset:
             return Color(hex: "F59E0B").opacity(0.15)
+        case .custom:
+            return accentColor.opacity(0.15)
+        }
+    }
+    
+    var dividerColor: Color {
+        switch self {
+        case .dark, .pixel:
+            return Color.white.opacity(0.08)
+        case .pink:
+            return Color(hex: "E85D75").opacity(0.12)
+        case .lavender:
+            return Color(hex: "8B5CF6").opacity(0.12)
+        case .mint:
+            return Color(hex: "10B981").opacity(0.12)
+        case .ocean:
+            return Color(hex: "3B82F6").opacity(0.12)
+        case .sunset:
+            return Color(hex: "F59E0B").opacity(0.12)
+        case .custom:
+            return accentColor.opacity(0.12)
         }
     }
     
     // MARK: - 开关和控件颜色
     
-    /// 开关开启颜色
     var toggleOnColor: Color {
         return accentColor
     }
     
-    /// 开关背景颜色
     var toggleBackgroundColor: Color {
         switch self {
         case .dark, .pixel:
             return Color.white.opacity(0.15)
         default:
-            return Color.gray.opacity(0.25)
+            return Color.gray.opacity(0.2)
         }
     }
     
     // MARK: - 按钮样式
     
-    /// 主要按钮背景
     var primaryButtonBackground: Color {
-        return accentColor.opacity(0.15)
+        return accentColor.opacity(0.12)
     }
     
-    /// 主要按钮文字颜色
     var primaryButtonTextColor: Color {
         return accentColor
     }
     
-    /// 次要按钮背景
     var secondaryButtonBackground: Color {
         switch self {
         case .dark, .pixel:
@@ -263,7 +335,6 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         }
     }
     
-    /// 危险按钮文字颜色
     var destructiveButtonColor: Color {
         switch self {
         case .dark, .pixel:
@@ -275,7 +346,6 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     
     // MARK: - 图标和装饰
     
-    /// 图标颜色（非强调色）
     var iconColor: Color {
         switch self {
         case .dark, .pixel:
@@ -285,7 +355,6 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         }
     }
     
-    /// 悬停背景色
     var hoverBackgroundColor: Color {
         switch self {
         case .dark, .pixel:
@@ -399,7 +468,14 @@ struct StatusBarView: View {
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundStyle(themeColor.secondaryTextColor)
 
-            HStack(spacing: 8) {
+            let columns = [
+                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: 8)
+            ]
+            
+            LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(ThemeColor.allCases) { theme in
                     ThemeColorButton(
                         theme: theme,
@@ -409,15 +485,84 @@ struct StatusBarView: View {
                                 themeColor = theme
                                 saveThemeColor(theme)
                             }
-                            // 选择后延迟隐藏
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                    showThemePicker = false
+                            if theme != .custom {
+                                // 选择非自定义主题后延迟隐藏
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                        showThemePicker = false
+                                    }
                                 }
                             }
                         }
                     )
                 }
+            }
+            .padding(.horizontal, 2)
+            
+            // 如果是自定义主题，显示 HEX 输入框和 ColorPicker
+            if themeColor == .custom {
+                VStack(spacing: 8) {
+                    Divider()
+                        .background(themeColor.dividerColor)
+                        .padding(.vertical, 2)
+                    
+                    HStack(spacing: 8) {
+                        Text("自定义 HEX")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(themeColor.textColor)
+                        
+                        Spacer()
+                        
+                        TextField("#HEX", text: Binding(
+                            get: {
+                                DependencyContainer.shared.settingsService.settings.customThemeColorHex
+                            },
+                            set: { newValue in
+                                var hex = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if !hex.hasPrefix("#") && hex.count == 6 {
+                                    hex = "#" + hex
+                                }
+                                let pattern = "^#?[0-9a-fA-F]{6}$"
+                                if hex.range(of: pattern, options: .regularExpression) != nil {
+                                    let cleanHex = hex.replacingOccurrences(of: "#", with: "")
+                                    saveCustomThemeColorHex(cleanHex)
+                                    themeColor = .custom
+                                }
+                            }
+                        ))
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 10, design: .monospaced))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(themeColor.textColor.opacity(0.05))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(themeColor.borderColor, lineWidth: 1)
+                        )
+                        .frame(width: 80)
+                        .foregroundStyle(themeColor.textColor)
+                        
+                        ColorPicker("", selection: Binding(
+                            get: {
+                                themeColor.customColor
+                            },
+                            set: { newColor in
+                                if let hex = newColor.toHex() {
+                                    saveCustomThemeColorHex(hex)
+                                    withAnimation {
+                                        themeColor = .custom
+                                    }
+                                }
+                            }
+                        ))
+                        .labelsHidden()
+                        .frame(width: 24, height: 24)
+                    }
+                }
+                .padding(.top, 4)
             }
         }
         .padding(12)
@@ -435,6 +580,14 @@ struct StatusBarView: View {
     private func saveThemeColor(_ theme: ThemeColor) {
         var settings = DependencyContainer.shared.settingsService.settings
         settings.selectedThemeColor = theme
+        DependencyContainer.shared.settingsService.updateSettings(settings)
+    }
+    
+    /// 保存自定义主题色 Hex
+    private func saveCustomThemeColorHex(_ hex: String) {
+        var settings = DependencyContainer.shared.settingsService.settings
+        settings.customThemeColorHex = hex
+        settings.selectedThemeColor = .custom
         DependencyContainer.shared.settingsService.updateSettings(settings)
     }
     
@@ -548,6 +701,38 @@ struct StatusBarView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .minimumScaleFactor(0.8)
                 .lineLimit(1)
+            
+            // 纪念日里程碑列表 (100, 180, 300天及周年里程碑展示)
+            if !info.milestones.isEmpty {
+                Divider()
+                    .background(themeColor.dividerColor)
+                    .padding(.vertical, 4)
+                
+                VStack(spacing: 6) {
+                    ForEach(info.milestones) { milestone in
+                        HStack(spacing: 6) {
+                            Text(milestone.icon)
+                                .font(.system(size: 11))
+                            
+                            Text(milestone.label)
+                                .font(.system(size: 10))
+                                .foregroundStyle(themeColor.secondaryTextColor)
+                            
+                            Spacer()
+                            
+                            Text(milestone.formattedDate)
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundStyle(themeColor.textColor.opacity(0.8))
+                                .frame(width: 75, alignment: .leading)
+                            
+                            Text("(\(milestone.countDisplay))")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(themeColor.accentColor)
+                                .frame(width: 55, alignment: .trailing)
+                        }
+                    }
+                }
+            }
         }
         .padding(14)
         .background(

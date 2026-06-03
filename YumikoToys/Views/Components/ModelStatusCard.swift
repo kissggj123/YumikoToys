@@ -12,10 +12,30 @@ import SwiftUI
 struct ModelStatusCard: View {
     @ObservedObject var modelService: ModelManagementService
     let onManageTapped: () -> Void
+    let layout: ComponentLayout?
 
     @State private var isHovered = false
 
-    private let themeColor = Color(hex: "5856D6")
+    init(modelService: ModelManagementService, onManageTapped: @escaping () -> Void, layout: ComponentLayout? = nil) {
+        self.modelService = modelService
+        self.onManageTapped = onManageTapped
+        self.layout = layout
+    }
+
+    private var themeColor: Color {
+        if let hex = layout?.customColorHex {
+            return Color(hex: hex)
+        }
+        return Color(hex: "5856D6")
+    }
+    
+    private var fontSizeScale: Double {
+        layout?.customFontSizeScale ?? 1.0
+    }
+    
+    private var titleText: String {
+        layout?.customTitle ?? "本地模型"
+    }
 
     // MARK: - Computed Properties
 
@@ -75,7 +95,7 @@ struct ModelStatusCard: View {
         HStack(spacing: 8) {
             // 紫色渐变图标
             Image(systemName: "cpu.fill")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 14 * fontSizeScale, weight: .semibold))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [themeColor, themeColor.opacity(0.6)],
@@ -85,8 +105,8 @@ struct ModelStatusCard: View {
                 )
 
             // 标题
-            Text("本地模型")
-                .font(.system(size: 13, weight: .semibold))
+            Text(titleText)
+                .font(.system(size: 13 * fontSizeScale, weight: .semibold))
                 .foregroundStyle(.primary)
 
             Spacer()
@@ -98,14 +118,14 @@ struct ModelStatusCard: View {
                     .frame(width: 6, height: 6)
 
                 Text("\(loadedCount)/\(totalCount) 已加载")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 11 * fontSizeScale, weight: .medium))
                     .foregroundStyle(.secondary)
             }
 
             // 管理按钮
             Button(action: onManageTapped) {
                 Text("管理")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 11 * fontSizeScale, weight: .medium))
                     .foregroundStyle(themeColor)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)

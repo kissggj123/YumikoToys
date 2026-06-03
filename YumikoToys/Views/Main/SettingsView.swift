@@ -10,27 +10,40 @@ import Combine
 
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
+    @State private var expandedComponentId: String? = nil
+    @State private var customHexInput: String = ""
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                SettingsHeader()
-                generalSettingsSection
-                iconStyleSection
-                statusBarIconStyleSection
-                fontSection
-                layoutSection
-                preventSleepSection
-                timeSyncSection
-                modelManagementSection
-                backgroundLearningSection
-                dataManagementSection
-                aboutSection
-                footerText
+            HStack {
+                Spacer(minLength: 20)
+                
+                VStack(spacing: 20) {
+                    SettingsHeader()
+                        .padding(.top, 10)
+                    generalSettingsSection
+                    iconStyleSection
+                    statusBarIconStyleSection
+                    fontSection
+                    themeColorSection
+                    layoutSection
+                    preventSleepSection
+                    timeSyncSection
+                    modelManagementSection
+                    backgroundLearningSection
+                    psychologySettingsSection
+                    dataManagementSection
+                    aboutSection
+                    footerText
+                }
+                .frame(maxWidth: 460)
+                
+                Spacer(minLength: 20)
             }
-            .padding(28)
+            .padding(.top, 44) // Offset for traffic light buttons
+            .padding(.bottom, 28)
         }
-        .frame(minWidth: 460, idealWidth: 500, maxWidth: 560)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(settingsBackground)
         
         // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
@@ -76,6 +89,16 @@ struct SettingsView: View {
         }
         .onAppear {
             viewModel.reloadSettings()
+            viewModel.checkFullDiskAccess()
+            customHexInput = "#" + viewModel.customThemeColorHex
+        }
+        .onChange(of: viewModel.customThemeColorHex) { newValue in
+            if customHexInput != "#" + newValue {
+                customHexInput = "#" + newValue
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            viewModel.checkFullDiskAccess()
         }
     }
 
@@ -148,49 +171,277 @@ struct SettingsView: View {
         }
     }
     
-    private var layoutSection: some View {
-        SettingsSection(title: "自定义布局", icon: "rectangle.3.group", iconColor: "007AFF") {
-            VStack(spacing: 6) {
-                // 组件列表（可拖拽排序）
-                let sortedLayouts = ComponentLayout.sorted(viewModel.componentLayouts)
+    private var themeColorSection: some View {
+        SettingsSection(title: "主页及状态栏主题色", icon: "paintpalette.fill", iconColor: "FF6B9D") {
+            VStack(alignment: .leading, spacing: 12) {
+                // 主题选择
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 8) {
+                    ForEach(ThemeColor.allCases) { theme in
+                        Button(action: {
+                            viewModel.selectThemeColor(theme)
+                        }) {
+                            VStack(spacing: 6) {
+                                Image(systemName: theme.themeIcon)
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(viewModel.selectedThemeColor == theme ? .white : theme.accentColor)
+                                    .frame(width: 32, height: 32)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(viewModel.selectedThemeColor == theme ? theme.accentColor : Color.primary.opacity(0.06))
+                                    )
+                                
+                                Text(theme.displayName)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(viewModel.selectedThemeColor == theme ? .primary : .secondary)
+                            }
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(viewModel.selectedThemeColor == theme ? Color.primary.opacity(0.04) : Color.clear)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
                 
-                ForEach(Array(sortedLayouts.enumerated()), id: \.element.id) { index, layout in
+                // 如果是自定义主题，显示 ColorPicker & HEX 输入框
+                if viewModel.selectedThemeColor == .custom {
+                    Divider()
+                        .background(Color.primary.opacity(0.08))
+                        .padding(.vertical, 4)
+                    
                     HStack(spacing: 12) {
-                        // 拖拽手柄
-                        Image(systemName: "line.3.horizontal")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.tertiary)
+                        Image(systemName: "eyedropper.halftone")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
                         
-                        // 图标
-                        Text(layout.type.icon)
-                            .font(.system(size: 16))
-                        
-                        // 名称
-                        Text(layout.type.displayName)
-                            .font(.system(size: 14, weight: .medium))
+                        Text("自定义主题色")
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.primary)
                         
                         Spacer()
                         
-                        // 显示/隐藏开关（核心组件不可隐藏）
-                        if layout.type.isOptional {
-                            Toggle("", isOn: Binding(
-                                get: { layout.isVisible },
-                                set: { _ in viewModel.toggleComponentVisibility(layout.type) }
-                            ))
-                            .toggleStyle(.switch)
-                            .labelsHidden()
-                        } else {
-                            Text("必选")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.tertiary)
-                        }
+                        TextField("#HEX", text: $customHexInput)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(width: 90)
+                            .onSubmit {
+                                applyCustomHex()
+                            }
+                            .onChange(of: customHexInput) { newValue in
+                                applyCustomHex(newValue)
+                            }
+                        
+                        ColorPicker("", selection: Binding(
+                            get: {
+                                Color(hex: viewModel.customThemeColorHex)
+                            },
+                            set: { color in
+                                if let hex = color.toHex() {
+                                    viewModel.updateCustomThemeColorHex(hex)
+                                }
+                            }
+                        ))
+                        .labelsHidden()
                     }
                     .padding(.horizontal, 4)
-                    .padding(.vertical, 6)
+                }
+            }
+        }
+    }
+
+    private func applyCustomHex(_ val: String? = nil) {
+        let input = val ?? customHexInput
+        var hex = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        if hex.hasPrefix("#") {
+            hex = String(hex.dropFirst())
+        }
+        let pattern = "^[0-9a-fA-F]{6}$"
+        if hex.range(of: pattern, options: .regularExpression) != nil {
+            viewModel.updateCustomThemeColorHex(hex)
+        }
+    }
+
+    private var layoutSection: some View {
+        SettingsSection(title: "自定义布局", icon: "rectangle.3.group", iconColor: "007AFF") {
+            VStack(spacing: 10) {
+                let sortedLayouts = ComponentLayout.sorted(viewModel.componentLayouts)
+                
+                ForEach(Array(sortedLayouts.enumerated()), id: \.element.id) { index, layout in
+                    VStack(spacing: 0) {
+                        // 头部标题栏
+                        HStack(spacing: 12) {
+                            // 拖动排序按钮
+                            HStack(spacing: 6) {
+                                Button(action: {
+                                    if index > 0 {
+                                        viewModel.moveComponent(from: index, to: index - 1)
+                                    }
+                                }) {
+                                    Image(systemName: "arrow.up")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(index == 0 ? Color.secondary.opacity(0.3) : .secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(index == 0)
+                                
+                                Button(action: {
+                                    if index < sortedLayouts.count - 1 {
+                                        viewModel.moveComponent(from: index, to: index + 1)
+                                    }
+                                }) {
+                                    Image(systemName: "arrow.down")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(index == sortedLayouts.count - 1 ? Color.secondary.opacity(0.3) : .secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(index == sortedLayouts.count - 1)
+                            }
+                            
+                            // 图标
+                            Text(layout.type.icon)
+                                .font(.system(size: 16))
+                            
+                            // 名称
+                            Text(layout.customTitle ?? layout.type.displayName)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(.primary)
+                            
+                            Spacer()
+                            
+                            // 详情展开/收起按钮
+                            Button(action: {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    if expandedComponentId == layout.id {
+                                        expandedComponentId = nil
+                                    } else {
+                                        expandedComponentId = layout.id
+                                    }
+                                }
+                            }) {
+                                Image(systemName: expandedComponentId == layout.id ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(Color(hex: "007AFF").opacity(0.8))
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.trailing, 8)
+                            
+                            // 显示/隐藏开关
+                            if layout.type.isOptional {
+                                Toggle("", isOn: Binding(
+                                    get: { layout.isVisible },
+                                    set: { _ in viewModel.toggleComponentVisibility(layout.type) }
+                                ))
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                            } else {
+                                Text("必选")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 10)
+                        
+                        // 展开的可编辑属性
+                        if expandedComponentId == layout.id {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Divider()
+                                    .background(Color.primary.opacity(0.08))
+                                    .padding(.bottom, 6)
+                                
+                                // 自定义标题
+                                HStack(spacing: 8) {
+                                    Text("自定义标题")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 80, alignment: .leading)
+                                    
+                                    TextField("默认: \(layout.type.displayName)", text: Binding(
+                                        get: { layout.customTitle ?? "" },
+                                        set: { val in
+                                            var newLayout = layout
+                                            newLayout.customTitle = val.isEmpty ? nil : val
+                                            viewModel.updateComponentLayout(newLayout)
+                                        }
+                                    ))
+                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(size: 12))
+                                }
+                                
+                                // 自定义字体大小
+                                HStack(spacing: 8) {
+                                    Text("字号大小")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 80, alignment: .leading)
+                                    
+                                    Slider(value: Binding(
+                                        get: { layout.customFontSizeScale ?? 1.0 },
+                                        set: { val in
+                                            var newLayout = layout
+                                            newLayout.customFontSizeScale = val
+                                            viewModel.updateComponentLayout(newLayout)
+                                        }
+                                    ), in: 0.8...1.5, step: 0.05)
+                                    
+                                    Text("\(Int((layout.customFontSizeScale ?? 1.0) * 100))%")
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 40, alignment: .trailing)
+                                }
+                                
+                                // 自定义卡片背景/主题色
+                                HStack(spacing: 8) {
+                                    Text("自定义主题色")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 80, alignment: .leading)
+                                    
+                                    Toggle("开启自定义卡片颜色", isOn: Binding(
+                                        get: { layout.customColorHex != nil },
+                                        set: { hasColor in
+                                            var newLayout = layout
+                                            newLayout.customColorHex = hasColor ? "FF6B9D" : nil
+                                            viewModel.updateComponentLayout(newLayout)
+                                        }
+                                    ))
+                                    .font(.system(size: 11))
+                                    .toggleStyle(.checkbox)
+                                    
+                                    Spacer()
+                                    
+                                    if let hexColor = layout.customColorHex {
+                                        ColorPicker("", selection: Binding(
+                                            get: {
+                                                Color(hex: hexColor)
+                                            },
+                                            set: { color in
+                                                if let hex = color.toHex() {
+                                                    var newLayout = layout
+                                                    newLayout.customColorHex = hex
+                                                    viewModel.updateComponentLayout(newLayout)
+                                                }
+                                            }
+                                        ))
+                                        .labelsHidden()
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 12)
+                            .background(Color.primary.opacity(0.01))
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+                    }
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 12)
                             .fill(Color.primary.opacity(0.02))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.primary.opacity(expandedComponentId == layout.id ? 0.08 : 0.03), lineWidth: 1)
+                            )
                     )
                 }
                 
@@ -396,6 +647,33 @@ struct SettingsView: View {
                 onToggle: viewModel.toggleBackgroundLearning
             )
 
+            // 完全磁盘访问权限 (FDA) 状态与一键引导开启
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(viewModel.hasFullDiskAccess ? Color.green : Color.orange)
+                    .frame(width: 6, height: 6)
+                    .shadow(color: (viewModel.hasFullDiskAccess ? Color.green : Color.orange).opacity(0.4), radius: 2)
+                
+                Text(viewModel.hasFullDiskAccess ? "完全磁盘访问权限：已授予" : "完全磁盘访问权限：未开启 (将暂停后台扫描以防弹窗)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                if !viewModel.hasFullDiskAccess {
+                    Button(action: {
+                        FullDiskAccessHelper.openSystemPrivacySettings()
+                    }) {
+                        Text("去开启")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color(hex: "007AFF"))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.leading, 50)
+            .padding(.top, 4)
+
             // 【修改】显示详细的后台学习日志状态进度
             if viewModel.enableBackgroundLearning {
                 VStack(alignment: .leading, spacing: 8) {
@@ -406,13 +684,13 @@ struct SettingsView: View {
                     // 状态指示
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(Color.green)
+                            .fill(viewModel.hasFullDiskAccess ? Color.green : Color.orange)
                             .frame(width: 6, height: 6)
-                            .shadow(color: .green.opacity(0.5), radius: 3)
+                            .shadow(color: (viewModel.hasFullDiskAccess ? Color.green : Color.orange).opacity(0.5), radius: 3)
 
-                        Text("运行中")
+                        Text(viewModel.hasFullDiskAccess ? "运行中" : "暂停 (需要完全磁盘访问权限)")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.green)
+                            .foregroundStyle(viewModel.hasFullDiskAccess ? .green : .orange)
 
                         Spacer()
                     }
@@ -478,6 +756,165 @@ struct SettingsView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.enableBackgroundLearning)
+    }
+
+    private var psychologySettingsSection: some View {
+        SettingsSection(title: "专业心理陪伴设置", icon: "brain.head.profile", iconColor: "AF52DE") {
+            VStack(alignment: .leading, spacing: 12) {
+                SettingsToggleRow(
+                    icon: "heart.text.square.fill",
+                    iconColor: "AF52DE",
+                    title: "启用心理学模型参数",
+                    subtitle: "在 AI 聊天中启用专业心理陪伴的理论支持与底层参数优化",
+                    isOn: Binding(
+                        get: { viewModel.enablePsychologyParams },
+                        set: { val in
+                            viewModel.enablePsychologyParams = val
+                            viewModel.updatePsychologySettings()
+                        }
+                    )
+                )
+
+                if viewModel.enablePsychologyParams {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Divider().background(Color.primary.opacity(0.08))
+                        
+                        // 理论学派选择
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Image(systemName: "graduationcap")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color(hex: "AF52DE"))
+                                Text("心理学理论学派支撑")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.primary)
+                                
+                                Spacer()
+                                
+                                Picker("", selection: Binding(
+                                    get: { viewModel.selectedPsychologyTheory },
+                                    set: { val in
+                                        viewModel.selectedPsychologyTheory = val
+                                        viewModel.updatePsychologySettings()
+                                    }
+                                )) {
+                                    ForEach(PsychologyTheory.allCases) { theory in
+                                        Text(theory.displayName).tag(theory)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
+                                .frame(width: 220)
+                            }
+                            
+                            Text(viewModel.selectedPsychologyTheory.description)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .lineSpacing(3)
+                                .padding(.top, 2)
+                                .padding(.horizontal, 4)
+                        }
+
+                        // 陪伴专家角色身份
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Image(systemName: "person.text.rectangle")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color(hex: "AF52DE"))
+                                Text("心理学专家角色倾向")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.primary)
+                                
+                                Spacer()
+                                
+                                Picker("", selection: Binding(
+                                    get: { viewModel.selectedPsychologyPersona },
+                                    set: { val in
+                                        viewModel.selectedPsychologyPersona = val
+                                        viewModel.updatePsychologySettings()
+                                    }
+                                )) {
+                                    ForEach(PsychologyPersona.allCases) { persona in
+                                        Text(persona.displayName).tag(persona)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
+                                .frame(width: 220)
+                            }
+                            
+                            Text(viewModel.selectedPsychologyPersona.subtitle)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .lineSpacing(3)
+                                .padding(.top, 2)
+                                .padding(.horizontal, 4)
+                        }
+
+                        Divider().background(Color.primary.opacity(0.08))
+
+                        // 发散度 Slider
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("模型创造力 (Temperature): \(String(format: "%.2f", viewModel.psychologyTempScale))")
+                                    .font(.system(size: 12, weight: .medium))
+                                Spacer()
+                                Text(viewModel.psychologyTempScale > 1.0 ? "发散/创造" : (viewModel.psychologyTempScale < 0.4 ? "严谨/保守" : "平衡陪伴"))
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Slider(value: Binding(
+                                get: { viewModel.psychologyTempScale },
+                                set: { val in
+                                    viewModel.psychologyTempScale = val
+                                    viewModel.updatePsychologySettings()
+                                }
+                            ), in: 0.1...1.5, step: 0.05)
+                            .tint(Color(hex: "AF52DE"))
+                        }
+
+                        // Top P Slider
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("核采样率 (Top P): \(String(format: "%.2f", viewModel.psychologyTopP))")
+                                    .font(.system(size: 12, weight: .medium))
+                                Spacer()
+                            }
+                            Slider(value: Binding(
+                                get: { viewModel.psychologyTopP },
+                                set: { val in
+                                    viewModel.psychologyTopP = val
+                                    viewModel.updatePsychologySettings()
+                                }
+                            ), in: 0.1...1.0, step: 0.05)
+                            .tint(Color(hex: "AF52DE"))
+                        }
+
+                        // 学术理论支持说明卡片
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("【专业心理陪伴学术支持说明】")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(Color(hex: "AF52DE"))
+                            
+                            Text("本系统心理陪伴机制深度集成了认知行为重构、自我决定论的三大基础心理需求评估（主观能动性、自我成长力、关怀归属感）、罗杰斯人本主义无条件关注机制与精神分析深层动机追索。通过调控底层超参数以控制大模型的词汇发散和发散度核采样率，从而输出更具关怀深度和学术合理性的回应。")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .lineSpacing(3.5)
+                        }
+                        .padding(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.primary.opacity(0.02))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .padding(.leading, 50)
+                }
+            }
+        }
     }
 
     private var dataManagementSection: some View {
@@ -947,6 +1384,8 @@ final class SettingsViewModel: ObservableObject {
     @Published var statusBarIconStyle: IconStyle = .originalHattie
     @Published var customFontPath: String?
     @Published var enableBackgroundLearning: Bool = true
+    @Published var selectedThemeColor: ThemeColor = .dark
+    @Published var customThemeColorHex: String = "FF6B9D"
 
     @Published var showResetConfirmation = false
     @Published var showImportSuccess = false
@@ -981,6 +1420,16 @@ final class SettingsViewModel: ObservableObject {
     @Published var showKeychainInput: Bool = false
     @Published var keychainInputPassword: String = ""
 
+    // 完全磁盘访问权限 (FDA) 状态
+    @Published var hasFullDiskAccess: Bool = false
+    
+    // 专业心理陪伴配置
+    @Published var enablePsychologyParams: Bool = true
+    @Published var psychologyTempScale: Double = 0.7
+    @Published var psychologyTopP: Double = 0.85
+    @Published var selectedPsychologyTheory: PsychologyTheory = .cbt
+    @Published var selectedPsychologyPersona: PsychologyPersona = .counselor
+
     private let container = DependencyContainer.shared
     private let exportService = DataExportService()
     private var cancellables = Set<AnyCancellable>()
@@ -1003,13 +1452,17 @@ final class SettingsViewModel: ObservableObject {
         preventSleep = container.preventSleepService.isPreventSleepEnabled
         launchAtLogin = container.launchAtLoginService.isEnabled
         timeOffset = container.timeSyncService.timeOffset
-        selectedFont = container.settingsService.settings.selectedFont
-        selectedIconStyle = container.settingsService.settings.selectedIconStyle
-        statusBarIconStyle = container.settingsService.settings.statusBarIconStyle
-        customFontPath = container.settingsService.settings.customFontPath
+        
+        let settings = container.settingsService.settings
+        selectedFont = settings.selectedFont
+        selectedIconStyle = settings.selectedIconStyle
+        statusBarIconStyle = settings.statusBarIconStyle
+        customFontPath = settings.customFontPath
+        selectedThemeColor = settings.selectedThemeColor
+        customThemeColorHex = settings.customThemeColorHex
         
         // 读取 NTP 配置
-        let ntpConfig = container.settingsService.settings.ntpConfiguration
+        let ntpConfig = settings.ntpConfiguration
         selectedNTPPreset = ntpConfig.selectedPreset
         customNTPServer = ntpConfig.customServer ?? ""
         showCustomNTPField = (ntpConfig.selectedPreset == .custom)
@@ -1020,6 +1473,14 @@ final class SettingsViewModel: ObservableObject {
             enableBackgroundLearning = results.stats.isLearningEnabled
             learningStats = results.stats
         }
+
+        // 读取完全磁盘访问权限与专业心理学参数
+        hasFullDiskAccess = FullDiskAccessHelper.hasFullDiskAccess
+        enablePsychologyParams = settings.enablePsychologyParams
+        psychologyTempScale = settings.psychologyTempScale
+        psychologyTopP = settings.psychologyTopP
+        selectedPsychologyTheory = settings.selectedPsychologyTheory
+        selectedPsychologyPersona = settings.selectedPsychologyPersona
 
         // 【新增】检测钥匙串中是否存在已存的管理员密码，初始化授权状态指示灯
         checkKeychainStatus()
@@ -1044,6 +1505,20 @@ final class SettingsViewModel: ObservableObject {
         container.componentLayoutService.layoutsPublisher
             .receive(on: DispatchQueue.main)
             .assign(to: &$componentLayouts)
+            
+        // 监听设置变化
+        container.settingsService.settingsPublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak self] updatedSettings in
+                guard let self = self else { return }
+                self.selectedThemeColor = updatedSettings.selectedThemeColor
+                self.customThemeColorHex = updatedSettings.customThemeColorHex
+                self.selectedFont = updatedSettings.selectedFont
+                self.selectedIconStyle = updatedSettings.selectedIconStyle
+                self.statusBarIconStyle = updatedSettings.statusBarIconStyle
+                self.customFontPath = updatedSettings.customFontPath
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - 【新增】钥匙串授权状态核心逻辑
@@ -1126,7 +1601,28 @@ final class SettingsViewModel: ObservableObject {
         customNTPServer = ntpConfig.customServer ?? ""
         showCustomNTPField = (ntpConfig.selectedPreset == .custom)
 
+        enablePsychologyParams = settings.enablePsychologyParams
+        psychologyTempScale = settings.psychologyTempScale
+        psychologyTopP = settings.psychologyTopP
+        selectedPsychologyTheory = settings.selectedPsychologyTheory
+        selectedPsychologyPersona = settings.selectedPsychologyPersona
+
         LoggerService.shared.debug("SettingsView: 重新加载设置，NTP服务器: \(ntpConfig.selectedPreset.displayName)")
+    }
+
+    func checkFullDiskAccess() {
+        hasFullDiskAccess = FullDiskAccessHelper.hasFullDiskAccess
+    }
+
+    func updatePsychologySettings() {
+        var settings = container.settingsService.settings
+        settings.enablePsychologyParams = enablePsychologyParams
+        settings.psychologyTempScale = psychologyTempScale
+        settings.psychologyTopP = psychologyTopP
+        settings.selectedPsychologyTheory = selectedPsychologyTheory
+        settings.selectedPsychologyPersona = selectedPsychologyPersona
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Psychology settings updated in SettingsViewModel")
     }
 
     func toggleComponentVisibility(_ type: ComponentType) {
@@ -1136,6 +1632,32 @@ final class SettingsViewModel: ObservableObject {
     func moveComponent(from source: IndexSet, to destination: Int) {
         guard let sourceIndex = source.first else { return }
         container.componentLayoutService.moveLayout(from: sourceIndex, to: destination)
+    }
+    
+    func moveComponent(from sourceIndex: Int, to destinationIndex: Int) {
+        container.componentLayoutService.moveLayout(from: sourceIndex, to: destinationIndex)
+    }
+    
+    func updateComponentLayout(_ layout: ComponentLayout) {
+        container.componentLayoutService.updateLayout(layout)
+    }
+    
+    func selectThemeColor(_ theme: ThemeColor) {
+        selectedThemeColor = theme
+        var settings = container.settingsService.settings
+        settings.selectedThemeColor = theme
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Theme color changed to: \(theme.rawValue)")
+    }
+    
+    func updateCustomThemeColorHex(_ hex: String) {
+        customThemeColorHex = hex
+        selectedThemeColor = .custom
+        var settings = container.settingsService.settings
+        settings.customThemeColorHex = hex
+        settings.selectedThemeColor = .custom
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Custom theme color hex changed to: \(hex)")
     }
     
     func resetComponentLayout() {

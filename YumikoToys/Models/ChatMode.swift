@@ -2,7 +2,7 @@
 //  ChatMode.swift
 //  YumikoToys
 //
-//  对话模式枚举
+//  对话模式枚举（Pro Human 重构版）
 //
 
 import Foundation
@@ -17,14 +17,14 @@ enum ChatMode: String, Codable, CaseIterable, Identifiable, Sendable {
     var displayName: String {
         switch self {
         case .petCompanion: return "宠物陪伴"
-        case .aiAssistant: return "全能助手"
+        case .aiAssistant: return "Pro Human"
         }
     }
 
     var icon: String {
         switch self {
         case .petCompanion: return "🐰"
-        case .aiAssistant: return "🤖"
+        case .aiAssistant: return "🌱"
         }
     }
 
@@ -33,7 +33,7 @@ enum ChatMode: String, Codable, CaseIterable, Identifiable, Sendable {
         case .petCompanion:
             return "以宠物身份陪伴您，带有情感交互和人设记忆"
         case .aiAssistant:
-            return "全能 AI 助手，支持深度思考、联网搜索、Agent 模式"
+            return "Stay Human, Stay Strong — 拆解认知工具、守护身心完整性，支持深度思考、联网搜索与 Agent 模式"
         }
     }
 }

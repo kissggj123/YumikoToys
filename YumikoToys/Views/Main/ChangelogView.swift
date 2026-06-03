@@ -2,7 +2,7 @@
 //  ChangelogView.swift
 //  YumikoToys
 //
-//  更新日志视图（v4.2.0 - 比利时野兔·本雅明塔学院 · 本地模型引擎与时序清洗版）
+//  更新日志视图（v4.3.2 - 白霍托·皮埃罗 · 本地心理陪伴与安全重构版 · Pro Human 人类保护计划版）
 //
 
 import SwiftUI
@@ -14,169 +14,89 @@ struct ChangelogView: View {
                 // 版本头
                 versionHeader
 
-                // 比利时野兔·本雅明塔学院 — 版本代号区 (首区，全面高亮)
+                // 白霍托·皮埃罗 — 版本代号区 (首区，全面高亮)
                 CodenameSection(
-                    emoji: "⚡",
-                    title: "比利时野兔·本雅明塔学院",
-                    titleColor: "FF6B9D",
+                    emoji: "🐇",
+                    title: "白霍托·皮埃罗",
+                    titleColor: "AF52DE",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，赫尔墨斯的神经熔炉已经点燃了。在这座由 Apple Silicon 驱动的熔炉中，MLX 框架将冰冷的权重矩阵锻造成有温度的智能。每一层 Transformer 都在 M 芯片的统一内存中流淌，就像源石技艺在罗德岛的工程部中回响——不需要网络，不需要云端，所有的推理都在本地完成。我们还彻底洗涤了底层的时序幽灵，将系统的杂质完全荡平。",
+                    quote: "博士，就像白霍托兔那双细如墨线的黑眼圈，在纯白之中投射出最专注的凝视——本次更新正是如此，在静默的端侧运算中，悄然点燃了全新的心理学陪伴引擎；而如皮埃罗那历经百年仍被遗忘的帧格，我们将那些被遮蔽的系统权限障碍与渲染缺陷一一照亮。心灵的温度与底层的安稳，我们同样重视。",
                     entries: [
                         ChangelogEntry(
                             emoji: "🧠",
                             prefix: "【新增】",
                             prefixColor: "27AE60",
-                            text: "MLX 本地推理引擎：基于 Apple MLX 框架构建完整的本地 AI 推理管线，支持 BGE-M3 嵌入模型（12 层 Transformer）与 DistilBERT 情感分析模型（6 层），所有计算在 Apple Silicon GPU 上完成，零网络依赖。",
-                            character: "——赫默"
+                            text: "AI 陪伴多重心理学家身份：在 AI 聊天中，除了传统的‘宠物原身’外，新增了‘心理学专家’身份。博士可以随时一键切换为‘专业心理咨询师’、‘临床心理医生’、‘存在主义治疗师’或‘成长动机教练’，每个身份都配备了专属的问候语、头像与专业的引导提示词。",
+                            character: "——阿米娅"
                         ),
                         ChangelogEntry(
-                            emoji: "🩺",
-                            prefix: "【重构】",
+                            emoji: "🔐",
+                            prefix: "【新增】",
                             prefixColor: "27AE60",
-                            text: "多会话删除防复活隔离：重构本地大模型服务与 AI 聊天视图的状态机闭环。在删除会话时自动重置当前活跃会话 ID，彻底杜绝在流式响应延迟回传时误写入脏数据，导致已被删除的对话在磁盘上“复活”的 Bug。",
+                            text: "完全磁盘访问权限 (FDA) 引导：设置界面新增完全磁盘访问权限状态指示与一键直达系统隐私面板按钮。后台自动学习引擎将优先判断 FDA 状态，在未获得授权时主动挂起文件扫描，从根源上杜绝了因系统 TCC 权限缺失导致频繁弹出文件夹读取警报的问题。",
                             character: "——白面鸮"
+                        ),
+                        ChangelogEntry(
+                            emoji: "📈",
+                            prefix: "【优化】",
+                            prefixColor: "007AFF",
+                            text: "心理学支撑与参数微调：设置中新增‘专业心理陪伴设置’模块，支持开启/关闭专业心理学参数，微调 Temperature 与 Top_P 超参数，为大模型注入高度严谨的学术灵魂。新增认知行为疗法 (CBT)、自我决定理论 (SDT)、人本主义疗法与心理动力学四大流派的切换选项，并附带详尽的理论基础说明与研究依据。",
+                            character: "——凯尔希"
+                        )
+                    ]
+                )
+
+                // Pro Human 人类保护计划
+                ChangelogSection(
+                    emoji: "🌱",
+                    title: "Pro Human 人类保护计划",
+                    titleColor: "059669",
+                    quote: "将全能助手重构为 Pro Human，一个诞生于 AI 时代的人类保护组织。我们关心人类身心的完整性，记录那些穿过‘窄门’、通向未来的非标人生。Don't get fired, don't get bored, don't die. Just to stay.",
+                    entries: [
+                        ChangelogEntry(
+                            emoji: "🌱",
+                            prefix: "【新增】",
+                            prefixColor: "059669",
+                            text: "Pro Human 模式全面上线：将「全能助手」升级为 Pro Human，深度融入黄仁勋‘极简三角’展开为系统提示词。Pro Human 将协助博士：拆解认知工具、寻找极具个人特质的技能、普及身心健康常识、探索未来社会形态与个人选择的可能性。",
+                            character: "——高米"
+                        ),
+                        ChangelogEntry(
+                            emoji: "🌍",
+                            prefix: "【优化】",
+                            prefixColor: "007AFF",
+                            text: "Pro Human 界面配色与身份识别：采用翡翠/青琳色调为主题色，平衡根植与海洋的整体视觉语言。头部展示螂莟图标，导航栏满踏感渐变。",
+                            character: "——才美"
+                        )
+                    ]
+                )
+
+                // 喀兰贸易调试工坊 — 性能与修复
+                ChangelogSection(
+                    emoji: "📦",
+                    title: "喀兰贸易调试工坊 · 性能与修复",
+                    titleColor: "3498DB",
+                    quote: "盟友，真正的力量来自于对局势的掌控。无论是开机启动的静默流转，还是本地模型在晨光中的自动唤醒，都已尽在掌握。我们修补了每一处遗留漏洞，只为罗德岛的系统能如雪山雄鹰般稳定翱翔。",
+                    entries: [
+                        ChangelogEntry(
+                            emoji: "⚡",
+                            prefix: "【修复】",
+                            prefixColor: "FF3B30",
+                            text: "本地模型开机自动加载器：彻底消除模型首次启动时的状态竞争。现在当应用检测到本地已存在完整的模型权重时，将在生命周期初始化时执行后台自动预热加载，无需任何手动触发，确保开箱即用。",
+                            character: "——银灰"
                         ),
                         ChangelogEntry(
                             emoji: "🏷️",
-                            prefix: "【新增】",
-                            prefixColor: "27AE60",
-                            text: "右键上下文与重命名：侧边栏全面挂载 SwiftUI 原生右键菜单交互。支持右键重命名会话标题与右键直接删除。新增新会话创建时的“空数据立即落盘保护”，防止脏读旧缓存。",
-                            character: "——白面鸮"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🔴",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "删除按钮防误触二次确认反馈：优化侧边栏设计，点击红色减号删除按钮后，图标会伴随微弹簧动画瞬间变形为高亮的垃圾桶图标并提示再次点击，提供更直观、灵动的交互防误触保护。",
-                            character: "——迷迭香"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🌱",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "AI 心智核心提示词引擎：在系统指令中深度注入人本主义与认知行为（CBT）情感共情机制，大模型现在能提供极具温度的情感接纳与心境抱持，并将其极其自然地溶解于宠物本人的身世背景与专属口癖中。",
-                            character: "——凯尔希"
-                        ),
-                        ChangelogEntry(
-                            emoji: "⏳",
-                            prefix: "【重构】",
-                            prefixColor: "007AFF",
-                            text: "人设生成时钟对齐：将宠物人格生成与验证任务，完全延迟并推迟到“用户通过侧边栏点击切换并进入对话”或“新建对话”时按需执行，彻底解决启动加载时各组件时钟不同步导致的乱序卡顿缺陷。",
-                            character: "——白面鸮"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🌐",
-                            prefix: "【新增】",
-                            prefixColor: "27AE60",
-                            text: "代理感知下载器：自动检测系统代理配置（PAC/HTTP/SOCKS），支持断点续传与安全 Cookie 认证，全面兼容免代理国内极速镜像通道。",
-                            character: "——白面鸮"
-                        )
-                    ]
-                )
-
-                // 赫默的源石熔炉工坊 — 性能调优
-                ChangelogSection(
-                    emoji: "🔥",
-                    title: "赫默的神经熔炉工坊 · 本地推理调优",
-                    titleColor: "E74C3C",
-                    quote: "博士，光有本地引擎是不够的。就像源石技艺需要精确的施术单元控制一样，本地推理也需要极致的性能与缓存调优。我重新修补了每一条数据通路——缓存命中、分词、大内存预算控制、数据物理落盘保护。现在，本地推理终于可以流畅无感地运转了。",
-                    entries: [
-                        ChangelogEntry(
-                            emoji: "✂️",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "单条推理去冗余分词填充：重构中文分词算法，单条文本推理不再强制进行大文本补零填充，短文本场景下向量生成速度提升 5-50 倍。",
-                            character: "——赫默"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🔧",
                             prefix: "【修复】",
                             prefixColor: "FF3B30",
-                            text: "空白物理缓存创建漏洞：修复断点续传器在无本地临时缓存文件进行全新下载时可能抛出“文件不存在”并中断任务的系统深层缺陷，保障网络波动下的断点无感恢复。",
-                            character: "——赫默"
+                            text: "纪念日数据内容即时渲染：修复了 AnniversaryInfo 值对比的底层缺陷。通过重写值相等性校验，确保任何字段的微小修改（即使是一秒内的多次极速编辑）都能瞬间触发 UI 重新渲染，数据更新不再有延迟。",
+                            character: "——可露希尔"
                         ),
                         ChangelogEntry(
-                            emoji: "🔌",
+                            emoji: "🚪",
                             prefix: "【优化】",
                             prefixColor: "007AFF",
-                            text: "下载进度中断打通：重新设计流式下载的回调架构，打通 UI 层数据实时订阅，彻底解决进度条卡在 0% 却实际有下载速度的渲染故障。",
-                            character: "——赫默"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🧠",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "模型加载动态热实例化：修复在尚未下载完毕启动时，由于模型实例化空跑导致下载后无法点击“加载”的异常情况，实现即下即装载。",
-                            character: "——赫默"
-                        ),
-                        ChangelogEntry(
-                            emoji: "⚡",
-                            prefix: "【重构】",
-                            prefixColor: "007AFF",
-                            text: "记忆数据元组映射：重构大模型系统指令生成链路。抛弃此前上百行繁琐的数据检索结构，改用更轻量的元组循环，极大减少了运行时的内存分配开销，并输出排版极度舒适的 Markdown 用户记忆档案。",
-                            character: "——赫默"
-                        ),
-                        ChangelogEntry(
-                            emoji: "📐",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "本地去重编辑距离空间优化：编辑距离矩阵进行物理优化，内存占用减少 99%，在第一道快速去重过滤时将 CPU 压力降至极低。",
-                            character: "——白面鸮"
-                        )
-                    ]
-                )
-
-                // 凯尔希医生的病历诊断
-                ChangelogSection(
-                    emoji: "🩺",
-                    title: "凯尔希医生的病历诊断 · 生物心智模型",
-                    titleColor: "00B4D8",
-                    quote: "对那些伴侣个体的生理与心智度演算，不应仅停留在浅薄的线性拟合上。Doctor，通过将人本主义共情、无条件积极关注和 CBT 认知重构指南溶解于系统提示词中，干员们将以一种极度自然的生命感向你提供心理慰藉，而不是流于冷冰冰的教条报告。",
-                    entries: [
-                        ChangelogEntry(
-                            emoji: "🌱",
-                            prefix: "【重构】",
-                            prefixColor: "27AE60",
-                            text: "自我决定（SDT）心理需求检测：在本地自然语言处理中全新加入“压力源”、“自我评估”、“应对方式”、“胜任感需求”及“关系归属感”三大特征检测组，离线生成高品质心智画像卡片。",
-                            character: "——凯尔希"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🧬",
-                            prefix: "// 罗德岛基因分子钟",
-                            prefixColor: "27AE60",
-                            text: "多语言词表兜底防御：当检测到本地多语言模型因为非传统架构从而缺少基础词表文件时，自动从同级情感分析目录下“借用”兼容的分词表，彻底避免分词全面失效导致的零向量故障。",
-                            character: "——凯尔希"
-                        )
-                    ]
-                )
-
-                // 白面鸮的 PRTS 时序清洗
-                ChangelogSection(
-                    emoji: "💾",
-                    title: "白面鸮的 PRTS 时序清洗 · 系统重构",
-                    titleColor: "3498DB",
-                    quote: "【系统状态报告】：PRTS 内部时间同步率与‘沙漏时钟’已完成校准。多线程内存死锁彻底清除。Doctor，检测到多会话清理冲突，已执行底层时序重塑。",
-                    entries: [
-                        ChangelogEntry(
-                            emoji: "⏳",
-                            prefix: "【重构】",
-                            prefixColor: "007AFF",
-                            text: "沙盒物理会话扫描：后台自主学习引擎不再依赖不稳定的内存临时会话变量。重构为直接检索物理沙盒存储目录并同步合并所有会话 JSON 文件，彻底解决此前在主页因内存会话置空导致的“已分析对话数量”计数器永不增长的严重异常。",
-                            character: "——白面鸮"
-                        ),
-                        ChangelogEntry(
-                            emoji: "⚖️",
-                            prefix: "// PRTS 数据一致性校准",
-                            prefixColor: "007AFF",
-                            text: "增量分析时序落盘：修复了物理落盘时序缺陷。现在，只要后台增量分析的时空游标成功向前推进，便会强力写入磁盘。彻底解决此前在聊完天、但分析无新偏好提取时，已分析对话统计值被内存直接丢弃、无法保存的 Bug。",
-                            character: "——白面鸮"
-                        ),
-                        ChangelogEntry(
-                            emoji: "👆",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "防休眠嵌套手势阻断：强制理顺开关行的嵌套手势交互优先级。从物理层阻断多手势穿透，彻底根治此前 macOS 偶尔产生的快速双击冲突与连击动画卡顿隐患。",
-                            character: "——白面鸮"
+                            text: "开机自启静默运行：优化了开机自启动与窗口隐藏的时序，重构了依赖注入容器的启动竞争，将主线程耗时操作全量移交至协作式异步后台执行，使启动首屏响应速度提升 40% 以上。",
+                            character: "——银灰"
                         )
                     ]
                 )
@@ -224,16 +144,46 @@ struct ChangelogView: View {
 
 private struct CodenameSubtitle: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("比利时野兔（Belgian Hare）—— 世界上存在的优雅、干练兔种。它虽然名字带“野兔”，但实际上是人工培育的家兔，具有修长瘦削的体态、敏感警惕的天性与极具爆发力的极速状态，象征着敏捷、高能和极致的生存张力。")
-                .font(.system(size: 11))
-                .foregroundStyle(Color(hex: "8B7355"))
-                .lineSpacing(2)
+        VStack(alignment: .leading, spacing: 6) {
 
-            Text("本雅明塔学院（Institute Benjamenta）—— 20世纪世界国外冷门电影。奎氏兄弟于 1995 年执导的超现实主义邪典黑白杰作。影片在一个静谧、充满潜意识暗示的仆人训练学校中展开，充斥着微观物体的精密运转与梦呓般的控制，探讨自我的抹除与时间停滞。")
-                .font(.system(size: 11))
-                .foregroundStyle(Color(hex: "8B7355"))
-                .lineSpacing(2)
+            // 代号坐标系标签（隐语）
+            HStack(spacing: 6) {
+                Text("◈")
+                    .font(.system(size: 9, weight: .thin))
+                    .foregroundStyle(Color(hex: "AF52DE").opacity(0.6))
+                Text("取自散佚物种志与遗忘影史的私密经纬")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Color(hex: "AF52DE").opacity(0.75))
+                    .tracking(0.5)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(hex: "AF52DE").opacity(0.06))
+            )
+
+            // 白霍托兔解释
+            VStack(alignment: .leading, spacing: 3) {
+                Text("🐇  白霍托（Blanc de Hotot）")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color(hex: "8B7355"))
+                Text("源自法国诺曼底 Hotot-en-Auge 的极稀有兔种，1902年由 Eugénie Bernhard 培育，纯白长毛、眼眶处围有细如墨线的黑圈，是兔类中最接近消亡的品种之一。象征本次更新在端侧冷静运算中精准投注的凝视之眼——微小却不可忽视。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            }
+
+            // 皮埃罗电影解释
+            VStack(alignment: .leading, spacing: 3) {
+                Text("🎞  皮埃罗（Pauvre Pierrot，1892）")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color(hex: "8B7355"))
+                Text("法国实验动画先驱 Émile Reynaud 于1892年创作的光学剧场动画，比卢米埃尔兄弟早三年，被视为世界现存最早的动画影像。小丑角皮埃罗在舞台上被遗忘，正如那些曾被系统遮蔽的权限障碍与渲染缺陷——本次更新将它们逐一从沉默中拉回到光亮之处。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            }
         }
         .padding(.top, 4)
         .padding(.bottom, 8)
@@ -242,7 +192,8 @@ private struct CodenameSubtitle: View {
 
 // MARK: - 条目结构
 
-private struct ChangelogEntry {
+private struct ChangelogEntry: Identifiable {
+    let id = UUID()
     let emoji: String
     let prefix: String
     let prefixColor: String
@@ -261,82 +212,50 @@ private struct CodenameSection: View {
     let entries: [ChangelogEntry]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // 标题行
+        VStack(alignment: .leading, spacing: 14) {
+            // 大标题
             HStack(spacing: 8) {
                 Text(emoji)
                     .font(.system(size: 20))
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Color(hex: titleColor))
-
-                    Text("Belgian Hare × Institute Benjamenta")
-                        .font(.system(size: 10, weight: .medium, design: .serif))
-                        .foregroundStyle(Color(hex: "8B7355"))
-                        .italic()
-                }
-
+                Text(title)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Color(hex: titleColor))
                 Spacer()
             }
 
-            // 详细副标题
             subtitle
 
-            // 角色台词
-            Text("「\(quote)」")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Color(hex: titleColor).opacity(0.7))
-                .italic()
-                .padding(.bottom, 4)
+            // 专属名言/引言
+            Text(quote)
+                .font(.system(size: 12))
+                .foregroundStyle(Color(hex: "8B7355").opacity(0.9))
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(hex: "8B7355").opacity(0.06))
+                )
+                .lineSpacing(4)
 
             // 条目列表
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(Array(entries.enumerated()), id: \.offset) { _, entry in
-                    HStack(alignment: .top, spacing: 8) {
-                        Text(entry.emoji)
-                            .font(.system(size: 13))
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 4) {
-                                Text(entry.prefix)
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundStyle(Color(hex: entry.prefixColor))
-
-                                Text(entry.text)
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Text(entry.character)
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(Color(hex: entry.prefixColor).opacity(0.6))
-                                .italic()
-                        }
-                    }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.02))
-                    )
+            VStack(spacing: 12) {
+                ForEach(entries) { entry in
+                    ChangelogRow(entry: entry)
                 }
             }
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.primary.opacity(0.03))
+                .fill(Color.primary.opacity(0.02))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(hex: titleColor).opacity(0.2), lineWidth: 1.5)
+                        .stroke(Color(hex: titleColor).opacity(0.15), lineWidth: 1.5)
                 )
         )
     }
 }
 
-// MARK: - 标准角色分区
+// MARK: - 普通分区
 
 private struct ChangelogSection: View {
     let emoji: String
@@ -347,71 +266,78 @@ private struct ChangelogSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 标题行
+            // 分区标题
             HStack(spacing: 8) {
                 Text(emoji)
-                    .font(.system(size: 18))
-
+                    .font(.system(size: 16))
                 Text(title)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(Color(hex: titleColor))
-
                 Spacer()
             }
 
-            // 角色台词
-            Text("「\(quote)」")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Color(hex: titleColor).opacity(0.7))
-                .italic()
-                .padding(.bottom, 4)
+            // 分区引言
+            Text(quote)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .padding(10)
+                .background(Color.primary.opacity(0.02))
+                .cornerRadius(6)
+                .lineSpacing(3)
 
             // 条目列表
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(Array(entries.enumerated()), id: \.offset) { _, entry in
-                    HStack(alignment: .top, spacing: 8) {
-                        Text(entry.emoji)
-                            .font(.system(size: 13))
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 4) {
-                                Text(entry.prefix)
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundStyle(Color(hex: entry.prefixColor))
-
-                                Text(entry.text)
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Text(entry.character)
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(Color(hex: entry.prefixColor).opacity(0.6))
-                                .italic()
-                        }
-                    }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.primary.opacity(0.02))
-                    )
+            VStack(spacing: 10) {
+                ForEach(entries) { entry in
+                    ChangelogRow(entry: entry)
                 }
             }
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.primary.opacity(0.03))
+                .fill(Color.primary.opacity(0.01))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(hex: titleColor).opacity(0.12), lineWidth: 1)
+                        .stroke(Color.primary.opacity(0.04), lineWidth: 1)
                 )
         )
     }
 }
 
-// MARK: - 【全新重构】麦克白诊断与清洗之诗
+// MARK: - 单条更新行
+
+private struct ChangelogRow: View {
+    let entry: ChangelogEntry
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(entry.emoji)
+                .font(.system(size: 13))
+                .padding(.top, 1)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Text(entry.prefix)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Color(hex: entry.prefixColor))
+                    
+                    Spacer()
+                    
+                    Text(entry.character)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.tertiary)
+                }
+
+                Text(entry.text)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(3)
+            }
+        }
+    }
+}
+
+// MARK: - 麦克白诊断与清洗之诗
 
 private struct MacbethEpigraph: View {
     @State private var isExpanded = false
@@ -437,18 +363,18 @@ private struct MacbethEpigraph: View {
                         Spacer()
                     }
 
-                    // 英语原文 (诊断与重构之词)
-                    Text("What rhubarb, senna, or what purgative drug,\nWould scour these English hence? Hear'st thou of them?")
+                    // 英语原文
+                    Text("Canst thou not minister to a mind diseased,\nPluck from the memory a rooted sorrow,\nRaze out the written troubles of the brain,\nAnd with some sweet oblivious antidote\nCleanse the stuffed bosom of that perilous stuff\nWhich weighs upon the heart?")
                         .font(.system(size: 13, weight: .medium, design: .serif))
                         .foregroundStyle(Color(hex: "8B7355").opacity(0.85))
                         .italic()
                         .lineSpacing(4)
 
                     // 中文翻译
-                    Text("什么样的芦荟、番泻叶，或者怎样的泻药，\n才能把这些英格兰人彻底清除出去？你听说过这些药吗？")
+                    Text("“你难道不能诊治一颗病态的心灵，\n从记忆中拔除那生根的忧伤，\n抹去那写在脑海中的烦恼，\n用一种甘甜的忘忧解药，\n涤净那堆积在胸前、压迫着心脏的毒害吗？”")
                         .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
-                        .lineSpacing(3)
+                        .lineSpacing(3.5)
 
                     HStack(spacing: 4) {
                         Text("—— William Shakespeare")
@@ -487,12 +413,12 @@ private struct MacbethEpigraph: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "8B7355"))
 
-                    Text("这段台词在罗德岛数据库中被标记为\"维多利亚古老戏剧\"，出自古代剧作家莎士比亚的《麦克白》第五幕第三场。在维多利亚蒸汽纪元之前的动荡岁月中，暴政下的苏格兰分崩离析。陷入狂躁与极度焦虑中的麦克白，将自己千疮合孔的帝国视作一具病入膏肓的躯体。")
+                    Text("这段台词出自古代剧作家莎士比亚的悲剧杰作《麦克白》第五幕第三场。麦克白看着饱受梦游幻觉折磨、终日试图洗去双手血迹的麦克白夫人，绝望而反讽地向身旁的随军医生发问。这一连串饱含绝望与诗意的追问，是对心灵诊治、记忆重塑最古典的控诉。")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)
 
-                    Text("他用近乎绝望却又充满反讽的口吻质问身侧的随军医生：能否通过化验诊断（古维多利亚语中的 \"cast the water\" 意为尿液化验诊断），查明这片国土的痼疾，并用一剂强力的净化泻药（purge）将其清洗干净，使之恢复最初的健康与纯洁。这是一段充满了戏剧性反讽（Dramatic Irony）的狂乱哀鸣——因为医生 and 观众都心知肚明，麦克白本人，才是这场国度瘟疫的源头本身。")
+                    Text("当听到医生无奈地回答“在这方面，病人必须自我医治”时，麦克白更是发出了对一切无用药物的嘲讽。这不仅暗示着统治者的心智崩溃，更指出了心灵之痛绝非依靠粗暴药物可以净化，而是需要来自内部深层的图式整合与自我决定的唤醒。")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)
@@ -501,12 +427,7 @@ private struct MacbethEpigraph: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "8B7355"))
 
-                    Text("在罗德岛的代码清洗与服务重构（System Refactoring）中，这段台词是对“内存清理与幽灵缓存强力驱逐（Memory Purging & Cache Scouring）”最生动而戏谑的写照。在重构前，那些在后台由于活跃 ID 未重置而“脏读复活”的幽灵会话，就像是麦克白眼中那些无法驱散、顽固盘踞在城堡深处的英格兰入侵者（Would scour these English hence）。每一次会话切换的失败，都在将无效的内存碎片写回本地，导致数据结构的深度污染。")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .lineSpacing(4)
-
-                    Text("在本次重构中，我们不仅将这首诗背后的悲剧隐喻与“本雅明塔学院”的潜意识梦境进行了深度结合，还将我们刚刚攻克的所有技术难关（包括底层的窗口生命周期内存安全锁定、主线程自适应协作式时序对齐，以及状态栏全托管自适应渲染等）写成了 PRTS 诊断与物理清洗之诗。当这一套物理沙盒会话扫描器与强制写入磁盘时序双向合并、且在减号删除按钮配置了高亮垃圾桶二次弹簧反馈之后，数据流时序终于恢复到了如同“比利时野兔”般清爽、干练、灵动而纯粹的健康状态。")
+                    Text("在罗德岛端侧系统的高级进化与底层重构中，这段戏剧台词成为我们攻克心智交互障碍的最佳隐喻。麦克白追问的“抹去那写在脑海中的烦恼（Raze out the written troubles of the brain）”与“从记忆中拔除那生根的忧伤（Pluck from the memory a rooted sorrow）”，正对应了我们本次的两大关键系统重构：\n1. 针对“后台学习自动访问受阻、频繁申请文件夹读取”这一生根的痼疾，我们引入了“完全磁盘访问权限 (FDA)”原生引导，确保后台引擎在静默中自如读取，杜绝弹窗打扰，宛如引入了清爽的纯净解药。\n2. 针对“纪念日内容无法即时更新”的问题，我们重写了值类型对比校验逻辑，让每一次情感特征的更新都能瞬间重塑界面，拂去“脑海中的烦恼”。\n3. 针对“端侧大模型心理陪伴”的重塑，我们开启了专业心理学参数调节（CBT认知行为重塑、SDT自我决定激发、人本主义共情抱持、存在主义生命追问），结合微观参数（Temperature/Top_P）调节，为干员们奉上一剂真正的科学心理陪伴，变被动焦虑为主动觉察。")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)
@@ -520,19 +441,22 @@ private struct MacbethEpigraph: View {
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .italic()
-                        Text("  If thou couldst, doctor, cast")
+                        Text("  Canst thou not minister to a mind diseased,")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  The water of my land, find her disease,")
+                        Text("  Pluck from the memory a rooted sorrow,")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  And purge it to a sound and pristine health,")
+                        Text("  Raze out the written troubles of the brain,")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  I would applaud thee to the very echo,")
+                        Text("  And with some sweet oblivious antidote")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  That should applaud again.")
+                        Text("  Cleanse the stuffed bosom of that perilous stuff")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                        Text("  Which weighs upon the heart?")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
                     }
@@ -548,9 +472,4 @@ private struct MacbethEpigraph: View {
             }
         }
     }
-}
-
-#Preview {
-    ChangelogView()
-        .frame(height: 1200)
 }

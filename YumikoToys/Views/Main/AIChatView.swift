@@ -30,12 +30,15 @@ struct AIChatView: View {
         NavigationSplitView {
             ConversationSidebarView(
                 conversationService: conversationService,
+                chatMode: viewModel.chatMode,
+                themeColor: viewModel.themeColor,
                 onSelectConversation: { id in
                     conversationService.switchToConversation(id)
                     viewModel.switchConversation(to: id)
                 },
                 onNewConversation: {
-                    let newConv = conversationService.createConversation(title: "新对话")
+                    let defaultTitle = viewModel.chatMode == .aiAssistant ? "新 Pro Human 对话" : "新宠物对话"
+                    let newConv = conversationService.createConversation(title: defaultTitle, chatMode: viewModel.chatMode)
                     viewModel.startNewConversation(id: newConv.id)
                 },
                 onDeleteConversation: { id in
@@ -51,8 +54,8 @@ struct AIChatView: View {
             chatDetailView
         }
         .navigationSplitViewStyle(.prominentDetail)
-        .frame(minWidth: 580, minHeight: 500)
-        .background(Color(hex: "0F0F12"))
+        .frame(minWidth: 580, maxWidth: .infinity, minHeight: 500, maxHeight: .infinity)
+        .background(detailBackgroundColor)
         .sheet(isPresented: $showSettings, onDismiss: {
             viewModel.loadAPIConfiguration()
         }) {
@@ -67,9 +70,7 @@ struct AIChatView: View {
         .onAppear {
             Task {
                 await conversationService.loadConversations()
-                if let currentId = conversationService.currentConversationId {
-                    viewModel.switchConversation(to: currentId)
-                }
+                switchConversationForMode(viewModel.chatMode)
             }
         }
     }
@@ -87,7 +88,7 @@ struct AIChatView: View {
             // 输入区域
             inputArea
         }
-        .background(Color(hex: "0F0F12"))
+        .background(detailBackgroundColor)
     }
 
     // MARK: - 标题栏
@@ -98,18 +99,19 @@ struct AIChatView: View {
             HStack(spacing: 12) {
                 // AI 像素头像
                 PixelAvatarView(
-                    emoji: viewModel.chatMode == .aiAssistant ? "🤖" : viewModel.aiAvatarEmoji,
-                    size: 36
+                    emoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
+                    size: 36,
+                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.themeColor.iconGradient
                 )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.chatMode == .aiAssistant ? "全能助手" : viewModel.characterName)
+                    Text(viewModel.chatMode == .aiAssistant ? "Pro Human" : viewModel.characterName)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.white)
 
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(viewModel.chatMode == .aiAssistant ? Color(hex: "06B6D4") : Color.green)
+                            .fill(viewModel.chatMode == .aiAssistant ? Color(hex: "059669") : Color.green)
                             .frame(width: 6, height: 6)
 
                         Text("在线")
@@ -139,7 +141,7 @@ struct AIChatView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color(hex: "1A1A1E"))
+            .background(panelBackgroundColor)
 
             // 模式切换和提供商选择
             HStack(spacing: 12) {
@@ -147,8 +149,18 @@ struct AIChatView: View {
                     selectedMode: $viewModel.chatMode,
                     onModeChange: { mode in
                         viewModel.switchChatMode(to: mode)
+                        switchConversationForMode(mode)
                     }
                 )
+
+                if viewModel.chatMode == .petCompanion {
+                    ChatIdentitySelector(
+                        selectedIdentity: $viewModel.selectedIdentity,
+                        onIdentityChange: { _ in
+                            viewModel.updateChatIdentity()
+                        }
+                    )
+                }
 
                 Spacer()
 
@@ -169,14 +181,18 @@ struct AIChatView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(Color(hex: "1A1A1E"))
+            .background(panelBackgroundColor)
         }
     }
 
     private var userAvatarPreview: some View {
         Group {
             if let emoji = viewModel.userAvatarEmoji {
-                PixelAvatarView(emoji: emoji, size: 28)
+                PixelAvatarView(
+                    emoji: emoji,
+                    size: 28,
+                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.themeColor.iconGradient
+                )
             } else if let path = viewModel.userAvatarPath {
                 Image(nsImage: NSImage(contentsOfFile: path) ?? NSImage())
                     .resizable()
@@ -223,8 +239,11 @@ struct AIChatView: View {
                             }
                             
                             if viewModel.isLoading {
-                                TypingIndicator(aiAvatarEmoji: viewModel.aiAvatarEmoji)
-                                    .id("typing")
+                                TypingIndicator(
+                                    aiAvatarEmoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
+                                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.themeColor.iconGradient
+                                )
+                                .id("typing")
                             }
                         }
                         .padding(16)
@@ -245,19 +264,19 @@ struct AIChatView: View {
                             isUserScrolling = false
                         }
                     }
-                    .onChange(of: viewModel.messages.count) { _ in
+                    .onChange(of: viewModel.messages.count) { _, _ in
                         if !isUserScrolling { scrollToBottom(proxy: proxy) }
                     }
-                    .onChange(of: viewModel.isLoading) { _ in
+                    .onChange(of: viewModel.isLoading) { _, _ in
                         if !isUserScrolling { scrollToBottom(proxy: proxy) }
                     }
-                    .onChange(of: viewModel.initialHistoryLoaded) { _ in
+                    .onChange(of: viewModel.initialHistoryLoaded) { _, _ in
                         Task {
                             try? await Task.sleep(nanoseconds: 200_000_000)
                             scrollToBottom(proxy: proxy)
                         }
                     }
-                    .onChange(of: viewModel.messages.last?.content.count ?? 0) { _ in
+                    .onChange(of: viewModel.messages.last?.content.count ?? 0) { _, _ in
                         if viewModel.isLoading && !isUserScrolling {
                             scrollToBottom(proxy: proxy)
                         }
@@ -274,7 +293,9 @@ struct AIChatView: View {
             message: message,
             aiAvatarEmoji: viewModel.aiAvatarEmoji,
             userAvatarEmoji: viewModel.userAvatarEmoji,
-            userAvatarPath: viewModel.userAvatarPath
+            userAvatarPath: viewModel.userAvatarPath,
+            chatMode: viewModel.chatMode,
+            themeColor: viewModel.themeColor
         )
         .id(message.id)
         .contextMenu {
@@ -336,7 +357,11 @@ struct AIChatView: View {
                     )
                     .frame(width: 100, height: 100)
 
-                PixelAvatarView(emoji: viewModel.aiAvatarEmoji, size: 60)
+                PixelAvatarView(
+                    emoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
+                    size: 60,
+                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.themeColor.iconGradient
+                )
             }
 
             VStack(spacing: 8) {
@@ -351,11 +376,11 @@ struct AIChatView: View {
             }
 
             HStack(spacing: 8) {
-                QuickPromptButton(text: "介绍一下自己") {
+                QuickPromptButton(text: "介绍一下自己", themeGradient: themeGradient) {
                     viewModel.inputText = "介绍一下自己"
                     sendMessage()
                 }
-                QuickPromptButton(text: "今天心情如何") {
+                QuickPromptButton(text: "今天心情如何", themeGradient: themeGradient) {
                     viewModel.inputText = "今天心情如何"
                     sendMessage()
                 }
@@ -481,7 +506,7 @@ struct AIChatView: View {
                 }
             }
             .padding(16)
-            .background(Color(hex: "1A1A1E"))
+            .background(panelBackgroundColor)
         }
     }
 
@@ -509,19 +534,31 @@ struct AIChatView: View {
         }
     }
 
+    private func switchConversationForMode(_ mode: ChatMode) {
+        let filtered = conversationService.conversations.filter { ($0.chatMode ?? .petCompanion) == mode }
+        if let lastActive = filtered.first {
+            conversationService.switchToConversation(lastActive.id)
+            viewModel.switchConversation(to: lastActive.id)
+        } else {
+            let defaultTitle = mode == .aiAssistant ? "新 Pro Human 对话" : "新宠物对话"
+            let newConv = conversationService.createConversation(title: defaultTitle, chatMode: mode)
+            viewModel.startNewConversation(id: newConv.id)
+        }
+    }
+
     // MARK: - 主题配色
 
     private var themeGradient: LinearGradient {
         switch viewModel.chatMode {
         case .petCompanion:
             return LinearGradient(
-                colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                colors: viewModel.themeColor.iconGradient,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .aiAssistant:
             return LinearGradient(
-                colors: [Color(hex: "3B82F6"), Color(hex: "06B6D4")],
+                colors: [Color(hex: "059669"), Color(hex: "0891B2")],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -531,9 +568,27 @@ struct AIChatView: View {
     private var themeColor: Color {
         switch viewModel.chatMode {
         case .petCompanion:
-            return Color(hex: "FF6B9D")
+            return viewModel.themeColor.accentColor
         case .aiAssistant:
-            return Color(hex: "3B82F6")
+            return Color(hex: "059669")
+        }
+    }
+
+    private var detailBackgroundColor: Color {
+        switch viewModel.chatMode {
+        case .petCompanion:
+            return viewModel.themeColor.backgroundColor
+        case .aiAssistant:
+            return Color(hex: "0A0F0D")
+        }
+    }
+
+    private var panelBackgroundColor: Color {
+        switch viewModel.chatMode {
+        case .petCompanion:
+            return viewModel.themeColor.cardBackgroundColor
+        case .aiAssistant:
+            return Color(hex: "141E1A")
         }
     }
 }
@@ -551,11 +606,12 @@ private struct ScrollOffsetKey: PreferenceKey {
 
 private struct TypingIndicator: View {
     var aiAvatarEmoji: String = "🐰"
+    var gradientColors: [Color] = [Color(hex: "FF6B9D"), Color(hex: "C44FE2")]
     @State private var offset: CGFloat = 0
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            PixelAvatarView(emoji: aiAvatarEmoji, size: 28)
+            PixelAvatarView(emoji: aiAvatarEmoji, size: 28, gradientColors: gradientColors)
 
             HStack(spacing: 4) {
                 ForEach(0..<3) { i in
@@ -589,6 +645,7 @@ private struct TypingIndicator: View {
 
 private struct QuickPromptButton: View {
     let text: String
+    let themeGradient: LinearGradient
     let action: () -> Void
 
     @State private var isHovered = false
@@ -603,11 +660,7 @@ private struct QuickPromptButton: View {
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(isHovered
-                            ? AnyShapeStyle(LinearGradient(
-                                colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ))
+                            ? AnyShapeStyle(themeGradient)
                             : AnyShapeStyle(Color.white.opacity(0.05))
                         )
                 )

@@ -8,7 +8,32 @@
 import SwiftUI
 
 struct AppHeader: View, Equatable {
-    static func == (lhs: AppHeader, rhs: AppHeader) -> Bool { true }
+    let layout: ComponentLayout?
+    
+    init(layout: ComponentLayout? = nil) {
+        self.layout = layout
+    }
+    
+    static func == (lhs: AppHeader, rhs: AppHeader) -> Bool {
+        lhs.layout == rhs.layout
+    }
+    
+    private var titleText: String {
+        layout?.customTitle ?? AppConfig.appName
+    }
+    
+    private var fontSizeScale: Double {
+        layout?.customFontSizeScale ?? 1.0
+    }
+    
+    private var accentColors: [Color] {
+        if let hex = layout?.customColorHex {
+            let col = Color(hex: hex)
+            return [col, col.opacity(0.7)]
+        }
+        let themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
+        return themeColor.iconGradient
+    }
     
     var body: some View {
         HStack(spacing: 16) {
@@ -18,17 +43,14 @@ struct AppHeader: View, Equatable {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(hex: "FF6B9D"),
-                                Color(hex: "C44FE2")
-                            ],
+                            colors: accentColors,
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .frame(width: 56, height: 56)
                     .shadow(
-                        color: Color(hex: "FF6B9D").opacity(0.4),
+                        color: (accentColors.first ?? .clear).opacity(0.4),
                         radius: 12,
                         x: 0,
                         y: 6
@@ -42,25 +64,25 @@ struct AppHeader: View, Equatable {
                         .frame(width: 36, height: 36)
                 } else {
                     Image(systemName: "rabbit.fill")
-                        .font(.system(size: 28, weight: .medium))
+                        .font(.system(size: 28 * fontSizeScale, weight: .medium))
                         .foregroundStyle(.white)
                 }
             }
             
             // 应用信息
             VStack(alignment: .leading, spacing: 3) {
-                Text(AppConfig.appName)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                Text(titleText)
+                    .font(.system(size: 22 * fontSizeScale, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                 
                 HStack(spacing: 4) {
                     Text(AppConfig.displayName)
-                        .font(.subheadline)
+                        .font(.system(size: 13 * fontSizeScale))
                         .foregroundStyle(.secondary)
                     
                     // 版本标签
                     Text("v\(AppConfig.version)")
-                        .font(.caption)
+                        .font(.system(size: 10 * fontSizeScale))
                         .fontWeight(.medium)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 6)

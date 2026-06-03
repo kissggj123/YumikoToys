@@ -19,44 +19,48 @@ struct MainView: View {
             // 左侧主内容区
             ScrollView {
                 VStack(spacing: 24) {
-                    // 应用头部
-                    AppHeader()
-                    
-                    // 天数展示卡片
-                    if let info = viewModel.anniversaryInfo {
-                        DaysDisplayCard(
-                            info: info,
-                            countdownText: viewModel.countdownText,
-                            onCopy: { message in
-                                copyToClipboard(message)
-                                toastMessage = "已复制到剪贴板"
-                                withAnimation { showToast = true }
+                    ForEach(ComponentLayout.visible(viewModel.componentLayouts)) { layout in
+                        switch layout.type {
+                        case .header:
+                            AppHeader(layout: layout)
+                        case .daysDisplay:
+                            if let info = viewModel.anniversaryInfo {
+                                DaysDisplayCard(
+                                    info: info,
+                                    countdownText: viewModel.countdownText,
+                                    onCopy: { message in
+                                        copyToClipboard(message)
+                                        toastMessage = "已复制到剪贴板"
+                                        withAnimation { showToast = true }
+                                    },
+                                    layout: layout
+                                )
                             }
-                        )
+                        case .backgroundLearning:
+                            BackgroundLearningLogCard(
+                                learningStats: viewModel.learningStats,
+                                isEnabled: viewModel.isBackgroundLearningEnabled,
+                                onOpenSettings: {
+                                    viewModel.openSettings()
+                                },
+                                onImmediateLearning: {
+                                    viewModel.performImmediateLearning()
+                                },
+                                onShowPreferences: {
+                                    viewModel.showLearnedPreferences = true
+                                },
+                                layout: layout
+                            )
+                        case .modelStatus:
+                            ModelStatusCard(
+                                modelService: DependencyContainer.shared.modelManagementService,
+                                onManageTapped: {
+                                    viewModel.openSettings()
+                                },
+                                layout: layout
+                            )
+                        }
                     }
-                    
-                    // 后台学习日志状态显示
-                    BackgroundLearningLogCard(
-                        learningStats: viewModel.learningStats,
-                        isEnabled: viewModel.isBackgroundLearningEnabled,
-                        onOpenSettings: {
-                            viewModel.openSettings()
-                        },
-                        onImmediateLearning: {
-                            viewModel.performImmediateLearning()
-                        },
-                        onShowPreferences: {
-                            viewModel.showLearnedPreferences = true
-                        }
-                    )
-                    
-                    // 本地模型状态卡片
-                    ModelStatusCard(
-                        modelService: DependencyContainer.shared.modelManagementService,
-                        onManageTapped: {
-                            viewModel.openSettings()
-                        }
-                    )
                 }
                 .padding(28)
             }
@@ -72,12 +76,12 @@ struct MainView: View {
         .background(
             ZStack {
                 // 主背景
-                Color(nsColor: .windowBackgroundColor)
+                viewModel.selectedThemeColor.backgroundColor
                 
                 // 顶部渐变光晕
                 EllipticalGradient(
                     stops: [
-                        .init(color: Color.pink.opacity(0.08), location: 0.0),
+                        .init(color: viewModel.selectedThemeColor.accentColor.opacity(0.08), location: 0.0),
                         .init(color: .clear, location: 0.5)
                     ],
                     center: .top,
@@ -102,6 +106,14 @@ struct DaysDisplayCard: View {
     let info: AnniversaryInfo
     let countdownText: String
     let onCopy: (String) -> Void
+    let layout: ComponentLayout?
+    
+    init(info: AnniversaryInfo, countdownText: String, onCopy: @escaping (String) -> Void, layout: ComponentLayout? = nil) {
+        self.info = info
+        self.countdownText = countdownText
+        self.onCopy = onCopy
+        self.layout = layout
+    }
     
     @State private var isHovered = false
     @State private var pulseAnimation = false
@@ -111,6 +123,14 @@ struct DaysDisplayCard: View {
         case days = "天数"
         case name = "名字"
         case countdown = "倒计时"
+    }
+    
+    private var titleText: String {
+        layout?.customTitle ?? info.anniversary.displayPetName
+    }
+    
+    private var fontSizeScale: Double {
+        layout?.customFontSizeScale ?? 1.0
     }
     
     /// 当前是第几周期/阶段
@@ -125,11 +145,11 @@ struct DaysDisplayCard: View {
                 PixelAvatarView(emoji: info.anniversary.displayAvatar, size: 28)
                 
                 // 观测目标标识（可点击复制）
-                Text(info.anniversary.displayPetName)
-                    .font(.system(size: 18, weight: .semibold))
+                Text(titleText)
+                    .font(.system(size: 18 * fontSizeScale, weight: .semibold))
                     .foregroundStyle(.primary)
                     .onTapGesture {
-                        onCopy(info.anniversary.displayPetName)
+                        onCopy(titleText)
                     }
                     .onHover { hovering in
                         hoveredElement = hovering ? .name : nil
@@ -149,7 +169,7 @@ struct DaysDisplayCard: View {
                     emoji: info.anniversary.displayAvatar
                 )
                 Text(petAge.displayText)
-                    .font(.system(size: 12))
+                    .font(.system(size: 12 * fontSizeScale))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -160,13 +180,13 @@ struct DaysDisplayCard: View {
                 
                 // 相对时间标尺
                 Text(petAge.humanAgeDecimalText)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(Color(hex: "FF6B9D"))
+                    .font(.system(size: 11 * fontSizeScale, design: .monospaced))
+                    .foregroundStyle(daysFirstColor)
                 
                 // 性别图标
                 if let gender = info.anniversary.petGender {
                     Text(gender.emoji)
-                        .font(.system(size: 14))
+                        .font(.system(size: 14 * fontSizeScale))
                         .foregroundStyle(gender.color)
                 }
                 
@@ -174,7 +194,7 @@ struct DaysDisplayCard: View {
                 
                 // 模式类型标签
                 Text(info.anniversary.type.displayName)
-                    .font(.caption)
+                    .font(.system(size: 10 * fontSizeScale))
                     .fontWeight(.medium)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)
@@ -188,12 +208,12 @@ struct DaysDisplayCard: View {
             // 发展历程展示（可点击复制）
             VStack(spacing: 8) {
                 Text("联结发展：第 \(currentYear) 阶段")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 14 * fontSizeScale, weight: .medium))
                     .foregroundStyle(.secondary)
                 
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(String(format: "%.3f", info.calculation.totalDays))
-                        .font(.system(size: 56, weight: .bold, design: .rounded))
+                        .font(.system(size: 56 * fontSizeScale, weight: .bold, design: .rounded))
                         .foregroundStyle(daysGradient)
                         .scaleEffect(pulseAnimation ? 1.02 : 1.0)
                         .onTapGesture {
@@ -213,14 +233,14 @@ struct DaysDisplayCard: View {
                         }
                     
                     Text("天")
-                        .font(.system(size: 20, weight: .medium))
+                        .font(.system(size: 20 * fontSizeScale, weight: .medium))
                         .foregroundStyle(.secondary)
                         .offset(y: -8)
                 }
                 
                 // 实时倒计时（可点击复制）
                 Text(countdownText)
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .font(.system(size: 13 * fontSizeScale, weight: .medium, design: .monospaced))
                     .foregroundStyle(.tertiary)
                     .onTapGesture {
                         onCopy(countdownText)
@@ -259,21 +279,23 @@ struct DaysDisplayCard: View {
                                 .font(.callout)
                             
                             Text(milestone.label)
-                                .font(.subheadline)
+                                .font(.system(size: 13 * fontSizeScale))
                                 .foregroundStyle(.secondary)
                             
                             Spacer()
                             
-                            HStack(spacing: 4) {
+                            HStack(spacing: 8) {
                                 Text(milestone.formattedDate)
-                                    .font(.caption)
+                                    .font(.system(size: 11 * fontSizeScale))
                                     .fontWeight(.medium)
                                     .foregroundStyle(.primary)
+                                    .frame(width: 85, alignment: .leading)
                                 
                                 Text("(\(milestone.countDisplay))")
-                                    .font(.caption)
+                                    .font(.system(size: 11 * fontSizeScale))
                                     .fontWeight(.medium)
-                                    .foregroundStyle(Color(hex: "FF6B9D"))
+                                    .foregroundStyle(daysFirstColor)
+                                    .frame(width: 60, alignment: .trailing)
                             }
                         }
                     }
@@ -284,7 +306,7 @@ struct DaysDisplayCard: View {
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(.ultraThinMaterial)
-                .overlay(
+                .overlay(alignment: .center) {
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
                             LinearGradient(
@@ -294,7 +316,7 @@ struct DaysDisplayCard: View {
                             ),
                             lineWidth: 1
                         )
-                )
+                }
                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 6)
         )
         .scaleEffect(isHovered ? 1.015 : 1.0)
@@ -303,7 +325,15 @@ struct DaysDisplayCard: View {
     }
     
     private var daysGradient: LinearGradient {
-        LinearGradient(
+        if let hex = layout?.customColorHex {
+            let col = Color(hex: hex)
+            return LinearGradient(
+                colors: [col, col.opacity(0.7)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        }
+        return LinearGradient(
             colors: [
                 Color(hex: "FF6B9D"),
                 Color(hex: "C44FE2")
@@ -313,7 +343,22 @@ struct DaysDisplayCard: View {
         )
     }
     
+    private var daysFirstColor: Color {
+        if let hex = layout?.customColorHex {
+            return Color(hex: hex)
+        }
+        return Color(hex: "FF6B9D")
+    }
+    
     private var typeGradient: LinearGradient {
+        if let hex = layout?.customColorHex {
+            let col = Color(hex: hex)
+            return LinearGradient(
+                colors: [col, col.opacity(0.8)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        }
         switch info.anniversary.type {
         case .countUp:
             return LinearGradient(
@@ -472,6 +517,10 @@ final class MainViewModel: ObservableObject {
     @Published var showLearnedPreferences: Bool = false
     @Published var learnedPreferences: [UserPreference] = []
     
+    @Published var selectedThemeColor: ThemeColor = .dark
+    @Published var customThemeColorHex: String = "FF6B9D"
+    @Published var componentLayouts: [ComponentLayout] = []
+    
     // 订阅并存储动态心理学画像，提供实时更新和渲染支持
     @Published var psychologicalProfile: PsychologicalProfile?
 
@@ -509,8 +558,22 @@ final class MainViewModel: ObservableObject {
                 self?.currentMode = settings.currentMode
                 self?.selectedIconStyle = settings.selectedIconStyle
                 self?.isBackgroundLearningEnabled = settings.isBackgroundLearningEnabled
+                self?.selectedThemeColor = settings.selectedThemeColor
+                self?.customThemeColorHex = settings.customThemeColorHex
             }
             .store(in: &cancellables)
+
+        // 订阅组件布局变化
+        container.componentLayoutService.layoutsPublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak self] layouts in
+                self?.componentLayouts = layouts
+            }
+            .store(in: &cancellables)
+            
+        componentLayouts = container.componentLayoutService.loadLayouts()
+        selectedThemeColor = container.settingsService.settings.selectedThemeColor
+        customThemeColorHex = container.settingsService.settings.customThemeColorHex
 
         // 订阅后台学习服务状态变化，实时更新学习统计
         if let learningService = container.backgroundLearningService {
@@ -623,9 +686,43 @@ struct BackgroundLearningLogCard: View {
     let onOpenSettings: () -> Void
     let onImmediateLearning: () -> Void
     let onShowPreferences: () -> Void
+    let layout: ComponentLayout?
+    
+    init(
+        learningStats: LearningStats,
+        isEnabled: Bool,
+        onOpenSettings: @escaping () -> Void,
+        onImmediateLearning: @escaping () -> Void,
+        onShowPreferences: @escaping () -> Void,
+        layout: ComponentLayout? = nil
+    ) {
+        self.learningStats = learningStats
+        self.isEnabled = isEnabled
+        self.onOpenSettings = onOpenSettings
+        self.onImmediateLearning = onImmediateLearning
+        self.onShowPreferences = onShowPreferences
+        self.layout = layout
+    }
+
     @State private var isHovered = false
     @State private var pulseAnimation = false
     @State private var isLearningNow = false
+
+    private var titleText: String {
+        layout?.customTitle ?? "心智建模与评估日志"
+    }
+    
+    private var fontSizeScale: Double {
+        layout?.customFontSizeScale ?? 1.0
+    }
+    
+    private var cardAccentColors: [Color] {
+        if let hex = layout?.customColorHex {
+            let col = Color(hex: hex)
+            return [col, col.opacity(0.8)]
+        }
+        return [Color(hex: "5856D6"), Color(hex: "AF52DE")]
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -635,13 +732,13 @@ struct BackgroundLearningLogCard: View {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "5856D6"), Color(hex: "AF52DE")],
+                                colors: cardAccentColors,
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 36, height: 36)
-                        .shadow(color: Color(hex: "5856D6").opacity(0.3), radius: 6, x: 0, y: 3)
+                        .shadow(color: (cardAccentColors.first ?? .clear).opacity(0.3), radius: 6, x: 0, y: 3)
 
                     Image(systemName: "brain.head.profile")
                         .font(.system(size: 16, weight: .medium))
@@ -649,8 +746,8 @@ struct BackgroundLearningLogCard: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("心智建模与评估日志") // 👈【图3精简】：字数精简，防止折行
-                        .font(.system(size: 14, weight: .semibold))
+                    Text(titleText)
+                        .font(.system(size: 14 * fontSizeScale, weight: .semibold))
                         .foregroundStyle(.primary)
 
                     HStack(spacing: 4) {
@@ -660,7 +757,7 @@ struct BackgroundLearningLogCard: View {
                             .shadow(color: (isEnabled ? Color.green : Color.gray).opacity(0.5), radius: 2)
 
                         Text(isEnabled ? "活跃分析中" : "监听挂起")
-                            .font(.system(size: 11))
+                            .font(.system(size: 11 * fontSizeScale))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -671,23 +768,22 @@ struct BackgroundLearningLogCard: View {
                     Button(action: {
                         isLearningNow = true
                         onImmediateLearning()
-                        // 【修复】使用延时监听替代固定 2 秒
                         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
                             isLearningNow = false
                         }
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: isLearningNow ? "arrow.2.circlepath" : "play.circle")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 12 * fontSizeScale, weight: .medium))
                             Text(isLearningNow ? "分析中..." : "即时建模")
-                                .font(.system(size: 11, weight: .medium))
+                                .font(.system(size: 11 * fontSizeScale, weight: .medium))
                         }
-                        .foregroundStyle(Color(hex: "5856D6"))
+                        .foregroundStyle(cardAccentColors.first ?? Color(hex: "5856D6"))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(
                             Capsule()
-                                .fill(Color(hex: "5856D6").opacity(0.1))
+                                .fill((cardAccentColors.first ?? Color(hex: "5856D6")).opacity(0.1))
                         )
                     }
                     .buttonStyle(.plain)
@@ -717,51 +813,51 @@ struct BackgroundLearningLogCard: View {
                 HStack(spacing: 8) {
                     Image(systemName: "play.circle")
                         .font(.system(size: 11))
-                        .foregroundStyle(Color(hex: "5856D6"))
+                        .foregroundStyle(cardAccentColors.first ?? Color(hex: "5856D6"))
                         .frame(width: 16)
 
                     Text("进程初始化时间")
-                        .font(.system(size: 12))
+                        .font(.system(size: 12 * fontSizeScale))
                         .foregroundStyle(.secondary)
 
                     Spacer()
 
                     Text(formatStartTime())
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 12 * fontSizeScale, weight: .medium))
                         .foregroundStyle(.primary)
                 }
 
                 HStack(spacing: 8) {
                     Image(systemName: "bubble.left.and.bubble.right")
                         .font(.system(size: 11))
-                        .foregroundStyle(Color(hex: "5856D6"))
+                        .foregroundStyle(cardAccentColors.first ?? Color(hex: "5856D6"))
                         .frame(width: 16)
 
                     Text("分析会话语料")
-                        .font(.system(size: 12))
+                        .font(.system(size: 12 * fontSizeScale))
                         .foregroundStyle(.secondary)
 
                     Spacer()
 
                     Text("\(learningStats.totalConversationsAnalyzed) 轮")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 12 * fontSizeScale, weight: .medium))
                         .foregroundStyle(.primary)
                 }
 
                 HStack(spacing: 8) {
                     Image(systemName: "heart.text.square")
                         .font(.system(size: 11))
-                        .foregroundStyle(Color(hex: "5856D6"))
+                        .foregroundStyle(cardAccentColors.first ?? Color(hex: "5856D6"))
                         .frame(width: 16)
 
                     Text("沉淀图式特征")
-                        .font(.system(size: 12))
+                        .font(.system(size: 12 * fontSizeScale))
                         .foregroundStyle(.secondary)
 
                     Spacer()
 
                     Text("\(learningStats.totalPreferencesLearned) 个维度")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 12 * fontSizeScale, weight: .medium))
                         .foregroundStyle(.primary)
                 }
 
@@ -769,17 +865,17 @@ struct BackgroundLearningLogCard: View {
                     HStack(spacing: 8) {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 11))
-                            .foregroundStyle(Color(hex: "5856D6"))
+                            .foregroundStyle(cardAccentColors.first ?? Color(hex: "5856D6"))
                             .frame(width: 16)
 
                         Text("最近更新时间")
-                            .font(.system(size: 12))
+                            .font(.system(size: 12 * fontSizeScale))
                             .foregroundStyle(.secondary)
 
                         Spacer()
 
                         Text(formatDate(lastDate))
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 12 * fontSizeScale, weight: .medium))
                             .foregroundStyle(.primary)
                     }
                 }
@@ -792,7 +888,7 @@ struct BackgroundLearningLogCard: View {
                         .foregroundStyle(.tertiary)
 
                     Text("请在系统设置中启用后台认知学习通道")
-                        .font(.system(size: 11))
+                        .font(.system(size: 11 * fontSizeScale))
                         .foregroundStyle(.tertiary)
                 }
                 .padding(.top, 4)

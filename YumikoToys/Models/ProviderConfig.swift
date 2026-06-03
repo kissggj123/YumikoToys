@@ -16,6 +16,18 @@ struct ProviderConfig: Codable, Sendable {
     var fallbackModels: [String]
     var availableModels: [AIModelInfo]
     var lastModelFetchDate: Date?
+    var estimatedSentTokens: Int?
+    var estimatedReceivedTokens: Int?
+
+    var sentTokens: Int {
+        get { estimatedSentTokens ?? 0 }
+        set { estimatedSentTokens = newValue }
+    }
+    
+    var receivedTokens: Int {
+        get { estimatedReceivedTokens ?? 0 }
+        set { estimatedReceivedTokens = newValue }
+    }
 
     init(
         apiURL: String,
@@ -24,7 +36,9 @@ struct ProviderConfig: Codable, Sendable {
         autoSelect: Bool = false,
         fallbackModels: [String] = [],
         availableModels: [AIModelInfo] = [],
-        lastModelFetchDate: Date? = nil
+        lastModelFetchDate: Date? = nil,
+        estimatedSentTokens: Int? = 0,
+        estimatedReceivedTokens: Int? = 0
     ) {
         self.apiURL = apiURL
         self.apiKey = apiKey
@@ -33,6 +47,8 @@ struct ProviderConfig: Codable, Sendable {
         self.fallbackModels = fallbackModels
         self.availableModels = availableModels
         self.lastModelFetchDate = lastModelFetchDate
+        self.estimatedSentTokens = estimatedSentTokens
+        self.estimatedReceivedTokens = estimatedReceivedTokens
     }
 }
 

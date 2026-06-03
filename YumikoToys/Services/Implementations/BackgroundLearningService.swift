@@ -183,6 +183,12 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
     func performLearning() async {
         guard !isLearning else { return }
         
+        // 👈 【优化：避免无 FDA 时的重复弹窗】检测完全磁盘访问权限，如果未授予，则跳过后台学习并记录警告
+        guard FullDiskAccessHelper.hasFullDiskAccess else {
+            LoggerService.shared.warning("[BackgroundLearningService] 未授予完全磁盘访问权限 (FDA)，已跳过后台学习以防重复申请权限提示。")
+            return
+        }
+        
         // 👈 【核心 Bug 1 修复】物理载入沙盒中所有的历史会话文件，而不再依赖处于内存休眠状态的单个 currentConversationId。
         // 这彻底解决了在主界面点击“立即学习”时因为会话 ID 默认为 "default" 导致消息数判定为 0 从而静默跳过分析的严重时序 Bug。 [2]
         let allMessages = loadAllSavedMessages()

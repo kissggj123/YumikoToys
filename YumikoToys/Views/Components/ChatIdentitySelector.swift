@@ -1,26 +1,26 @@
 //
-//  ChatModeSelector.swift
+//  ChatIdentitySelector.swift
 //  YumikoToys
 //
-//  对话模式切换组件
+//  AI 陪伴身份切换组件
 //
 
 import SwiftUI
 
-struct ChatModeSelector: View {
-    @Binding var selectedMode: ChatMode
-    let onModeChange: (ChatMode) -> Void
+struct ChatIdentitySelector: View {
+    @Binding var selectedIdentity: ChatIdentity
+    let onIdentityChange: (ChatIdentity) -> Void
 
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(ChatMode.allCases) { mode in
-                ChatModeButton(
-                    mode: mode,
-                    isSelected: selectedMode == mode,
+            ForEach(ChatIdentity.allCases) { identity in
+                ChatIdentityButton(
+                    identity: identity,
+                    isSelected: selectedIdentity == identity,
                     action: {
-                        if selectedMode != mode {
-                            selectedMode = mode
-                            onModeChange(mode)
+                        if selectedIdentity != identity {
+                            selectedIdentity = identity
+                            onIdentityChange(identity)
                         }
                     }
                 )
@@ -37,17 +37,17 @@ struct ChatModeSelector: View {
     }
 }
 
-private struct ChatModeButton: View {
-    let mode: ChatMode
+private struct ChatIdentityButton: View {
+    let identity: ChatIdentity
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Text(mode.icon)
+                Text(identityEmoji)
                     .font(.system(size: 14))
-                Text(mode.displayName)
+                Text(identity.displayName)
                     .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
             }
             .foregroundStyle(isSelected ? .white : .primary)
@@ -55,23 +55,30 @@ private struct ChatModeButton: View {
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? AnyShapeStyle(modeGradient) : AnyShapeStyle(Color.clear))
+                    .fill(isSelected ? AnyShapeStyle(identityGradient) : AnyShapeStyle(Color.clear))
             )
         }
         .buttonStyle(.plain)
     }
 
-    private var modeGradient: LinearGradient {
-        switch mode {
-        case .petCompanion:
+    private var identityEmoji: String {
+        switch identity {
+        case .pet: return "🐾"
+        case .psychologyExpert: return "🧠"
+        }
+    }
+
+    private var identityGradient: LinearGradient {
+        switch identity {
+        case .pet:
             return LinearGradient(
                 colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
                 startPoint: .leading,
                 endPoint: .trailing
             )
-        case .aiAssistant:
+        case .psychologyExpert:
             return LinearGradient(
-                colors: [Color(hex: "059669"), Color(hex: "0891B2")],
+                colors: [Color(hex: "5856D6"), Color(hex: "AF52DE")],
                 startPoint: .leading,
                 endPoint: .trailing
             )

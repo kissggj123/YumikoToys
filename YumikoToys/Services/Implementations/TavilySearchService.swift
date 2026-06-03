@@ -294,7 +294,9 @@ final class UnifiedSearchService: ObservableObject, Sendable {
             do {
                 let response = try await tavily.search(query: optimizedQuery, maxResults: maxResults)
                 return UnifiedSearchResult(query: response.query, answer: response.answer, results: tavily.toEnhancedResults(response), sources: tavily.toSearchSources(response), backend: .tavily, responseTime: response.responseTime)
-            } catch { }
+            } catch {
+                LoggerService.shared.warning("Tavily search failed: \(error). Falling back to next backend.")
+            }
         }
         
         if let google = googleSearchService {
@@ -302,11 +304,13 @@ final class UnifiedSearchService: ObservableObject, Sendable {
                 let results = try await google.search(query: optimizedQuery, maxResults: maxResults)
                 let sources = results.map { SearchSource(title: $0.title, url: $0.url, snippet: $0.snippet) }
                 return UnifiedSearchResult(query: optimizedQuery, answer: nil, results: results, sources: sources, backend: .google, responseTime: 0.1)
-            } catch { }
+            } catch {
+                LoggerService.shared.warning("Google search failed: \(error). Falling back to DDG.")
+            }
         }
 
-        // 3. 👈【终极大招】：100% 移植 Python 版的纯原生 DDG 正则抓取。
-        // 彻底抛弃那些会引发云盾拦截的爬虫，和会返回 HAPPY 的脏数据池！
+        // 3. DDG HTML 抓取（Python 版本原汁原味移植）
+        LoggerService.shared.info("All premium search backends failed. Using DDG HTML scraping for query: \(optimizedQuery)")
         return try await executePythonStyleDDGSearch(query: optimizedQuery, maxResults: maxResults)
     }
     
@@ -408,7 +412,7 @@ final class UnifiedSearchService: ObservableObject, Sendable {
         }
 
         // 3. Match <td class="result__snippet"> (for the table layout)
-        let tdRegex = try? NSRegularExpression(pattern: "<td[^>]+class=\"[^\"]*result__snippet[^\"]*\"[^*]>(.*?)</td>", options: [.dotMatchesLineSeparators, .caseInsensitive])
+        let tdRegex = try? NSRegularExpression(pattern: "<td[^>]+class=\"[^\"]*result__snippet[^\"]*\"[^>]*>(.*?)</td>", options: [.dotMatchesLineSeparators, .caseInsensitive])
         if let matches = tdRegex?.matches(in: html, range: NSRange(html.startIndex..., in: html)) {
             for match in matches {
                 guard let tdRange = Range(match.range(at: 1), in: html) else { continue }

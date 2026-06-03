@@ -31,12 +31,19 @@ struct Conversation: Codable, Identifiable, Equatable, Sendable {
     var messageCount: Int
     var petAnniversaryId: String?  // 关联的宠物纪念日ID
     var isPinned: Bool  // 是否置顶
+    var chatMode: ChatMode?  // 对话所属模式
+
+    var mode: ChatMode {
+        get { chatMode ?? .petCompanion }
+        set { chatMode = newValue }
+    }
 
     init(
         id: UUID = UUID(),
         title: String = "新对话",
         petAnniversaryId: String? = nil,
-        isPinned: Bool = false
+        isPinned: Bool = false,
+        chatMode: ChatMode = .petCompanion
     ) {
         self.id = id
         self.title = title
@@ -45,6 +52,7 @@ struct Conversation: Codable, Identifiable, Equatable, Sendable {
         self.messageCount = 0
         self.petAnniversaryId = petAnniversaryId
         self.isPinned = isPinned
+        self.chatMode = chatMode
     }
 
     /// 生成显示标题（基于最新消息）
@@ -96,7 +104,7 @@ final class ConversationService: ObservableObject {
         }
         // 如果没有对话，创建默认对话
         if conversations.isEmpty {
-            let defaultConversation = Conversation(title: "可可的对话")
+            let defaultConversation = Conversation(title: "可可的对话", chatMode: .petCompanion)
             conversations.append(defaultConversation)
             currentConversationId = defaultConversation.id
             await saveConversations()
@@ -107,8 +115,8 @@ final class ConversationService: ObservableObject {
 
     /// 创建新对话
     @discardableResult
-    func createConversation(title: String = "新对话", petAnniversaryId: String? = nil) -> Conversation {
-        let conversation = Conversation(title: title, petAnniversaryId: petAnniversaryId)
+    func createConversation(title: String = "新对话", petAnniversaryId: String? = nil, chatMode: ChatMode = .petCompanion) -> Conversation {
+        let conversation = Conversation(title: title, petAnniversaryId: petAnniversaryId, chatMode: chatMode)
         conversations.insert(conversation, at: 0)
         currentConversationId = conversation.id
         Task { await saveConversations() }

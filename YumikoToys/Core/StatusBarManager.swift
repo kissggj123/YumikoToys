@@ -100,6 +100,7 @@ final class StatusBarManager: NSObject {
         popover.contentSize = NSSize(width: 280, height: 100)
         popover.behavior = .transient
         popover.animates = true
+        popover.delegate = self
         
         // 【修复】根据当前主题色设置 popover 外观
         let themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
@@ -133,8 +134,17 @@ final class StatusBarManager: NSObject {
     
     private func setupEventMonitor() {
         let mask: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown]
-        eventMonitor = EventMonitor(mask: mask) { [weak self] (_: NSEvent?) in
-            if let self = self, self.popover?.isShown == true {
+        eventMonitor = EventMonitor(mask: mask) { [weak self] (event: NSEvent?) in
+            guard let self = self else { return }
+            if self.popover?.isShown == true {
+                // 如果系统颜色面板打开着，且点击在该面板内，则不关闭 popover
+                if NSColorPanel.shared.isVisible {
+                    if let clickedWindow = event?.window {
+                        if clickedWindow == NSColorPanel.shared || clickedWindow.className.contains("ColorPanel") || clickedWindow.level == .floating || clickedWindow.level == .modalPanel {
+                            return
+                        }
+                    }
+                }
                 self.closePopover()
             }
         }
@@ -276,14 +286,25 @@ final class StatusBarManager: NSObject {
         
         container.settingsService.settingsPublisher
             .receive(on: DispatchQueue.main)
-            .map { $0.statusBarIconStyle }
-            .removeDuplicates()
-            .sink { [weak self] style in
-                self?.currentIconStyle = style
-                if !(self?.container.preventSleepService.isPreventSleepEnabled ?? false) {
-                    self?.updateStatusBarIcon()
+            .sink { [weak self] settings in
+                guard let self = self else { return }
+                
+                // 更新图标风格
+                let style = settings.statusBarIconStyle
+                if self.currentIconStyle != style {
+                    self.currentIconStyle = style
+                    if !self.container.preventSleepService.isPreventSleepEnabled {
+                        self.updateStatusBarIcon()
+                    }
+                    LoggerService.shared.info("Status bar icon updated to style: \(style.displayName)")
                 }
-                LoggerService.shared.info("Status bar icon updated to style: \(style.displayName)")
+                
+                // 动态同步更新 popover 外观与窗口背景色（确保小箭头颜色同步跟随主题）
+                let themeColor = settings.selectedThemeColor
+                self.popover?.appearance = themeColor.isDarkTheme ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+                if let window = self.popover?.contentViewController?.view.window {
+                    window.backgroundColor = themeColor.nsBackgroundColor
+                }
             }
             .store(in: &cancellables)
         
@@ -383,8 +404,12 @@ final class StatusBarManager: NSObject {
     }
     
     private func closePopover() {
-        popover?.performClose(nil)
+        popover?.close()
         eventMonitor?.stop()
+        // 随 popover 关闭一同关闭可能遗留的系统颜色选择器面板
+        if NSColorPanel.shared.isVisible {
+            NSColorPanel.shared.close()
+        }
     }
     
     // MARK: - Window Actions
@@ -419,6 +444,12 @@ final class AdaptiveHostingController<Content: View>: NSHostingController<Conten
             if popover?.contentSize.height != idealSize.height {
                 popover?.contentSize = idealSize
             }
+        }
+        
+        // 动态设置 popover 窗口背景色以使得顶部小箭头和边框契合主题
+        if let window = self.view.window {
+            let themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
+            window.backgroundColor = themeColor.nsBackgroundColor
         }
     }
 }
@@ -559,5 +590,17 @@ struct StatusBarButtonView: View {
 private extension CGFloat {
     static func random(in range: ClosedRange<CGFloat>) -> CGFloat {
         return CGFloat(Double.random(in: Double(range.lowerBound)...Double(range.upperBound)))
+    }
+}
+
+// MARK: - NSPopoverDelegate
+
+extension StatusBarManager: NSPopoverDelegate {
+    func popoverShouldClose(_ popover: NSPopover) -> Bool {
+        // 如果系统颜色面板是打开的，阻断 NSPopover 失去焦点时自动关闭的行为
+        if NSColorPanel.shared.isVisible {
+            return false
+        }
+        return true
     }
 }

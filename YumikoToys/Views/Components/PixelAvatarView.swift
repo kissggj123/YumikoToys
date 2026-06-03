@@ -58,9 +58,7 @@ struct PixelAvatarView: View {
     let size: CGFloat
 
     /// 渐变背景色（默认粉→紫）
-    var gradientColors: [Color] {
-        [Color(hex: "FF6B9D"), Color(hex: "C44FE2")]
-    }
+    var gradientColors: [Color] = [Color(hex: "FF6B9D"), Color(hex: "C44FE2")]
 
     var body: some View {
         let avatarData = PixelAvatarMapper.lookup(emoji)

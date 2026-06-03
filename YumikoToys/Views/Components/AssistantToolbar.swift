@@ -63,7 +63,7 @@ private struct ToolbarToggleButton: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isOn
                         ? AnyShapeStyle(LinearGradient(
-                            colors: [Color(hex: "3B82F6"), Color(hex: "06B6D4")],
+                            colors: [Color(hex: "059669"), Color(hex: "0891B2")],
                             startPoint: .leading,
                             endPoint: .trailing
                         ))
@@ -73,7 +73,7 @@ private struct ToolbarToggleButton: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(isOn
-                        ? Color(hex: "3B82F6").opacity(0.3)
+                        ? Color(hex: "059669").opacity(0.3)
                         : Color.primary.opacity(0.1),
                         lineWidth: 1
                     )

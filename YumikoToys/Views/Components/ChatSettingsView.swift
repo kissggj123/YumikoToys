@@ -291,9 +291,9 @@ struct ChatSettingsView: View {
             // Token 用量
             cuteSectionCard(title: "Token 用量", icon: "📊") {
                 HStack(spacing: 20) {
-                    cuteStatItem(emoji: "📤", label: "发送", value: "\(viewModel.settings.estimatedSentTokens.formatted())")
-                    cuteStatItem(emoji: "📥", label: "接收", value: "\(viewModel.settings.estimatedReceivedTokens.formatted())")
-                    cuteStatItem(emoji: "📈", label: "总计", value: "\(viewModel.settings.totalEstimatedTokens.formatted())", highlight: true)
+                    cuteStatItem(emoji: "📤", label: "发送", value: "\(viewModel.settings.currentConfig.sentTokens.formatted())")
+                    cuteStatItem(emoji: "📥", label: "接收", value: "\(viewModel.settings.currentConfig.receivedTokens.formatted())")
+                    cuteStatItem(emoji: "📈", label: "总计", value: "\((viewModel.settings.currentConfig.sentTokens + viewModel.settings.currentConfig.receivedTokens).formatted())", highlight: true)
                 }
             }
         }
@@ -820,6 +820,9 @@ final class ChatSettingsViewModel: ObservableObject {
             nvidiaModels = config?.availableModels ?? []
             isNvidiaVerified = !nvidiaAPIKey.isEmpty && !nvidiaModels.isEmpty
         }
+
+        // 6. 重新将 settings 绑定回 UI，以确保 Token 用量等信息能同步更新
+        self.settings = settings
 
         saveStatus = "已切换到 \(provider.displayName)"
     }

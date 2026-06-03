@@ -158,7 +158,9 @@ final class UniversalLLMProvider: AIProvider {
         systemPrompt: String?,
         model: String,
         enableThinking: Bool = false,
-        tools: [AgentToolDefinition]? = nil
+        tools: [AgentToolDefinition]? = nil,
+        temperature: Double? = nil,
+        topP: Double? = nil
     ) -> AsyncThrowingStream<UniversalStreamEvent, Error> {
         let capturedApiKey = self.apiKey
         let capturedBaseURL = self.baseURL
@@ -189,6 +191,12 @@ final class UniversalLLMProvider: AIProvider {
                         if let systemPrompt = systemPrompt, !systemPrompt.isEmpty {
                             payload["system"] = systemPrompt
                         }
+                        if let temp = temperature {
+                            payload["temperature"] = temp
+                        }
+                        if let tp = topP {
+                            payload["top_p"] = tp
+                        }
                         
                         request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
                         urlRequest = request
@@ -216,10 +224,14 @@ final class UniversalLLMProvider: AIProvider {
                             "model": model,
                             "messages": openAIMessages,
                             "stream": true,
-                            "temperature": 0.6
+                            "temperature": temperature ?? 0.6
                         ]
+                        if let tp = topP {
+                            payload["top_p"] = tp
+                        }
                         
-                        if let tools = tools, !tools.isEmpty && !model.contains("reasoner") {
+                        let isReasoningModel = model.lowercased().contains("reasoner") || model.lowercased().contains("thinking") || model.lowercased().contains("think") || model.lowercased().contains("r1")
+                        if let tools = tools, !tools.isEmpty && !isReasoningModel {
                             var toolsArray: [[String: Any]] = []
                             for tool in tools {
                                 var toolDict: [String: Any] = [
