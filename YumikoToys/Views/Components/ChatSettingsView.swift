@@ -325,6 +325,16 @@ struct ChatSettingsView: View {
                                 .toggleStyle(.switch)
                                 .labelsHidden()
                         }
+                        
+                        HStack {
+                            Text("联网搜索增强模式 (多线程全面抓取)")
+                                .font(.system(size: 12, design: .rounded))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Toggle("", isOn: $viewModel.enableEnhancedSearchMode)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                        }
                     }
                 }
             }
@@ -693,6 +703,7 @@ final class ChatSettingsViewModel: ObservableObject {
     @Published var searchAPIKey: String = ""
     @Published var enableWebSearch: Bool = true
     @Published var autoWebSearch: Bool = true
+    @Published var enableEnhancedSearchMode: Bool = false
 
     // 助手模式
     @Published var defaultChatMode: ChatMode = .petCompanion
@@ -750,7 +761,8 @@ final class ChatSettingsViewModel: ObservableObject {
         searchAPIKey = appSettings.assistantConfig.searchAPIKey
         enableWebSearch = appSettings.assistantConfig.enableWebSearch
         autoWebSearch = appSettings.assistantConfig.autoWebSearch
-
+        enableEnhancedSearchMode = appSettings.assistantConfig.enableEnhancedSearchMode
+        
         defaultChatMode = appSettings.defaultChatMode
         enableDeepThinking = appSettings.assistantConfig.enableDeepThinking
         thinkingModel = appSettings.assistantConfig.thinkingModel
@@ -970,6 +982,7 @@ final class ChatSettingsViewModel: ObservableObject {
         appSettings.assistantConfig.tavilyAPIKey = tavilyAPIKey
         appSettings.assistantConfig.searchAPIURL = searchAPIURL
         appSettings.assistantConfig.searchAPIKey = searchAPIKey
+        appSettings.assistantConfig.enableEnhancedSearchMode = enableEnhancedSearchMode
         container.settingsService.updateSettings(appSettings)
 
         saveStatus = "设置已保存"

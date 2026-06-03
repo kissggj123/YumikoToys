@@ -80,13 +80,41 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     var isCustomDarkBackground: Bool {
         let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
         let (r, g, b) = Self.getRGB(from: hex)
-        let luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
-        return luminance > 0.45
+        let MathLuminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return MathLuminance > 0.45
+    }
+    
+    var isAccentLight: Bool {
+        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
+        let (r, g, b) = Self.getRGB(from: hex)
+        let MathLuminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return MathLuminance > 0.7
+    }
+    
+    var customBlendedBackground: (r: Double, g: Double, b: Double) {
+        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
+        let (r, g, b) = Self.getRGB(from: hex)
+        if isCustomDarkBackground {
+            // blend with dark gray (92% #0E0E10 + 8% custom)
+            let bgR = r * 0.08 + 0.055 * 0.92
+            let bgG = g * 0.08 + 0.055 * 0.92
+            let bgB = b * 0.08 + 0.063 * 0.92
+            return (bgR, bgG, bgB)
+        } else {
+            // blend with white (96% white + 4% custom)
+            let bgR = r * 0.04 + 1.0 * 0.96
+            let bgG = g * 0.04 + 1.0 * 0.96
+            let bgB = b * 0.04 + 1.0 * 0.96
+            return (bgR, bgG, bgB)
+        }
     }
     
     // MARK: - 基础颜色
     
     var backgroundColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customBackgroundColorHex)
+        }
         switch self {
         case .dark:
             return Color(red: 0.07, green: 0.07, blue: 0.08)  // #121214 premium dark
@@ -103,13 +131,17 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         case .pixel:
             return Color(red: 0.10, green: 0.10, blue: 0.12)  // retro console dark
         case .custom:
-            return isCustomDarkBackground
-                ? Color(red: 0.07, green: 0.07, blue: 0.08)
-                : Color(red: 0.97, green: 0.98, blue: 0.99)
+            let (r, g, b) = customBlendedBackground
+            return Color(red: r, green: g, blue: b)
         }
     }
     
     var nsBackgroundColor: NSColor {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            let hex = DependencyContainer.shared.settingsService.settings.customBackgroundColorHex
+            let (r, g, b) = Self.getRGB(from: hex)
+            return NSColor(red: r, green: g, blue: b, alpha: 1.0)
+        }
         switch self {
         case .dark:
             return NSColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1.0)
@@ -126,13 +158,15 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         case .pixel:
             return NSColor(red: 0.10, green: 0.10, blue: 0.12, alpha: 1.0)
         case .custom:
-            return isCustomDarkBackground
-                ? NSColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1.0)
-                : NSColor(red: 0.97, green: 0.98, blue: 0.99, alpha: 1.0)
+            let (r, g, b) = customBlendedBackground
+            return NSColor(red: r, green: g, blue: b, alpha: 1.0)
         }
     }
     
     var accentColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customAccentColorHex)
+        }
         switch self {
         case .dark:
             return Color(hex: "FF6B9D")
@@ -154,6 +188,10 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     }
     
     var iconGradient: [Color] {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            let accent = Color(hex: DependencyContainer.shared.settingsService.settings.customAccentColorHex)
+            return [accent, accent.opacity(0.7)]
+        }
         switch self {
         case .dark:
             return [Color(hex: "FF6B9D"), Color(hex: "C44FE2")]
@@ -177,6 +215,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     // MARK: - 文字颜色系统
     
     var textColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customTextColorHex)
+        }
         switch self {
         case .dark, .pixel:
             return .white
@@ -198,6 +239,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     }
     
     var secondaryTextColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customTextColorHex).opacity(0.7)
+        }
         switch self {
         case .dark, .pixel:
             return Color(hex: "9A9AAB")
@@ -219,6 +263,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     }
     
     var cardBackgroundColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customCardBackgroundColorHex)
+        }
         switch self {
         case .dark, .pixel:
             return Color.white.opacity(0.05)
@@ -232,6 +279,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     }
     
     var buttonBackgroundColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customAccentColorHex).opacity(0.08)
+        }
         switch self {
         case .dark, .pixel:
             return Color.white.opacity(0.08)
@@ -251,6 +301,12 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     }
     
     var isDarkTheme: Bool {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            let hex = DependencyContainer.shared.settingsService.settings.customBackgroundColorHex
+            let (r, g, b) = Self.getRGB(from: hex)
+            let MathLuminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            return MathLuminance < 0.55
+        }
         switch self {
         case .dark, .pixel:
             return true
@@ -264,6 +320,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     // MARK: - 边框和分割线颜色
     
     var borderColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customBorderColorHex)
+        }
         switch self {
         case .dark, .pixel:
             return Color.white.opacity(0.12)
@@ -283,6 +342,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     }
     
     var dividerColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customDividerColorHex)
+        }
         switch self {
         case .dark, .pixel:
             return Color.white.opacity(0.08)
@@ -347,6 +409,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     // MARK: - 图标和装饰
     
     var iconColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customTextColorHex).opacity(0.6)
+        }
         switch self {
         case .dark, .pixel:
             return .secondary
@@ -356,6 +421,9 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     }
     
     var hoverBackgroundColor: Color {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customAccentColorHex).opacity(0.08)
+        }
         switch self {
         case .dark, .pixel:
             return Color.white.opacity(0.06)
@@ -418,6 +486,7 @@ struct StatusBarView: View {
         .fixedSize(horizontal: false, vertical: true)
         // 【修复】根据主题色设置背景
         .background(themeColor.backgroundColor)
+        .preferredColorScheme(themeColor.isDarkTheme ? .dark : .light)
         .onAppear {
             viewModel.onAppear()
             // 【修复】在 onAppear 中读取保存的主题色
@@ -717,6 +786,8 @@ struct StatusBarView: View {
                             Text(milestone.label)
                                 .font(.system(size: 10))
                                 .foregroundStyle(themeColor.secondaryTextColor)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             
                             Spacer()
                             

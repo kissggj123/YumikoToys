@@ -97,6 +97,7 @@ struct MainView: View {
             // 【核心修复：解决不更新 Bug】绑定 viewModel 响应式宿主，打破闭包捕获死锁，实现数据完全实时更新 [1]
             LearnedPreferencesSheet(viewModel: viewModel)
         }
+        .preferredColorScheme(viewModel.selectedThemeColor.isDarkTheme ? .dark : .light)
     }
 }
 
@@ -281,6 +282,8 @@ struct DaysDisplayCard: View {
                             Text(milestone.label)
                                 .font(.system(size: 13 * fontSizeScale))
                                 .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             
                             Spacer()
                             

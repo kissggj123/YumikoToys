@@ -73,6 +73,7 @@ struct AIChatView: View {
                 switchConversationForMode(viewModel.chatMode)
             }
         }
+        .preferredColorScheme(viewModel.chatMode == .aiAssistant ? .dark : (viewModel.themeColor.isDarkTheme ? .dark : .light))
     }
 
     // MARK: - 聊天详情
@@ -107,7 +108,7 @@ struct AIChatView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(viewModel.chatMode == .aiAssistant ? "Pro Human" : viewModel.characterName)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(viewModel.chatMode == .aiAssistant ? .white : viewModel.themeColor.textColor)
 
                     HStack(spacing: 4) {
                         Circle()
@@ -133,7 +134,7 @@ struct AIChatView: View {
                         .frame(width: 32, height: 32)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.05))
+                                .fill(inputBackgroundColor)
                         )
                 }
                 .buttonStyle(.plain)
@@ -201,7 +202,7 @@ struct AIChatView: View {
                     .clipShape(Circle())
             } else {
                 Circle()
-                    .fill(Color.white.opacity(0.1))
+                    .fill(viewModel.chatMode == .aiAssistant ? Color.white.opacity(0.1) : (viewModel.themeColor.isDarkTheme ? Color.white.opacity(0.1) : Color.black.opacity(0.1)))
                     .frame(width: 28, height: 28)
                     .overlay(
                         Image(systemName: "person.fill")
@@ -295,7 +296,20 @@ struct AIChatView: View {
             userAvatarEmoji: viewModel.userAvatarEmoji,
             userAvatarPath: viewModel.userAvatarPath,
             chatMode: viewModel.chatMode,
-            themeColor: viewModel.themeColor
+            themeColor: viewModel.themeColor,
+            onEdit: message.role == "user" ? {
+                viewModel.inputText = message.content
+                viewModel.messages = Array(viewModel.messages.prefix(while: { $0.id != message.id }))
+                if let currentId = viewModel.currentConversationId {
+                    DependencyContainer.shared.glmService.replaceConversationHistory(viewModel.messages, for: currentId.uuidString)
+                }
+            } : nil,
+            onDelete: {
+                viewModel.deleteMessage(messageId: message.id)
+            },
+            onRegenerate: message.role == "assistant" ? {
+                viewModel.regenerateResponse(for: message.id)
+            } : nil
         )
         .id(message.id)
         .contextMenu {
@@ -367,20 +381,20 @@ struct AIChatView: View {
             VStack(spacing: 8) {
                 Text("开始对话")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-
+                    .foregroundStyle(emptyStateTitleColor)
+                
                 Text(viewModel.greeting)
                     .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(emptyStateSubtitleColor)
                     .multilineTextAlignment(.center)
             }
 
             HStack(spacing: 8) {
-                QuickPromptButton(text: "介绍一下自己", themeGradient: themeGradient) {
+                QuickPromptButton(text: "介绍一下自己", themeGradient: themeGradient, isDark: viewModel.chatMode == .aiAssistant || viewModel.themeColor.isDarkTheme) {
                     viewModel.inputText = "介绍一下自己"
                     sendMessage()
                 }
-                QuickPromptButton(text: "今天心情如何", themeGradient: themeGradient) {
+                QuickPromptButton(text: "今天心情如何", themeGradient: themeGradient, isDark: viewModel.chatMode == .aiAssistant || viewModel.themeColor.isDarkTheme) {
                     viewModel.inputText = "今天心情如何"
                     sendMessage()
                 }
@@ -444,7 +458,7 @@ struct AIChatView: View {
                 TextField("输入消息...", text: $viewModel.inputText, axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(.system(size: 14))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(inputTextColor)
                     .lineLimit(1...5)
                     .focused($isInputFocused)
                     .onSubmit {
@@ -454,7 +468,7 @@ struct AIChatView: View {
                     .padding(.vertical, 10)
                     .background(
                         RoundedRectangle(cornerRadius: 18)
-                            .fill(Color.white.opacity(0.05))
+                            .fill(inputBackgroundColor)
                     )
 
                 if !viewModel.messages.isEmpty && !viewModel.isGenerating && !viewModel.isLoading {
@@ -465,7 +479,7 @@ struct AIChatView: View {
                             .frame(width: 32, height: 32)
                             .background(
                                 Circle()
-                                    .fill(Color.white.opacity(0.05))
+                                    .fill(inputBackgroundColor)
                             )
                     }
                     .buttonStyle(.plain)
@@ -591,6 +605,22 @@ struct AIChatView: View {
             return Color(hex: "141E1A")
         }
     }
+
+    private var inputTextColor: Color {
+        viewModel.chatMode == .aiAssistant ? .white : viewModel.themeColor.textColor
+    }
+
+    private var inputBackgroundColor: Color {
+        viewModel.chatMode == .aiAssistant ? Color.white.opacity(0.05) : (viewModel.themeColor.isDarkTheme ? Color.white.opacity(0.05) : Color.black.opacity(0.05))
+    }
+
+    private var emptyStateTitleColor: Color {
+        viewModel.chatMode == .aiAssistant ? .white : viewModel.themeColor.textColor
+    }
+
+    private var emptyStateSubtitleColor: Color {
+        viewModel.chatMode == .aiAssistant ? .secondary : viewModel.themeColor.secondaryTextColor
+    }
 }
 
 // MARK: - 滚动偏移量检测
@@ -646,6 +676,7 @@ private struct TypingIndicator: View {
 private struct QuickPromptButton: View {
     let text: String
     let themeGradient: LinearGradient
+    let isDark: Bool
     let action: () -> Void
 
     @State private var isHovered = false
@@ -661,7 +692,7 @@ private struct QuickPromptButton: View {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(isHovered
                             ? AnyShapeStyle(themeGradient)
-                            : AnyShapeStyle(Color.white.opacity(0.05))
+                            : AnyShapeStyle(isDark ? Color.white.opacity(0.05) : Color.black.opacity(0.05))
                         )
                 )
         }

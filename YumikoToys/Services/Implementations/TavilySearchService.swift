@@ -265,8 +265,10 @@ final class UnifiedSearchService: ObservableObject, Sendable {
     @Published private(set) var activeBackend: SearchBackend
     private var tavilyService: TavilySearchService?
     private var googleSearchService: GoogleSearchService?
+    private let assistantConfig: AssistantConfig
 
     init(assistantConfig: AssistantConfig) {
+        self.assistantConfig = assistantConfig
         let isGoogleConfig = !assistantConfig.searchAPIURL.contains("http") && !assistantConfig.searchAPIURL.isEmpty
         if isGoogleConfig {
             self.googleSearchService = GoogleSearchService(apiKey: assistantConfig.searchAPIKey, cx: assistantConfig.searchAPIURL)
@@ -285,6 +287,45 @@ final class UnifiedSearchService: ObservableObject, Sendable {
     func search(query: String, maxResults: Int = 5) async throws -> UnifiedSearchResult {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuery.isEmpty else { throw TavilyError.invalidQuery }
+
+        // 如果开启了增强搜索模式，通过多线程全面抓取最新信息
+        if assistantConfig.enableEnhancedSearchMode {
+            LoggerService.shared.info("Enhanced search mode enabled. Running multi-channel concurrent search.")
+            let enhancedSearchService = EnhancedWebSearchService(
+                searxngBaseURL: assistantConfig.searchAPIURL.isEmpty ? "https://searx.be" : assistantConfig.searchAPIURL
+            )
+            let results = await enhancedSearchService.search(
+                query: trimmedQuery,
+                channels: SearchChannelType.allCases,
+                maxResultsPerChannel: maxResults
+            )
+            
+            var mergedSources: [SearchSource] = []
+            var seenUrls = Set<String>()
+            var allResults: [EnhancedSearchResult] = []
+            
+            for channel in SearchChannelType.allCases {
+                if let result = results[channel], case .success(let channelResults) = result {
+                    for src in channelResults {
+                        if !seenUrls.contains(src.url) {
+                            seenUrls.insert(src.url)
+                            allResults.append(src)
+                            let title = "[\(channel.displayName)] \(src.title) (来源: \(src.source))"
+                            mergedSources.append(SearchSource(id: src.id, title: title, url: src.url, snippet: src.snippet))
+                        }
+                    }
+                }
+            }
+            
+            return UnifiedSearchResult(
+                query: trimmedQuery,
+                answer: nil,
+                results: allResults,
+                sources: Array(mergedSources.prefix(maxResults * 3)),
+                backend: .searxng,
+                responseTime: 0.5
+            )
+        }
 
         // 1. 极简智能提取，保护原词 (比如 "柯遥 42")
         let optimizedQuery = Self.extractSemanticKeywords(from: trimmedQuery)

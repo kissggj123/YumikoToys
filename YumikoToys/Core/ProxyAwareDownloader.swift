@@ -85,33 +85,30 @@ final class ProxyAwareDownloader: Sendable {
 
     // MARK: - Cookie 管理
 
-    /// 保存 Cookie 到 Keychain
+    /// 保存 Cookie 到 SecureStorage
     func saveCookie(_ cookieString: String, for host: String) {
-        let data = cookieString.data(using: .utf8)!
-        let key = "com.yumikotoys.hfcookie.\(host)"
+        let secureKey = "hfcookie_\(host)"
+        
+        // 先删除旧的系统钥匙串项
+        clearCookieFromKeychainExplicit(for: host)
 
-        // 先删除旧的
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key
-        ]
-        SecItemDelete(query as CFDictionary)
-
-        // 保存新的
-        let attributes: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data
-        ]
-        SecItemAdd(attributes as CFDictionary, nil)
+        // 保存新的到本地加密存储
+        SecureStorage.saveSecureItem(cookieString, key: secureKey)
 
         // 更新 URLSession 的 cookie 存储
         updateSessionCookies(for: host, cookieString: cookieString)
         LoggerService.shared.info("Cookie saved for \(host)")
     }
 
-    /// 从 Keychain 读取 Cookie
+    /// 从 SecureStorage/Keychain 读取 Cookie
     func loadCookie(for host: String) -> String? {
+        let secureKey = "hfcookie_\(host)"
+        // 1. 优先从免密码弹窗的本地加密存储读取
+        if let cookie = SecureStorage.retrieveSecureItem(key: secureKey) {
+            return cookie
+        }
+        
+        // 2. 如果本地加密存储没有，从系统钥匙串读取并执行单向静默迁移
         let key = "com.yumikotoys.hfcookie.\(host)"
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -123,22 +120,34 @@ final class ProxyAwareDownloader: Sendable {
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-        guard status == errSecSuccess, let data = result as? Data else {
-            return nil
+        if status == errSecSuccess, let data = result as? Data, let cookie = String(data: data, encoding: .utf8) {
+            // 写入本地加密存储
+            SecureStorage.saveSecureItem(cookie, key: secureKey)
+            // 从系统钥匙串中彻底抹除，后续更新版本将不再触发系统钥匙串弹窗
+            clearCookieFromKeychainExplicit(for: host)
+            LoggerService.shared.info("Cookie for \(host) migrated from Keychain to SecureStorage successfully.")
+            return cookie
         }
 
-        return String(data: data, encoding: .utf8)
+        return nil
     }
 
     /// 清除 Cookie
     func clearCookie(for host: String) {
+        clearCookieFromKeychainExplicit(for: host)
+        let secureKey = "hfcookie_\(host)"
+        SecureStorage.deleteSecureItem(key: secureKey)
+        LoggerService.shared.info("Cookie cleared for \(host)")
+    }
+    
+    /// 仅从系统钥匙串清除 Cookie 的辅助方法
+    private func clearCookieFromKeychainExplicit(for host: String) {
         let key = "com.yumikotoys.hfcookie.\(host)"
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key
         ]
         SecItemDelete(query as CFDictionary)
-        LoggerService.shared.info("Cookie cleared for \(host)")
     }
 
     /// 打开登录页面

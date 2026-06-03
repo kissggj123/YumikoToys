@@ -190,8 +190,15 @@ final class HuggingFaceAuthService: ObservableObject {
         return nil
     }
     
-    /// 从 Keychain 读取 Token
+    /// 从 SecureStorage/Keychain 读取 Token
     private func loadTokenFromKeychain() -> String? {
+        let secureKey = "hf_token"
+        // 1. 优先从免密码弹窗的本地加密存储读取
+        if let token = SecureStorage.retrieveSecureItem(key: secureKey) {
+            return token
+        }
+        
+        // 2. 如果本地加密存储没有，从系统钥匙串读取并执行单向静默迁移
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
@@ -203,45 +210,46 @@ final class HuggingFaceAuthService: ObservableObject {
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         
-        guard status == errSecSuccess,
-              let data = result as? Data,
-              let token = String(data: data, encoding: .utf8) else {
-            return nil
+        if status == errSecSuccess,
+           let data = result as? Data,
+           let token = String(data: data, encoding: .utf8) {
+            // 写入本地加密存储
+            SecureStorage.saveSecureItem(token, key: secureKey)
+            // 从系统钥匙串中彻底抹除，后续更新版本将不再触发系统钥匙串弹窗
+            deleteTokenFromKeychainExplicit()
+            LoggerService.shared.info("[HuggingFaceAuthService] Token migrated from Keychain to SecureStorage successfully.")
+            return token
         }
         
-        return token
+        return nil
     }
     
-    /// 保存 Token 到 Keychain
+    /// 保存 Token 到 SecureStorage
     private func saveTokenToKeychain(_ token: String) {
-        guard let data = token.data(using: .utf8) else { return }
+        let secureKey = "hf_token"
+        // 先删除旧的钥匙串项
+        deleteTokenFromKeychainExplicit()
         
-        // 先删除旧的
-        deleteTokenFromKeychain()
-        
-        // 保存新的
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: keychainAccount,
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
-        ]
-        
-        let status = SecItemAdd(query as CFDictionary, nil)
-        if status != errSecSuccess {
-            LoggerService.shared.error("[HuggingFaceAuthService] 保存 Token 到 Keychain 失败: \(status)")
+        // 保存到本地加密存储
+        let success = SecureStorage.saveSecureItem(token, key: secureKey)
+        if !success {
+            LoggerService.shared.error("[HuggingFaceAuthService] 保存 Token 到 SecureStorage 失败")
         }
     }
     
-    /// 从 Keychain 删除 Token
+    /// 从 SecureStorage/Keychain 删除 Token
     private func deleteTokenFromKeychain() {
+        deleteTokenFromKeychainExplicit()
+        SecureStorage.deleteSecureItem(key: "hf_token")
+    }
+    
+    /// 仅抹除系统钥匙串 Token 的辅助方法
+    private func deleteTokenFromKeychainExplicit() {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: keychainAccount
         ]
-        
         SecItemDelete(query as CFDictionary)
     }
     

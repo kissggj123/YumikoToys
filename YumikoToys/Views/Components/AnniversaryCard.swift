@@ -93,6 +93,8 @@ private struct MilestoneRow: View, Equatable {
             Text(milestone.label)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
             Spacer()
             Text("是 \(milestone.formattedDate) (第\(milestone.count)\(milestone.unit))")
                 .font(.subheadline)

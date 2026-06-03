@@ -148,6 +148,19 @@ final class AgentService {
             ]
         ))
 
+        // 👈【核心新增】：动态加载大模型 Skill 库作为可用工具，赋能上帝模式修改或自定义任务运行
+        let skills = SkillService.shared.getAllSkills()
+        for skill in skills {
+            if let data = skill.parametersJSON.data(using: String.Encoding.utf8),
+               let params = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                tools.append(AgentToolDefinition(
+                    name: skill.name,
+                    description: skill.description,
+                    parameters: params
+                ))
+            }
+        }
+
         return tools
     }
 
@@ -230,6 +243,11 @@ final class AgentService {
                 return "{\"success\": true}"
 
             default:
+                // 👈【核心新增】：拦截并执行大模型自定义技能或上帝模式配色
+                let allSkills = SkillService.shared.getAllSkills()
+                if allSkills.contains(where: { $0.name == name }) {
+                    return await SkillService.shared.executeSkill(name: name, arguments: args)
+                }
                 return "{\"error\": \"未知工具: \(name)\"}"
             }
         } catch {

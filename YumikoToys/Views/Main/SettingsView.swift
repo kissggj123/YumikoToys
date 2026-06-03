@@ -26,12 +26,15 @@ struct SettingsView: View {
                     statusBarIconStyleSection
                     fontSection
                     themeColorSection
+                    godModeSection
                     layoutSection
                     preventSleepSection
                     timeSyncSection
                     modelManagementSection
                     backgroundLearningSection
                     psychologySettingsSection
+                    proHumanSettingsSection
+                    skillManagementSection
                     dataManagementSection
                     aboutSection
                     footerText
@@ -45,6 +48,7 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(settingsBackground)
+        .preferredColorScheme(viewModel.selectedThemeColor.isDarkTheme ? .dark : .light)
         
         // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
         //  【新增】密码输入弹窗 - 用于重新授权或首次写入钥匙串
@@ -86,6 +90,136 @@ struct SettingsView: View {
             Button("确定", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "未知错误")
+        }
+        .sheet(isPresented: $viewModel.showSkillEditor) {
+            VStack(spacing: 16) {
+                HStack {
+                    Text(viewModel.selectedSkillToEdit == nil ? "新增自定义 Skill 技能" : "编辑自定义 Skill 技能")
+                        .font(.system(size: 15, weight: .bold))
+                    Spacer()
+                    Button("关闭") {
+                        viewModel.showSkillEditor = false
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                }
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        // 技能名称
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("技能标识名称 (大模型调用名，必须为英文下划线格式)")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            TextField("例如: open_safari_url", text: $viewModel.editingSkillName)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.system(size: 12, design: .monospaced))
+                                .disabled(viewModel.selectedSkillToEdit != nil)
+                        }
+                        
+                        // 描述
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("技能用途描述 (大模型根据此描述判断何时调用该技能)")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            TextField("例如: 用于打开指定网页链接", text: $viewModel.editingSkillDescription)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        // 脚本类型
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("执行脚本类型")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            Picker("", selection: $viewModel.editingSkillScriptType) {
+                                Text("Shell 脚本").tag("shell")
+                                Text("AppleScript").tag("applescript")
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        
+                        // 参数 Schema
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("参数 JSON Schema 定义")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            TextEditor(text: $viewModel.editingSkillParametersJSON)
+                                .font(.system(size: 11, design: .monospaced))
+                                .frame(height: 100)
+                                .scrollContentBackground(.hidden)
+                                .padding(6)
+                                .background(Color.primary.opacity(0.03))
+                                .cornerRadius(6)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.1), lineWidth: 1))
+                        }
+                        
+                        // 脚本内容
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("脚本源码内容 (使用 {{paramName}} 引用上述参数)")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            TextEditor(text: $viewModel.editingSkillScriptContent)
+                                .font(.system(size: 11, design: .monospaced))
+                                .frame(height: 120)
+                                .scrollContentBackground(.hidden)
+                                .padding(6)
+                                .background(Color.primary.opacity(0.03))
+                                .cornerRadius(6)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.1), lineWidth: 1))
+                        }
+                        
+                        // 测试输出
+                        if !viewModel.testOutput.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("运行测试结果反馈")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                ScrollView {
+                                    Text(viewModel.testOutput)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundStyle(viewModel.testOutput.contains("error") || viewModel.testOutput.contains("错误") ? .red : .primary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(8)
+                                }
+                                .frame(height: 80)
+                                .background(Color.primary.opacity(0.05))
+                                .cornerRadius(6)
+                            }
+                        }
+                    }
+                }
+                
+                HStack {
+                    Button(action: {
+                        viewModel.testSkill()
+                    }) {
+                        HStack {
+                            if viewModel.isTestingSkill {
+                                ProgressView().scaleEffect(0.5)
+                            } else {
+                                Image(systemName: "play.fill")
+                            }
+                            Text("运行测试 (使用 Mock 数据)")
+                        }
+                    }
+                    .disabled(viewModel.isTestingSkill || viewModel.editingSkillName.isEmpty)
+                    
+                    Spacer()
+                    
+                    Button("取消") {
+                        viewModel.showSkillEditor = false
+                    }
+                    .keyboardShortcut(.escape, modifiers: [])
+                    
+                    Button("保存技能") {
+                        viewModel.saveSkill()
+                    }
+                    .keyboardShortcut(.return, modifiers: [])
+                    .disabled(viewModel.editingSkillName.isEmpty)
+                }
+            }
+            .padding()
+            .frame(width: 480, height: 600)
         }
         .onAppear {
             viewModel.reloadSettings()
@@ -260,6 +394,222 @@ struct SettingsView: View {
         let pattern = "^[0-9a-fA-F]{6}$"
         if hex.range(of: pattern, options: .regularExpression) != nil {
             viewModel.updateCustomThemeColorHex(hex)
+        }
+    }
+
+    private var godModeSection: some View {
+        SettingsSection(title: "上帝模式 (自定义 UI)", icon: "sparkles", iconColor: "AF52DE") {
+            VStack(alignment: .leading, spacing: 12) {
+                SettingsToggleRow(
+                    icon: "wand.and.stars",
+                    iconColor: "AF52DE",
+                    title: "启用上帝模式",
+                    subtitle: "自定义界面中所有元素的配色、描边与大小参数",
+                    isOn: Binding(
+                        get: { viewModel.godModeEnabled },
+                        set: { viewModel.updateGodMode($0) }
+                    )
+                )
+                
+                if viewModel.godModeEnabled {
+                    VStack(spacing: 10) {
+                        Divider().background(Color.primary.opacity(0.08))
+                        
+                        // 1. Background
+                        HStack {
+                            Text("主背景色")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            TextField("#HEX", text: Binding(
+                                get: { "#" + viewModel.customBackgroundColorHex },
+                                set: { val in
+                                    let clean = val.replacingOccurrences(of: "#", with: "")
+                                    if clean.count == 6 {
+                                        viewModel.updateGodModeColors(bg: clean)
+                                    }
+                                }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(width: 80)
+                            
+                            ColorPicker("", selection: Binding(
+                                get: { Color(hex: viewModel.customBackgroundColorHex) },
+                                set: { color in
+                                    if let hex = color.toHex() {
+                                        viewModel.updateGodModeColors(bg: hex)
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                        }
+                        
+                        // 2. Card Background
+                        HStack {
+                            Text("气泡卡片背景色")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            TextField("#HEX", text: Binding(
+                                get: { "#" + viewModel.customCardBackgroundColorHex },
+                                set: { val in
+                                    let clean = val.replacingOccurrences(of: "#", with: "")
+                                    if clean.count == 6 {
+                                        viewModel.updateGodModeColors(card: clean)
+                                    }
+                                }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(width: 80)
+                            
+                            ColorPicker("", selection: Binding(
+                                get: { Color(hex: viewModel.customCardBackgroundColorHex) },
+                                set: { color in
+                                    if let hex = color.toHex() {
+                                        viewModel.updateGodModeColors(card: hex)
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                        }
+                        
+                        // 3. Text Color
+                        HStack {
+                            Text("主文本颜色")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            TextField("#HEX", text: Binding(
+                                get: { "#" + viewModel.customTextColorHex },
+                                set: { val in
+                                    let clean = val.replacingOccurrences(of: "#", with: "")
+                                    if clean.count == 6 {
+                                        viewModel.updateGodModeColors(text: clean)
+                                    }
+                                }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(width: 80)
+                            
+                            ColorPicker("", selection: Binding(
+                                get: { Color(hex: viewModel.customTextColorHex) },
+                                set: { color in
+                                    if let hex = color.toHex() {
+                                        viewModel.updateGodModeColors(text: hex)
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                        }
+                        
+                        // 4. Accent Color
+                        HStack {
+                            Text("按钮强调色")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            TextField("#HEX", text: Binding(
+                                get: { "#" + viewModel.customAccentColorHex },
+                                set: { val in
+                                    let clean = val.replacingOccurrences(of: "#", with: "")
+                                    if clean.count == 6 {
+                                        viewModel.updateGodModeColors(accent: clean)
+                                    }
+                                }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(width: 80)
+                            
+                            ColorPicker("", selection: Binding(
+                                get: { Color(hex: viewModel.customAccentColorHex) },
+                                set: { color in
+                                    if let hex = color.toHex() {
+                                        viewModel.updateGodModeColors(accent: hex)
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                        }
+                        
+                        // 5. Border Color
+                        HStack {
+                            Text("边框描边色")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            TextField("#HEX", text: Binding(
+                                get: { "#" + viewModel.customBorderColorHex },
+                                set: { val in
+                                    let clean = val.replacingOccurrences(of: "#", with: "")
+                                    if clean.count == 6 {
+                                        viewModel.updateGodModeColors(border: clean)
+                                    }
+                                }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(width: 80)
+                            
+                            ColorPicker("", selection: Binding(
+                                get: { Color(hex: viewModel.customBorderColorHex) },
+                                set: { color in
+                                    if let hex = color.toHex() {
+                                        viewModel.updateGodModeColors(border: hex)
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                        }
+                        
+                        // 6. Divider Color
+                        HStack {
+                            Text("分割线颜色")
+                                .font(.system(size: 13, weight: .medium))
+                            Spacer()
+                            TextField("#HEX", text: Binding(
+                                get: { "#" + viewModel.customDividerColorHex },
+                                set: { val in
+                                    let clean = val.replacingOccurrences(of: "#", with: "")
+                                    if clean.count == 6 {
+                                        viewModel.updateGodModeColors(divider: clean)
+                                    }
+                                }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(width: 80)
+                            
+                            ColorPicker("", selection: Binding(
+                                get: { Color(hex: viewModel.customDividerColorHex) },
+                                set: { color in
+                                    if let hex = color.toHex() {
+                                        viewModel.updateGodModeColors(divider: hex)
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                        }
+                        
+                        // 7. Corner Radius
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("气泡卡片圆角半径")
+                                    .font(.system(size: 13, weight: .medium))
+                                Spacer()
+                                Text("\(Int(viewModel.customCornerRadius)) px")
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Slider(value: Binding(
+                                get: { viewModel.customCornerRadius },
+                                set: { viewModel.updateGodModeColors(radius: $0) }
+                            ), in: 4.0...32.0, step: 1.0)
+                        }
+                        .padding(.top, 4)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
         }
     }
 
@@ -890,13 +1240,47 @@ struct SettingsView: View {
                             .tint(Color(hex: "AF52DE"))
                         }
 
+                        // Presence Penalty Slider
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("话题发散度 (Presence Penalty): \(String(format: "%.2f", viewModel.psychologyPresencePenalty))")
+                                    .font(.system(size: 12, weight: .medium))
+                                Spacer()
+                            }
+                            Slider(value: Binding(
+                                get: { viewModel.psychologyPresencePenalty },
+                                set: { val in
+                                    viewModel.psychologyPresencePenalty = val
+                                    viewModel.updatePsychologySettings()
+                                }
+                            ), in: -2.0...2.0, step: 0.1)
+                            .tint(Color(hex: "AF52DE"))
+                        }
+
+                        // Frequency Penalty Slider
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("重复词惩罚 (Frequency Penalty): \(String(format: "%.2f", viewModel.psychologyFrequencyPenalty))")
+                                    .font(.system(size: 12, weight: .medium))
+                                Spacer()
+                            }
+                            Slider(value: Binding(
+                                get: { viewModel.psychologyFrequencyPenalty },
+                                set: { val in
+                                    viewModel.psychologyFrequencyPenalty = val
+                                    viewModel.updatePsychologySettings()
+                                }
+                            ), in: -2.0...2.0, step: 0.1)
+                            .tint(Color(hex: "AF52DE"))
+                        }
+
                         // 学术理论支持说明卡片
                         VStack(alignment: .leading, spacing: 8) {
                             Text("【专业心理陪伴学术支持说明】")
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(Color(hex: "AF52DE"))
                             
-                            Text("本系统心理陪伴机制深度集成了认知行为重构、自我决定论的三大基础心理需求评估（主观能动性、自我成长力、关怀归属感）、罗杰斯人本主义无条件关注机制与精神分析深层动机追索。通过调控底层超参数以控制大模型的词汇发散和发散度核采样率，从而输出更具关怀深度和学术合理性的回应。")
+                            Text("本系统心理陪伴机制深度集成了认知行为重构、自我决定论的三大基础心理需求评估（主观能动性、自我成长力、关怀归属感）、罗杰斯人本主义无条件关注机制与精神分析深层动机追索。通过调控底层超参数以控制大模型的词汇发散和发散度核采样率，从而输出更具关怀深度 and 学术合理性的回应。")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                                 .lineSpacing(3.5)
@@ -913,6 +1297,196 @@ struct SettingsView: View {
                     }
                     .padding(.leading, 50)
                 }
+            }
+        }
+    }
+
+    private var proHumanSettingsSection: some View {
+        SettingsSection(title: "Pro Human 自定义设置", icon: "🌱", iconColor: "34C759") {
+            VStack(alignment: .leading, spacing: 12) {
+                // 使命重心选择
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Image(systemName: "triangle.fill")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color(hex: "34C759"))
+                        Text("极简三角使命重心")
+                            .font(.system(size: 13, weight: .medium))
+                        Spacer()
+                        Picker("", selection: Binding(
+                            get: { viewModel.proHumanMissionFocus },
+                            set: { val in
+                                viewModel.proHumanMissionFocus = val
+                                viewModel.updateProHumanSettings()
+                            }
+                        )) {
+                            ForEach(ProHumanMissionFocus.allCases) { focus in
+                                Text(focus.displayName).tag(focus)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                        .frame(width: 200)
+                    }
+                    
+                    Text(viewModel.proHumanMissionFocus.promptSnippet)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(3)
+                        .padding(.horizontal, 4)
+                }
+                
+                Divider().background(Color.primary.opacity(0.08))
+                
+                // 交互风格选择
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Image(systemName: "hand.raised.fill")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color(hex: "34C759"))
+                        Text("Pro Human 交互风格")
+                            .font(.system(size: 13, weight: .medium))
+                        Spacer()
+                        Picker("", selection: Binding(
+                            get: { viewModel.proHumanInteractionStyle },
+                            set: { val in
+                                viewModel.proHumanInteractionStyle = val
+                                viewModel.updateProHumanSettings()
+                            }
+                        )) {
+                            ForEach(ProHumanInteractionStyle.allCases) { style in
+                                Text(style.displayName).tag(style)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                        .frame(width: 200)
+                    }
+                    
+                    Text(viewModel.proHumanInteractionStyle.promptSnippet)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(3)
+                        .padding(.horizontal, 4)
+                }
+                
+                Divider().background(Color.primary.opacity(0.08))
+                
+                // 自定义极简三角准则输入框
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("自定义极简三角内容 (覆盖默认的 Don't get fired / bored / die)")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    
+                    TextEditor(text: Binding(
+                        get: { viewModel.proHumanCustomTriangleText },
+                        set: { val in
+                            viewModel.proHumanCustomTriangleText = val
+                            viewModel.updateProHumanSettings()
+                        }
+                    ))
+                    .font(.system(size: 11, design: .monospaced))
+                    .frame(height: 70)
+                    .scrollContentBackground(.hidden)
+                    .padding(8)
+                    .background(Color.primary.opacity(0.03))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                    )
+                }
+            }
+        }
+    }
+
+    private var skillManagementSection: some View {
+        SettingsSection(title: "大模型 Skill 技能管理", icon: "curlybraces", iconColor: "FF9500") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("配置大模型可调用的自动化脚本 (Shell / AppleScript)，支持传参执行。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 4)
+                
+                // 技能列表
+                VStack(spacing: 8) {
+                    // 系统预设技能
+                    ForEach(SkillService.shared.getBuiltInSkills()) { skill in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(skill.name)
+                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                Text(skill.description)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Text("系统预设")
+                                .font(.system(size: 9, weight: .semibold))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.primary.opacity(0.06))
+                                .cornerRadius(4)
+                        }
+                        .padding(10)
+                        .background(Color.primary.opacity(0.02))
+                        .cornerRadius(10)
+                    }
+                    
+                    // 自定义技能
+                    ForEach(viewModel.customSkills) { skill in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(skill.name)
+                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                Text(skill.description)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            
+                            HStack(spacing: 12) {
+                                Button(action: {
+                                    viewModel.startEditSkill(skill)
+                                }) {
+                                    Text("编辑")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(Color(hex: "007AFF"))
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button(action: {
+                                    viewModel.deleteSkill(name: skill.name)
+                                }) {
+                                    Text("删除")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(10)
+                        .background(Color.primary.opacity(0.03))
+                        .cornerRadius(10)
+                    }
+                }
+                
+                Button(action: {
+                    viewModel.startAddSkill()
+                }) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("新增自定义技能")
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(hex: "FF9500"))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
             }
         }
     }
@@ -1387,6 +1961,16 @@ final class SettingsViewModel: ObservableObject {
     @Published var selectedThemeColor: ThemeColor = .dark
     @Published var customThemeColorHex: String = "FF6B9D"
 
+    // 👈【核心新增】：上帝模式 (God Mode) 配色及圆角发布参数
+    @Published var godModeEnabled = false
+    @Published var customBackgroundColorHex = "1E1E2E"
+    @Published var customCardBackgroundColorHex = "252538"
+    @Published var customTextColorHex = "FFFFFF"
+    @Published var customAccentColorHex = "8B5CF6"
+    @Published var customBorderColorHex = "3F3F5F"
+    @Published var customDividerColorHex = "2E2E3E"
+    @Published var customCornerRadius = 16.0
+
     @Published var showResetConfirmation = false
     @Published var showImportSuccess = false
     @Published var showExportSuccess = false
@@ -1427,8 +2011,27 @@ final class SettingsViewModel: ObservableObject {
     @Published var enablePsychologyParams: Bool = true
     @Published var psychologyTempScale: Double = 0.7
     @Published var psychologyTopP: Double = 0.85
+    @Published var psychologyPresencePenalty: Double = 0.0
+    @Published var psychologyFrequencyPenalty: Double = 0.0
     @Published var selectedPsychologyTheory: PsychologyTheory = .cbt
     @Published var selectedPsychologyPersona: PsychologyPersona = .counselor
+
+    // Pro Human 自定义调整项
+    @Published var proHumanMissionFocus: ProHumanMissionFocus = .balanced
+    @Published var proHumanInteractionStyle: ProHumanInteractionStyle = .warm
+    @Published var proHumanCustomTriangleText: String = ""
+
+    // 技能编辑器状态属性
+    @Published var customSkills: [LLMSkill] = []
+    @Published var showSkillEditor = false
+    @Published var editingSkillName = ""
+    @Published var editingSkillDescription = ""
+    @Published var editingSkillScriptType = "shell"
+    @Published var editingSkillParametersJSON = "{}"
+    @Published var editingSkillScriptContent = ""
+    @Published var testOutput = ""
+    @Published var isTestingSkill = false
+    @Published var selectedSkillToEdit: LLMSkill? = nil
 
     private let container = DependencyContainer.shared
     private let exportService = DataExportService()
@@ -1461,6 +2064,16 @@ final class SettingsViewModel: ObservableObject {
         selectedThemeColor = settings.selectedThemeColor
         customThemeColorHex = settings.customThemeColorHex
         
+        // 读取上帝模式配置
+        godModeEnabled = settings.godModeEnabled
+        customBackgroundColorHex = settings.customBackgroundColorHex
+        customCardBackgroundColorHex = settings.customCardBackgroundColorHex
+        customTextColorHex = settings.customTextColorHex
+        customAccentColorHex = settings.customAccentColorHex
+        customBorderColorHex = settings.customBorderColorHex
+        customDividerColorHex = settings.customDividerColorHex
+        customCornerRadius = settings.customCornerRadius
+        
         // 读取 NTP 配置
         let ntpConfig = settings.ntpConfiguration
         selectedNTPPreset = ntpConfig.selectedPreset
@@ -1474,13 +2087,22 @@ final class SettingsViewModel: ObservableObject {
             learningStats = results.stats
         }
 
-        // 读取完全磁盘访问权限与专业心理学参数
+        // 读取完全磁盘访问权限与专业心理学参数与 Pro Human 配置
         hasFullDiskAccess = FullDiskAccessHelper.hasFullDiskAccess
         enablePsychologyParams = settings.enablePsychologyParams
         psychologyTempScale = settings.psychologyTempScale
         psychologyTopP = settings.psychologyTopP
+        psychologyPresencePenalty = settings.psychologyPresencePenalty
+        psychologyFrequencyPenalty = settings.psychologyFrequencyPenalty
         selectedPsychologyTheory = settings.selectedPsychologyTheory
         selectedPsychologyPersona = settings.selectedPsychologyPersona
+
+        proHumanMissionFocus = settings.proHumanMissionFocus
+        proHumanInteractionStyle = settings.proHumanInteractionStyle
+        proHumanCustomTriangleText = settings.proHumanCustomTriangleText
+
+        // 初始化技能列表
+        refreshSkillsList()
 
         // 【新增】检测钥匙串中是否存在已存的管理员密码，初始化授权状态指示灯
         checkKeychainStatus()
@@ -1517,6 +2139,15 @@ final class SettingsViewModel: ObservableObject {
                 self.selectedIconStyle = updatedSettings.selectedIconStyle
                 self.statusBarIconStyle = updatedSettings.statusBarIconStyle
                 self.customFontPath = updatedSettings.customFontPath
+                
+                self.godModeEnabled = updatedSettings.godModeEnabled
+                self.customBackgroundColorHex = updatedSettings.customBackgroundColorHex
+                self.customCardBackgroundColorHex = updatedSettings.customCardBackgroundColorHex
+                self.customTextColorHex = updatedSettings.customTextColorHex
+                self.customAccentColorHex = updatedSettings.customAccentColorHex
+                self.customBorderColorHex = updatedSettings.customBorderColorHex
+                self.customDividerColorHex = updatedSettings.customDividerColorHex
+                self.customCornerRadius = updatedSettings.customCornerRadius
             }
             .store(in: &cancellables)
     }
@@ -1604,10 +2235,78 @@ final class SettingsViewModel: ObservableObject {
         enablePsychologyParams = settings.enablePsychologyParams
         psychologyTempScale = settings.psychologyTempScale
         psychologyTopP = settings.psychologyTopP
+        psychologyPresencePenalty = settings.psychologyPresencePenalty
+        psychologyFrequencyPenalty = settings.psychologyFrequencyPenalty
         selectedPsychologyTheory = settings.selectedPsychologyTheory
         selectedPsychologyPersona = settings.selectedPsychologyPersona
 
+        proHumanMissionFocus = settings.proHumanMissionFocus
+        proHumanInteractionStyle = settings.proHumanInteractionStyle
+        proHumanCustomTriangleText = settings.proHumanCustomTriangleText
+
+        refreshSkillsList()
+
+        // 加载上帝模式配置
+        godModeEnabled = settings.godModeEnabled
+        customBackgroundColorHex = settings.customBackgroundColorHex
+        customCardBackgroundColorHex = settings.customCardBackgroundColorHex
+        customTextColorHex = settings.customTextColorHex
+        customAccentColorHex = settings.customAccentColorHex
+        customBorderColorHex = settings.customBorderColorHex
+        customDividerColorHex = settings.customDividerColorHex
+        customCornerRadius = settings.customCornerRadius
+
         LoggerService.shared.debug("SettingsView: 重新加载设置，NTP服务器: \(ntpConfig.selectedPreset.displayName)")
+    }
+
+    func updateGodMode(_ enabled: Bool) {
+        godModeEnabled = enabled
+        var settings = container.settingsService.settings
+        settings.godModeEnabled = enabled
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("God Mode status toggled to: \(enabled)")
+    }
+
+    func updateGodModeColors(
+        bg: String? = nil,
+        card: String? = nil,
+        text: String? = nil,
+        accent: String? = nil,
+        border: String? = nil,
+        divider: String? = nil,
+        radius: Double? = nil
+    ) {
+        var settings = container.settingsService.settings
+        if let bg = bg {
+            customBackgroundColorHex = bg
+            settings.customBackgroundColorHex = bg
+        }
+        if let card = card {
+            customCardBackgroundColorHex = card
+            settings.customCardBackgroundColorHex = card
+        }
+        if let text = text {
+            customTextColorHex = text
+            settings.customTextColorHex = text
+        }
+        if let accent = accent {
+            customAccentColorHex = accent
+            settings.customAccentColorHex = accent
+        }
+        if let border = border {
+            customBorderColorHex = border
+            settings.customBorderColorHex = border
+        }
+        if let divider = divider {
+            customDividerColorHex = divider
+            settings.customDividerColorHex = divider
+        }
+        if let radius = radius {
+            customCornerRadius = radius
+            settings.customCornerRadius = radius
+        }
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("God Mode style parameters modified.")
     }
 
     func checkFullDiskAccess() {
@@ -1619,10 +2318,137 @@ final class SettingsViewModel: ObservableObject {
         settings.enablePsychologyParams = enablePsychologyParams
         settings.psychologyTempScale = psychologyTempScale
         settings.psychologyTopP = psychologyTopP
+        settings.psychologyPresencePenalty = psychologyPresencePenalty
+        settings.psychologyFrequencyPenalty = psychologyFrequencyPenalty
         settings.selectedPsychologyTheory = selectedPsychologyTheory
         settings.selectedPsychologyPersona = selectedPsychologyPersona
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("Psychology settings updated in SettingsViewModel")
+    }
+
+    func updateProHumanSettings() {
+        var settings = container.settingsService.settings
+        settings.proHumanMissionFocus = proHumanMissionFocus
+        settings.proHumanInteractionStyle = proHumanInteractionStyle
+        settings.proHumanCustomTriangleText = proHumanCustomTriangleText
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Pro Human settings updated in SettingsViewModel")
+    }
+
+    func refreshSkillsList() {
+        customSkills = SkillService.shared.customSkills
+    }
+
+    func startAddSkill() {
+        selectedSkillToEdit = nil
+        editingSkillName = ""
+        editingSkillDescription = ""
+        editingSkillScriptType = "shell"
+        editingSkillParametersJSON = """
+        {
+            "type": "object",
+            "properties": {
+                "paramName": {
+                    "type": "string",
+                    "description": "参数描述"
+                }
+            },
+            "required": ["paramName"]
+        }
+        """
+        editingSkillScriptContent = "echo \"{{paramName}}\""
+        testOutput = ""
+        showSkillEditor = true
+    }
+
+    func startEditSkill(_ skill: LLMSkill) {
+        selectedSkillToEdit = skill
+        editingSkillName = skill.name
+        editingSkillDescription = skill.description
+        editingSkillScriptType = skill.scriptType
+        editingSkillParametersJSON = skill.parametersJSON
+        editingSkillScriptContent = skill.scriptContent
+        testOutput = ""
+        showSkillEditor = true
+    }
+
+    func saveSkill() {
+        guard !editingSkillName.isEmpty else { return }
+        
+        var parameters = editingSkillParametersJSON
+        if parameters.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            parameters = "{\"type\": \"object\", \"properties\": {}}"
+        }
+        
+        let newSkill = LLMSkill(
+            name: editingSkillName.trimmingCharacters(in: .whitespacesAndNewlines),
+            description: editingSkillDescription,
+            parametersJSON: parameters,
+            scriptType: editingSkillScriptType,
+            scriptContent: editingSkillScriptContent
+        )
+        
+        SkillService.shared.addOrUpdateSkill(newSkill)
+        refreshSkillsList()
+        showSkillEditor = false
+    }
+
+    func deleteSkill(name: String) {
+        SkillService.shared.deleteSkill(name: name)
+        refreshSkillsList()
+    }
+
+    func testSkill() {
+        guard !editingSkillName.isEmpty else {
+            testOutput = "错误: 技能名称不能为空"
+            return
+        }
+        isTestingSkill = true
+        testOutput = "正在测试运行中..."
+        
+        Task {
+            var mockArgs: [String: Any] = [:]
+            if let data = editingSkillParametersJSON.data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let properties = json["properties"] as? [String: Any] {
+                for (key, val) in properties {
+                    if let propDict = val as? [String: Any] {
+                        if let type = propDict["type"] as? String {
+                            if type == "string" {
+                                mockArgs[key] = "测试文本"
+                            } else if type == "number" || type == "integer" {
+                                mockArgs[key] = 42
+                            } else if type == "boolean" {
+                                mockArgs[key] = true
+                            }
+                        }
+                    } else {
+                        mockArgs[key] = "测试值"
+                    }
+                }
+            }
+            
+            let tempSkill = LLMSkill(
+                name: editingSkillName,
+                description: editingSkillDescription,
+                parametersJSON: editingSkillParametersJSON,
+                scriptType: editingSkillScriptType,
+                scriptContent: editingSkillScriptContent
+            )
+            SkillService.shared.addOrUpdateSkill(tempSkill)
+            
+            let output = await SkillService.shared.executeSkill(name: editingSkillName, arguments: mockArgs)
+            
+            if selectedSkillToEdit == nil {
+                SkillService.shared.deleteSkill(name: editingSkillName)
+            }
+            
+            await MainActor.run {
+                self.testOutput = output
+                self.isTestingSkill = false
+                self.refreshSkillsList()
+            }
+        }
     }
 
     func toggleComponentVisibility(_ type: ComponentType) {

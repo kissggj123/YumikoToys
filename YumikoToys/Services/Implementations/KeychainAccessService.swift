@@ -9,6 +9,8 @@ import Foundation
 import Security
 import LocalAuthentication
 import SwiftUI
+import CryptoKit
+import IOKit
 
 /// 钥匙串访问权限级别
 enum KeychainAccessLevel: String, CaseIterable {
@@ -327,5 +329,91 @@ struct KeychainAccessPrompt: View {
                 onDenied()
             }
         }
+    }
+}
+
+// MARK: - SecureStorage (Prompt-Free Hardware/Username Encrypted Local Storage)
+
+public struct SecureStorage {
+    private static var basePath: URL {
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return documents.appendingPathComponent("YumikoToys Data", isDirectory: true)
+            .appendingPathComponent("config", isDirectory: true)
+    }
+    
+    private static func getEncryptionKey() -> SymmetricKey? {
+        let serialNumber = getSystemSerialNumber()
+        let username = NSUserName()
+        let keyString = "\(serialNumber)-\(username)-YumikoToysSaltKey-2026"
+        
+        guard let data = keyString.data(using: .utf8) else { return nil }
+        let hash = SHA256.hash(data: data)
+        return SymmetricKey(data: hash)
+    }
+    
+    private static func getSystemSerialNumber() -> String {
+        let platformExpert = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceNameMatching("IOPlatformExpertDevice"))
+        if platformExpert != 0 {
+            if let serialNumber = IORegistryEntryCreateCFProperty(platformExpert, kIOPlatformSerialNumberKey as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? String {
+                IOObjectRelease(platformExpert)
+                return serialNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            IOObjectRelease(platformExpert)
+        }
+        return "YumikoToysDefaultSaltStringForFallback"
+    }
+    
+    @discardableResult
+    public static func saveSecureItem(_ value: String, key: String) -> Bool {
+        guard let keyData = getEncryptionKey(),
+              let valueData = value.data(using: .utf8) else {
+            return false
+        }
+        
+        do {
+            let encryptedData = try AES.GCM.seal(valueData, using: keyData).combined
+            let fileURL = basePath.appendingPathComponent("\(key).secure")
+            
+            let fileManager = FileManager.default
+            if !fileManager.fileExists(atPath: basePath.path) {
+                try fileManager.createDirectory(at: basePath, withIntermediateDirectories: true)
+            }
+            
+            try encryptedData?.write(to: fileURL)
+            return true
+        } catch {
+            return false
+        }
+    }
+    
+    public static func retrieveSecureItem(key: String) -> String? {
+        let fileURL = basePath.appendingPathComponent("\(key).secure")
+        guard FileManager.default.fileExists(atPath: fileURL.path),
+              let encryptedData = try? Data(contentsOf: fileURL),
+              let keyData = getEncryptionKey() else {
+            return nil
+        }
+        
+        do {
+            let sealedBox = try AES.GCM.SealedBox(combined: encryptedData)
+            let decryptedData = try AES.GCM.open(sealedBox, using: keyData)
+            return String(data: decryptedData, encoding: .utf8)
+        } catch {
+            return nil
+        }
+    }
+    
+    @discardableResult
+    public static func deleteSecureItem(key: String) -> Bool {
+        let fileURL = basePath.appendingPathComponent("\(key).secure")
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            do {
+                try FileManager.default.removeItem(at: fileURL)
+                return true
+            } catch {
+                return false
+            }
+        }
+        return true
     }
 }

@@ -382,9 +382,16 @@ enum LaunchAtLoginError: Error, LocalizedError {
 struct YumikoToysKeychain {
     private static let service = "com.Lite.YumikoToys"
     private static let account = NSUserName()
+    private static let secureStorageKey = "admin_password"
     
-    /// 从系统级加密钥匙串中取出密码 [1]
+    /// 从安全存储或系统级加密钥匙串中取出密码 [1]
     static func getSavedPassword() -> String? {
+        // 1. 优先从免密码弹窗的本地加密存储读取
+        if let password = SecureStorage.retrieveSecureItem(key: secureStorageKey) {
+            return password
+        }
+        
+        // 2. 如果本地加密存储没有，从系统钥匙串读取并执行单向静默迁移
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -396,42 +403,42 @@ struct YumikoToysKeychain {
         var dataTypeRef: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &dataTypeRef)
         
-        guard status == errSecSuccess, let data = dataTypeRef as? Data else {
-            return nil
+        if status == errSecSuccess, let data = dataTypeRef as? Data, let password = String(data: data, encoding: .utf8) {
+            // 写入本地加密存储
+            SecureStorage.saveSecureItem(password, key: secureStorageKey)
+            // 从系统钥匙串中彻底抹除，后续更新版本将不再触发系统钥匙串弹窗
+            deleteSavedPasswordFromKeychain()
+            LoggerService.shared.info("Administrator password migrated from Keychain to SecureStorage successfully.")
+            return password
         }
         
-        return String(data: data, encoding: .utf8)
+        return nil
     }
     
-    /// 将密码安全持久化写入钥匙串 [1]
+    /// 将密码安全持久化写入本地加密存储 [1]
     @discardableResult
     static func saveCurrentPassword(_ password: String) -> Bool {
-        guard let data = password.data(using: .utf8) else { return false }
-        
-        // 覆盖写：先彻底抹除旧密码槽
-        deleteSavedPassword()
-        
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock // 限制首次解锁后才可以提权读取
-        ]
-        
-        let status = SecItemAdd(query as CFDictionary, nil)
-        return status == errSecSuccess
+        // 先抹除系统钥匙串
+        deleteSavedPasswordFromKeychain()
+        // 保存至本地加密存储
+        return SecureStorage.saveSecureItem(password, key: secureStorageKey)
     }
     
-    /// 从钥匙串中永久销毁密码 [1]
+    /// 从安全存储中永久销毁密码 [1]
     @discardableResult
     static func deleteSavedPassword() -> Bool {
+        deleteSavedPasswordFromKeychain()
+        return SecureStorage.deleteSecureItem(key: secureStorageKey)
+    }
+    
+    /// 仅抹除系统钥匙串的辅助方法
+    @discardableResult
+    private static func deleteSavedPasswordFromKeychain() -> Bool {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
-        
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound
     }

@@ -160,7 +160,9 @@ final class UniversalLLMProvider: AIProvider {
         enableThinking: Bool = false,
         tools: [AgentToolDefinition]? = nil,
         temperature: Double? = nil,
-        topP: Double? = nil
+        topP: Double? = nil,
+        presencePenalty: Double? = nil,
+        frequencyPenalty: Double? = nil
     ) -> AsyncThrowingStream<UniversalStreamEvent, Error> {
         let capturedApiKey = self.apiKey
         let capturedBaseURL = self.baseURL
@@ -228,6 +230,12 @@ final class UniversalLLMProvider: AIProvider {
                         ]
                         if let tp = topP {
                             payload["top_p"] = tp
+                        }
+                        if let pp = presencePenalty {
+                            payload["presence_penalty"] = pp
+                        }
+                        if let fp = frequencyPenalty {
+                            payload["frequency_penalty"] = fp
                         }
                         
                         let isReasoningModel = model.lowercased().contains("reasoner") || model.lowercased().contains("thinking") || model.lowercased().contains("think") || model.lowercased().contains("r1")

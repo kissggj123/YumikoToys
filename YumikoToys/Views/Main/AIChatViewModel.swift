@@ -425,9 +425,7 @@ final class AIChatViewModel: ObservableObject {
             usePreInjectedSearch: usePreInjectedSearch
         )
     }
-
-    // MARK: - 发送消息核心（多轨流并发重构）
-
+    
     func sendMessage(_ content: String) {
         guard let currentId = currentConversationId else { return }
         stopStreaming(for: currentId)
@@ -436,21 +434,31 @@ final class AIChatViewModel: ObservableObject {
 
         // Capture settings synchronously on MainActor before entering the Task!
         let activeProvider = self.currentProvider
-        let resolved = self.resolveModelAndCapabilities()
         let settings = container.apiSettingsService.getSettings()
         let config = settings.providerConfigs[activeProvider] ?? settings.currentConfig
         let providerKey = config.apiKey
         let providerURL = config.apiURL
-        let providerModel = resolved.model
-        let enableThinking = resolved.enableThinking
-        let enableAgentMode = resolved.enableAgentMode
-        let enableWebSearch = resolved.enableWebSearch
-        let usePreInjectedSearch = resolved.usePreInjectedSearch
         let snapshotAvailableModels = self.availableModels
 
         activeTasks[currentId] = Task {
             var searchSources: [SearchSource] = []
-            var activeModel = providerModel
+
+            // 1. 自动开启或调用深度学习联网及agent的能力 (Auto-triggers based on query intent)
+            let queryLower = content.lowercased()
+            let requiresSearch = queryLower.contains("最新") || queryLower.contains("今天") || queryLower.contains("新闻") || queryLower.contains("搜索") || queryLower.contains("查一下") || queryLower.contains("实时")
+            let requiresAgent = queryLower.contains("文件") || queryLower.contains("代码") || queryLower.contains("写一") || queryLower.contains("编写") || queryLower.contains("创建") || queryLower.contains("运行")
+            let requiresDeepThinking = queryLower.contains("为什么") || queryLower.contains("分析") || queryLower.contains("设计") || queryLower.contains("架构") || queryLower.contains("怎么")
+            
+            let finalWebSearch = enableWebSearch || requiresSearch
+            let finalAgentMode = enableAgentMode || requiresAgent
+            let finalDeepThinking = enableDeepThinking || requiresDeepThinking
+
+            let resolved = self.resolveModelAndCapabilities()
+            var activeModel = resolved.model
+            let enableThinking = finalDeepThinking
+            let enableAgentMode = finalAgentMode
+            let enableWebSearch = finalWebSearch
+            let usePreInjectedSearch = enableWebSearch && !enableAgentMode
 
             defer {
                 activeTasks[currentId] = nil
@@ -461,14 +469,17 @@ final class AIChatViewModel: ObservableObject {
 
             guard !Task.isCancelled else { return }
 
+            // 🧠 2. 上下文记忆联想 (Context Memory Association)
+            let relevantMemory = await getRelevantMemoryContext(for: content)
             let fileContents = await getFileContentsSummary(query: content)
-            var finalUserPrompt = content + fileContents
+            var finalUserPrompt = relevantMemory + content + fileContents
 
             let userMsg = ChatMessage(role: "user", content: content)
             await MainActor.run {
                 uploadedFiles.removeAll()
                 inputText = ""
                 messages.append(userMsg)
+                messages.sort(by: { $0.timestamp < $1.timestamp })
             }
 
             // 同步写入持久化历史
@@ -499,9 +510,12 @@ final class AIChatViewModel: ObservableObject {
                     )
 
                     if needsSearch && !Task.isCancelled {
-                        if currentConversationId == currentId {
-                            messages.append(ChatMessage(role: "assistant", content: AppPromptService.shared.searchStatusMessage("searching")))
-                            objectWillChange.send()
+                        await MainActor.run {
+                            if currentConversationId == currentId {
+                                messages.append(ChatMessage(role: "assistant", content: AppPromptService.shared.searchStatusMessage("searching")))
+                                messages.sort(by: { $0.timestamp < $1.timestamp })
+                                objectWillChange.send()
+                            }
                         }
 
                         let appSettings = container.settingsService.settings
@@ -510,11 +524,33 @@ final class AIChatViewModel: ObservableObject {
                         )
                         let searchResults: [SearchSource]
                         do {
-                            let unifiedResult = try await searchService.search(
-                                query: content,
-                                maxResults: 5
-                            )
-                            searchResults = unifiedResult.sources
+                            // 3. 协同生成多维度检索词，并行化多路召回 (Collaborative Parallel Search)
+                            let query2 = content + " 最新 实时"
+                            let query3 = content + " 动态 资讯"
+                            
+                            async let res1 = try? searchService.search(query: content, maxResults: 3)
+                            async let res2 = try? searchService.search(query: query2, maxResults: 3)
+                            async let res3 = try? searchService.search(query: query3, maxResults: 3)
+                            
+                            let (all1, all2, all3) = await (res1, res2, res3)
+                            
+                            var mergedSources: [SearchSource] = []
+                            var seenUrls = Set<String>()
+                            
+                            let addSources = { (sources: [SearchSource]) in
+                                for src in sources {
+                                    if !seenUrls.contains(src.url) {
+                                        seenUrls.insert(src.url)
+                                        mergedSources.append(src)
+                                    }
+                                }
+                            }
+                            
+                            if let s1 = all1?.sources { addSources(s1) }
+                            if let s2 = all2?.sources { addSources(s2) }
+                            if let s3 = all3?.sources { addSources(s3) }
+                            
+                            searchResults = Array(mergedSources.prefix(6))
                         } catch {
                             LoggerService.shared.error(
                                 "Unified search failed: \(error)"
@@ -522,10 +558,12 @@ final class AIChatViewModel: ObservableObject {
                             searchResults = []
                         }
 
-                        if currentConversationId == currentId
-                            && messages.last?.content == AppPromptService.shared.searchStatusMessage("searching")
-                        {
-                            messages.removeLast()
+                        await MainActor.run {
+                            if currentConversationId == currentId
+                                && messages.last?.content == AppPromptService.shared.searchStatusMessage("searching")
+                            {
+                                messages.removeLast()
+                            }
                         }
 
                         if !searchResults.isEmpty {
@@ -538,7 +576,7 @@ final class AIChatViewModel: ObservableObject {
 
                             // 对齐 Python 版本：英文指令 + 中文内容，模型遵循效果更好
                             injectedContext = AppPromptService.shared.searchInjection(snippet: searchSnippet, question: content)
-                            finalUserPrompt = injectedContext + fileContents
+                            finalUserPrompt = relevantMemory + injectedContext + fileContents
                             LoggerService.shared.info(
                                 "Search context injected. Context length: \(injectedContext.count) chars"
                             )
@@ -555,9 +593,9 @@ final class AIChatViewModel: ObservableObject {
                 let isNativeReasoner =
                     activeModel.contains("reasoner")
                     || activeModel.contains("thinking")
+                    || activeModel.contains("r1")
 
                 // 🧠 强制激发所有大模型（如 Kimi / GLM）进入思维链模式
-                // 强制激发所有大模型进入思维链模式
                 systemPrompt += AppPromptService.shared.deepThinkingEnforcer()
 
                 guard !Task.isCancelled else { return }
@@ -572,8 +610,7 @@ final class AIChatViewModel: ObservableObject {
                     iteration += 1
                     continueReasoning = false
 
-                    // 👈【核心修复】：将 prunedHistory 的组装彻底移入 while 循环内部！
-                    // 这样，在每一轮迭代前，刚刚追加到 messages 里的工具执行卡片 and 数据，都会被“实时”装配进历史记录中！
+                    // 将 prunedHistory 的组装彻底移入 while 循环内部！
                     let limit = getModelContextLimit(model: activeModel)
                     let safetyMarginLimit = Int(Double(limit) * 0.8)
                     var totalTokens = estimateTokens(text: systemPrompt)
@@ -621,6 +658,8 @@ final class AIChatViewModel: ObservableObject {
                             let appSettings = container.settingsService.settings
                             let finalTemp = appSettings.enablePsychologyParams ? appSettings.psychologyTempScale : nil
                             let finalTopP = appSettings.enablePsychologyParams ? appSettings.psychologyTopP : nil
+                            let finalPresence = appSettings.enablePsychologyParams ? appSettings.psychologyPresencePenalty : nil
+                            let finalFrequency = appSettings.enablePsychologyParams ? appSettings.psychologyFrequencyPenalty : nil
 
                             let eventStream =
                                 universalProvider.streamChatWithEvents(
@@ -630,7 +669,9 @@ final class AIChatViewModel: ObservableObject {
                                     enableThinking: enableThinking,
                                     tools: tools,
                                     temperature: finalTemp,
-                                    topP: finalTopP
+                                    topP: finalTopP,
+                                    presencePenalty: finalPresence,
+                                    frequencyPenalty: finalFrequency
                                 )
 
                             for try await event in eventStream {
@@ -705,8 +746,6 @@ final class AIChatViewModel: ObservableObject {
                                             )
                                     }
 
-                                    // 👈【交互深度优化】：将重试/工具卡片一律标记为 isAgentStep。
-                                    // 这样在下一轮 prunedHistory 装配时，它们可以被 buildMessages 无痕清洗掉，既不污染大模型，又完美保留在 UI 界面上。
                                     let stepMsg = ChatMessage(
                                         role: "assistant",
                                         content:
@@ -714,8 +753,11 @@ final class AIChatViewModel: ObservableObject {
                                         isAgentStep: true
                                     )
                                     if currentConversationId == currentId {
-                                        messages.append(stepMsg)
-                                        objectWillChange.send()
+                                        await MainActor.run {
+                                            messages.append(stepMsg)
+                                            messages.sort(by: { $0.timestamp < $1.timestamp })
+                                            objectWillChange.send()
+                                        }
                                     }
                                     var currentHistory = container.glmService
                                         .getConversationHistory(
@@ -753,8 +795,11 @@ final class AIChatViewModel: ObservableObject {
                                         isAgentStep: true
                                     )
                                     if currentConversationId == currentId {
-                                        messages.append(fallbackMsg)
-                                        objectWillChange.send()
+                                        await MainActor.run {
+                                            messages.append(fallbackMsg)
+                                            messages.sort(by: { $0.timestamp < $1.timestamp })
+                                            objectWillChange.send()
+                                        }
                                     }
                                     var currentHistory = container.glmService
                                         .getConversationHistory(
@@ -808,6 +853,16 @@ final class AIChatViewModel: ObservableObject {
                         for: currentId.uuidString
                     )
 
+                    await MainActor.run {
+                        if let lastIdx = messages.lastIndex(where: { $0.role == "assistant" && !$0.isAgentStep }) {
+                            messages[lastIdx] = finalAssistantMsg
+                        } else {
+                            messages.append(finalAssistantMsg)
+                        }
+                        messages.sort(by: { $0.timestamp < $1.timestamp })
+                        objectWillChange.send()
+                    }
+
                     // 估算并累加本次对话消耗的 Token 用量
                     _ = container.apiSettingsService.estimateTokens(
                         sent: content,
@@ -818,14 +873,17 @@ final class AIChatViewModel: ObservableObject {
             } catch {
                 LoggerService.shared.error("AI chat failed: \(error)")
                 if currentConversationId == currentId {
-                    messages.append(
-                        ChatMessage(
-                            role: "assistant",
-                            content:
-                                "❌ **服务连接严重故障**\n\n```\n\(error.localizedDescription)\n```\n多次重试均遭拒绝。请检查网络环境或模型状态。"
+                    await MainActor.run {
+                        messages.append(
+                            ChatMessage(
+                                role: "assistant",
+                                content:
+                                    "❌ **服务连接严重故障**\n\n```\n\(error.localizedDescription)\n```\n多次重试均遭拒绝。请检查网络环境或模型状态。"
+                            )
                         )
-                    )
-                    objectWillChange.send()
+                        messages.sort(by: { $0.timestamp < $1.timestamp })
+                        objectWillChange.send()
+                    }
                 }
             }
         }
@@ -872,6 +930,7 @@ final class AIChatViewModel: ObservableObject {
                 )
                 messages.append(assistantMsg)
             }
+            messages.sort(by: { $0.timestamp < $1.timestamp })
             objectWillChange.send()
         }
     }
@@ -1426,8 +1485,27 @@ final class AIChatViewModel: ObservableObject {
     }
 
     private func buildAssistantPrompt(resolvedAgentMode: Bool) -> String {
-        let config = container.settingsService.settings.assistantConfig
+        let settings = container.settingsService.settings
+        let config = settings.assistantConfig
         var prompt = !config.customSystemPrompt.isEmpty ? config.customSystemPrompt : AppPromptService.shared.defaultAssistantPrompt()
+        
+        // 如果自定义提示词为空，则动态追加用户在 Pro Human 设置中配置的参数
+        if config.customSystemPrompt.isEmpty {
+            let focus = settings.proHumanMissionFocus
+            let style = settings.proHumanInteractionStyle
+            
+            prompt += "\n\n## [Pro Human 运行指令调整]\n"
+            prompt += "- **使命重心配置**：\(focus.displayName)\n"
+            prompt += "  指导要求：\(focus.promptSnippet)\n"
+            prompt += "- **交互风格配置**：\(style.displayName)\n"
+            prompt += "  交互要求：\(style.promptSnippet)\n"
+            
+            let customTriangle = settings.proHumanCustomTriangleText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !customTriangle.isEmpty {
+                prompt += "- **自定义极简三角准则**：\n\(customTriangle)\n"
+            }
+        }
+        
         if resolvedAgentMode {
             prompt += AppPromptService.shared.agentModeInstruction()
         }
@@ -1487,5 +1565,43 @@ final class AIChatViewModel: ObservableObject {
         }
         
         return prompt
+    }
+
+    private func getRelevantMemoryContext(for query: String) async -> String {
+        guard let currentId = currentConversationId else { return "" }
+        let history = container.glmService.getConversationHistory(for: currentId.uuidString)
+        
+        let chatPairs = history.filter { !$0.isAgentStep && $0.role != "system" }
+        
+        let keywords = query.lowercased().components(separatedBy: CharacterSet.whitespacesAndNewlines)
+            .filter { $0.count >= 2 }
+        
+        guard !keywords.isEmpty else { return "" }
+        
+        var matches: [(user: String, assistant: String)] = []
+        var i = 0
+        while i < chatPairs.count - 1 {
+            let msg1 = chatPairs[i]
+            let msg2 = chatPairs[i+1]
+            if msg1.role == "user" && msg2.role == "assistant" {
+                let textToSearch = (msg1.content + " " + msg2.content).lowercased()
+                let matchCount = keywords.filter { textToSearch.contains($0) }.count
+                if matchCount > 0 {
+                    matches.append((user: msg1.content, assistant: msg2.content))
+                }
+                i += 2
+            } else {
+                i += 1
+            }
+        }
+        
+        guard !matches.isEmpty else { return "" }
+        
+        var memoryText = "\n\n[相关联的历史记忆片段]\n(系统自动关联的你在先前对话中提到的相关信息，供参考以保持回答连贯性):\n"
+        for (idx, match) in matches.suffix(3).enumerated() {
+            memoryText += "--- 记忆片段 \(idx + 1) ---\n博士: \"\(match.user)\"\n\(characterName): \"\(match.assistant)\"\n"
+        }
+        memoryText += "--- 记忆片段结束 ---\n\n"
+        return memoryText
     }
 }

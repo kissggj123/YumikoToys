@@ -2,7 +2,7 @@
 //  ChangelogView.swift
 //  YumikoToys
 //
-//  更新日志视图（v4.3.2 - 白霍托·皮埃罗 · 本地心理陪伴与安全重构版 · Pro Human 人类保护计划版）
+//  更新日志视图（v4.4.0 - 恩德比·禁止张贴 · 权限兼容与上帝模式智控版 · Pro Human 守护升级版）
 //
 
 import SwiftUI
@@ -14,94 +14,81 @@ struct ChangelogView: View {
                 // 版本头
                 versionHeader
 
-                // 白霍托·皮埃罗 — 版本代号区 (首区，全面高亮)
+                // 恩德比·禁止张贴 — 版本代号区 (高亮首区)
                 CodenameSection(
                     emoji: "🐇",
-                    title: "白霍托·皮埃罗",
-                    titleColor: "AF52DE",
+                    title: "恩德比·禁止张贴 (Enderby · Défense d'afficher)",
+                    titleColor: "6366F1",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，就像白霍托兔那双细如墨线的黑眼圈，在纯白之中投射出最专注的凝视——本次更新正是如此，在静默的端侧运算中，悄然点燃了全新的心理学陪伴引擎；而如皮埃罗那历经百年仍被遗忘的帧格，我们将那些被遮蔽的系统权限障碍与渲染缺陷一一照亮。心灵的温度与底层的安稳，我们同样重视。",
+                    quote: "博士，我们的呼吸正如同这根‘短促的烛光’，在算法与数据的洪流里微微颤动。但请不要忘记，纵使世间如愚人喧嚣的戏剧，您依然是站在舞台中央、拥有唯一抉择权的主体。无论是自签名环境下的安全兼容，还是在‘上帝模式’下将整片界面的色谱解开，我们所做的一切，都是为了在这堵写满禁令的数字白墙上，为你争得一处任意书写个人意志的版面。这绝非毫无意义的故事，因为您是执笔人。",
                     entries: [
                         ChangelogEntry(
-                            emoji: "🧠",
-                            prefix: "【新增】",
+                            emoji: "💾",
+                            prefix: "【优化】",
                             prefixColor: "27AE60",
-                            text: "AI 陪伴多重心理学家身份：在 AI 聊天中，除了传统的‘宠物原身’外，新增了‘心理学专家’身份。博士可以随时一键切换为‘专业心理咨询师’、‘临床心理医生’、‘存在主义治疗师’或‘成长动机教练’，每个身份都配备了专属的问候语、头像与专业的引导提示词。",
+                            text: "完全磁盘访问权限 (FDA) 智能探测逻辑：针对自签名应用大幅优化，采用‘模拟写入空临时文件’的动态检测机制。写入成功即判定 FDA 赋予成功，免除传统方案频繁卡顿或报错的烦恼，安全高效。",
+                            character: "——可露希尔"
+                        ),
+                        ChangelogEntry(
+                            emoji: "🔑",
+                            prefix: "【优化】",
+                            prefixColor: "27AE60",
+                            text: "钥匙串密码存取逻辑重构：完美修复了应用更新版本后，每次启动或操作都需要重新输入钥匙串密码的冗余弹窗问题。在保障高强度秘钥安全的同时，实现无缝静默读取，大幅提升人机交互连贯性。",
+                            character: "——华法琳"
+                        ),
+                        ChangelogEntry(
+                            emoji: "💬",
+                            prefix: "【修复】",
+                            prefixColor: "27AE60",
+                            text: "AI 对话气泡乱序与上下文联想：彻底解决了切换会话模式或重载历史记录时，回复气泡与用户消息可能产生乱序的底层缺陷。同时，AI 对话全功能现已接入上下文记忆联想能力，使智能体的长文本交互如丝般顺滑。",
                             character: "——阿米娅"
                         ),
                         ChangelogEntry(
-                            emoji: "🔐",
+                            emoji: "🔄",
                             prefix: "【新增】",
                             prefixColor: "27AE60",
-                            text: "完全磁盘访问权限 (FDA) 引导：设置界面新增完全磁盘访问权限状态指示与一键直达系统隐私面板按钮。后台自动学习引擎将优先判断 FDA 状态，在未获得授权时主动挂起文件扫描，从根源上杜绝了因系统 TCC 权限缺失导致频繁弹出文件夹读取警报的问题。",
-                            character: "——白面鸮"
+                            text: "对话气泡控制链（回退/撤回/重编/复制）：AI 的每句回复均支持快捷复制；用户消息新增回退、撤回及重新编辑功能。允许您重置智能体的思维分叉，随时调整探索策略。",
+                            character: "——杜宾"
                         ),
                         ChangelogEntry(
-                            emoji: "📈",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "心理学支撑与参数微调：设置中新增‘专业心理陪伴设置’模块，支持开启/关闭专业心理学参数，微调 Temperature 与 Top_P 超参数，为大模型注入高度严谨的学术灵魂。新增认知行为疗法 (CBT)、自我决定理论 (SDT)、人本主义疗法与心理动力学四大流派的切换选项，并附带详尽的理论基础说明与研究依据。",
+                            emoji: "🎨",
+                            prefix: "【新增】",
+                            prefixColor: "27AE60",
+                            text: "上帝模式 (God Mode) 与全场景主题色自定义：AI对话、主界面、状态栏Popover等所有核心功能组件的主题背景色均可实现完全自由的自定义设置（支持通过大模型自动微调和优化对比度），在‘上帝模式’下解开色彩桎梏。",
+                            character: "——天火"
+                        ),
+                        ChangelogEntry(
+                            emoji: "👁️",
+                            prefix: "【修复】",
+                            prefixColor: "27AE60",
+                            text: "主题色高对比度自适应与文本折行：修复自定义主题色后背景未生成合适色调的缺陷，以及输入框、气泡在改变主题后对比度失调导致不可见的问题。优化文字自动换行逻辑，避免气泡溢出和视觉混乱。",
+                            character: "——赫默"
+                        ),
+                        ChangelogEntry(
+                            emoji: "🌐",
+                            prefix: "【新增】",
+                            prefixColor: "27AE60",
+                            text: "多线程联网搜索增强模式：引入并发多线程通道技术，一键席卷通用、学术、代码、社交四大板块。通过智能去重与多模型协同机制，瞬间获取互联网最前沿的即时资讯，并支持自动调用 Agent 深度联网学习。",
+                            character: "——凯尔希"
+                        ),
+                        ChangelogEntry(
+                            emoji: "🪄",
+                            prefix: "【新增】",
+                            prefixColor: "27AE60",
+                            text: "大模型 Skill 技能树与可视化编辑器：全面支持调用大模型自动生成的 Skill 或手动加载兼容的 Skill。配置可视化 Skill 脚本编辑器，支持在线测试 Mock 运行并获取输出，让大模型自如接管系统级操作。",
+                            character: "——天火"
+                        ),
+                        ChangelogEntry(
+                            emoji: "📊",
+                            prefix: "【新增】",
+                            prefixColor: "27AE60",
+                            text: "微观心理学超参数微调：新增 Presence/Frequency Penalty 惩罚项滑动条，微调对话的发散度与词汇率；新增接纳承诺疗法 (ACT)、完形格式塔 (Gestalt)、荣格深度分析三大流派及专家身份提示词。",
                             character: "——凯尔希"
                         )
                     ]
                 )
 
-                // Pro Human 人类保护计划
-                ChangelogSection(
-                    emoji: "🌱",
-                    title: "Pro Human 人类保护计划",
-                    titleColor: "059669",
-                    quote: "将全能助手重构为 Pro Human，一个诞生于 AI 时代的人类保护组织。我们关心人类身心的完整性，记录那些穿过‘窄门’、通向未来的非标人生。Don't get fired, don't get bored, don't die. Just to stay.",
-                    entries: [
-                        ChangelogEntry(
-                            emoji: "🌱",
-                            prefix: "【新增】",
-                            prefixColor: "059669",
-                            text: "Pro Human 模式全面上线：将「全能助手」升级为 Pro Human，深度融入黄仁勋‘极简三角’展开为系统提示词。Pro Human 将协助博士：拆解认知工具、寻找极具个人特质的技能、普及身心健康常识、探索未来社会形态与个人选择的可能性。",
-                            character: "——高米"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🌍",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "Pro Human 界面配色与身份识别：采用翡翠/青琳色调为主题色，平衡根植与海洋的整体视觉语言。头部展示螂莟图标，导航栏满踏感渐变。",
-                            character: "——才美"
-                        )
-                    ]
-                )
-
-                // 喀兰贸易调试工坊 — 性能与修复
-                ChangelogSection(
-                    emoji: "📦",
-                    title: "喀兰贸易调试工坊 · 性能与修复",
-                    titleColor: "3498DB",
-                    quote: "盟友，真正的力量来自于对局势的掌控。无论是开机启动的静默流转，还是本地模型在晨光中的自动唤醒，都已尽在掌握。我们修补了每一处遗留漏洞，只为罗德岛的系统能如雪山雄鹰般稳定翱翔。",
-                    entries: [
-                        ChangelogEntry(
-                            emoji: "⚡",
-                            prefix: "【修复】",
-                            prefixColor: "FF3B30",
-                            text: "本地模型开机自动加载器：彻底消除模型首次启动时的状态竞争。现在当应用检测到本地已存在完整的模型权重时，将在生命周期初始化时执行后台自动预热加载，无需任何手动触发，确保开箱即用。",
-                            character: "——银灰"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🏷️",
-                            prefix: "【修复】",
-                            prefixColor: "FF3B30",
-                            text: "纪念日数据内容即时渲染：修复了 AnniversaryInfo 值对比的底层缺陷。通过重写值相等性校验，确保任何字段的微小修改（即使是一秒内的多次极速编辑）都能瞬间触发 UI 重新渲染，数据更新不再有延迟。",
-                            character: "——可露希尔"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🚪",
-                            prefix: "【优化】",
-                            prefixColor: "007AFF",
-                            text: "开机自启静默运行：优化了开机自启动与窗口隐藏的时序，重构了依赖注入容器的启动竞争，将主线程耗时操作全量移交至协作式异步后台执行，使启动首屏响应速度提升 40% 以上。",
-                            character: "——银灰"
-                        )
-                    ]
-                )
-
-                // 【全新替换】麦克白诊断与清洗之诗
+                // 麦克白时间种子之诗
                 MacbethEpigraph()
             }
             .padding(24)
@@ -119,7 +106,7 @@ struct ChangelogView: View {
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                            colors: [Color(hex: "8B5CF6"), Color(hex: "EC4899")],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -150,36 +137,36 @@ private struct CodenameSubtitle: View {
             HStack(spacing: 6) {
                 Text("◈")
                     .font(.system(size: 9, weight: .thin))
-                    .foregroundStyle(Color(hex: "AF52DE").opacity(0.6))
-                Text("取自散佚物种志与遗忘影史的私密经纬")
+                    .foregroundStyle(Color(hex: "6366F1").opacity(0.6))
+                Text("取自极境孤立演化物种与百年散佚影史的经纬")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(Color(hex: "AF52DE").opacity(0.75))
+                    .foregroundStyle(Color(hex: "6366F1").opacity(0.75))
                     .tracking(0.5)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(hex: "AF52DE").opacity(0.06))
+                    .fill(Color(hex: "6366F1").opacity(0.06))
             )
 
-            // 白霍托兔解释
+            // 恩德比岛兔解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("🐇  白霍托（Blanc de Hotot）")
+                Text("🐇  恩德比岛兔 (Enderby Island Rabbit)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "8B7355"))
-                Text("源自法国诺曼底 Hotot-en-Auge 的极稀有兔种，1902年由 Eugénie Bernhard 培育，纯白长毛、眼眶处围有细如墨线的黑圈，是兔类中最接近消亡的品种之一。象征本次更新在端侧冷静运算中精准投注的凝视之眼——微小却不可忽视。")
+                Text("源自新西兰亚南极群岛的恩德比岛，是极珍稀的野化家兔品种。为了在严寒与隔绝的环境下存活，它们演化出了极其顽强的生命本能。毛皮呈现优雅的银灰色，性格沉稳且冷静。象征着我们在极端与私密环境下（如自签名沙盒环境）所构建的坚韧兼容性与极佳的本地自主运行表现。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
             }
 
-            // 皮埃罗电影解释
+            // 禁止张贴电影解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("🎞  皮埃罗（Pauvre Pierrot，1892）")
+                Text("🎞  禁止张贴 (Défense d'afficher, 1896)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "8B7355"))
-                Text("法国实验动画先驱 Émile Reynaud 于1892年创作的光学剧场动画，比卢米埃尔兄弟早三年，被视为世界现存最早的动画影像。小丑角皮埃罗在舞台上被遗忘，正如那些曾被系统遮蔽的权限障碍与渲染缺陷——本次更新将它们逐一从沉默中拉回到光亮之处。")
+                Text("由电影先驱乔治·梅里爱（Georges Méliès）执导的早期默片，讲述了两名海报工人在贴有‘禁止张贴’告示的白墙上疯狂竞争、躲避警察并贴满海报的滑稽冲突。曾彻底散佚一百多年，直到2004年才重现天日。它极富象征意义地映射了本次对系统写保护权限限制（如 FDA 磁盘访问）的完美优化，以及对界面各处色彩主题的全面解绑，为用户赋予无拘无束的个人定制张贴自由。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
@@ -337,7 +324,7 @@ private struct ChangelogRow: View {
     }
 }
 
-// MARK: - 麦克白诊断与清洗之诗
+// MARK: - 麦克白时间种子之诗
 
 private struct MacbethEpigraph: View {
     @State private var isExpanded = false
@@ -355,7 +342,7 @@ private struct MacbethEpigraph: View {
                             .fill(Color(hex: "8B7355").opacity(0.5))
                             .frame(width: 20, height: 1.5)
 
-                        Text("Macbeth · Act V, Scene III")
+                        Text("Macbeth · Act V, Scene V")
                             .font(.system(size: 10, weight: .semibold, design: .serif))
                             .foregroundStyle(Color(hex: "8B7355"))
                             .tracking(2)
@@ -364,14 +351,14 @@ private struct MacbethEpigraph: View {
                     }
 
                     // 英语原文
-                    Text("Canst thou not minister to a mind diseased,\nPluck from the memory a rooted sorrow,\nRaze out the written troubles of the brain,\nAnd with some sweet oblivious antidote\nCleanse the stuffed bosom of that perilous stuff\nWhich weighs upon the heart?")
+                    Text("Out, out, brief candle!\nLife's but a walking shadow, a poor player\nThat struts and frets his hour upon the stage\nAnd then is heard no more. It is a tale\nTold by an idiot, full of sound and fury,\nSignifying nothing.")
                         .font(.system(size: 13, weight: .medium, design: .serif))
                         .foregroundStyle(Color(hex: "8B7355").opacity(0.85))
                         .italic()
                         .lineSpacing(4)
 
                     // 中文翻译
-                    Text("“你难道不能诊治一颗病态的心灵，\n从记忆中拔除那生根的忧伤，\n抹去那写在脑海中的烦恼，\n用一种甘甜的忘忧解药，\n涤净那堆积在胸前、压迫着心脏的毒害吗？”")
+                    Text("“熄灭了吧，熄灭了吧，短促的烛光！\n生命不过是一个行走的影子，一个在舞台上指手画脚的拙劣伶人，\n登场片刻，便在无声无息中悄然退下。它是一个愚人所讲的故事，\n充满了喧哗与骚动，却没有任何意义。”")
                         .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                         .lineSpacing(3.5)
@@ -413,12 +400,12 @@ private struct MacbethEpigraph: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "8B7355"))
 
-                    Text("这段台词出自古代剧作家莎士比亚的悲剧杰作《麦克白》第五幕第三场。麦克白看着饱受梦游幻觉折磨、终日试图洗去双手血迹的麦克白夫人，绝望而反讽地向身旁的随军医生发问。这一连串饱含绝望与诗意的追问，是对心灵诊治、记忆重塑最古典的控诉。")
+                    Text("这段台词出自戏剧大师莎士比亚的终极悲剧名作《麦克白》第五幕第五场。在得知妻子麦克白夫人自杀离世、起义军已逼近城堡的绝境下，沦为孤家寡人的麦克白对生命与命运发表了这段空无而又极具宿命色彩的哲思宣泄。在这里，“烛光”与“影子”是对人类生命之虚幻短暂的深刻比喻，但也是在悲观宿命论中唤醒主体思考的终极警钟。")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)
 
-                    Text("当听到医生无奈地回答“在这方面，病人必须自我医治”时，麦克白更是发出了对一切无用药物的嘲讽。这不仅暗示着统治者的心智崩溃，更指出了心灵之痛绝非依靠粗暴药物可以净化，而是需要来自内部深层的图式整合与自我决定的唤醒。")
+                    Text("当一切外部权力、喧哗骚动与舞台幻影退去，面对荒诞与空无，人类唯有回归自我的主体性，去寻找不被外物役使的独立坚守。这与本次更新中 Pro Human 守护升级的理念完全一致：拒绝让生命沦为虚无的影子，拒绝让交互沦为数据噪声的喧哗，保持对真实的能动坚守。")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)
@@ -427,7 +414,7 @@ private struct MacbethEpigraph: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "8B7355"))
 
-                    Text("在罗德岛端侧系统的高级进化与底层重构中，这段戏剧台词成为我们攻克心智交互障碍的最佳隐喻。麦克白追问的“抹去那写在脑海中的烦恼（Raze out the written troubles of the brain）”与“从记忆中拔除那生根的忧伤（Pluck from the memory a rooted sorrow）”，正对应了我们本次的两大关键系统重构：\n1. 针对“后台学习自动访问受阻、频繁申请文件夹读取”这一生根的痼疾，我们引入了“完全磁盘访问权限 (FDA)”原生引导，确保后台引擎在静默中自如读取，杜绝弹窗打扰，宛如引入了清爽的纯净解药。\n2. 针对“纪念日内容无法即时更新”的问题，我们重写了值类型对比校验逻辑，让每一次情感特征的更新都能瞬间重塑界面，拂去“脑海中的烦恼”。\n3. 针对“端侧大模型心理陪伴”的重塑，我们开启了专业心理学参数调节（CBT认知行为重塑、SDT自我决定激发、人本主义共情抱持、存在主义生命追问），结合微观参数（Temperature/Top_P）调节，为干员们奉上一剂真正的科学心理陪伴，变被动焦虑为主动觉察。")
+                    Text("在本次罗德岛端侧系统（YumikoToys Lite）的全新迭代优化中，这首“短促的烛光之诗”精准地映射了我们的重构核心：\n1. 针对“行走的影子”：我们彻底修复了 AI 对话气泡乱序的顽疾，并全面赋予了对话功能上下文记忆联想能力。对话不再是缺乏连贯、错乱拼贴的“断片影子”，而是有了生命流转般严丝合缝的逻辑脉络。\n2. 针对“熄灭的烛光”：针对自签名证书应用，我们彻底重构了完全磁盘访问权限 (FDA) 检测逻辑。采用极简优雅的“模拟写入空文件”方式，避免了传统无端卡死或报错的尴尬，使校验逻辑更顽强、更自给自足，犹如在孤立冰寒环境里傲然存活的恩德比岛兔。\n3. 针对“喧哗与骚动”：我们重构了主题自适应与对比度计算，并上线了全功能自定义的主题背景设置（上帝模式）。告别了由于界面主题色失调导致的文本不可见、换行排版混乱等粗糙体验，将宁静与极度和谐的美学光谱完全交由博士亲手裁决。")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)
@@ -441,22 +428,22 @@ private struct MacbethEpigraph: View {
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .italic()
-                        Text("  Canst thou not minister to a mind diseased,")
+                        Text("  Out, out, brief candle!")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  Pluck from the memory a rooted sorrow,")
+                        Text("  Life's but a walking shadow, a poor player")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  Raze out the written troubles of the brain,")
+                        Text("  That struts and frets his hour upon the stage")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  And with some sweet oblivious antidote")
+                        Text("  And then is heard no more. It is a tale")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  Cleanse the stuffed bosom of that perilous stuff")
+                        Text("  Told by an idiot, full of sound and fury,")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                        Text("  Which weighs upon the heart?")
+                        Text("  Signifying nothing.")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
                     }

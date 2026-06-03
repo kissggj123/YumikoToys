@@ -19,6 +19,11 @@ struct CopyableMessageBubble: View {
     let chatMode: ChatMode
     let themeColor: ThemeColor
 
+    // 👈【核心新增】：添加回调以支持快捷操作
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
+    var onRegenerate: (() -> Void)? = nil
+
     @State private var isHovered = false
     @State private var showCopied = false
 
@@ -31,6 +36,13 @@ struct CopyableMessageBubble: View {
         case .aiAssistant:
             return [Color(hex: "059669"), Color(hex: "0891B2")]
         }
+    }
+    
+    private var userBubbleTextColor: Color {
+        if chatMode == .petCompanion && themeColor.isAccentLight {
+            return Color(red: 0.06, green: 0.09, blue: 0.16)
+        }
+        return .white
     }
     
     private var userBubbleShadowColor: Color {
@@ -109,6 +121,13 @@ struct CopyableMessageBubble: View {
         message.role == "user"
     }
 
+    private var cornerRadius: CGFloat {
+        if DependencyContainer.shared.settingsService.settings.godModeEnabled {
+            return CGFloat(DependencyContainer.shared.settingsService.settings.customCornerRadius)
+        }
+        return 18
+    }
+
     // UI 隔离过滤器。剔除 System Note，只在气泡里渲染最干净的提问文本。
     private var displayedContent: String {
         let raw = message.content
@@ -167,6 +186,67 @@ struct CopyableMessageBubble: View {
                         messageContentView(isStructured: isStructured, formattedContent: formattedContent)
                     }
                 }
+
+                // 👈【核心新增】：鼠标悬浮时在气泡下方显示快捷交互按钮，提升自签名应用下的操作体验
+                if isHovered && !message.isAgentStep {
+                    HStack(spacing: 8) {
+                        if isUser {
+                            if let onEdit = onEdit {
+                                Button(action: onEdit) {
+                                    Label("编辑", systemImage: "pencil")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Capsule().fill(Color.primary.opacity(0.06)))
+                                }
+                                .buttonStyle(.plain)
+                                .help("编辑并重新发送")
+                            }
+                            if let onDelete = onDelete {
+                                Button(action: onDelete) {
+                                    Label("撤回", systemImage: "arrow.uturn.backward")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Capsule().fill(Color.primary.opacity(0.06)))
+                                }
+                                .buttonStyle(.plain)
+                                .help("撤回提问")
+                            }
+                        } else {
+                            copyButton
+                            
+                            if let onRegenerate = onRegenerate {
+                                Button(action: onRegenerate) {
+                                    Label("重新生成", systemImage: "arrow.clockwise")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Capsule().fill(Color.primary.opacity(0.06)))
+                                }
+                                .buttonStyle(.plain)
+                                .help("重新生成AI回复")
+                            }
+                            
+                            if let onDelete = onDelete {
+                                Button(action: onDelete) {
+                                    Label("删除", systemImage: "trash")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Capsule().fill(Color.primary.opacity(0.06)))
+                                }
+                                .buttonStyle(.plain)
+                                .help("删除此消息")
+                            }
+                        }
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                }
             }
 
             // 👈【重构】：用户头像同步（与陪伴端样式 100% 同步对齐）
@@ -206,12 +286,6 @@ struct CopyableMessageBubble: View {
             }
         }
         .onHover { isHovered = $0 }
-        .overlay(alignment: .topTrailing) {
-            if isHovered && !displayedContent.isEmpty && !message.isAgentStep {
-                copyButton
-                    .offset(x: 8, y: -4)
-            }
-        }
     }
 
     // MARK: - 消息内容
@@ -224,18 +298,18 @@ struct CopyableMessageBubble: View {
                     Markdown(formattedContent)
                         .markdownTheme(.gitHub)
                         .font(.system(size: 14))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(userBubbleTextColor)
                 } else {
                     Text(displayedContent)
                         .font(.system(size: 14))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(userBubbleTextColor)
                         .lineLimit(nil)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: cornerRadius)
                     .fill(
                         LinearGradient(
                             colors: userBubbleColors,
@@ -262,10 +336,10 @@ struct CopyableMessageBubble: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: cornerRadius)
                     .fill(Color.primary.opacity(0.04))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 18)
+                        RoundedRectangle(cornerRadius: cornerRadius)
                             .stroke(
                                 LinearGradient(
                                     colors: assistantBorderColors,
