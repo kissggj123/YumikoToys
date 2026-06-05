@@ -10,7 +10,7 @@ import SwiftUI
 struct ConversationSidebarView: View {
     @ObservedObject var conversationService: ConversationService
     let chatMode: ChatMode
-    let themeColor: ThemeColor
+    let themeColor: ResolvedTheme
     let onSelectConversation: (UUID) -> Void
     let onNewConversation: () -> Void
     let onDeleteConversation: (UUID) -> Void
@@ -256,7 +256,7 @@ private struct ConversationRow: View {
     let isSelected: Bool
     let isHovered: Bool
     let isConfirmingDelete: Bool
-    let themeColor: ThemeColor
+    let themeColor: ResolvedTheme
     let chatMode: ChatMode
     let onTap: () -> Void
     let onDelete: () -> Void

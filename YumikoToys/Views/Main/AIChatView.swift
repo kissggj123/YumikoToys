@@ -31,7 +31,7 @@ struct AIChatView: View {
             ConversationSidebarView(
                 conversationService: conversationService,
                 chatMode: viewModel.chatMode,
-                themeColor: viewModel.themeColor,
+                themeColor: viewModel.resolvedTheme,
                 onSelectConversation: { id in
                     conversationService.switchToConversation(id)
                     viewModel.switchConversation(to: id)
@@ -73,7 +73,7 @@ struct AIChatView: View {
                 switchConversationForMode(viewModel.chatMode)
             }
         }
-        .preferredColorScheme(viewModel.chatMode == .aiAssistant ? .dark : (viewModel.themeColor.isDarkTheme ? .dark : .light))
+        .preferredColorScheme(viewModel.chatMode == .aiAssistant ? .dark : (viewModel.resolvedTheme.isDarkTheme ? .dark : .light))
     }
 
     // MARK: - 聊天详情
@@ -102,13 +102,13 @@ struct AIChatView: View {
                 PixelAvatarView(
                     emoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
                     size: 36,
-                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.themeColor.iconGradient
+                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.iconGradient
                 )
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(viewModel.chatMode == .aiAssistant ? "Pro Human" : viewModel.characterName)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(viewModel.chatMode == .aiAssistant ? .white : viewModel.themeColor.textColor)
+                        .foregroundStyle(viewModel.chatMode == .aiAssistant ? .white : viewModel.resolvedTheme.textColor)
 
                     HStack(spacing: 4) {
                         Circle()
@@ -137,7 +137,8 @@ struct AIChatView: View {
                                 .fill(inputBackgroundColor)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.premium)
+                .premiumHover(scale: 1.1)
                 .help("设置")
             }
             .padding(.horizontal, 16)
@@ -192,7 +193,7 @@ struct AIChatView: View {
                 PixelAvatarView(
                     emoji: emoji,
                     size: 28,
-                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.themeColor.iconGradient
+                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.iconGradient
                 )
             } else if let path = viewModel.userAvatarPath {
                 Image(nsImage: NSImage(contentsOfFile: path) ?? NSImage())
@@ -202,7 +203,7 @@ struct AIChatView: View {
                     .clipShape(Circle())
             } else {
                 Circle()
-                    .fill(viewModel.chatMode == .aiAssistant ? Color.white.opacity(0.1) : (viewModel.themeColor.isDarkTheme ? Color.white.opacity(0.1) : Color.black.opacity(0.1)))
+                    .fill(viewModel.chatMode == .aiAssistant ? Color.white.opacity(0.1) : (viewModel.resolvedTheme.isDarkTheme ? Color.white.opacity(0.1) : Color.black.opacity(0.1)))
                     .frame(width: 28, height: 28)
                     .overlay(
                         Image(systemName: "person.fill")
@@ -242,7 +243,7 @@ struct AIChatView: View {
                             if viewModel.isLoading {
                                 TypingIndicator(
                                     aiAvatarEmoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
-                                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.themeColor.iconGradient
+                                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.iconGradient
                                 )
                                 .id("typing")
                             }
@@ -296,7 +297,7 @@ struct AIChatView: View {
             userAvatarEmoji: viewModel.userAvatarEmoji,
             userAvatarPath: viewModel.userAvatarPath,
             chatMode: viewModel.chatMode,
-            themeColor: viewModel.themeColor,
+            themeColor: viewModel.resolvedTheme,
             onEdit: message.role == "user" ? {
                 viewModel.inputText = message.content
                 viewModel.messages = Array(viewModel.messages.prefix(while: { $0.id != message.id }))
@@ -374,7 +375,7 @@ struct AIChatView: View {
                 PixelAvatarView(
                     emoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
                     size: 60,
-                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.themeColor.iconGradient
+                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.iconGradient
                 )
             }
 
@@ -390,11 +391,11 @@ struct AIChatView: View {
             }
 
             HStack(spacing: 8) {
-                QuickPromptButton(text: "介绍一下自己", themeGradient: themeGradient, isDark: viewModel.chatMode == .aiAssistant || viewModel.themeColor.isDarkTheme) {
+                QuickPromptButton(text: "介绍一下自己", themeGradient: themeGradient, isDark: viewModel.chatMode == .aiAssistant || viewModel.resolvedTheme.isDarkTheme) {
                     viewModel.inputText = "介绍一下自己"
                     sendMessage()
                 }
-                QuickPromptButton(text: "今天心情如何", themeGradient: themeGradient, isDark: viewModel.chatMode == .aiAssistant || viewModel.themeColor.isDarkTheme) {
+                QuickPromptButton(text: "今天心情如何", themeGradient: themeGradient, isDark: viewModel.chatMode == .aiAssistant || viewModel.resolvedTheme.isDarkTheme) {
                     viewModel.inputText = "今天心情如何"
                     sendMessage()
                 }
@@ -482,7 +483,8 @@ struct AIChatView: View {
                                     .fill(inputBackgroundColor)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.premium)
+                    .premiumHover(scale: 1.1)
                     .help("撤销发送/回退上一次对话")
                 }
 
@@ -498,7 +500,8 @@ struct AIChatView: View {
                                     .fill(Color.red.opacity(0.8))
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.premium)
+                    .premiumHover(scale: 1.1)
                     .help("中止流式输出")
                 } else {
                     // 发送按钮 (Send State)
@@ -515,7 +518,8 @@ struct AIChatView: View {
                                     )
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.premium)
+                    .premiumHover(scale: 1.1)
                     .disabled(viewModel.inputText.isEmpty || viewModel.isGeneratingPersona)
                 }
             }
@@ -566,7 +570,7 @@ struct AIChatView: View {
         switch viewModel.chatMode {
         case .petCompanion:
             return LinearGradient(
-                colors: viewModel.themeColor.iconGradient,
+                colors: viewModel.resolvedTheme.iconGradient,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -582,7 +586,7 @@ struct AIChatView: View {
     private var themeColor: Color {
         switch viewModel.chatMode {
         case .petCompanion:
-            return viewModel.themeColor.accentColor
+            return viewModel.resolvedTheme.accentColor
         case .aiAssistant:
             return Color(hex: "059669")
         }
@@ -591,7 +595,7 @@ struct AIChatView: View {
     private var detailBackgroundColor: Color {
         switch viewModel.chatMode {
         case .petCompanion:
-            return viewModel.themeColor.backgroundColor
+            return viewModel.resolvedTheme.backgroundColor
         case .aiAssistant:
             return Color(hex: "0A0F0D")
         }
@@ -600,26 +604,26 @@ struct AIChatView: View {
     private var panelBackgroundColor: Color {
         switch viewModel.chatMode {
         case .petCompanion:
-            return viewModel.themeColor.cardBackgroundColor
+            return viewModel.resolvedTheme.cardBackgroundColor
         case .aiAssistant:
             return Color(hex: "141E1A")
         }
     }
 
     private var inputTextColor: Color {
-        viewModel.chatMode == .aiAssistant ? .white : viewModel.themeColor.textColor
+        viewModel.chatMode == .aiAssistant ? .white : viewModel.resolvedTheme.textColor
     }
 
     private var inputBackgroundColor: Color {
-        viewModel.chatMode == .aiAssistant ? Color.white.opacity(0.05) : (viewModel.themeColor.isDarkTheme ? Color.white.opacity(0.05) : Color.black.opacity(0.05))
+        viewModel.chatMode == .aiAssistant ? Color.white.opacity(0.05) : (viewModel.resolvedTheme.isDarkTheme ? Color.white.opacity(0.05) : Color.black.opacity(0.05))
     }
 
     private var emptyStateTitleColor: Color {
-        viewModel.chatMode == .aiAssistant ? .white : viewModel.themeColor.textColor
+        viewModel.chatMode == .aiAssistant ? .white : viewModel.resolvedTheme.textColor
     }
 
     private var emptyStateSubtitleColor: Color {
-        viewModel.chatMode == .aiAssistant ? .secondary : viewModel.themeColor.secondaryTextColor
+        viewModel.chatMode == .aiAssistant ? .secondary : viewModel.resolvedTheme.secondaryTextColor
     }
 }
 
@@ -696,7 +700,7 @@ private struct QuickPromptButton: View {
                         )
                 )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.premium)
         .onHover { isHovered = $0 }
         .animation(.easeInOut(duration: 0.2), value: isHovered)
     }

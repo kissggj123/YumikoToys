@@ -293,16 +293,21 @@ final class WindowManager {
             DependencyContainer.shared.settingsService.settingsPublisher
                 .receive(on: DispatchQueue.main)
                 .sink { [weak self] settings in
-                    self?.updateAllWindowsTheme(settings.selectedThemeColor)
+                    self?.updateAllWindowsTheme(
+                        color: settings.mainWindowThemeColor,
+                        customHex: settings.customMainWindowThemeColorHex
+                    )
                 }
                 .store(in: &self.cancellables)
         }
     }
     
-    func updateAllWindowsTheme(_ themeColor: ThemeColor) {
+    func updateAllWindowsTheme(color: ThemeColor, customHex: String) {
+        let nsBg = color.nsBackgroundColor(customHex: customHex)
+        let isDark = color.isDarkTheme(customHex: customHex)
         for window in windows.values {
-            window.backgroundColor = themeColor.nsBackgroundColor
-            window.appearance = themeColor.isDarkTheme ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+            window.backgroundColor = nsBg
+            window.appearance = isDark ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
             window.hasShadow = true
             window.invalidateShadow()
         }
@@ -310,19 +315,39 @@ final class WindowManager {
     
     // MARK: - Window Management
     
+    /// 激活并使窗口轻微弹动 (微交互动效)
+    private func activateAndPulseWindow(_ window: NSWindow) {
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
+        
+        window.orderFrontRegardless()
+        window.makeKey()
+        NSApp.activate(ignoringOtherApps: true)
+        
+        let currentFrame = window.frame
+        let pulseFrame = currentFrame.insetBy(dx: -3, dy: -3)
+        
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.12
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            window.animator().setFrame(pulseFrame, display: true)
+        }, completionHandler: {
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.15
+                context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+                window.animator().setFrame(currentFrame, display: true)
+            }, completionHandler: nil)
+        })
+    }
+    
     /// 显示窗口（单例模式）
     func showWindow(_ type: WindowType, content: () -> NSView) {
         
-        // 1. 如果窗口已存在，直接激活
+        // 1. 如果窗口已存在，直接激活且弹动反馈
         if let existingWindow = windows[type] {
             DispatchQueue.main.async {
-                existingWindow.orderFrontRegardless()
-                existingWindow.makeKey()
-                NSApp.activate(ignoringOtherApps: true)
-                
-                if existingWindow.isMiniaturized {
-                    existingWindow.deminiaturize(nil)
-                }
+                self.activateAndPulseWindow(existingWindow)
             }
             LoggerService.shared.debug("Activated existing window: \(type.rawValue)")
             return
@@ -335,9 +360,7 @@ final class WindowManager {
         DispatchQueue.main.async {
             // 二次防重检查
             if let existingWindow = self.windows[type] {
-                existingWindow.orderFrontRegardless()
-                existingWindow.makeKey()
-                NSApp.activate(ignoringOtherApps: true)
+                self.activateAndPulseWindow(existingWindow)
                 return
             }
             
@@ -369,10 +392,12 @@ final class WindowManager {
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             
-            // 根据主题色设置背景和外观
-            let themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
-            window.backgroundColor = themeColor.nsBackgroundColor
-            window.appearance = themeColor.isDarkTheme ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+            // 根据主界面主题色设置背景和外观
+            let settings = DependencyContainer.shared.settingsService.settings
+            let mainThemeColor = settings.mainWindowThemeColor
+            let mainCustomHex = settings.customMainWindowThemeColorHex
+            window.backgroundColor = mainThemeColor.nsBackgroundColor(customHex: mainCustomHex)
+            window.appearance = mainThemeColor.isDarkTheme(customHex: mainCustomHex) ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
             window.hasShadow = true
             
             // 设定最小和最大窗口尺寸
@@ -397,9 +422,23 @@ final class WindowManager {
             
             self.windows[type] = window
             
+            // 【弹出过渡动画】设定初始透明度为0，并向下偏移15pt以实现向上弹跳弹出效果
+            window.alphaValue = 0.0
+            let finalFrame = window.frame
+            let startFrame = finalFrame.offsetBy(dx: 0, dy: -15)
+            window.setFrame(startFrame, display: false)
+            
             window.orderFrontRegardless()
             window.makeKey()
             NSApp.activate(ignoringOtherApps: true)
+            
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.32
+                // 经典缓动曲线，高品质交互感
+                context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
+                window.animator().alphaValue = 1.0
+                window.animator().setFrame(finalFrame, display: true)
+            }, completionHandler: nil)
             
             LoggerService.shared.info("Created new window: \(type.rawValue)")
         }
@@ -442,6 +481,33 @@ final class WindowManager {
 private class WindowDelegate: NSObject, NSWindowDelegate {
     static let shared = WindowDelegate()
     
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        guard let identifier = sender.identifier?.rawValue,
+              let _ = WindowType(rawValue: identifier) else {
+            return true
+        }
+        
+        // 如果已经开始淡出，则直接允许关闭
+        if sender.alphaValue == 0.0 {
+            return true
+        }
+        
+        // 退出过渡动画：淡出并向下偏移15pt以实现滑落效果
+        let currentFrame = sender.frame
+        let exitFrame = currentFrame.offsetBy(dx: 0, dy: -15)
+        
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.22
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            sender.animator().alphaValue = 0.0
+            sender.animator().setFrame(exitFrame, display: true)
+        }, completionHandler: {
+            sender.close()
+        })
+        
+        return false
+    }
+    
     func windowWillClose(_ notification: Notification) {
         guard let window = notification.object as? NSWindow,
               let identifier = window.identifier?.rawValue,
@@ -458,3 +524,66 @@ private class WindowDelegate: NSObject, NSWindowDelegate {
         LoggerService.shared.debug("Window became key: \(window.title ?? "Unknown")")
     }
 }
+
+// MARK: - Premium Interactive Click & Hover Styles
+
+/// 交互式按键样式 - 包含轻微按下缩放与弹簧反馈
+struct PremiumButtonStyle: ButtonStyle {
+    let scaleOnPress: CGFloat
+    let animation: Animation
+    
+    init(scaleOnPress: CGFloat = 0.94, animation: Animation = .spring(response: 0.22, dampingFraction: 0.55, blendDuration: 0)) {
+        self.scaleOnPress = scaleOnPress
+        self.animation = animation
+    }
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scaleOnPress : 1.0)
+            .animation(animation, value: configuration.isPressed)
+    }
+}
+
+/// 交互式悬停修饰符
+struct PremiumHoverModifier: ViewModifier {
+    @State private var isHovered = false
+    
+    let scaleOnHover: CGFloat
+    let hoverGlow: Bool
+    
+    init(scaleOnHover: CGFloat = 1.03, hoverGlow: Bool = true) {
+        self.scaleOnHover = scaleOnHover
+        self.hoverGlow = hoverGlow
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isHovered ? scaleOnHover : 1.0)
+            .shadow(color: hoverGlow && isHovered ? Color.primary.opacity(0.08) : Color.clear, radius: 8, x: 0, y: 4)
+            .brightness(isHovered ? 0.02 : 0.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isHovered)
+            .onHover { hovering in
+                self.isHovered = hovering
+            }
+    }
+}
+
+extension View {
+    /// 添加高端质感的交互式悬浮微动效果（缩放、亮度和阴影）
+    func premiumHover(scale: CGFloat = 1.03, glow: Bool = true) -> some View {
+        self.modifier(PremiumHoverModifier(scaleOnHover: scale, hoverGlow: glow))
+    }
+}
+
+extension ButtonStyle where Self == PremiumButtonStyle {
+    /// 具有轻微弹动反馈的 Premium 按钮样式
+    static var premium: PremiumButtonStyle {
+        PremiumButtonStyle()
+    }
+    
+    /// 自定义缩放比例的 Premium 按钮样式
+    static func premium(scale: CGFloat) -> PremiumButtonStyle {
+        PremiumButtonStyle(scaleOnPress: scale)
+    }
+}
+

@@ -30,7 +30,7 @@ struct MainView: View {
                                     countdownText: viewModel.countdownText,
                                     onCopy: { message in
                                         copyToClipboard(message)
-                                        toastMessage = "已复制到剪贴板"
+                                        toastMessage = "已复制整块文字信息"
                                         withAnimation { showToast = true }
                                     },
                                     layout: layout
@@ -76,12 +76,12 @@ struct MainView: View {
         .background(
             ZStack {
                 // 主背景
-                viewModel.selectedThemeColor.backgroundColor
+                viewModel.resolvedTheme.backgroundColor
                 
                 // 顶部渐变光晕
                 EllipticalGradient(
                     stops: [
-                        .init(color: viewModel.selectedThemeColor.accentColor.opacity(0.08), location: 0.0),
+                        .init(color: viewModel.resolvedTheme.accentColor.opacity(0.08), location: 0.0),
                         .init(color: .clear, location: 0.5)
                     ],
                     center: .top,
@@ -97,7 +97,7 @@ struct MainView: View {
             // 【核心修复：解决不更新 Bug】绑定 viewModel 响应式宿主，打破闭包捕获死锁，实现数据完全实时更新 [1]
             LearnedPreferencesSheet(viewModel: viewModel)
         }
-        .preferredColorScheme(viewModel.selectedThemeColor.isDarkTheme ? .dark : .light)
+        .preferredColorScheme(viewModel.resolvedTheme.isDarkTheme ? .dark : .light)
     }
 }
 
@@ -138,6 +138,32 @@ struct DaysDisplayCard: View {
     private var currentYear: Int {
         Int(info.calculation.totalDays / 365.25) + 1
     }
+
+    private func getFormattedCopyText() -> String {
+        let petAge = PetAgeCalculator.calculate(
+            from: info.anniversary.startDate,
+            emoji: info.anniversary.displayAvatar
+        )
+        let genderStr = info.anniversary.petGender.map { " \($0.emoji)" } ?? ""
+        
+        var text = ""
+        text += "🌟 【\(titleText)】 观测手记 🌟\n"
+        text += "------------------------------\n"
+        text += "🧸 阶段定位：联结发展 · 第 \(currentYear) 阶段\n"
+        text += "📈 累计相伴：\(String(format: "%.3f", info.calculation.totalDays)) 天\n"
+        text += "⏳ 精准历时：\(countdownText)\n"
+        text += "🧬 生物年龄：\(petAge.displayText) (\(petAge.humanAgeDecimalText))\(genderStr)\n"
+        
+        if !info.milestones.isEmpty {
+            text += "\n📅 心智共鸣里程碑规划：\n"
+            for milestone in info.milestones {
+                text += "\(milestone.icon) \(milestone.label)：\(milestone.formattedDate) (\(milestone.countDisplay))\n"
+            }
+        }
+        text += "------------------------------\n"
+        text += "© YumikoToys · 心智稳态系统"
+        return text
+    }
     
     var body: some View {
         VStack(spacing: 20) {
@@ -150,7 +176,7 @@ struct DaysDisplayCard: View {
                     .font(.system(size: 18 * fontSizeScale, weight: .semibold))
                     .foregroundStyle(.primary)
                     .onTapGesture {
-                        onCopy(titleText)
+                        onCopy(getFormattedCopyText())
                     }
                     .onHover { hovering in
                         hoveredElement = hovering ? .name : nil
@@ -218,7 +244,7 @@ struct DaysDisplayCard: View {
                         .foregroundStyle(daysGradient)
                         .scaleEffect(pulseAnimation ? 1.02 : 1.0)
                         .onTapGesture {
-                            onCopy(String(format: "%.3f", info.calculation.totalDays) + " 天")
+                            onCopy(getFormattedCopyText())
                         }
                         .onHover { hovering in
                             hoveredElement = hovering ? .days : nil
@@ -244,7 +270,7 @@ struct DaysDisplayCard: View {
                     .font(.system(size: 13 * fontSizeScale, weight: .medium, design: .monospaced))
                     .foregroundStyle(.tertiary)
                     .onTapGesture {
-                        onCopy(countdownText)
+                        onCopy(getFormattedCopyText())
                     }
                     .onHover { hovering in
                         hoveredElement = hovering ? .countdown : nil
@@ -522,6 +548,10 @@ final class MainViewModel: ObservableObject {
     
     @Published var selectedThemeColor: ThemeColor = .dark
     @Published var customThemeColorHex: String = "FF6B9D"
+    
+    var resolvedTheme: ResolvedTheme {
+        ResolvedTheme(color: selectedThemeColor, customHex: customThemeColorHex)
+    }
     @Published var componentLayouts: [ComponentLayout] = []
     
     // 订阅并存储动态心理学画像，提供实时更新和渲染支持
@@ -561,8 +591,8 @@ final class MainViewModel: ObservableObject {
                 self?.currentMode = settings.currentMode
                 self?.selectedIconStyle = settings.selectedIconStyle
                 self?.isBackgroundLearningEnabled = settings.isBackgroundLearningEnabled
-                self?.selectedThemeColor = settings.selectedThemeColor
-                self?.customThemeColorHex = settings.customThemeColorHex
+                self?.selectedThemeColor = settings.mainWindowThemeColor
+                self?.customThemeColorHex = settings.customMainWindowThemeColorHex
             }
             .store(in: &cancellables)
 
@@ -575,8 +605,8 @@ final class MainViewModel: ObservableObject {
             .store(in: &cancellables)
             
         componentLayouts = container.componentLayoutService.loadLayouts()
-        selectedThemeColor = container.settingsService.settings.selectedThemeColor
-        customThemeColorHex = container.settingsService.settings.customThemeColorHex
+        selectedThemeColor = container.settingsService.settings.mainWindowThemeColor
+        customThemeColorHex = container.settingsService.settings.customMainWindowThemeColorHex
 
         // 订阅后台学习服务状态变化，实时更新学习统计
         if let learningService = container.backgroundLearningService {
@@ -789,7 +819,8 @@ struct BackgroundLearningLogCard: View {
                                 .fill((cardAccentColors.first ?? Color(hex: "5856D6")).opacity(0.1))
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.premium)
+                    .premiumHover()
                     .disabled(isLearningNow)
                     .help("触发即时认知语料分析机制")
 
@@ -803,7 +834,8 @@ struct BackgroundLearningLogCard: View {
                                     .fill(Color.primary.opacity(0.06))
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.premium)
+                    .premiumHover(scale: 1.1)
                     .help("打开设置")
                 }
             }
@@ -2043,7 +2075,7 @@ private struct CuteTabButton: View {
             )
             .scaleEffect(isHovered ? 1.02 : 1.0)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.premium)
         .onHover { isHovered = $0 }
     }
 }

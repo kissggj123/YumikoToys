@@ -96,15 +96,16 @@ final class StatusBarManager: NSObject {
         }
         
         let popover = NSPopover()
-        // 初始宽度设为 280，高度交由 AdaptiveHostingController 运行时根据 SwiftUI 内容动态自适应
-        popover.contentSize = NSSize(width: 280, height: 100)
+        // 初始宽度设为 340，高度交由 AdaptiveHostingController 运行时根据 SwiftUI 内容动态自适应
+        popover.contentSize = NSSize(width: 340, height: 100)
         popover.behavior = .transient
         popover.animates = true
         popover.delegate = self
         
         // 【修复】根据当前主题色设置 popover 外观
-        let themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
-        popover.appearance = themeColor.isDarkTheme ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.selectedThemeColor
+        popover.appearance = themeColor.isDarkTheme(customHex: settings.customThemeColorHex) ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
         
         let contentView = StatusBarView(
             onShowMainWindow: { [weak self] in
@@ -301,9 +302,13 @@ final class StatusBarManager: NSObject {
                 
                 // 动态同步更新 popover 外观与窗口背景色（确保小箭头颜色同步跟随主题）
                 let themeColor = settings.selectedThemeColor
-                self.popover?.appearance = themeColor.isDarkTheme ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+                self.popover?.appearance = themeColor.isDarkTheme(customHex: settings.customThemeColorHex) ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
                 if let window = self.popover?.contentViewController?.view.window {
-                    window.backgroundColor = themeColor.nsBackgroundColor
+                    let nsBg = themeColor.nsBackgroundColor(customHex: settings.customThemeColorHex)
+                    window.backgroundColor = nsBg
+                    if let frameView = window.contentView?.superview {
+                        colorizePopoverBackground(in: frameView, color: nsBg)
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -435,6 +440,32 @@ final class StatusBarManager: NSObject {
 /// 专门解决 AppKit 弹出框内部 SwiftUI 布局动态伸缩的 Hosting 封装控制器
 final class AdaptiveHostingController<Content: View>: NSHostingController<Content> {
     weak var popover: NSPopover?
+    private var cancellables = Set<AnyCancellable>()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupSettingsObserver()
+    }
+    
+    private func setupSettingsObserver() {
+        DependencyContainer.shared.settingsService.settingsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePopoverColors()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func updatePopoverColors() {
+        guard let window = self.view.window else { return }
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.selectedThemeColor
+        let nsBg = themeColor.nsBackgroundColor(customHex: settings.customThemeColorHex)
+        window.backgroundColor = nsBg
+        if let frameView = window.contentView?.superview {
+            colorizePopoverBackground(in: frameView, color: nsBg)
+        }
+    }
     
     override func viewDidLayout() {
         super.viewDidLayout()
@@ -442,15 +473,30 @@ final class AdaptiveHostingController<Content: View>: NSHostingController<Conten
         let idealSize = self.view.fittingSize
         if idealSize.width > 0 && idealSize.height > 0 {
             if popover?.contentSize.height != idealSize.height {
-                popover?.contentSize = idealSize
+                DispatchQueue.main.async { [weak self] in
+                    self?.popover?.contentSize = idealSize
+                }
             }
         }
         
-        // 动态设置 popover 窗口背景色以使得顶部小箭头和边框契合主题
-        if let window = self.view.window {
-            let themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
-            window.backgroundColor = themeColor.nsBackgroundColor
-        }
+        updatePopoverColors()
+    }
+}
+
+// 遍历并设置 window 的背景视图以让 window.backgroundColor 能够透出并契合主题（包含小箭头）
+fileprivate func colorizePopoverBackground(in view: NSView, color: NSColor) {
+    let className = String(describing: type(of: view))
+    if let effectView = view as? NSVisualEffectView {
+        effectView.wantsLayer = true
+        effectView.layer?.backgroundColor = color.cgColor
+        effectView.alphaValue = 1.0
+        effectView.state = .inactive
+    } else if className.contains("Popover") {
+        view.wantsLayer = true
+        view.layer?.backgroundColor = color.cgColor
+    }
+    for subview in view.subviews {
+        colorizePopoverBackground(in: subview, color: color)
     }
 }
 

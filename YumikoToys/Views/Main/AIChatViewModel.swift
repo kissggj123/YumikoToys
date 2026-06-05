@@ -70,6 +70,11 @@ final class AIChatViewModel: ObservableObject {
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
     @Published var themeColor: ThemeColor = .dark
+    @Published var customThemeColorHex: String = "FF6B9D"
+    
+    var resolvedTheme: ResolvedTheme {
+        ResolvedTheme(color: themeColor, customHex: customThemeColorHex)
+    }
     private var cancellables = Set<AnyCancellable>()
 
     private lazy var embeddingService: LocalEmbeddingService = {
@@ -88,14 +93,17 @@ final class AIChatViewModel: ObservableObject {
     }()
 
     init() {
-        themeColor = container.settingsService.settings.selectedThemeColor
+        let appSettings = container.settingsService.settings
+        themeColor = appSettings.mainWindowThemeColor
+        customThemeColorHex = appSettings.customMainWindowThemeColorHex
         loadUserAvatar()
         loadAPIConfiguration()
         
         container.settingsService.settingsPublisher
             .receive(on: RunLoop.main)
             .sink { [weak self] settings in
-                self?.themeColor = settings.selectedThemeColor
+                self?.themeColor = settings.mainWindowThemeColor
+                self?.customThemeColorHex = settings.customMainWindowThemeColorHex
             }
             .store(in: &cancellables)
     }

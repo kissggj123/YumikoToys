@@ -149,6 +149,7 @@
 		FC6553202FC373980093B726 /* AgentFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552422FC373980093B726 /* AgentFileService.swift */; };
 		FC6553212FC373980093B726 /* AgentStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526C2FC373980093B726 /* AgentStepView.swift */; };
 		FC6553222FC373980093B726 /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552142FC373980093B726 /* FontManager.swift */; };
+		FC6553B12FD000010093B726 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553B02FD000010093B726 /* Theme.swift */; };
 		FC6553FF0000000000000001 /* FullDiskAccessHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */; };
 		FCA5AF182FC0992D00E668DB /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = FCA5AF172FC0992D00E668DB /* CoreXLSX */; };
 		FCB283B32E43D77A00FA3D4A /* MediaKeyTap in Frameworks */ = {isa = PBXBuildFile; productRef = FCB283B22E43D77A00FA3D4A /* MediaKeyTap */; };
@@ -332,6 +333,7 @@
 		FC6552A12FC373980093B726 /* SplashLocalFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashLocalFix.md; sourceTree = "<group>"; };
 		FC6552A22FC373980093B726 /* YumikoToysApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumikoToysApp.swift; sourceTree = "<group>"; };
 		FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessHelper.swift; sourceTree = "<group>"; };
+		FC6553B02FD000010093B726 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		FCF267382E114015007230B1 /* YumikoCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YumikoCLI; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -519,6 +521,7 @@
 				FC65522D2FC373980093B726 /* Anniversary.swift */,
 				FC65522E2FC373980093B726 /* APISettings.swift */,
 				FC65522F2FC373980093B726 /* AppSettings.swift */,
+				FC6553B02FD000010093B726 /* Theme.swift */,
 				FC6552302FC373980093B726 /* AssistantConfig.swift */,
 				FC6552312FC373980093B726 /* ChatMode.swift */,
 				FC6552322FC373980093B726 /* ComponentLayout.swift */,
@@ -961,6 +964,7 @@
 				FC6552BB2FC373980093B726 /* ModelCompatibilityManager.swift in Sources */,
 				FC6552BC2FC373980093B726 /* ButtonAnimations.swift in Sources */,
 				FC6552BD2FC373980093B726 /* AppSettings.swift in Sources */,
+				FC6553B12FD000010093B726 /* Theme.swift in Sources */,
 				FC6552BE2FC373980093B726 /* PromptTemplatePicker.swift in Sources */,
 				FC6552BF2FC373980093B726 /* MLXModelLoader.swift in Sources */,
 				FC6552C02FC373980093B726 /* UserAvatarSettings.swift in Sources */,
@@ -1216,7 +1220,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 195373231;
+				CURRENT_PROJECT_VERSION = 19591336;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_APP_SANDBOX = NO;
@@ -1227,7 +1231,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 4.3.3;
+				MARKETING_VERSION = 4.3.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1249,7 +1253,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 195373231;
+				CURRENT_PROJECT_VERSION = 19591336;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1259,7 +1263,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 4.3.3;
+				MARKETING_VERSION = 4.3.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

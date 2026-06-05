@@ -27,13 +27,102 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     // MARK: - Lifecycle
     
+    nonisolated func applicationWillFinishLaunching(_ notification: Notification) {
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(0x4755524c), // 'GURL'
+            andEventID: AEEventID(0x6775726c)        // 'gurl'
+        )
+    }
+    
+    nonisolated func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            Task { @MainActor in
+                handleIncomingURL(url)
+            }
+        }
+    }
+    
     nonisolated func applicationDidFinishLaunching(_ notification: Notification) {
         Task { @MainActor in
             await initializeApp()
             
-            // 如果不是系统开机自启动，则显示主界面
-            if !launchedAsLogInItem {
-                showMainWindow()
+            let settings = DependencyContainer.shared.settingsService.settings
+            let isAutoLaunch = launchedAsLogInItem
+            
+            if isAutoLaunch {
+                if settings.showMainWindowOnAutoLaunch {
+                    showMainWindow()
+                }
+            } else {
+                if settings.showMainWindowOnManualLaunch {
+                    showMainWindow()
+                }
+            }
+        }
+    }
+    
+    @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
+        guard let urlString = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
+              let url = URL(string: urlString) else {
+            return
+        }
+        handleIncomingURL(url)
+    }
+    
+    private func handleIncomingURL(_ url: URL) {
+        guard url.scheme == "yumikotoys" else { return }
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return }
+        
+        let action = components.queryItems?.first(where: { $0.name == "action" })?.value
+        let output = components.queryItems?.first(where: { $0.name == "output" })?.value
+        
+        if action == "list" {
+            let skills = SkillService.shared.getAllSkills()
+            var listText = ""
+            for skill in skills {
+                listText += "\(skill.name) - \(skill.description)\n"
+            }
+            if let output = output {
+                do {
+                    try listText.write(toFile: output, atomically: true, encoding: .utf8)
+                    LoggerService.shared.info("Successfully wrote list output to \(output)")
+                } catch {
+                    LoggerService.shared.error("Failed to write list output to \(output): \(error)")
+                }
+            }
+        } else if action == "run" {
+            let name = components.queryItems?.first(where: { $0.name == "name" })?.value
+            let argsStr = components.queryItems?.first(where: { $0.name == "args" })?.value ?? "{}"
+            
+            guard let name = name else {
+                if let output = output {
+                    do {
+                        try "Error: Missing skill name".write(toFile: output, atomically: true, encoding: .utf8)
+                    } catch {
+                        LoggerService.shared.error("Failed to write missing skill name error to \(output): \(error)")
+                    }
+                }
+                return
+            }
+            
+            Task {
+                var arguments: [String: Any] = [:]
+                if let data = argsStr.data(using: .utf8),
+                   let dict = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    arguments = dict
+                }
+                
+                let result = await SkillService.shared.executeSkill(name: name, arguments: arguments)
+                if let output = output {
+                    do {
+                        try result.write(toFile: output, atomically: true, encoding: .utf8)
+                        LoggerService.shared.info("Successfully wrote run result to \(output)")
+                    } catch {
+                        LoggerService.shared.error("Failed to write run result to \(output): \(error)")
+                    }
+                }
             }
         }
     }

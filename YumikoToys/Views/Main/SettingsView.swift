@@ -12,6 +12,7 @@ struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
     @State private var expandedComponentId: String? = nil
     @State private var customHexInput: String = ""
+    @State private var customMainHexInput: String = ""
 
     var body: some View {
         ScrollView {
@@ -25,7 +26,8 @@ struct SettingsView: View {
                     iconStyleSection
                     statusBarIconStyleSection
                     fontSection
-                    themeColorSection
+                    statusBarThemeColorSection
+                    mainWindowThemeColorSection
                     godModeSection
                     layoutSection
                     preventSleepSection
@@ -48,7 +50,7 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(settingsBackground)
-        .preferredColorScheme(viewModel.selectedThemeColor.isDarkTheme ? .dark : .light)
+        .preferredColorScheme(viewModel.mainWindowThemeColor.isDarkTheme ? .dark : .light)
         
         // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
         //  【新增】密码输入弹窗 - 用于重新授权或首次写入钥匙串
@@ -104,105 +106,260 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                 }
                 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        // 技能名称
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("技能标识名称 (大模型调用名，必须为英文下划线格式)")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                            TextField("例如: open_safari_url", text: $viewModel.editingSkillName)
-                                .textFieldStyle(.roundedBorder)
-                                .font(.system(size: 12, design: .monospaced))
-                                .disabled(viewModel.selectedSkillToEdit != nil)
+                // 步骤指示器
+                HStack(spacing: 8) {
+                    ForEach(1...4, id: \.self) { step in
+                        VStack(spacing: 4) {
+                            Text("\(step)")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundStyle(viewModel.currentEditorStep == step ? .white : .secondary)
+                                .frame(width: 20, height: 20)
+                                .background(
+                                    Circle()
+                                        .fill(viewModel.currentEditorStep == step ? Color(hex: "FF9500") : Color.primary.opacity(0.06))
+                                )
+                            
+                            Text(stepTitle(for: step))
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundStyle(viewModel.currentEditorStep == step ? .primary : .secondary)
                         }
+                        .frame(maxWidth: .infinity)
                         
-                        // 描述
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("技能用途描述 (大模型根据此描述判断何时调用该技能)")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                            TextField("例如: 用于打开指定网页链接", text: $viewModel.editingSkillDescription)
-                                .textFieldStyle(.roundedBorder)
+                        if step < 4 {
+                            Rectangle()
+                                .fill(viewModel.currentEditorStep > step ? Color(hex: "FF9500") : Color.primary.opacity(0.08))
+                                .frame(height: 2)
+                                .frame(maxWidth: 30)
+                                .padding(.bottom, 14)
                         }
-                        
-                        // 脚本类型
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("执行脚本类型")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                            Picker("", selection: $viewModel.editingSkillScriptType) {
-                                Text("Shell 脚本").tag("shell")
-                                Text("AppleScript").tag("applescript")
-                            }
-                            .pickerStyle(.segmented)
-                        }
-                        
-                        // 参数 Schema
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("参数 JSON Schema 定义")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                            TextEditor(text: $viewModel.editingSkillParametersJSON)
-                                .font(.system(size: 11, design: .monospaced))
-                                .frame(height: 100)
-                                .scrollContentBackground(.hidden)
-                                .padding(6)
-                                .background(Color.primary.opacity(0.03))
-                                .cornerRadius(6)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.1), lineWidth: 1))
-                        }
-                        
-                        // 脚本内容
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("脚本源码内容 (使用 {{paramName}} 引用上述参数)")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                            TextEditor(text: $viewModel.editingSkillScriptContent)
-                                .font(.system(size: 11, design: .monospaced))
-                                .frame(height: 120)
-                                .scrollContentBackground(.hidden)
-                                .padding(6)
-                                .background(Color.primary.opacity(0.03))
-                                .cornerRadius(6)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.1), lineWidth: 1))
-                        }
-                        
-                        // 测试输出
-                        if !viewModel.testOutput.isEmpty {
+                    }
+                }
+                .padding(.vertical, 8)
+                .background(Color.primary.opacity(0.02))
+                .cornerRadius(8)
+                
+                // 步骤主内容
+                VStack {
+                    if viewModel.currentEditorStep == 1 {
+                        VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("运行测试结果反馈")
+                                Text("技能标识名称 (大模型调用名，必须为英文下划线格式)")
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(.secondary)
+                                TextField("例如: open_safari_url", text: $viewModel.editingSkillName)
+                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .disabled(viewModel.selectedSkillToEdit != nil)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("技能用途描述 (大模型根据此描述判断何时调用该技能)")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                TextField("例如: 用于打开指定网页链接", text: $viewModel.editingSkillDescription)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("执行脚本类型")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                Picker("", selection: $viewModel.editingSkillScriptType) {
+                                    Text("Shell 脚本").tag("shell")
+                                    Text("AppleScript").tag("applescript")
+                                }
+                                .pickerStyle(.segmented)
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding(.top, 8)
+                    }
+                    else if viewModel.currentEditorStep == 2 {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("可视化参数定义")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Button(action: {
+                                    viewModel.editingSkillParameters.append(
+                                        SettingsViewModel.SkillParameter(name: "new_param", type: "string", description: "描述", isRequired: true)
+                                    )
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "plus")
+                                        Text("添加参数")
+                                    }
+                                    .font(.system(size: 11, weight: .semibold))
+                                }
+                            }
+                            
+                            ScrollView {
+                                VStack(spacing: 10) {
+                                    if viewModel.editingSkillParameters.isEmpty {
+                                        Text("暂无自定义参数，点击右上方添加。")
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(.tertiary)
+                                            .padding(.vertical, 20)
+                                    } else {
+                                        ForEach($viewModel.editingSkillParameters) { $param in
+                                            HStack(spacing: 8) {
+                                                TextField("参数名", text: $param.name)
+                                                    .textFieldStyle(.roundedBorder)
+                                                    .font(.system(size: 11, design: .monospaced))
+                                                    .frame(width: 100)
+                                                
+                                                Picker("", selection: $param.type) {
+                                                    Text("文本").tag("string")
+                                                    Text("数字").tag("number")
+                                                    Text("布尔").tag("boolean")
+                                                }
+                                                .pickerStyle(.menu)
+                                                .frame(width: 70)
+                                                
+                                                TextField("描述", text: $param.description)
+                                                    .textFieldStyle(.roundedBorder)
+                                                    .font(.system(size: 11))
+                                                
+                                                Toggle("必填", isOn: $param.isRequired)
+                                                    .toggleStyle(.checkbox)
+                                                    .font(.system(size: 11))
+                                                
+                                                Button(action: {
+                                                    viewModel.editingSkillParameters.removeAll(where: { $0.id == param.id })
+                                                }) {
+                                                    Image(systemName: "trash")
+                                                        .foregroundStyle(.red)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                            .padding(6)
+                                            .background(Color.primary.opacity(0.02))
+                                            .cornerRadius(6)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            // 自动生成的 JSON Schema 预览
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("自动生成的 JSON Schema")
+                                    .font(.system(size: 9, weight: .semibold))
+                                    .foregroundStyle(.tertiary)
                                 ScrollView {
-                                    Text(viewModel.testOutput)
+                                    Text(viewModel.generateJSONSchema())
+                                        .font(.system(size: 9, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .frame(height: 60)
+                                .padding(4)
+                                .background(Color.primary.opacity(0.03))
+                                .cornerRadius(6)
+                            }
+                        }
+                        .padding(.top, 8)
+                    }
+                    else if viewModel.currentEditorStep == 3 {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("编写执行脚本 (使用双大括号 {{参数名}} 引用参数值)")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            
+                            HStack {
+                                Text("可用参数:")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(.secondary)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 6) {
+                                        ForEach(viewModel.editingSkillParameters) { param in
+                                            Text("{{\(param.name)}}")
+                                                .font(.system(size: 10, design: .monospaced))
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(Color.primary.opacity(0.08))
+                                                .cornerRadius(4)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            TextEditor(text: $viewModel.editingSkillScriptContent)
+                                .font(.system(size: 11, design: .monospaced))
+                                .frame(minHeight: 200, maxHeight: .infinity)
+                                .scrollContentBackground(.hidden)
+                                .padding(6)
+                                .background(Color.primary.opacity(0.03))
+                                .cornerRadius(6)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.1), lineWidth: 1))
+                            
+                            Spacer()
+                        }
+                        .padding(.top, 8)
+                    }
+                    else if viewModel.currentEditorStep == 4 {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("沙盒运行测试验证")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            
+                            Text("系统将使用模拟 Mock 参数值来实际调用该脚本以校验正确性。")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                            
+                            Button(action: {
+                                viewModel.testSkill()
+                            }) {
+                                HStack {
+                                    if viewModel.isTestingSkill {
+                                        ProgressView().scaleEffect(0.5)
+                                    } else {
+                                        Image(systemName: "play.fill")
+                                    }
+                                    Text("运行测试 (使用 Mock 数据)")
+                                }
+                            }
+                            .disabled(viewModel.isTestingSkill || viewModel.editingSkillName.isEmpty)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("运行反馈输出:")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                
+                                ScrollView {
+                                    Text(viewModel.testOutput.isEmpty ? "点击上方按钮运行测试，控制台输出将在此实时显示" : viewModel.testOutput)
                                         .font(.system(size: 11, design: .monospaced))
                                         .foregroundStyle(viewModel.testOutput.contains("error") || viewModel.testOutput.contains("错误") ? .red : .primary)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .padding(8)
                                 }
-                                .frame(height: 80)
+                                .frame(minHeight: 120, maxHeight: .infinity)
                                 .background(Color.primary.opacity(0.05))
                                 .cornerRadius(6)
                             }
+                            
+                            Spacer()
                         }
+                        .padding(.top, 8)
                     }
                 }
+                .frame(maxHeight: .infinity)
                 
+                Divider()
+                
+                // 导航控制按钮
                 HStack {
-                    Button(action: {
-                        viewModel.testSkill()
-                    }) {
-                        HStack {
-                            if viewModel.isTestingSkill {
-                                ProgressView().scaleEffect(0.5)
-                            } else {
-                                Image(systemName: "play.fill")
+                    if viewModel.currentEditorStep > 1 {
+                        Button("上一步") {
+                            withAnimation {
+                                viewModel.currentEditorStep -= 1
                             }
-                            Text("运行测试 (使用 Mock 数据)")
                         }
                     }
-                    .disabled(viewModel.isTestingSkill || viewModel.editingSkillName.isEmpty)
                     
                     Spacer()
                     
@@ -211,24 +368,40 @@ struct SettingsView: View {
                     }
                     .keyboardShortcut(.escape, modifiers: [])
                     
-                    Button("保存技能") {
-                        viewModel.saveSkill()
+                    if viewModel.currentEditorStep < 4 {
+                        Button("下一步") {
+                            withAnimation {
+                                viewModel.currentEditorStep += 1
+                            }
+                        }
+                        .disabled(viewModel.editingSkillName.isEmpty)
+                    } else {
+                        Button("保存并发布技能") {
+                            viewModel.saveSkill()
+                        }
+                        .keyboardShortcut(.return, modifiers: [])
+                        .disabled(viewModel.editingSkillName.isEmpty)
                     }
-                    .keyboardShortcut(.return, modifiers: [])
-                    .disabled(viewModel.editingSkillName.isEmpty)
                 }
             }
             .padding()
-            .frame(width: 480, height: 600)
+            .frame(width: 500, height: 600)
         }
         .onAppear {
             viewModel.reloadSettings()
             viewModel.checkFullDiskAccess()
+            viewModel.checkCLIInstalled()
             customHexInput = "#" + viewModel.customThemeColorHex
+            customMainHexInput = "#" + viewModel.customMainWindowThemeColorHex
         }
         .onChange(of: viewModel.customThemeColorHex) { newValue in
             if customHexInput != "#" + newValue {
                 customHexInput = "#" + newValue
+            }
+        }
+        .onChange(of: viewModel.customMainWindowThemeColorHex) { newValue in
+            if customMainHexInput != "#" + newValue {
+                customMainHexInput = "#" + newValue
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
@@ -286,7 +459,26 @@ struct SettingsView: View {
                 iconColor: "007AFF",
                 title: "显示状态栏图标",
                 subtitle: "在菜单栏中显示兔可可",
-                isOn: $viewModel.showStatusBarIcon
+                isOn: $viewModel.showStatusBarIcon,
+                onToggle: { value in viewModel.updateShowStatusBarIcon(value) }
+            )
+
+            SettingsToggleRow(
+                icon: "sparkles.rectangle.stack",
+                iconColor: "007AFF",
+                title: "开机自启显示主界面",
+                subtitle: "在系统开机/登录自动启动时，是否打开主窗口",
+                isOn: $viewModel.showMainWindowOnAutoLaunch,
+                onToggle: { value in viewModel.updateShowMainWindowOnAutoLaunch(value) }
+            )
+
+            SettingsToggleRow(
+                icon: "hand.tap.fill",
+                iconColor: "007AFF",
+                title: "手动启动显示主界面",
+                subtitle: "在手动运行应用时，是否自动打开主窗口",
+                isOn: $viewModel.showMainWindowOnManualLaunch,
+                onToggle: { value in viewModel.updateShowMainWindowOnManualLaunch(value) }
             )
         }
     }
@@ -305,8 +497,8 @@ struct SettingsView: View {
         }
     }
     
-    private var themeColorSection: some View {
-        SettingsSection(title: "主页及状态栏主题色", icon: "paintpalette.fill", iconColor: "FF6B9D") {
+    private var statusBarThemeColorSection: some View {
+        SettingsSection(title: "状态栏主题色", icon: "paintpalette.fill", iconColor: "FF6B9D") {
             VStack(alignment: .leading, spacing: 12) {
                 // 主题选择
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 8) {
@@ -372,7 +564,7 @@ struct SettingsView: View {
                                 Color(hex: viewModel.customThemeColorHex)
                             },
                             set: { color in
-                                if let hex = color.toHex() {
+                                if let hex = color.toHex(), !Color.isHexClose(hex, viewModel.customThemeColorHex) {
                                     viewModel.updateCustomThemeColorHex(hex)
                                 }
                             }
@@ -385,6 +577,167 @@ struct SettingsView: View {
         }
     }
 
+    private var mainWindowThemeColorSection: some View {
+        SettingsSection(title: "主界面主题色", icon: "paintpalette", iconColor: "007AFF") {
+            VStack(alignment: .leading, spacing: 12) {
+                // 主题选择
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 8) {
+                    ForEach(ThemeColor.allCases) { theme in
+                        Button(action: {
+                            viewModel.selectMainWindowThemeColor(theme)
+                        }) {
+                            VStack(spacing: 6) {
+                                Image(systemName: theme.themeIcon)
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(viewModel.mainWindowThemeColor == theme ? .white : theme.accentColor)
+                                    .frame(width: 32, height: 32)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(viewModel.mainWindowThemeColor == theme ? theme.accentColor : Color.primary.opacity(0.06))
+                                    )
+                                
+                                Text(theme.displayName)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(viewModel.mainWindowThemeColor == theme ? .primary : .secondary)
+                            }
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(viewModel.mainWindowThemeColor == theme ? Color.primary.opacity(0.04) : Color.clear)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                
+                // 如果是自定义主题，显示 ColorPicker & HEX 输入框
+                if viewModel.mainWindowThemeColor == .custom {
+                    Divider()
+                        .background(Color.primary.opacity(0.08))
+                        .padding(.vertical, 4)
+                    
+                    HStack(spacing: 12) {
+                        Image(systemName: "eyedropper.halftone")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                        
+                        Text("自定义主题色")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary)
+                        
+                        Spacer()
+                        
+                        TextField("#HEX", text: $customMainHexInput)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(width: 90)
+                            .onSubmit {
+                                applyCustomMainHex()
+                            }
+                            .onChange(of: customMainHexInput) { newValue in
+                                applyCustomMainHex(newValue)
+                            }
+                        
+                        ColorPicker("", selection: Binding(
+                            get: {
+                                Color(hex: viewModel.customMainWindowThemeColorHex)
+                            },
+                            set: { color in
+                                if let hex = color.toHex(), !Color.isHexClose(hex, viewModel.customMainWindowThemeColorHex) {
+                                    viewModel.updateCustomMainWindowThemeColorHex(hex)
+                                }
+                            }
+                        ))
+                    }
+                    .padding(.horizontal, 4)
+                }
+                
+                // Color schemes management UI inside mainWindowThemeColorSection
+                Divider()
+                    .background(Color.primary.opacity(0.08))
+                    .padding(.vertical, 8)
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("配色方案备份与加载")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.primary)
+                    
+                    if !viewModel.savedColorSchemes.isEmpty {
+                        VStack(spacing: 8) {
+                            ForEach(viewModel.savedColorSchemes) { scheme in
+                                HStack(spacing: 8) {
+                                    HStack(spacing: 4) {
+                                        Circle().fill(Color(hex: scheme.statusBarHex)).frame(width: 8, height: 8)
+                                        Circle().fill(Color(hex: scheme.mainWindowHex)).frame(width: 8, height: 8)
+                                        Circle().fill(Color(hex: scheme.accentHex)).frame(width: 8, height: 8)
+                                    }
+                                    
+                                    Text(scheme.name)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(viewModel.activeColorSchemeName == scheme.name ? Color(hex: "007AFF") : .primary)
+                                    
+                                    Spacer()
+                                    
+                                    Button("加载") {
+                                        viewModel.loadColorScheme(name: scheme.name)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .foregroundStyle(Color(hex: "007AFF"))
+                                    .font(.system(size: 11, weight: .semibold))
+                                    
+                                    Button(action: {
+                                        viewModel.deleteColorScheme(name: scheme.name)
+                                    }) {
+                                        Image(systemName: "trash")
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(.red)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(8)
+                                .background(Color.primary.opacity(0.03))
+                                .cornerRadius(8)
+                            }
+                        }
+                        .padding(.bottom, 6)
+                    }
+                    
+                    HStack(spacing: 8) {
+                        TextField("方案名称 (如: 极光绿)", text: $viewModel.newSchemeName)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12))
+                        
+                        Button(action: {
+                            viewModel.saveCurrentAsColorScheme(name: viewModel.newSchemeName)
+                            viewModel.newSchemeName = ""
+                        }) {
+                            Text("保存当前配色为方案")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(viewModel.newSchemeName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : Color(hex: "007AFF"))
+                                .cornerRadius(6)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(viewModel.newSchemeName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+            }
+        }
+    }
+
+    private func stepTitle(for step: Int) -> String {
+        switch step {
+        case 1: return "基础信息"
+        case 2: return "参数定义"
+        case 3: return "脚本内容"
+        case 4: return "测试验证"
+        default: return ""
+        }
+    }
+
     private func applyCustomHex(_ val: String? = nil) {
         let input = val ?? customHexInput
         var hex = input.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -394,6 +747,18 @@ struct SettingsView: View {
         let pattern = "^[0-9a-fA-F]{6}$"
         if hex.range(of: pattern, options: .regularExpression) != nil {
             viewModel.updateCustomThemeColorHex(hex)
+        }
+    }
+
+    private func applyCustomMainHex(_ val: String? = nil) {
+        let input = val ?? customMainHexInput
+        var hex = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        if hex.hasPrefix("#") {
+            hex = String(hex.dropFirst())
+        }
+        let pattern = "^[0-9a-fA-F]{6}$"
+        if hex.range(of: pattern, options: .regularExpression) != nil {
+            viewModel.updateCustomMainWindowThemeColorHex(hex)
         }
     }
 
@@ -436,7 +801,7 @@ struct SettingsView: View {
                             ColorPicker("", selection: Binding(
                                 get: { Color(hex: viewModel.customBackgroundColorHex) },
                                 set: { color in
-                                    if let hex = color.toHex() {
+                                    if let hex = color.toHex(), !Color.isHexClose(hex, viewModel.customBackgroundColorHex) {
                                         viewModel.updateGodModeColors(bg: hex)
                                     }
                                 }
@@ -465,7 +830,7 @@ struct SettingsView: View {
                             ColorPicker("", selection: Binding(
                                 get: { Color(hex: viewModel.customCardBackgroundColorHex) },
                                 set: { color in
-                                    if let hex = color.toHex() {
+                                    if let hex = color.toHex(), !Color.isHexClose(hex, viewModel.customCardBackgroundColorHex) {
                                         viewModel.updateGodModeColors(card: hex)
                                     }
                                 }
@@ -494,7 +859,7 @@ struct SettingsView: View {
                             ColorPicker("", selection: Binding(
                                 get: { Color(hex: viewModel.customTextColorHex) },
                                 set: { color in
-                                    if let hex = color.toHex() {
+                                    if let hex = color.toHex(), !Color.isHexClose(hex, viewModel.customTextColorHex) {
                                         viewModel.updateGodModeColors(text: hex)
                                     }
                                 }
@@ -523,7 +888,7 @@ struct SettingsView: View {
                             ColorPicker("", selection: Binding(
                                 get: { Color(hex: viewModel.customAccentColorHex) },
                                 set: { color in
-                                    if let hex = color.toHex() {
+                                    if let hex = color.toHex(), !Color.isHexClose(hex, viewModel.customAccentColorHex) {
                                         viewModel.updateGodModeColors(accent: hex)
                                     }
                                 }
@@ -552,7 +917,7 @@ struct SettingsView: View {
                             ColorPicker("", selection: Binding(
                                 get: { Color(hex: viewModel.customBorderColorHex) },
                                 set: { color in
-                                    if let hex = color.toHex() {
+                                    if let hex = color.toHex(), !Color.isHexClose(hex, viewModel.customBorderColorHex) {
                                         viewModel.updateGodModeColors(border: hex)
                                     }
                                 }
@@ -581,7 +946,7 @@ struct SettingsView: View {
                             ColorPicker("", selection: Binding(
                                 get: { Color(hex: viewModel.customDividerColorHex) },
                                 set: { color in
-                                    if let hex = color.toHex() {
+                                    if let hex = color.toHex(), hex.lowercased() != viewModel.customDividerColorHex.lowercased() {
                                         viewModel.updateGodModeColors(divider: hex)
                                     }
                                 }
@@ -768,7 +1133,7 @@ struct SettingsView: View {
                                                 Color(hex: hexColor)
                                             },
                                             set: { color in
-                                                if let hex = color.toHex() {
+                                                if let hex = color.toHex(), !Color.isHexClose(hex, layout.customColorHex ?? "") {
                                                     var newLayout = layout
                                                     newLayout.customColorHex = hex
                                                     viewModel.updateComponentLayout(newLayout)
@@ -1274,6 +1639,57 @@ struct SettingsView: View {
                             .tint(Color(hex: "AF52DE"))
                         }
 
+                        // Empathy Level Slider
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("情感共鸣同理度 (Empathy): \(String(format: "%.2f", viewModel.psychologyEmpathyLevel))")
+                                    .font(.system(size: 12, weight: .medium))
+                                Spacer()
+                            }
+                            Slider(value: Binding(
+                                get: { viewModel.psychologyEmpathyLevel },
+                                set: { val in
+                                    viewModel.psychologyEmpathyLevel = val
+                                    viewModel.updatePsychologySettings()
+                                }
+                            ), in: 0.0...1.0, step: 0.05)
+                            .tint(Color(hex: "AF52DE"))
+                        }
+
+                        // Clinical Depth Slider
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("临床分析重构深度 (Clinical Depth): \(String(format: "%.2f", viewModel.psychologyClinicalDepth))")
+                                    .font(.system(size: 12, weight: .medium))
+                                Spacer()
+                            }
+                            Slider(value: Binding(
+                                get: { viewModel.psychologyClinicalDepth },
+                                set: { val in
+                                    viewModel.psychologyClinicalDepth = val
+                                    viewModel.updatePsychologySettings()
+                                }
+                            ), in: 0.0...1.0, step: 0.05)
+                            .tint(Color(hex: "AF52DE"))
+                        }
+
+                        // Reframing Intensity Slider
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("认知重塑干预强度 (Reframing): \(String(format: "%.2f", viewModel.psychologyReframingIntensity))")
+                                    .font(.system(size: 12, weight: .medium))
+                                Spacer()
+                            }
+                            Slider(value: Binding(
+                                get: { viewModel.psychologyReframingIntensity },
+                                set: { val in
+                                    viewModel.psychologyReframingIntensity = val
+                                    viewModel.updatePsychologySettings()
+                                }
+                            ), in: 0.0...1.0, step: 0.05)
+                            .tint(Color(hex: "AF52DE"))
+                        }
+
                         // 学术理论支持说明卡片
                         VStack(alignment: .leading, spacing: 8) {
                             Text("【专业心理陪伴学术支持说明】")
@@ -1396,6 +1812,76 @@ struct SettingsView: View {
                             .stroke(Color.primary.opacity(0.1), lineWidth: 1)
                     )
                 }
+
+                Divider().background(Color.primary.opacity(0.08))
+
+                // Anti-Algorithm Intensity Slider
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("反算法驯化与推荐挑战度 (Anti-Algorithm): \(String(format: "%.2f", viewModel.proHumanAntiAlgorithmIntensity))")
+                            .font(.system(size: 12, weight: .medium))
+                        Spacer()
+                    }
+                    Slider(value: Binding(
+                        get: { viewModel.proHumanAntiAlgorithmIntensity },
+                        set: { val in
+                            viewModel.proHumanAntiAlgorithmIntensity = val
+                            viewModel.updateProHumanSettings()
+                        }
+                    ), in: 0.0...1.0, step: 0.05)
+                    .tint(Color(hex: "34C759"))
+                }
+
+                // Self-Reflection Interval Slider
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("自我内省与冥想日志引导频率 (Self-Reflection): \(String(format: "%.2f", viewModel.proHumanSelfReflectionInterval))")
+                            .font(.system(size: 12, weight: .medium))
+                        Spacer()
+                    }
+                    Slider(value: Binding(
+                        get: { viewModel.proHumanSelfReflectionInterval },
+                        set: { val in
+                            viewModel.proHumanSelfReflectionInterval = val
+                            viewModel.updateProHumanSettings()
+                        }
+                    ), in: 0.0...1.0, step: 0.05)
+                    .tint(Color(hex: "34C759"))
+                }
+
+                // Screen Time Therapy Slider
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("身心断联与排毒干预强度 (Digital Detox): \(String(format: "%.2f", viewModel.proHumanScreenTimeTherapy))")
+                            .font(.system(size: 12, weight: .medium))
+                        Spacer()
+                    }
+                    Slider(value: Binding(
+                        get: { viewModel.proHumanScreenTimeTherapy },
+                        set: { val in
+                            viewModel.proHumanScreenTimeTherapy = val
+                            viewModel.updateProHumanSettings()
+                        }
+                    ), in: 0.0...1.0, step: 0.05)
+                    .tint(Color(hex: "34C759"))
+                }
+
+                // Cognitive Resistance Slider
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("高阻力深度阅读与思考强化 (Cognitive Resistance): \(String(format: "%.2f", viewModel.proHumanCognitiveResistance))")
+                            .font(.system(size: 12, weight: .medium))
+                        Spacer()
+                    }
+                    Slider(value: Binding(
+                        get: { viewModel.proHumanCognitiveResistance },
+                        set: { val in
+                            viewModel.proHumanCognitiveResistance = val
+                            viewModel.updateProHumanSettings()
+                        }
+                    ), in: 0.0...1.0, step: 0.05)
+                    .tint(Color(hex: "34C759"))
+                }
             }
         }
     }
@@ -1453,7 +1939,8 @@ struct SettingsView: View {
                                         .font(.system(size: 11, weight: .semibold))
                                         .foregroundStyle(Color(hex: "007AFF"))
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.premium)
+                                .premiumHover()
                                 
                                 Button(action: {
                                     viewModel.deleteSkill(name: skill.name)
@@ -1462,7 +1949,8 @@ struct SettingsView: View {
                                         .font(.system(size: 11, weight: .semibold))
                                         .foregroundStyle(.red)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.premium)
+                                .premiumHover()
                             }
                         }
                         .padding(10)
@@ -1485,8 +1973,56 @@ struct SettingsView: View {
                     .background(Color(hex: "FF9500"))
                     .cornerRadius(10)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.premium)
+                .premiumHover()
                 .padding(.top, 4)
+                
+                Divider()
+                    .background(Color.primary.opacity(0.08))
+                    .padding(.vertical, 8)
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("CLI 命令行工具")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.primary)
+                    
+                    Text("安装 ytskill 命令行工具后，您可以在终端中运行技能脚本或控制大模型。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    
+                    HStack {
+                        Button(action: {
+                            viewModel.installCLITool()
+                        }) {
+                            HStack {
+                                if viewModel.isInstallingCLI {
+                                    ProgressView().scaleEffect(0.5)
+                                        .frame(height: 10)
+                                } else {
+                                    Image(systemName: viewModel.isCLIInstalled ? "arrow.clockwise.circle.fill" : "terminal.fill")
+                                }
+                                Text(viewModel.isCLIInstalled ? "重新安装 CLI 工具" : "安装 CLI 命令行工具")
+                            }
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(viewModel.isCLIInstalled ? Color(hex: "5856D6") : Color(hex: "007AFF"))
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(.premium)
+                        .premiumHover()
+                        .disabled(viewModel.isInstallingCLI)
+                        
+                        if !viewModel.cliInstallStatus.isEmpty {
+                            Text(viewModel.cliInstallStatus)
+                                .font(.system(size: 11))
+                                .foregroundStyle(viewModel.cliInstallStatus.contains("失败") ? .red : .green)
+                        }
+                    }
+                    
+                    CommandLineInstructionView()
+                }
             }
         }
     }
@@ -1960,6 +2496,10 @@ final class SettingsViewModel: ObservableObject {
     @Published var enableBackgroundLearning: Bool = true
     @Published var selectedThemeColor: ThemeColor = .dark
     @Published var customThemeColorHex: String = "FF6B9D"
+    @Published var mainWindowThemeColor: ThemeColor = .dark
+    @Published var customMainWindowThemeColorHex: String = "FF6B9D"
+    @Published var showMainWindowOnAutoLaunch: Bool = false
+    @Published var showMainWindowOnManualLaunch: Bool = true
 
     // 👈【核心新增】：上帝模式 (God Mode) 配色及圆角发布参数
     @Published var godModeEnabled = false
@@ -2015,11 +2555,18 @@ final class SettingsViewModel: ObservableObject {
     @Published var psychologyFrequencyPenalty: Double = 0.0
     @Published var selectedPsychologyTheory: PsychologyTheory = .cbt
     @Published var selectedPsychologyPersona: PsychologyPersona = .counselor
+    @Published var psychologyEmpathyLevel: Double = 0.8
+    @Published var psychologyClinicalDepth: Double = 0.6
+    @Published var psychologyReframingIntensity: Double = 0.5
 
     // Pro Human 自定义调整项
     @Published var proHumanMissionFocus: ProHumanMissionFocus = .balanced
     @Published var proHumanInteractionStyle: ProHumanInteractionStyle = .warm
     @Published var proHumanCustomTriangleText: String = ""
+    @Published var proHumanAntiAlgorithmIntensity: Double = 0.7
+    @Published var proHumanSelfReflectionInterval: Double = 0.5
+    @Published var proHumanScreenTimeTherapy: Double = 0.6
+    @Published var proHumanCognitiveResistance: Double = 0.5
 
     // 技能编辑器状态属性
     @Published var customSkills: [LLMSkill] = []
@@ -2032,6 +2579,17 @@ final class SettingsViewModel: ObservableObject {
     @Published var testOutput = ""
     @Published var isTestingSkill = false
     @Published var selectedSkillToEdit: LLMSkill? = nil
+
+    // CLI 工具安装状态
+    @Published var isInstallingCLI = false
+    @Published var cliInstallStatus = ""
+    @Published var isCLIInstalled = false
+
+    // 自定义颜色方案相关属性
+    @Published var savedColorSchemes: [ColorScheme] = []
+    @Published var activeColorSchemeName: String? = nil
+    @Published var showSaveSchemeDialog = false
+    @Published var newSchemeName = ""
 
     private let container = DependencyContainer.shared
     private let exportService = DataExportService()
@@ -2063,6 +2621,10 @@ final class SettingsViewModel: ObservableObject {
         customFontPath = settings.customFontPath
         selectedThemeColor = settings.selectedThemeColor
         customThemeColorHex = settings.customThemeColorHex
+        mainWindowThemeColor = settings.mainWindowThemeColor
+        customMainWindowThemeColorHex = settings.customMainWindowThemeColorHex
+        showMainWindowOnAutoLaunch = settings.showMainWindowOnAutoLaunch
+        showMainWindowOnManualLaunch = settings.showMainWindowOnManualLaunch
         
         // 读取上帝模式配置
         godModeEnabled = settings.godModeEnabled
@@ -2096,16 +2658,30 @@ final class SettingsViewModel: ObservableObject {
         psychologyFrequencyPenalty = settings.psychologyFrequencyPenalty
         selectedPsychologyTheory = settings.selectedPsychologyTheory
         selectedPsychologyPersona = settings.selectedPsychologyPersona
+        psychologyEmpathyLevel = settings.psychologyEmpathyLevel
+        psychologyClinicalDepth = settings.psychologyClinicalDepth
+        psychologyReframingIntensity = settings.psychologyReframingIntensity
 
         proHumanMissionFocus = settings.proHumanMissionFocus
         proHumanInteractionStyle = settings.proHumanInteractionStyle
         proHumanCustomTriangleText = settings.proHumanCustomTriangleText
+        proHumanAntiAlgorithmIntensity = settings.proHumanAntiAlgorithmIntensity
+        proHumanSelfReflectionInterval = settings.proHumanSelfReflectionInterval
+        proHumanScreenTimeTherapy = settings.proHumanScreenTimeTherapy
+        proHumanCognitiveResistance = settings.proHumanCognitiveResistance
 
         // 初始化技能列表
         refreshSkillsList()
 
         // 【新增】检测钥匙串中是否存在已存的管理员密码，初始化授权状态指示灯
         checkKeychainStatus()
+        
+        // 检测命令行工具安装状态
+        checkCLIInstalled()
+        
+        // 自定义配色方案初始化
+        savedColorSchemes = settings.savedColorSchemes
+        activeColorSchemeName = settings.activeColorSchemeName
 
         container.preventSleepService.isPreventSleepEnabledPublisher
             .receive(on: DispatchQueue.main)
@@ -2135,6 +2711,10 @@ final class SettingsViewModel: ObservableObject {
                 guard let self = self else { return }
                 self.selectedThemeColor = updatedSettings.selectedThemeColor
                 self.customThemeColorHex = updatedSettings.customThemeColorHex
+                self.mainWindowThemeColor = updatedSettings.mainWindowThemeColor
+                self.customMainWindowThemeColorHex = updatedSettings.customMainWindowThemeColorHex
+                self.showMainWindowOnAutoLaunch = updatedSettings.showMainWindowOnAutoLaunch
+                self.showMainWindowOnManualLaunch = updatedSettings.showMainWindowOnManualLaunch
                 self.selectedFont = updatedSettings.selectedFont
                 self.selectedIconStyle = updatedSettings.selectedIconStyle
                 self.statusBarIconStyle = updatedSettings.statusBarIconStyle
@@ -2148,6 +2728,8 @@ final class SettingsViewModel: ObservableObject {
                 self.customBorderColorHex = updatedSettings.customBorderColorHex
                 self.customDividerColorHex = updatedSettings.customDividerColorHex
                 self.customCornerRadius = updatedSettings.customCornerRadius
+                self.savedColorSchemes = updatedSettings.savedColorSchemes
+                self.activeColorSchemeName = updatedSettings.activeColorSchemeName
             }
             .store(in: &cancellables)
     }
@@ -2157,6 +2739,14 @@ final class SettingsViewModel: ObservableObject {
     /// 检查钥匙串是否已安全保存本地登录密码
     func checkKeychainStatus() {
         isKeychainAuthorized = YumikoToysKeychain.getSavedPassword() != nil
+    }
+    
+    /// 检查命令行工具是否已安装
+    func checkCLIInstalled() {
+        isCLIInstalled = FileManager.default.fileExists(atPath: "/usr/local/bin/ytskill")
+        if isCLIInstalled && cliInstallStatus.isEmpty {
+            cliInstallStatus = "已安装 (位于 /usr/local/bin/ytskill)"
+        }
     }
     
     /// 手动保存输入的管理员密码至系统钥匙串
@@ -2239,10 +2829,17 @@ final class SettingsViewModel: ObservableObject {
         psychologyFrequencyPenalty = settings.psychologyFrequencyPenalty
         selectedPsychologyTheory = settings.selectedPsychologyTheory
         selectedPsychologyPersona = settings.selectedPsychologyPersona
+        psychologyEmpathyLevel = settings.psychologyEmpathyLevel
+        psychologyClinicalDepth = settings.psychologyClinicalDepth
+        psychologyReframingIntensity = settings.psychologyReframingIntensity
 
         proHumanMissionFocus = settings.proHumanMissionFocus
         proHumanInteractionStyle = settings.proHumanInteractionStyle
         proHumanCustomTriangleText = settings.proHumanCustomTriangleText
+        proHumanAntiAlgorithmIntensity = settings.proHumanAntiAlgorithmIntensity
+        proHumanSelfReflectionInterval = settings.proHumanSelfReflectionInterval
+        proHumanScreenTimeTherapy = settings.proHumanScreenTimeTherapy
+        proHumanCognitiveResistance = settings.proHumanCognitiveResistance
 
         refreshSkillsList()
 
@@ -2255,8 +2852,80 @@ final class SettingsViewModel: ObservableObject {
         customBorderColorHex = settings.customBorderColorHex
         customDividerColorHex = settings.customDividerColorHex
         customCornerRadius = settings.customCornerRadius
+        
+        mainWindowThemeColor = settings.mainWindowThemeColor
+        customMainWindowThemeColorHex = settings.customMainWindowThemeColorHex
+        showMainWindowOnAutoLaunch = settings.showMainWindowOnAutoLaunch
+        showMainWindowOnManualLaunch = settings.showMainWindowOnManualLaunch
+        savedColorSchemes = settings.savedColorSchemes
+        activeColorSchemeName = settings.activeColorSchemeName
+        
+        checkCLIInstalled()
 
         LoggerService.shared.debug("SettingsView: 重新加载设置，NTP服务器: \(ntpConfig.selectedPreset.displayName)")
+    }
+
+    func saveCurrentAsColorScheme(name: String) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+        
+        let newScheme = ColorScheme(
+            name: trimmedName,
+            statusBarHex: customThemeColorHex,
+            mainWindowHex: customMainWindowThemeColorHex,
+            bgHex: customBackgroundColorHex,
+            accentHex: customAccentColorHex,
+            cardHex: customCardBackgroundColorHex,
+            textHex: customTextColorHex,
+            borderHex: customBorderColorHex,
+            dividerHex: customDividerColorHex,
+            cornerRadius: customCornerRadius
+        )
+        
+        var settings = container.settingsService.settings
+        settings.savedColorSchemes.removeAll(where: { $0.name == trimmedName })
+        settings.savedColorSchemes.append(newScheme)
+        settings.activeColorSchemeName = trimmedName
+        container.settingsService.updateSettings(settings)
+        
+        savedColorSchemes = settings.savedColorSchemes
+        activeColorSchemeName = trimmedName
+        LoggerService.shared.info("Color scheme '\(trimmedName)' saved successfully.")
+    }
+    
+    func loadColorScheme(name: String) {
+        let settings = container.settingsService.settings
+        guard let scheme = settings.savedColorSchemes.first(where: { $0.name == name }) else { return }
+        
+        var updatedSettings = settings
+        updatedSettings.selectedThemeColor = .custom
+        updatedSettings.mainWindowThemeColor = .custom
+        updatedSettings.customThemeColorHex = scheme.statusBarHex
+        updatedSettings.customMainWindowThemeColorHex = scheme.mainWindowHex
+        updatedSettings.customBackgroundColorHex = scheme.bgHex
+        updatedSettings.customAccentColorHex = scheme.accentHex
+        updatedSettings.customCardBackgroundColorHex = scheme.cardHex
+        updatedSettings.customTextColorHex = scheme.textHex
+        updatedSettings.customBorderColorHex = scheme.borderHex
+        updatedSettings.customDividerColorHex = scheme.dividerHex
+        updatedSettings.customCornerRadius = scheme.cornerRadius
+        updatedSettings.activeColorSchemeName = name
+        
+        container.settingsService.updateSettings(updatedSettings)
+        reloadSettings() // reload properties in view model
+        LoggerService.shared.info("Color scheme '\(name)' loaded successfully.")
+    }
+    
+    func deleteColorScheme(name: String) {
+        var settings = container.settingsService.settings
+        settings.savedColorSchemes.removeAll(where: { $0.name == name })
+        if settings.activeColorSchemeName == name {
+            settings.activeColorSchemeName = nil
+        }
+        container.settingsService.updateSettings(settings)
+        savedColorSchemes = settings.savedColorSchemes
+        activeColorSchemeName = settings.activeColorSchemeName
+        LoggerService.shared.info("Color scheme '\(name)' deleted.")
     }
 
     func updateGodMode(_ enabled: Bool) {
@@ -2322,6 +2991,9 @@ final class SettingsViewModel: ObservableObject {
         settings.psychologyFrequencyPenalty = psychologyFrequencyPenalty
         settings.selectedPsychologyTheory = selectedPsychologyTheory
         settings.selectedPsychologyPersona = selectedPsychologyPersona
+        settings.psychologyEmpathyLevel = psychologyEmpathyLevel
+        settings.psychologyClinicalDepth = psychologyClinicalDepth
+        settings.psychologyReframingIntensity = psychologyReframingIntensity
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("Psychology settings updated in SettingsViewModel")
     }
@@ -2331,8 +3003,91 @@ final class SettingsViewModel: ObservableObject {
         settings.proHumanMissionFocus = proHumanMissionFocus
         settings.proHumanInteractionStyle = proHumanInteractionStyle
         settings.proHumanCustomTriangleText = proHumanCustomTriangleText
+        settings.proHumanAntiAlgorithmIntensity = proHumanAntiAlgorithmIntensity
+        settings.proHumanSelfReflectionInterval = proHumanSelfReflectionInterval
+        settings.proHumanScreenTimeTherapy = proHumanScreenTimeTherapy
+        settings.proHumanCognitiveResistance = proHumanCognitiveResistance
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("Pro Human settings updated in SettingsViewModel")
+    }
+
+    func updateShowMainWindowOnAutoLaunch(_ enabled: Bool) {
+        showMainWindowOnAutoLaunch = enabled
+        var settings = container.settingsService.settings
+        settings.showMainWindowOnAutoLaunch = enabled
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Show main window on auto launch changed to: \(enabled)")
+    }
+    
+    func updateShowMainWindowOnManualLaunch(_ enabled: Bool) {
+        showMainWindowOnManualLaunch = enabled
+        var settings = container.settingsService.settings
+        settings.showMainWindowOnManualLaunch = enabled
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Show main window on manual launch changed to: \(enabled)")
+    }
+
+    struct SkillParameter: Identifiable, Codable, Equatable {
+        var id = UUID()
+        var name: String
+        var type: String // "string", "number", "boolean"
+        var description: String
+        var isRequired: Bool
+    }
+
+    @Published var editingSkillParameters: [SkillParameter] = []
+    @Published var currentEditorStep: Int = 1
+
+    func parseParametersJSON(_ jsonStr: String) -> [SkillParameter] {
+        guard let data = jsonStr.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return []
+        }
+        
+        var list: [SkillParameter] = []
+        let properties = json["properties"] as? [String: Any] ?? [:]
+        let requiredList = json["required"] as? [String] ?? []
+        
+        for (key, val) in properties {
+            if let dict = val as? [String: Any] {
+                let type = dict["type"] as? String ?? "string"
+                let desc = dict["description"] as? String ?? ""
+                let isRequired = requiredList.contains(key)
+                list.append(SkillParameter(id: UUID(), name: key, type: type, description: desc, isRequired: isRequired))
+            }
+        }
+        return list
+    }
+    
+    func generateJSONSchema() -> String {
+        var properties: [String: Any] = [:]
+        var required: [String] = []
+        
+        for param in editingSkillParameters {
+            let name = param.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { continue }
+            
+            var prop: [String: Any] = [:]
+            prop["type"] = param.type
+            prop["description"] = param.description
+            properties[name] = prop
+            
+            if param.isRequired {
+                required.append(name)
+            }
+        }
+        
+        let schema: [String: Any] = [
+            "type": "object",
+            "properties": properties,
+            "required": required
+        ]
+        
+        if let data = try? JSONSerialization.data(withJSONObject: schema, options: [.prettyPrinted]),
+           let jsonStr = String(data: data, encoding: .utf8) {
+            return jsonStr
+        }
+        return "{}"
     }
 
     func refreshSkillsList() {
@@ -2344,20 +3099,13 @@ final class SettingsViewModel: ObservableObject {
         editingSkillName = ""
         editingSkillDescription = ""
         editingSkillScriptType = "shell"
-        editingSkillParametersJSON = """
-        {
-            "type": "object",
-            "properties": {
-                "paramName": {
-                    "type": "string",
-                    "description": "参数描述"
-                }
-            },
-            "required": ["paramName"]
-        }
-        """
+        editingSkillParameters = [
+            SkillParameter(name: "paramName", type: "string", description: "参数描述", isRequired: true)
+        ]
+        editingSkillParametersJSON = generateJSONSchema()
         editingSkillScriptContent = "echo \"{{paramName}}\""
         testOutput = ""
+        currentEditorStep = 1
         showSkillEditor = true
     }
 
@@ -2366,24 +3114,23 @@ final class SettingsViewModel: ObservableObject {
         editingSkillName = skill.name
         editingSkillDescription = skill.description
         editingSkillScriptType = skill.scriptType
+        editingSkillParameters = parseParametersJSON(skill.parametersJSON)
         editingSkillParametersJSON = skill.parametersJSON
         editingSkillScriptContent = skill.scriptContent
         testOutput = ""
+        currentEditorStep = 1
         showSkillEditor = true
     }
 
     func saveSkill() {
         guard !editingSkillName.isEmpty else { return }
         
-        var parameters = editingSkillParametersJSON
-        if parameters.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            parameters = "{\"type\": \"object\", \"properties\": {}}"
-        }
+        editingSkillParametersJSON = generateJSONSchema()
         
         let newSkill = LLMSkill(
             name: editingSkillName.trimmingCharacters(in: .whitespacesAndNewlines),
             description: editingSkillDescription,
-            parametersJSON: parameters,
+            parametersJSON: editingSkillParametersJSON,
             scriptType: editingSkillScriptType,
             scriptContent: editingSkillScriptContent
         )
@@ -2406,25 +3153,19 @@ final class SettingsViewModel: ObservableObject {
         isTestingSkill = true
         testOutput = "正在测试运行中..."
         
+        editingSkillParametersJSON = generateJSONSchema()
+        
         Task {
             var mockArgs: [String: Any] = [:]
-            if let data = editingSkillParametersJSON.data(using: .utf8),
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let properties = json["properties"] as? [String: Any] {
-                for (key, val) in properties {
-                    if let propDict = val as? [String: Any] {
-                        if let type = propDict["type"] as? String {
-                            if type == "string" {
-                                mockArgs[key] = "测试文本"
-                            } else if type == "number" || type == "integer" {
-                                mockArgs[key] = 42
-                            } else if type == "boolean" {
-                                mockArgs[key] = true
-                            }
-                        }
-                    } else {
-                        mockArgs[key] = "测试值"
-                    }
+            for param in editingSkillParameters {
+                let name = param.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty else { continue }
+                if param.type == "string" {
+                    mockArgs[name] = "测试文本"
+                } else if param.type == "number" {
+                    mockArgs[name] = 42.0
+                } else if param.type == "boolean" {
+                    mockArgs[name] = true
                 }
             }
             
@@ -2447,6 +3188,27 @@ final class SettingsViewModel: ObservableObject {
                 self.testOutput = output
                 self.isTestingSkill = false
                 self.refreshSkillsList()
+            }
+        }
+    }
+
+    func installCLITool() {
+        isInstallingCLI = true
+        cliInstallStatus = "正在安装中..."
+        
+        Task {
+            do {
+                try await CLIInstaller.install()
+                await MainActor.run {
+                    self.isCLIInstalled = true
+                    self.cliInstallStatus = "安装成功 (已写入 /usr/local/bin/ytskill)"
+                    self.isInstallingCLI = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.cliInstallStatus = "安装失败: \(error.localizedDescription)"
+                    self.isInstallingCLI = false
+                }
             }
         }
     }
@@ -2484,6 +3246,48 @@ final class SettingsViewModel: ObservableObject {
         settings.selectedThemeColor = .custom
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("Custom theme color hex changed to: \(hex)")
+    }
+
+    func updateShowStatusBarIcon(_ show: Bool) {
+        showStatusBarIcon = show
+        var settings = container.settingsService.settings
+        settings.showStatusBarIcon = show
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Show status bar icon changed to: \(show)")
+    }
+
+    func selectMainWindowThemeColor(_ theme: ThemeColor) {
+        mainWindowThemeColor = theme
+        var settings = container.settingsService.settings
+        settings.mainWindowThemeColor = theme
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Main window theme color changed to: \(theme.rawValue)")
+    }
+    
+    func updateCustomMainWindowThemeColorHex(_ hex: String) {
+        customMainWindowThemeColorHex = hex
+        mainWindowThemeColor = .custom
+        var settings = container.settingsService.settings
+        settings.customMainWindowThemeColorHex = hex
+        settings.mainWindowThemeColor = .custom
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Custom main window theme color hex changed to: \(hex)")
+    }
+    
+    func toggleShowMainWindowOnAutoLaunch() {
+        showMainWindowOnAutoLaunch.toggle()
+        var settings = container.settingsService.settings
+        settings.showMainWindowOnAutoLaunch = showMainWindowOnAutoLaunch
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Show main window on auto launch changed to: \(showMainWindowOnAutoLaunch)")
+    }
+    
+    func toggleShowMainWindowOnManualLaunch() {
+        showMainWindowOnManualLaunch.toggle()
+        var settings = container.settingsService.settings
+        settings.showMainWindowOnManualLaunch = showMainWindowOnManualLaunch
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Show main window on manual launch changed to: \(showMainWindowOnManualLaunch)")
     }
     
     func resetComponentLayout() {
@@ -2642,6 +3446,114 @@ final class SettingsViewModel: ObservableObject {
         return formatter.string(from: date)
     }
 }
+
+// MARK: - CommandLineInstructionView
+
+struct CommandLineInstructionRow: View {
+    let cmd: String
+    let desc: String
+    @State private var isCopied = false
+    @State private var isHovered = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(desc)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.secondary)
+            
+            HStack {
+                Text(cmd)
+                    .font(.system(size: 10.5, design: .monospaced))
+                    .foregroundStyle(Color(hex: "30D158")) // terminal green
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                
+                Spacer()
+                
+                Button(action: {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(cmd, forType: .string)
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                        isCopied = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        withAnimation {
+                            isCopied = false
+                        }
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
+                            .imageScale(.small)
+                            .foregroundColor(isCopied ? .green : .secondary)
+                        Text(isCopied ? "已复制" : "复制")
+                            .font(.system(size: 9))
+                            .foregroundColor(isCopied ? .green : .secondary)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.primary.opacity(isHovered ? 0.08 : 0.03))
+                    .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+                .onHover { isHovered = $0 }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(Color.black.opacity(0.3))
+            .cornerRadius(6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+            )
+        }
+    }
+}
+
+struct CommandLineInstructionView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Divider()
+                .background(Color.primary.opacity(0.08))
+                .padding(.vertical, 4)
+                
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.right.terminal.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(hex: "FF9500"))
+                Text("终端命令用法示例")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.primary)
+            }
+            
+            Text("安装后，您可以在终端中使用 `ytskill` 命令行工具来调试或运行大模型技能：")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .lineSpacing(2)
+            
+            VStack(spacing: 8) {
+                CommandLineInstructionRow(
+                    cmd: "ytskill list",
+                    desc: "1. 列出当前所有已注册的技能脚本 (预设与自定义)"
+                )
+                CommandLineInstructionRow(
+                    cmd: "ytskill run system_garbage_cleanup",
+                    desc: "2. 运行系统预设技能：垃圾清理 (清除无用缓存)"
+                )
+                CommandLineInstructionRow(
+                    cmd: "ytskill run reminders_manager --args '{\"title\":\"买牛奶\"}'",
+                    desc: "3. 运行系统预设技能：提醒事项，支持传入参数"
+                )
+                CommandLineInstructionRow(
+                    cmd: "ytskill run search_web --args '{\"query\":\"Tahoe\"}'",
+                    desc: "4. 运行系统预设技能：网页搜索，并传递搜索参数"
+                )
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
 
 // MARK: - Font Picker Error
 

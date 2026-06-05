@@ -6,5 +6,14 @@
 	<array/>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- 网络访问（支持 search_web、AI 请求等需要联网的功能） -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- AppleScript 自动化控制（支持通知、日历、提醒事项、打开应用等技能） -->
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+	<!-- 用户通知推送 -->
+	<key>com.apple.security.usernotifications</key>
+	<true/>
 </dict>
 </plist>

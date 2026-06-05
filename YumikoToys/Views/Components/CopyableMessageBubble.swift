@@ -17,7 +17,7 @@ struct CopyableMessageBubble: View {
     let userAvatarPath: String?
     
     let chatMode: ChatMode
-    let themeColor: ThemeColor
+    let themeColor: ResolvedTheme
 
     // 👈【核心新增】：添加回调以支持快捷操作
     var onEdit: (() -> Void)? = nil

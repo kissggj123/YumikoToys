@@ -31,7 +31,8 @@ struct AnniversaryManagementView: View {
                         .font(.system(size: 22))
                         .foregroundStyle(Color(hex: "FF6B9D"))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.premium)
+                .premiumHover(scale: 1.1)
                 .help("添加宠物")
             }
             .padding()
@@ -138,7 +139,8 @@ private struct EmptyPetView: View {
                     .foregroundStyle(.white)
                     .cornerRadius(10)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.premium)
+            .premiumHover()
             
             Spacer()
         }
@@ -239,7 +241,8 @@ private struct PetProfileRowView: View {
                         .background(Color.secondary.opacity(0.1))
                         .cornerRadius(6)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.premium)
+                .premiumHover()
                 .help("编辑")
                 
                 Button(action: onDelete) {
@@ -250,7 +253,8 @@ private struct PetProfileRowView: View {
                         .background(Color.red.opacity(0.1))
                         .cornerRadius(6)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.premium)
+                .premiumHover()
                 .help("删除")
             }
             .opacity(isHovered ? 1 : 0.3)
@@ -328,7 +332,8 @@ struct PetProfileEditView: View {
             // 标题栏
             HStack {
                 Button("取消") { dismiss() }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.premium)
+                    .premiumHover()
                 
                 Spacer()
                 
@@ -341,7 +346,8 @@ struct PetProfileEditView: View {
                     save()
                 }
                 .disabled(petName.trimmingCharacters(in: .whitespaces).isEmpty)
-                .buttonStyle(.plain)
+                .buttonStyle(.premium)
+                .premiumHover()
             }
             .padding()
             
@@ -618,7 +624,7 @@ private struct VariableTagView: View {
                     .fill(Color(hex: "007AFF").opacity(isHovered ? 0.18 : 0.08))
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.premium)
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering

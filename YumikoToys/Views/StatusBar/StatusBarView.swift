@@ -18,6 +18,14 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     case ocean      // 海洋蓝
     case sunset     // 日落橙
     case pixel      // 像素复古
+    case sakura     // 櫻花粉
+    case deepSea    // 深海蓝
+    case forest     // 森林绿
+    case amber      // 琥珀橙
+    case crimson    // 赤焰紫
+    case arctic     // 极地白
+    case roseGold   // 玫瑞金
+    case charcoal   // 炭墨黑
     case custom     // 自定义主题
     
     var id: String { rawValue }
@@ -31,7 +39,19 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         case .ocean: return "海洋"
         case .sunset: return "日落"
         case .pixel: return "像素"
-        case .custom: return "自定义"
+        case .sakura: return "櫻花"
+        case .deepSea: return "深海"
+        case .forest: return "森林"
+        case .amber: return "琥珀"
+        case .crimson: return "赤焰"
+        case .arctic: return "极地"
+        case .roseGold: return "玫金"
+        case .charcoal: return "炭墨"
+        case .custom:
+            if let activeName = DependencyContainer.shared.settingsService.settings.activeColorSchemeName {
+                return activeName
+            }
+            return "自定义"
         }
     }
     
@@ -44,6 +64,14 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         case .ocean: return "water.waves"
         case .sunset: return "sun.max.fill"
         case .pixel: return "gamecontroller.fill"
+        case .sakura: return "tree.fill"
+        case .deepSea: return "fish.fill"
+        case .forest: return "tent.fill"
+        case .amber: return "flame.fill"
+        case .crimson: return "bolt.fill"
+        case .arctic: return "snowflake"
+        case .roseGold: return "crown.fill"
+        case .charcoal: return "circle.fill"
         case .custom: return "paintpalette.fill"
         }
     }
@@ -67,41 +95,64 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         return luminance > 0.65
     }
     
-    var customColor: Color {
-        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
-        return Color(hex: hex)
+    var customColor: Color { customColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var isCustomLight: Bool { isCustomLight(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var isCustomDarkBackground: Bool { isCustomDarkBackground(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var isAccentLight: Bool { isAccentLight(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var customBlendedBackground: (r: Double, g: Double, b: Double) { customBlendedBackground(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    
+    var backgroundColor: Color { backgroundColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var nsBackgroundColor: NSColor { nsBackgroundColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var accentColor: Color { accentColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var iconGradient: [Color] { iconGradient(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var textColor: Color { textColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var secondaryTextColor: Color { secondaryTextColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var cardBackgroundColor: Color { cardBackgroundColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var buttonBackgroundColor: Color { buttonBackgroundColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var isDarkTheme: Bool { isDarkTheme(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var borderColor: Color { borderColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var dividerColor: Color { dividerColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var toggleOnColor: Color { toggleOnColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var toggleBackgroundColor: Color { toggleBackgroundColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var primaryButtonBackground: Color { primaryButtonBackground(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var primaryButtonTextColor: Color { primaryButtonTextColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var secondaryButtonBackground: Color { secondaryButtonBackground(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var destructiveButtonColor: Color { destructiveButtonColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var iconColor: Color { iconColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    var hoverBackgroundColor: Color { hoverBackgroundColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+}
+
+// MARK: - ThemeColor Parameterized Extensions
+
+extension ThemeColor {
+    func customColor(customHex: String) -> Color {
+        return Color(hex: customHex)
     }
     
-    var isCustomLight: Bool {
-        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
-        return Self.isCustomLight(for: hex)
+    func isCustomLight(customHex: String) -> Bool {
+        return Self.isCustomLight(for: customHex)
     }
     
-    var isCustomDarkBackground: Bool {
-        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
-        let (r, g, b) = Self.getRGB(from: hex)
+    func isCustomDarkBackground(customHex: String) -> Bool {
+        let (r, g, b) = Self.getRGB(from: customHex)
         let MathLuminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
         return MathLuminance > 0.45
     }
     
-    var isAccentLight: Bool {
-        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
-        let (r, g, b) = Self.getRGB(from: hex)
+    func isAccentLight(customHex: String) -> Bool {
+        let (r, g, b) = Self.getRGB(from: customHex)
         let MathLuminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
         return MathLuminance > 0.7
     }
     
-    var customBlendedBackground: (r: Double, g: Double, b: Double) {
-        let hex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
-        let (r, g, b) = Self.getRGB(from: hex)
-        if isCustomDarkBackground {
-            // blend with dark gray (92% #0E0E10 + 8% custom)
+    func customBlendedBackground(customHex: String) -> (r: Double, g: Double, b: Double) {
+        let (r, g, b) = Self.getRGB(from: customHex)
+        if isCustomDarkBackground(customHex: customHex) {
             let bgR = r * 0.08 + 0.055 * 0.92
             let bgG = g * 0.08 + 0.055 * 0.92
             let bgB = b * 0.08 + 0.063 * 0.92
             return (bgR, bgG, bgB)
         } else {
-            // blend with white (96% white + 4% custom)
             let bgR = r * 0.04 + 1.0 * 0.96
             let bgG = g * 0.04 + 1.0 * 0.96
             let bgB = b * 0.04 + 1.0 * 0.96
@@ -109,34 +160,48 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
         }
     }
     
-    // MARK: - 基础颜色
-    
-    var backgroundColor: Color {
+    func backgroundColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customBackgroundColorHex)
         }
         switch self {
         case .dark:
-            return Color(red: 0.07, green: 0.07, blue: 0.08)  // #121214 premium dark
+            return Color(red: 0.07, green: 0.07, blue: 0.08)
         case .pink:
-            return Color(red: 1.0, green: 0.94, blue: 0.95)  // #FFF0F3 soft sweet pink
+            return Color(red: 1.0, green: 0.94, blue: 0.95)
         case .lavender:
-            return Color(red: 0.95, green: 0.94, blue: 0.99)  // #F3F0FC soft lavender
+            return Color(red: 0.95, green: 0.94, blue: 0.99)
         case .mint:
-            return Color(red: 0.94, green: 0.99, blue: 0.96)  // #F0FDF4 crisp mint
+            return Color(red: 0.94, green: 0.99, blue: 0.96)
         case .ocean:
-            return Color(red: 0.94, green: 0.98, blue: 1.0)   // #F0F9FF calm aqua
+            return Color(red: 0.94, green: 0.98, blue: 1.0)
         case .sunset:
-            return Color(red: 1.0, green: 0.97, blue: 0.93)  // #FFF7ED warm apricot
+            return Color(red: 1.0, green: 0.97, blue: 0.93)
         case .pixel:
-            return Color(red: 0.10, green: 0.10, blue: 0.12)  // retro console dark
+            return Color(red: 0.10, green: 0.10, blue: 0.12)
+        case .sakura:
+            return Color(red: 1.0, green: 0.96, blue: 0.97)
+        case .deepSea:
+            return Color(red: 0.106, green: 0.31, blue: 0.447)
+        case .forest:
+            return Color(red: 0.106, green: 0.227, blue: 0.176)
+        case .amber:
+            return Color(red: 0.176, green: 0.106, blue: 0.0)
+        case .crimson:
+            return Color(red: 0.176, green: 0.039, blue: 0.118)
+        case .arctic:
+            return Color(red: 0.941, green: 0.957, blue: 0.973)
+        case .roseGold:
+            return Color(red: 0.173, green: 0.094, blue: 0.063)
+        case .charcoal:
+            return Color(red: 0.051, green: 0.051, blue: 0.051)
         case .custom:
-            let (r, g, b) = customBlendedBackground
+            let (r, g, b) = customBlendedBackground(customHex: customHex)
             return Color(red: r, green: g, blue: b)
         }
     }
     
-    var nsBackgroundColor: NSColor {
+    func nsBackgroundColor(customHex: String) -> NSColor {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             let hex = DependencyContainer.shared.settingsService.settings.customBackgroundColorHex
             let (r, g, b) = Self.getRGB(from: hex)
@@ -157,13 +222,29 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return NSColor(red: 1.0, green: 0.97, blue: 0.93, alpha: 1.0)
         case .pixel:
             return NSColor(red: 0.10, green: 0.10, blue: 0.12, alpha: 1.0)
+        case .sakura:
+            return NSColor(red: 1.0, green: 0.96, blue: 0.97, alpha: 1.0)
+        case .deepSea:
+            return NSColor(red: 0.106, green: 0.31, blue: 0.447, alpha: 1.0)
+        case .forest:
+            return NSColor(red: 0.106, green: 0.227, blue: 0.176, alpha: 1.0)
+        case .amber:
+            return NSColor(red: 0.176, green: 0.106, blue: 0.0, alpha: 1.0)
+        case .crimson:
+            return NSColor(red: 0.176, green: 0.039, blue: 0.118, alpha: 1.0)
+        case .arctic:
+            return NSColor(red: 0.941, green: 0.957, blue: 0.973, alpha: 1.0)
+        case .roseGold:
+            return NSColor(red: 0.173, green: 0.094, blue: 0.063, alpha: 1.0)
+        case .charcoal:
+            return NSColor(red: 0.051, green: 0.051, blue: 0.051, alpha: 1.0)
         case .custom:
-            let (r, g, b) = customBlendedBackground
+            let (r, g, b) = customBlendedBackground(customHex: customHex)
             return NSColor(red: r, green: g, blue: b, alpha: 1.0)
         }
     }
     
-    var accentColor: Color {
+    func accentColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customAccentColorHex)
         }
@@ -182,12 +263,28 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return Color(hex: "F59E0B")
         case .pixel:
             return Color(hex: "22D3EE")
+        case .sakura:
+            return Color(hex: "FFB7C5")
+        case .deepSea:
+            return Color(hex: "00B4D8")
+        case .forest:
+            return Color(hex: "52B788")
+        case .amber:
+            return Color(hex: "F4A261")
+        case .crimson:
+            return Color(hex: "C77DFF")
+        case .arctic:
+            return Color(hex: "4A90D9")
+        case .roseGold:
+            return Color(hex: "E8956D")
+        case .charcoal:
+            return Color(hex: "A0A0A0")
         case .custom:
-            return customColor
+            return customColor(customHex: customHex)
         }
     }
     
-    var iconGradient: [Color] {
+    func iconGradient(customHex: String) -> [Color] {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             let accent = Color(hex: DependencyContainer.shared.settingsService.settings.customAccentColorHex)
             return [accent, accent.opacity(0.7)]
@@ -207,19 +304,34 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return [Color(hex: "FCD34D"), Color(hex: "F59E0B")]
         case .pixel:
             return [Color(hex: "22D3EE"), Color(hex: "A78BFA")]
+        case .sakura:
+            return [Color(hex: "FFB7C5"), Color(hex: "FF91A8")]
+        case .deepSea:
+            return [Color(hex: "48CAE4"), Color(hex: "00B4D8")]
+        case .forest:
+            return [Color(hex: "95D5B2"), Color(hex: "52B788")]
+        case .amber:
+            return [Color(hex: "FFD166"), Color(hex: "F4A261")]
+        case .crimson:
+            return [Color(hex: "E2B0FF"), Color(hex: "C77DFF")]
+        case .arctic:
+            return [Color(hex: "74B0E8"), Color(hex: "4A90D9")]
+        case .roseGold:
+            return [Color(hex: "F2C4A8"), Color(hex: "E8956D")]
+        case .charcoal:
+            return [Color(hex: "D0D0D0"), Color(hex: "A0A0A0")]
         case .custom:
-            return [customColor, customColor.opacity(0.7)]
+            let c = customColor(customHex: customHex)
+            return [c, c.opacity(0.7)]
         }
     }
     
-    // MARK: - 文字颜色系统
-    
-    var textColor: Color {
+    func textColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customTextColorHex)
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return .white
         case .pink:
             return Color(red: 0.25, green: 0.05, blue: 0.12)
@@ -231,19 +343,23 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return Color(red: 0.05, green: 0.29, blue: 0.43)
         case .sunset:
             return Color(red: 0.49, green: 0.18, blue: 0.07)
+        case .sakura:
+            return Color(red: 0.35, green: 0.08, blue: 0.15)
+        case .arctic:
+            return Color(red: 0.08, green: 0.18, blue: 0.32)
         case .custom:
-            return isCustomDarkBackground
+            return isCustomDarkBackground(customHex: customHex)
                 ? Color.white
                 : Color(red: 0.06, green: 0.09, blue: 0.16)
         }
     }
     
-    var secondaryTextColor: Color {
+    func secondaryTextColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customTextColorHex).opacity(0.7)
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color(hex: "9A9AAB")
         case .pink:
             return Color(hex: "A75D74")
@@ -255,35 +371,39 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return Color(hex: "0369A1").opacity(0.8)
         case .sunset:
             return Color(hex: "C2410C").opacity(0.8)
+        case .sakura:
+            return Color(hex: "C87890").opacity(0.8)
+        case .arctic:
+            return Color(hex: "4A6FA5").opacity(0.8)
         case .custom:
-            return isCustomDarkBackground
+            return isCustomDarkBackground(customHex: customHex)
                 ? Color(hex: "9CA3AF")
                 : Color(hex: "475569")
         }
     }
     
-    var cardBackgroundColor: Color {
+    func cardBackgroundColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customCardBackgroundColorHex)
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color.white.opacity(0.05)
-        case .pink, .lavender, .mint, .ocean, .sunset:
+        case .pink, .lavender, .mint, .ocean, .sunset, .sakura, .arctic:
             return Color.white.opacity(0.6)
         case .custom:
-            return isCustomDarkBackground
+            return isCustomDarkBackground(customHex: customHex)
                 ? Color.white.opacity(0.05)
                 : Color.white.opacity(0.6)
         }
     }
     
-    var buttonBackgroundColor: Color {
+    func buttonBackgroundColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customAccentColorHex).opacity(0.08)
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color.white.opacity(0.08)
         case .pink:
             return Color(hex: "E85D75").opacity(0.08)
@@ -295,12 +415,16 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return Color(hex: "3B82F6").opacity(0.08)
         case .sunset:
             return Color(hex: "F59E0B").opacity(0.08)
+        case .sakura:
+            return Color(hex: "FF91A8").opacity(0.08)
+        case .arctic:
+            return Color(hex: "4A90D9").opacity(0.08)
         case .custom:
-            return accentColor.opacity(0.08)
+            return accentColor(customHex: customHex).opacity(0.08)
         }
     }
     
-    var isDarkTheme: Bool {
+    func isDarkTheme(customHex: String) -> Bool {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             let hex = DependencyContainer.shared.settingsService.settings.customBackgroundColorHex
             let (r, g, b) = Self.getRGB(from: hex)
@@ -308,23 +432,21 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return MathLuminance < 0.55
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return true
         case .custom:
-            return isCustomDarkBackground
+            return isCustomDarkBackground(customHex: customHex)
         default:
             return false
         }
     }
     
-    // MARK: - 边框和分割线颜色
-    
-    var borderColor: Color {
+    func borderColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customBorderColorHex)
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color.white.opacity(0.12)
         case .pink:
             return Color(hex: "E85D75").opacity(0.15)
@@ -336,17 +458,21 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return Color(hex: "3B82F6").opacity(0.15)
         case .sunset:
             return Color(hex: "F59E0B").opacity(0.15)
+        case .sakura:
+            return Color(hex: "FF91A8").opacity(0.15)
+        case .arctic:
+            return Color(hex: "4A90D9").opacity(0.15)
         case .custom:
-            return accentColor.opacity(0.15)
+            return accentColor(customHex: customHex).opacity(0.15)
         }
     }
     
-    var dividerColor: Color {
+    func dividerColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customDividerColorHex)
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color.white.opacity(0.08)
         case .pink:
             return Color(hex: "E85D75").opacity(0.12)
@@ -358,77 +484,75 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
             return Color(hex: "3B82F6").opacity(0.12)
         case .sunset:
             return Color(hex: "F59E0B").opacity(0.12)
+        case .sakura:
+            return Color(hex: "FF91A8").opacity(0.12)
+        case .arctic:
+            return Color(hex: "4A90D9").opacity(0.12)
         case .custom:
-            return accentColor.opacity(0.12)
+            return accentColor(customHex: customHex).opacity(0.12)
         }
     }
     
-    // MARK: - 开关和控件颜色
-    
-    var toggleOnColor: Color {
-        return accentColor
+    func toggleOnColor(customHex: String) -> Color {
+        return accentColor(customHex: customHex)
     }
     
-    var toggleBackgroundColor: Color {
+    func toggleBackgroundColor(customHex: String) -> Color {
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color.white.opacity(0.15)
         default:
             return Color.gray.opacity(0.2)
         }
     }
     
-    // MARK: - 按钮样式
-    
-    var primaryButtonBackground: Color {
-        return accentColor.opacity(0.12)
+    func primaryButtonBackground(customHex: String) -> Color {
+        return accentColor(customHex: customHex).opacity(0.12)
     }
     
-    var primaryButtonTextColor: Color {
-        return accentColor
+    func primaryButtonTextColor(customHex: String) -> Color {
+        return accentColor(customHex: customHex)
     }
     
-    var secondaryButtonBackground: Color {
+    func secondaryButtonBackground(customHex: String) -> Color {
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color.white.opacity(0.08)
         default:
             return Color.black.opacity(0.05)
         }
     }
     
-    var destructiveButtonColor: Color {
+    func destructiveButtonColor(customHex: String) -> Color {
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color(hex: "FF453A")
         default:
             return Color(hex: "DC2626")
         }
     }
     
-    // MARK: - 图标和装饰
-    
-    var iconColor: Color {
+    func iconColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customTextColorHex).opacity(0.6)
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return .secondary
         default:
-            return textColor.opacity(0.6)
+            return textColor(customHex: customHex).opacity(0.6)
         }
     }
     
-    var hoverBackgroundColor: Color {
+    func hoverBackgroundColor(customHex: String) -> Color {
         if DependencyContainer.shared.settingsService.settings.godModeEnabled {
             return Color(hex: DependencyContainer.shared.settingsService.settings.customAccentColorHex).opacity(0.08)
         }
         switch self {
-        case .dark, .pixel:
+        case .dark, .pixel, .deepSea, .forest, .amber, .crimson, .roseGold, .charcoal:
             return Color.white.opacity(0.06)
         default:
-            return accentColor.opacity(0.08)
+            return accentColor(customHex: customHex).opacity(0.08)
         }
     }
 }
@@ -441,6 +565,14 @@ struct StatusBarView: View {
     // 主题色选择
     @State private var themeColor: ThemeColor = .dark
     @State private var showThemePicker: Bool = false
+
+    // 悬浮动效状态
+    @State private var isDaysCardHovered = false
+    @State private var isPreventSleepHovered = false
+    @State private var isMainBtnHovered = false
+    @State private var isQuitBtnHovered = false
+    @State private var isThemeBtnHovered = false
+    @State private var isAvatarHovered = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -478,10 +610,10 @@ struct StatusBarView: View {
                 themeColorPicker
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    .transition(.opacity)
             }
         }
-        .frame(width: 280)
+        .frame(width: 340)
         // 关键：允许垂直方向完全自适应内容高度，防止 popover 被裁剪或留下空白
         .fixedSize(horizontal: false, vertical: true)
         // 【修复】根据主题色设置背景
@@ -493,6 +625,13 @@ struct StatusBarView: View {
             themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
         }
         .onDisappear { viewModel.onDisappear() }
+        .onReceive(viewModel.$themeColor) { newTheme in
+            if themeColor != newTheme {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    themeColor = newTheme
+                }
+            }
+        }
     }
     
     // MARK: - 主题色切换按钮
@@ -526,6 +665,9 @@ struct StatusBarView: View {
             )
         }
         .buttonStyle(.plain)
+        .scaleEffect(isThemeBtnHovered ? 1.05 : 1.0)
+        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isThemeBtnHovered)
+        .onHover { isThemeBtnHovered = $0 }
         .help("切换主题色")
     }
 
@@ -619,7 +761,7 @@ struct StatusBarView: View {
                                 themeColor.customColor
                             },
                             set: { newColor in
-                                if let hex = newColor.toHex() {
+                                if let hex = newColor.toHex(), !Color.isHexClose(hex, DependencyContainer.shared.settingsService.settings.customThemeColorHex) {
                                     saveCustomThemeColorHex(hex)
                                     withAnimation {
                                         themeColor = .custom
@@ -733,6 +875,10 @@ struct StatusBarView: View {
             // 标题
             HStack(spacing: 6) {
                 PixelAvatarView(emoji: info.anniversary.displayAvatar, size: 20)
+                    .scaleEffect(isAvatarHovered ? 1.25 : 1.0)
+                    .rotationEffect(.degrees(isAvatarHovered ? 12 : 0))
+                    .animation(.spring(response: 0.25, dampingFraction: 0.5), value: isAvatarHovered)
+                    .onHover { isAvatarHovered = $0 }
                 
                 Text(info.anniversary.displayPetName)
                     .font(.subheadline)
@@ -810,6 +956,21 @@ struct StatusBarView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(themeColor.cardBackgroundColor)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    LinearGradient(
+                        colors: themeColor.iconGradient.map { $0.opacity(0.8) },
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .scaleEffect(isDaysCardHovered ? 1.015 : 1.0)
+        .shadow(color: themeColor.accentColor.opacity(isDaysCardHovered ? 0.12 : 0.0), radius: 8)
+        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isDaysCardHovered)
+        .onHover { isDaysCardHovered = $0 }
     }
     
     // MARK: - 防休眠开关
@@ -857,6 +1018,15 @@ struct StatusBarView: View {
                 .allowsHitTesting(false) // 【核心修复】阻断 Toggle 本身对鼠标的响应，统一由外层整行手势接管，消除冲突 [1]
             }
             .contentShape(Rectangle())
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isPreventSleepHovered ? themeColor.hoverBackgroundColor : Color.clear)
+            )
+            .scaleEffect(isPreventSleepHovered ? 1.02 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isPreventSleepHovered)
+            .onHover { isPreventSleepHovered = $0 }
         }
         .buttonStyle(.plain)
     }
@@ -888,6 +1058,10 @@ struct StatusBarView: View {
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(themeColor.borderColor, lineWidth: 1)
                 )
+                .scaleEffect(isMainBtnHovered ? 1.03 : 1.0)
+                .shadow(color: themeColor.accentColor.opacity(isMainBtnHovered ? 0.35 : 0.0), radius: 6)
+                .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isMainBtnHovered)
+                .onHover { isMainBtnHovered = $0 }
             }
             .buttonStyle(.plain)
             
@@ -914,6 +1088,10 @@ struct StatusBarView: View {
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(themeColor.destructiveButtonColor.opacity(0.2), lineWidth: 1)
                 )
+                .scaleEffect(isQuitBtnHovered ? 1.03 : 1.0)
+                .shadow(color: themeColor.destructiveButtonColor.opacity(isQuitBtnHovered ? 0.25 : 0.0), radius: 6)
+                .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isQuitBtnHovered)
+                .onHover { isQuitBtnHovered = $0 }
             }
             .buttonStyle(.plain)
         }
@@ -928,6 +1106,8 @@ final class StatusBarViewModel: ObservableObject {
     @Published var shortCountdown: String = ""
     @Published var isPreventSleepEnabled: Bool = false
     @Published var selectedIconStyle: IconStyle = .pixelAnimal
+    @Published var themeColor: ThemeColor = .dark
+    @Published var customThemeColorHex: String = "FF6B9D"
     
     var uiIconStyle: IconStyle {
         selectedIconStyle.isStatusBarOnly ? .pixelAnimal : selectedIconStyle
@@ -968,12 +1148,16 @@ final class StatusBarViewModel: ObservableObject {
             .sink { [weak self] settings in
                 guard let self = self else { return }
                 self.selectedIconStyle = settings.selectedIconStyle
+                self.themeColor = settings.selectedThemeColor
+                self.customThemeColorHex = settings.customThemeColorHex
             }
             .store(in: &cancellables)
         
         self.anniversaryInfo = container.anniversaryService.activeAnniversaryInfo
         self.isPreventSleepEnabled = container.preventSleepService.isPreventSleepEnabled
         self.selectedIconStyle = container.settingsService.settings.selectedIconStyle
+        self.themeColor = container.settingsService.settings.selectedThemeColor
+        self.customThemeColorHex = container.settingsService.settings.customThemeColorHex
         if let info = self.anniversaryInfo {
             self.shortCountdown = info.calculation.shortString
         }

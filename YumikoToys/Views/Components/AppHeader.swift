@@ -31,8 +31,9 @@ struct AppHeader: View, Equatable {
             let col = Color(hex: hex)
             return [col, col.opacity(0.7)]
         }
-        let themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
-        return themeColor.iconGradient
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.mainWindowThemeColor
+        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
     }
     
     var body: some View {

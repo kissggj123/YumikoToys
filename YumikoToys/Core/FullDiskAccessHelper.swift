@@ -8,6 +8,7 @@
 import Foundation
 import AppKit
 import SwiftUI
+import UserNotifications
 
 public struct FullDiskAccessHelper {
     
@@ -22,11 +23,15 @@ public struct FullDiskAccessHelper {
             }
         }
         
-        // 0. 模拟写入空临时文件进行写测试（针对自签名应用优化）
+        // 0. 模拟写入空临时文件进行写测试（针对自签名应用优化，增加备选目录，不依赖 NSTemporaryDirectory()）
         for home in homeDirs {
             let writePaths = [
                 home + "/Library/Application Support/com.apple.TCC/YumikoToys_test_fda.txt",
-                home + "/Library/Safari/YumikoToys_test_fda.txt"
+                home + "/Library/Safari/YumikoToys_test_fda.txt",
+                home + "/Library/Calendars/YumikoToys_test_fda.txt",
+                home + "/Library/Reminders/YumikoToys_test_fda.txt",
+                home + "/Library/Preferences/com.apple.TCC_test_fda.txt",
+                "/Library/Preferences/com.apple.TCC_test_fda.txt"
             ]
             for path in writePaths {
                 if let file = fopen(path, "w") {
@@ -44,6 +49,7 @@ public struct FullDiskAccessHelper {
             testPaths.append(home + "/Library/Safari/History.db")
             testPaths.append(home + "/Library/Safari/Bookmarks.plist")
             testPaths.append(home + "/Library/Messages/chat.db")
+            testPaths.append(home + "/Library/Calendars/Calendar Cache")
         }
         testPaths.append("/Library/Preferences/com.apple.TimeMachine.plist")
         
@@ -70,6 +76,8 @@ public struct FullDiskAccessHelper {
             testDirs.append(home + "/Library/Safari")
             testDirs.append(home + "/Library/Messages")
             testDirs.append(home + "/Library/Mail")
+            testDirs.append(home + "/Library/Calendars")
+            testDirs.append(home + "/Library/Reminders")
         }
         
         // 2. 尝试列出受限文件夹的内容
@@ -90,6 +98,18 @@ public struct FullDiskAccessHelper {
                         }
                     }
                 }
+            }
+        }
+        
+        // 3. 对 TCC 签名身份变化后的额外容错兜底探针（非 NSTemporaryDirectory()，比如尝试读取用户的某些偏好设置文件）
+        // 探测是否可以读取某些通常无法在严格沙盒或被限制环境下读取的系统配置文件
+        let fallbackFiles = [
+            "/private/var/db/SystemPolicy-control/default.plist",
+            "/Library/Security/Trust Settings/Admin.plist"
+        ]
+        for path in fallbackFiles {
+            if FileManager.default.isReadableFile(atPath: path) {
+                return true
             }
         }
         
@@ -228,6 +248,285 @@ public final class SkillService: ObservableObject {
                 """,
                 scriptType: "shell",
                 scriptContent: "echo \"=== OS Info ===\"; uname -a; sw_vers; echo \"=== CPU Usage ===\"; top -l 1 | head -n 12; echo \"=== Memory Stats ===\"; vm_stat | head -n 8"
+            ),
+            LLMSkill(
+                name: "read_file_content",
+                description: "读取指定路径下文件内容并返回文本。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "要读取文件的绝对路径，例如 /Users/username/document.txt"}
+                    },
+                    "required": ["path"]
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "cat \"{{path}}\""
+            ),
+            LLMSkill(
+                name: "write_file_content",
+                description: "向指定路径写入文件内容。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "要写入的绝对文件路径"},
+                        "content": {"type": "string", "description": "要写入的具体文本内容"}
+                    },
+                    "required": ["path", "content"]
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "echo \"{{content}}\" > \"{{path}}\""
+            ),
+            LLMSkill(
+                name: "get_clipboard",
+                description: "获取当前系统剪贴板中的文本内容。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "pbpaste"
+            ),
+            LLMSkill(
+                name: "set_clipboard",
+                description: "设置系统剪贴板文本。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string", "description": "要复制到剪切板的文本内容"}
+                    },
+                    "required": ["text"]
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "echo -n \"{{text}}\" | pbcopy"
+            ),
+            LLMSkill(
+                name: "search_files",
+                description: "通过 Spotlight 引擎搜索符合条件的文件列表。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Spotlight 搜索查询关键词"},
+                        "path": {"type": "string", "description": "可选：指定搜索的文件夹绝对路径范围"}
+                    },
+                    "required": ["query"]
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "if [ -n \"{{path}}\" ]; then mdfind -onlyin \"{{path}}\" \"{{query}}\"; else mdfind \"{{query}}\"; fi"
+            ),
+            LLMSkill(
+                name: "send_notification",
+                description: "触发 macOS 系统横幅通知推送。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "description": "通知标题"},
+                        "message": {"type": "string", "description": "通知的具体消息正文内容"}
+                    },
+                    "required": ["title", "message"]
+                }
+                """,
+                scriptType: "notification",
+                scriptContent: ""
+            ),
+            LLMSkill(
+                name: "take_screenshot",
+                description: "对屏幕进行截图并保存到指定路径（留空则自动保存到桌面）。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "截图保存的绝对目标路径，例如 ~/Desktop/screen.png，留空则自动保存到桌面"}
+                    },
+                    "required": []
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "SAVE_PATH=\"${1:-$HOME/Desktop/screenshot_$(date +%Y%m%d_%H%M%S).png}\"; screencapture -x \"$SAVE_PATH\" 2>&1 && echo \"截图已保存到: $SAVE_PATH\""
+            ),
+            LLMSkill(
+                name: "control_volume",
+                description: "控制系统输出音量大小百分比。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "level": {"type": "number", "description": "音量大小，0至100之间的整数"}
+                    },
+                    "required": ["level"]
+                }
+                """,
+                scriptType: "applescript",
+                scriptContent: "set volume output volume {{level}}"
+            ),
+            LLMSkill(
+                name: "get_battery_status",
+                description: "查询当前电池充电状态与电量百分比。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "pmset -g batt"
+            ),
+            LLMSkill(
+                name: "get_wifi_status",
+                description: "查询当前 Wi-Fi 网络连接的 SSID 和状态。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "networksetup -getairportnetwork en0"
+            ),
+            LLMSkill(
+                name: "change_wallpaper",
+                description: "使用 AppleScript 更改桌面壁纸图片。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "壁纸图片的绝对文件路径"}
+                    },
+                    "required": ["path"]
+                }
+                """,
+                scriptType: "applescript",
+                scriptContent: "tell application \"Finder\" to set desktop picture to POSIX file \"{{path}}\""
+            ),
+            LLMSkill(
+                name: "query_calendar",
+                description: "使用 AppleScript 查询未来几天内的系统日历日程事件。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "days": {"type": "number", "description": "查询未来几天内的日历日程事件数，如 7"}
+                    },
+                    "required": ["days"]
+                }
+                """,
+                scriptType: "applescript",
+                scriptContent: """
+                tell application "Calendar"
+                    set targetDate to (current date) + ({{days}} * days)
+                    set output to ""
+                    repeat with aCalendar in calendars
+                        repeat with aEvent in (events of aCalendar whose start date is greater than or equal to (current date) and start date is less than or equal to targetDate)
+                            set output to output & (summary of aEvent) & " | " & (start date of aEvent as string) & "\\n"
+                        end repeat
+                    end repeat
+                    return output
+                end tell
+                """
+            ),
+            LLMSkill(
+                name: "get_running_processes",
+                description: "查询活跃的系统进程列表，按 CPU 使用率排序。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "ps -Ao pid,pcpu,pmem,comm -r | head -n 11"
+            ),
+            LLMSkill(
+                name: "system_garbage_cleanup",
+                description: "清理系统废纸篓、Xcode DerivedData 衍生缓存等垃圾，释放磁盘空间。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "deepClean": {"type": "boolean", "description": "是否开启深度清理（包括 Xcode 衍生数据）"}
+                    },
+                    "required": ["deepClean"]
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: """
+                echo "=== 开始系统清理 ==="
+                echo "正在清理废纸篓..."
+                rm -rf ~/.Trash/* 2>/dev/null || true
+                if [ "{{deepClean}}" = "true" ]; then
+                    echo "执行深度清理..."
+                    echo "正在清理 Xcode 缓存..."
+                    rm -rf ~/Library/Developer/Xcode/DerivedData/* 2>/dev/null || true
+                    echo "正在清理系统用户 Caches..."
+                    rm -rf ~/Library/Caches/* 2>/dev/null || true
+                fi
+                echo "=== 清理完成 ==="
+                """
+            ),
+            LLMSkill(
+                name: "reminders_manager",
+                description: "管理 macOS 系统待办事项（Reminders）。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "action": {"type": "string", "description": "操作：list (列出未完成), add (添加)"},
+                        "title": {"type": "string", "description": "待办名称（仅add操作需要）"},
+                        "daysOffset": {"type": "number", "description": "截止天数偏移（仅add操作可选）"}
+                    },
+                    "required": ["action"]
+                }
+                """,
+                scriptType: "applescript",
+                scriptContent: """
+                tell application "Reminders"
+                    if "{{action}}" is "list" then
+                        set output to ""
+                        set todoList to reminders of default list
+                        repeat with todo in todoList
+                            if not completed of todo then
+                                set output to output & (name of todo) & " | " & (due date of todo as string) & "\\n"
+                            end if
+                        end repeat
+                        return output
+                    else if "{{action}}" is "add" then
+                        set newTodo to make new reminder with properties {name:"{{title}}"}
+                        if "{{daysOffset}}" is not "" then
+                            set due date of newTodo to (current date) + ({{daysOffset}} * days)
+                        end if
+                        return "成功添加待办事项: {{title}}"
+                    end if
+                end tell
+                """
+            ),
+            LLMSkill(
+                name: "search_web",
+                description: "通过公开搜索引擎快速查询网页链接和摘要信息。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "要查询的关键字"}
+                    },
+                    "required": ["query"]
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "Q=\"{{query}}\"; ENCODED=$(python3 -c \"import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))\" \"$Q\" 2>/dev/null || echo \"$Q\"); curl -s -L -m 15 --user-agent \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)\" \"https://html.duckduckgo.com/html/?q=$ENCODED\" | grep -oE 'class=\"result__url[^>]+>[^<]+' | head -n 5 | sed 's/.*>//g;s/[ \t]*$//g'"
             )
         ]
     }
@@ -241,8 +540,14 @@ public final class SkillService: ObservableObject {
             return "{\"error\": \"未找到对应技能: \(name)\"}"
         }
         
+        // MARK: theme skill
         if skill.scriptType == "theme" || name == "set_god_mode_style" {
             return await executeGodModeSkill(arguments: arguments)
+        }
+        
+        // MARK: notification skill — use native UNUserNotificationCenter to avoid osascript TCC issues
+        if skill.scriptType == "notification" || name == "send_notification" {
+            return await executeNotificationSkill(arguments: arguments)
         }
         
         // Process arguments substitution
@@ -250,6 +555,11 @@ public final class SkillService: ObservableObject {
         for (key, value) in arguments {
             let strVal = "\(value)"
             script = script.replacingOccurrences(of: "{{\(key)}}", with: strVal)
+        }
+        // 清理所有未传入的可选参数模板，防止脚本报错
+        if let regex = try? NSRegularExpression(pattern: "\\{\\{.*?\\}\\}", options: []) {
+            let range = NSRange(script.startIndex..., in: script)
+            script = regex.stringByReplacingMatches(in: script, options: [], range: range, withTemplate: "")
         }
         
         if skill.scriptType == "shell" {
@@ -259,6 +569,37 @@ public final class SkillService: ObservableObject {
         }
         
         return "{\"error\": \"未知的技能类型: \(skill.scriptType)\"}"
+    }
+    
+    private func executeNotificationSkill(arguments: [String: Any]) async -> String {
+        let title = arguments["title"] as? String ?? "通知"
+        let message = arguments["message"] as? String ?? ""
+        
+        return await withCheckedContinuation { continuation in
+            let center = UNUserNotificationCenter.current()
+            center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+                guard granted else {
+                    continuation.resume(returning: "{\"error\": \"通知权限未授权，请在系统设置中开启通知权限\"}")
+                    return
+                }
+                let content = UNMutableNotificationContent()
+                content.title = title
+                content.body = message
+                content.sound = .default
+                let request = UNNotificationRequest(
+                    identifier: "com.yumikotoys.skill.\(UUID().uuidString)",
+                    content: content,
+                    trigger: nil
+                )
+                center.add(request) { error in
+                    if let e = error {
+                        continuation.resume(returning: "{\"error\": \"\(e.localizedDescription)\"}")
+                    } else {
+                        continuation.resume(returning: "{\"success\": true, \"message\": \"通知已发送: \(title)\"}")
+                    }
+                }
+            }
+        }
     }
     
     private func executeGodModeSkill(arguments: [String: Any]) async -> String {
@@ -369,11 +710,17 @@ public final class SkillService: ObservableObject {
         var errorInfo: NSDictionary?
         let result = appleScript.executeAndReturnError(&errorInfo)
         if let error = errorInfo {
-            let errorMsg = error.description
-            let response: [String: String] = ["error": errorMsg]
-            if let jsonData = try? JSONSerialization.data(withJSONObject: response, options: []),
-               let jsonStr = String(data: jsonData, encoding: .utf8) {
-                return jsonStr
+            // Extract a clean error message from the error dict
+            let errorMsg: String
+            if let msg = (error[NSAppleScript.errorMessage] as? String) ??
+                         (error[NSAppleScript.errorBriefMessage] as? String) {
+                errorMsg = msg
+            } else {
+                errorMsg = error.description
+            }
+            if let data = try? JSONSerialization.data(withJSONObject: ["error": errorMsg], options: []),
+               let str = String(data: data, encoding: .utf8) {
+                return str
             }
             return "{\"error\": \"\(errorMsg)\"}"
         }
@@ -381,8 +728,129 @@ public final class SkillService: ObservableObject {
         let response: [String: String] = ["output": output]
         if let jsonData = try? JSONSerialization.data(withJSONObject: response, options: []),
            let jsonStr = String(data: jsonData, encoding: .utf8) {
-                return jsonStr
+            return jsonStr
         }
         return output
+    }
+}
+
+// MARK: - CLI Installer
+
+public struct CLIInstaller {
+    public static func install() async throws {
+        let scriptContent = """
+        #!/bin/bash
+        
+        ACTION=$1
+        CONTAINER_TMP="$HOME/Library/Containers/com.Lite.YumikoToys/Data/tmp"
+        
+        if [ "$ACTION" = "install" ]; then
+            echo "Installing ytskill to /usr/local/bin/ytskill..."
+            if [ "$(id -u)" -ne 0 ]; then
+                sudo cp "$0" /usr/local/bin/ytskill
+                sudo chmod +x /usr/local/bin/ytskill
+            else
+                cp "$0" /usr/local/bin/ytskill
+                chmod +x /usr/local/bin/ytskill
+            fi
+            echo "ytskill installed successfully at /usr/local/bin/ytskill"
+            exit 0
+        fi
+        
+        if [ "$ACTION" = "list" ]; then
+            mkdir -p "$CONTAINER_TMP"
+            TEMP_FILE=$(mktemp "$CONTAINER_TMP/ytskill_list.XXXXXX")
+            open "yumikotoys://skill?action=list&output=$TEMP_FILE"
+            
+            COUNTER=0
+            while [ ! -s "$TEMP_FILE" ] && [ $COUNTER -lt 50 ]; do
+                sleep 0.1
+                COUNTER=$((COUNTER+1))
+            done
+            
+            if [ -s "$TEMP_FILE" ]; then
+                cat "$TEMP_FILE"
+            else
+                echo "Error: Timeout waiting for response from YumikoToys"
+                rm -f "$TEMP_FILE"
+                exit 1
+            fi
+            rm -f "$TEMP_FILE"
+            exit 0
+        fi
+        
+        if [ "$ACTION" = "run" ]; then
+            NAME=$2
+            if [ -z "$NAME" ]; then
+                echo "Usage: ytskill run <name> [--args '{\\"key\\":\\"value\\"}']"
+                exit 1
+            fi
+            
+            ARGS=""
+            if [ "$3" = "--args" ] && [ -n "$4" ]; then
+                ARGS="$4"
+            fi
+            
+            mkdir -p "$CONTAINER_TMP"
+            TEMP_FILE=$(mktemp "$CONTAINER_TMP/ytskill_run.XXXXXX")
+            
+            if command -v python3 >/dev/null 2>&1; then
+                ENCODED_ARGS=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$ARGS'''))")
+            elif command -v python >/dev/null 2>&1; then
+                ENCODED_ARGS=$(python -c "import urllib.parse; print(urllib.parse.quote('''$ARGS'''))")
+            else
+                ENCODED_ARGS=$(echo -n "$ARGS" | curl -s -o /dev/null -w "%{url_effective}" --data-urlencode @- "" | cut -c 3-)
+            fi
+        
+            open "yumikotoys://skill?action=run&name=$NAME&args=$ENCODED_ARGS&output=$TEMP_FILE"
+            
+            COUNTER=0
+            while [ ! -s "$TEMP_FILE" ] && [ $COUNTER -lt 100 ]; do
+                sleep 0.1
+                COUNTER=$((COUNTER+1))
+            done
+            
+            if [ -s "$TEMP_FILE" ]; then
+                cat "$TEMP_FILE"
+            else
+                echo "Error: Timeout or execution failure from YumikoToys"
+                rm -f "$TEMP_FILE"
+                exit 1
+            fi
+            rm -f "$TEMP_FILE"
+            exit 0
+        fi
+        
+        echo "YumikoToys Skill CLI Tool"
+        echo "Usage:"
+        echo "  ytskill list                          # 列出所有技能"
+        echo "  ytskill run <name> [--args '{\\"k\\":\\"v\\"}']  # 执行技能"
+        echo "  ytskill install                        # 安装/更新 CLI"
+        exit 1
+        """
+        
+        let tempDir = NSTemporaryDirectory()
+        let tempFilePath = (tempDir as NSString).appendingPathComponent("ytskill")
+        
+        try scriptContent.write(toFile: tempFilePath, atomically: true, encoding: .utf8)
+        
+        let appleScriptSource = """
+        do shell script "mkdir -p /usr/local/bin && cp '\(tempFilePath)' /usr/local/bin/ytskill && chmod +x /usr/local/bin/ytskill" with administrator privileges
+        """
+        
+        guard let appleScript = NSAppleScript(source: appleScriptSource) else {
+            throw NSError(domain: "CLIInstaller", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法创建 AppleScript 实例"])
+        }
+        
+        var errorInfo: NSDictionary?
+        _ = appleScript.executeAndReturnError(&errorInfo)
+        
+        // Clean up temp file
+        try? FileManager.default.removeItem(atPath: tempFilePath)
+        
+        if let error = errorInfo {
+            let errorMsg = error.description
+            throw NSError(domain: "CLIInstaller", code: -2, userInfo: [NSLocalizedDescriptionKey: errorMsg])
+        }
     }
 }
