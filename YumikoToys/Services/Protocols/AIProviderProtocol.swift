@@ -31,6 +31,7 @@ enum AIProviderType: String, Codable, CaseIterable, Identifiable, Sendable {
     case siliconflow = "siliconflow"
     case ollama = "ollama"
     case nvidia = "nvidia"
+    case poke = "poke"
 
     var id: String { rawValue }
 
@@ -44,6 +45,7 @@ enum AIProviderType: String, Codable, CaseIterable, Identifiable, Sendable {
         case .siliconflow: return "硅基流动"
         case .ollama: return "Ollama (本地)"
         case .nvidia: return "NVIDIA NIM"
+        case .poke: return "Poke AI (MCP)"
         }
     }
 
@@ -57,6 +59,7 @@ enum AIProviderType: String, Codable, CaseIterable, Identifiable, Sendable {
         case .siliconflow: return "⚡"
         case .ollama: return "🦙"
         case .nvidia: return "🅝"
+        case .poke: return "🅟"
         }
     }
 
@@ -78,6 +81,8 @@ enum AIProviderType: String, Codable, CaseIterable, Identifiable, Sendable {
             return "http://localhost:11434"
         case .nvidia:
             return "https://integrate.api.nvidia.com/v1"
+        case .poke:
+            return "https://poke.com/api/v1/inbound-sms/webhook"
         }
     }
 }

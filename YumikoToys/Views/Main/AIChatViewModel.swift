@@ -419,17 +419,17 @@ final class AIChatViewModel: ObservableObject {
         let isReasoningModel = mLower.contains("thinking") || mLower.contains("think") || mLower.contains("reasoner") || mLower.contains("r1")
         
         var resolvedAgentMode = enableAgentMode
-        if isReasoningModel {
+        if isReasoningModel || currentProvider == .poke {
             resolvedAgentMode = false
         }
         
-        let usePreInjectedSearch = enableWebSearch && !resolvedAgentMode
+        let usePreInjectedSearch = enableWebSearch && !resolvedAgentMode && currentProvider != .poke
         
         return ResolvedCapabilities(
             model: resolvedModel,
-            enableThinking: enableDeepThinking,
+            enableThinking: currentProvider == .poke ? false : enableDeepThinking,
             enableAgentMode: resolvedAgentMode,
-            enableWebSearch: enableWebSearch,
+            enableWebSearch: currentProvider == .poke ? false : enableWebSearch,
             usePreInjectedSearch: usePreInjectedSearch
         )
     }
@@ -457,16 +457,17 @@ final class AIChatViewModel: ObservableObject {
             let requiresAgent = queryLower.contains("文件") || queryLower.contains("代码") || queryLower.contains("写一") || queryLower.contains("编写") || queryLower.contains("创建") || queryLower.contains("运行")
             let requiresDeepThinking = queryLower.contains("为什么") || queryLower.contains("分析") || queryLower.contains("设计") || queryLower.contains("架构") || queryLower.contains("怎么")
             
-            let finalWebSearch = enableWebSearch || requiresSearch
-            let finalAgentMode = enableAgentMode || requiresAgent
-            let finalDeepThinking = enableDeepThinking || requiresDeepThinking
+            let isPoke = activeProvider == .poke
+            let finalWebSearch = !isPoke && (enableWebSearch || requiresSearch)
+            let finalAgentMode = !isPoke && (enableAgentMode || requiresAgent)
+            let finalDeepThinking = !isPoke && (enableDeepThinking || requiresDeepThinking)
 
             let resolved = self.resolveModelAndCapabilities()
             var activeModel = resolved.model
             let enableThinking = finalDeepThinking
             let enableAgentMode = finalAgentMode
             let enableWebSearch = finalWebSearch
-            let usePreInjectedSearch = enableWebSearch && !enableAgentMode
+            let usePreInjectedSearch = enableWebSearch && !enableAgentMode && !isPoke
 
             defer {
                 activeTasks[currentId] = nil
@@ -488,6 +489,12 @@ final class AIChatViewModel: ObservableObject {
                 inputText = ""
                 messages.append(userMsg)
                 messages.sort(by: { $0.timestamp < $1.timestamp })
+            }
+            
+            // 同步用户消息到 Poke
+            let userContentCopy = content
+            Task.detached {
+                PokeService.shared.sendMessage("[User]: \(userContentCopy)")
             }
 
             // 同步写入持久化历史
@@ -860,6 +867,12 @@ final class AIChatViewModel: ObservableObject {
                         history,
                         for: currentId.uuidString
                     )
+                    
+                    // 同步助手回复到 Poke
+                    let assistantContentCopy = displayContent
+                    Task.detached {
+                        PokeService.shared.sendMessage("[Assistant]: \(assistantContentCopy)")
+                    }
 
                     await MainActor.run {
                         if let lastIdx = messages.lastIndex(where: { $0.role == "assistant" && !$0.isAgentStep }) {

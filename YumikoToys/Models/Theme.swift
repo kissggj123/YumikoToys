@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ResolvedTheme: Equatable, Sendable {
+@MainActor struct ResolvedTheme: Equatable, Sendable {
     let color: ThemeColor
     let customHex: String
     

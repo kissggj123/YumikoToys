@@ -44,7 +44,8 @@ struct APISettings: Codable, Sendable {
             .deepseek: .deepseekDefault,
             .siliconflow: .siliconflowDefault,
             .ollama: .ollamaDefault,
-            .nvidia: .nvidiaDefault
+            .nvidia: .nvidiaDefault,
+            .poke: .pokeDefault
         ]
         self.providerConfigsArray = configs.map { ProviderConfigEntry(provider: $0.key, config: $0.value) }
         self.estimatedSentTokens = estimatedSentTokens
@@ -106,7 +107,8 @@ struct APISettings: Codable, Sendable {
                 .deepseek: .deepseekDefault,
                 .siliconflow: .siliconflowDefault,
                 .ollama: .ollamaDefault,
-                .nvidia: .nvidiaDefault
+                .nvidia: .nvidiaDefault,
+                .poke: .pokeDefault
             ]
             
             for (p, defaultConfig) in allDefaults {
@@ -144,7 +146,8 @@ struct APISettings: Codable, Sendable {
                 .deepseek: .deepseekDefault,
                 .siliconflow: .siliconflowDefault,
                 .ollama: .ollamaDefault,
-                .nvidia: .nvidiaDefault
+                .nvidia: .nvidiaDefault,
+                .poke: .pokeDefault
             ]
             
             providerConfigsArray = configsMap.map { ProviderConfigEntry(provider: $0.key, config: $0.value) }

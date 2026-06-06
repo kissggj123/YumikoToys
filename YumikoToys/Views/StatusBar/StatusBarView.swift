@@ -10,7 +10,7 @@ import Combine
 
 // MARK: - 主题色枚举
 
-enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
+@MainActor enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     case dark       // 深色经典
     case pink       // 淡粉色
     case lavender   // 薰衣草紫
@@ -120,6 +120,81 @@ enum ThemeColor: String, CaseIterable, Codable, Sendable, Identifiable {
     var destructiveButtonColor: Color { destructiveButtonColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
     var iconColor: Color { iconColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
     var hoverBackgroundColor: Color { hoverBackgroundColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
+    
+    var originalIconGradient: [Color] {
+        switch self {
+        case .dark:
+            return [Color(hex: "FF6B9D"), Color(hex: "C44FE2")]
+        case .pink:
+            return [Color(hex: "FFB6C1"), Color(hex: "E85D75")]
+        case .lavender:
+            return [Color(hex: "C4B5FD"), Color(hex: "8B5CF6")]
+        case .mint:
+            return [Color(hex: "6EE7B7"), Color(hex: "10B981")]
+        case .ocean:
+            return [Color(hex: "93C5FD"), Color(hex: "3B82F6")]
+        case .sunset:
+            return [Color(hex: "FCD34D"), Color(hex: "F59E0B")]
+        case .pixel:
+            return [Color(hex: "22D3EE"), Color(hex: "A78BFA")]
+        case .sakura:
+            return [Color(hex: "FFB7C5"), Color(hex: "FF91A8")]
+        case .deepSea:
+            return [Color(hex: "48CAE4"), Color(hex: "00B4D8")]
+        case .forest:
+            return [Color(hex: "95D5B2"), Color(hex: "52B788")]
+        case .amber:
+            return [Color(hex: "FFD166"), Color(hex: "F4A261")]
+        case .crimson:
+            return [Color(hex: "E2B0FF"), Color(hex: "C77DFF")]
+        case .arctic:
+            return [Color(hex: "74B0E8"), Color(hex: "4A90D9")]
+        case .roseGold:
+            return [Color(hex: "F2C4A8"), Color(hex: "E8956D")]
+        case .charcoal:
+            return [Color(hex: "D0D0D0"), Color(hex: "A0A0A0")]
+        case .custom:
+            let c = Color(hex: DependencyContainer.shared.settingsService.settings.customThemeColorHex)
+            return [c, c.opacity(0.7)]
+        }
+    }
+    
+    var originalAccentColor: Color {
+        switch self {
+        case .dark:
+            return Color(hex: "FF6B9D")
+        case .pink:
+            return Color(hex: "E85D75")
+        case .lavender:
+            return Color(hex: "8B5CF6")
+        case .mint:
+            return Color(hex: "10B981")
+        case .ocean:
+            return Color(hex: "3B82F6")
+        case .sunset:
+            return Color(hex: "F59E0B")
+        case .pixel:
+            return Color(hex: "22D3EE")
+        case .sakura:
+            return Color(hex: "FFB7C5")
+        case .deepSea:
+            return Color(hex: "00B4D8")
+        case .forest:
+            return Color(hex: "52B788")
+        case .amber:
+            return Color(hex: "F4A261")
+        case .crimson:
+            return Color(hex: "C77DFF")
+        case .arctic:
+            return Color(hex: "4A90D9")
+        case .roseGold:
+            return Color(hex: "E8956D")
+        case .charcoal:
+            return Color(hex: "A0A0A0")
+        case .custom:
+            return Color(hex: DependencyContainer.shared.settingsService.settings.customThemeColorHex)
+        }
+    }
 }
 
 // MARK: - ThemeColor Parameterized Extensions
@@ -1188,7 +1263,7 @@ struct ThemeColorButton: View {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(
                             LinearGradient(
-                                colors: theme.iconGradient,
+                                colors: theme.originalIconGradient,
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -1206,12 +1281,12 @@ struct ThemeColorButton: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(isSelected ? .white : Color.clear, lineWidth: 2)
                 )
-                .shadow(color: theme.accentColor.opacity(isHovered ? 0.5 : 0.3), radius: isHovered ? 6 : 3)
+                .shadow(color: theme.originalAccentColor.opacity(isHovered ? 0.5 : 0.3), radius: isHovered ? 6 : 3)
 
                 // 主题名称
                 Text(theme.displayName)
                     .font(.system(size: 9, weight: .medium, design: .rounded))
-                    .foregroundStyle(isSelected ? theme.accentColor : .secondary)
+                    .foregroundStyle(isSelected ? theme.originalAccentColor : .secondary)
             }
         }
         .buttonStyle(.plain)

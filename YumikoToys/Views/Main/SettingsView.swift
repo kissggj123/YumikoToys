@@ -32,6 +32,7 @@ struct SettingsView: View {
                     layoutSection
                     preventSleepSection
                     timeSyncSection
+                    pokeIntegrationSection
                     modelManagementSection
                     backgroundLearningSection
                     psychologySettingsSection
@@ -1212,6 +1213,38 @@ struct SettingsView: View {
                         Task { await viewModel.selectCustomFont() }
                     }
                 }
+                
+                if viewModel.selectedFont == .systemCustom {
+                    HStack {
+                        Image(systemName: "textformat.size")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20)
+                        
+                        Text("选择内置系统字体")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary)
+                        
+                        Spacer()
+                        
+                        Picker("", selection: Binding(
+                            get: { viewModel.selectedSystemFontFamily ?? "" },
+                            set: { viewModel.selectSystemFontFamily($0) }
+                        )) {
+                            Text("请选择系统字体").tag("")
+                            ForEach(NSFontManager.shared.availableFontFamilies.sorted(), id: \.self) { family in
+                                Text(family).tag(family)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(width: 180)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(Color.primary.opacity(0.04))
+                    .cornerRadius(8)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
             }
         }
     }
@@ -1345,6 +1378,60 @@ struct SettingsView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.timeOffset)
         .animation(.easeInOut(duration: 0.2), value: viewModel.isTimeSyncing)
+    }
+    
+    private var pokeIntegrationSection: some View {
+        SettingsSection(title: "Poke 集成", icon: "link", iconColor: "00C7BE") {
+            VStack(alignment: .leading, spacing: 12) {
+                SettingsToggleRow(
+                    icon: viewModel.enablePoke ? "link.circle.fill" : "link.circle",
+                    iconColor: "00C7BE",
+                    title: "启用 Poke 集成",
+                    subtitle: viewModel.enablePoke ? "AI 对话内容将实时同步至 Poke" : "开启后同步 AI 对话消息到 Poke",
+                    isOn: Binding(
+                        get: { viewModel.enablePoke },
+                        set: { _ in viewModel.toggleEnablePoke() }
+                    )
+                )
+                
+                if viewModel.enablePoke {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Poke API Key")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        
+                        HStack(spacing: 8) {
+                            Image(systemName: "key.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                            
+                            SecureField("输入您的 Poke API Key", text: Binding(
+                                get: { viewModel.pokeApiKey },
+                                set: { viewModel.updatePokeApiKey($0) }
+                            ))
+                            .font(.system(size: 12, design: .monospaced))
+                            .textFieldStyle(.plain)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .background(Color.primary.opacity(0.04))
+                        .cornerRadius(6)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("💡 如何获取 API Key？")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.secondary)
+                        Text("1. 访问 https://poke.com/settings/advanced 并创建 API Key。\n2. 在上方填入 API Key 即可自动实时同步。")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                            .lineSpacing(3)
+                    }
+                    .padding(.top, 4)
+                }
+            }
+        }
     }
 
     private var modelManagementSection: some View {
@@ -2493,6 +2580,9 @@ final class SettingsViewModel: ObservableObject {
     @Published var selectedIconStyle: IconStyle = .pixelAnimal
     @Published var statusBarIconStyle: IconStyle = .originalHattie
     @Published var customFontPath: String?
+    @Published var selectedSystemFontFamily: String?
+    @Published var enablePoke = false
+    @Published var pokeApiKey = ""
     @Published var enableBackgroundLearning: Bool = true
     @Published var selectedThemeColor: ThemeColor = .dark
     @Published var customThemeColorHex: String = "FF6B9D"
@@ -2619,6 +2709,9 @@ final class SettingsViewModel: ObservableObject {
         selectedIconStyle = settings.selectedIconStyle
         statusBarIconStyle = settings.statusBarIconStyle
         customFontPath = settings.customFontPath
+        selectedSystemFontFamily = settings.selectedSystemFontFamily
+        enablePoke = settings.enablePoke
+        pokeApiKey = settings.pokeApiKey ?? ""
         selectedThemeColor = settings.selectedThemeColor
         customThemeColorHex = settings.customThemeColorHex
         mainWindowThemeColor = settings.mainWindowThemeColor
@@ -2719,6 +2812,9 @@ final class SettingsViewModel: ObservableObject {
                 self.selectedIconStyle = updatedSettings.selectedIconStyle
                 self.statusBarIconStyle = updatedSettings.statusBarIconStyle
                 self.customFontPath = updatedSettings.customFontPath
+                self.selectedSystemFontFamily = updatedSettings.selectedSystemFontFamily
+                self.enablePoke = updatedSettings.enablePoke
+                self.pokeApiKey = updatedSettings.pokeApiKey ?? ""
                 
                 self.godModeEnabled = updatedSettings.godModeEnabled
                 self.customBackgroundColorHex = updatedSettings.customBackgroundColorHex
@@ -2778,6 +2874,35 @@ final class SettingsViewModel: ObservableObject {
         settings.selectedFont = font
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("Font changed to: \(font.displayName)")
+    }
+    
+    func selectSystemFontFamily(_ family: String) {
+        let trimmed = family.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        selectedSystemFontFamily = trimmed
+        var settings = container.settingsService.settings
+        settings.selectedSystemFontFamily = trimmed
+        settings.selectedFont = .systemCustom
+        container.settingsService.updateSettings(settings)
+        selectedFont = .systemCustom
+        LoggerService.shared.info("System custom font family changed to: \(trimmed)")
+    }
+    
+    func toggleEnablePoke() {
+        enablePoke.toggle()
+        var settings = container.settingsService.settings
+        settings.enablePoke = enablePoke
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Poke integration toggled to: \(enablePoke)")
+    }
+    
+    func updatePokeApiKey(_ key: String) {
+        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        pokeApiKey = trimmed
+        var settings = container.settingsService.settings
+        settings.pokeApiKey = trimmed.isEmpty ? nil : trimmed
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Poke API Key updated")
     }
     
     func selectIconStyle(_ style: IconStyle) {
@@ -3457,14 +3582,14 @@ struct CommandLineInstructionRow: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(desc)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.secondary)
+            Text("// \(desc)")
+                .font(.system(size: 10.5, design: .monospaced))
+                .foregroundStyle(Color.white.opacity(0.45))
             
             HStack {
                 Text(cmd)
-                    .font(.system(size: 10.5, design: .monospaced))
-                    .foregroundStyle(Color(hex: "30D158")) // terminal green
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(Color(hex: "30D158")) // Terminal green
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 
@@ -3485,26 +3610,26 @@ struct CommandLineInstructionRow: View {
                     HStack(spacing: 4) {
                         Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
                             .imageScale(.small)
-                            .foregroundColor(isCopied ? .green : .secondary)
+                            .foregroundColor(isCopied ? .green : .white.opacity(0.8))
                         Text(isCopied ? "已复制" : "复制")
                             .font(.system(size: 9))
-                            .foregroundColor(isCopied ? .green : .secondary)
+                            .foregroundColor(isCopied ? .green : .white.opacity(0.8))
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(Color.primary.opacity(isHovered ? 0.08 : 0.03))
-                    .cornerRadius(4)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(isHovered ? 0.15 : 0.06))
+                    .cornerRadius(5)
                 }
                 .buttonStyle(.plain)
                 .onHover { isHovered = $0 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(Color.black.opacity(0.3))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.03))
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                    .stroke(Color.white.opacity(0.04), lineWidth: 1)
             )
         }
     }
@@ -3512,43 +3637,71 @@ struct CommandLineInstructionRow: View {
 
 struct CommandLineInstructionView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             Divider()
                 .background(Color.primary.opacity(0.08))
                 .padding(.vertical, 4)
                 
             HStack(spacing: 6) {
-                Image(systemName: "chevron.right.terminal.fill")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: "FF9500"))
+                Image(systemName: "terminal.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(hex: "AF52DE"))
                 Text("终端命令用法示例")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.primary)
             }
             
             Text("安装后，您可以在终端中使用 `ytskill` 命令行工具来调试或运行大模型技能：")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
-                .lineSpacing(2)
+                .lineSpacing(3)
             
-            VStack(spacing: 8) {
-                CommandLineInstructionRow(
-                    cmd: "ytskill list",
-                    desc: "1. 列出当前所有已注册的技能脚本 (预设与自定义)"
-                )
-                CommandLineInstructionRow(
-                    cmd: "ytskill run system_garbage_cleanup",
-                    desc: "2. 运行系统预设技能：垃圾清理 (清除无用缓存)"
-                )
-                CommandLineInstructionRow(
-                    cmd: "ytskill run reminders_manager --args '{\"title\":\"买牛奶\"}'",
-                    desc: "3. 运行系统预设技能：提醒事项，支持传入参数"
-                )
-                CommandLineInstructionRow(
-                    cmd: "ytskill run search_web --args '{\"query\":\"Tahoe\"}'",
-                    desc: "4. 运行系统预设技能：网页搜索，并传递搜索参数"
-                )
+            // Terminal block simulating macOS terminal window
+            VStack(alignment: .leading, spacing: 0) {
+                // Title Bar
+                HStack(spacing: 6) {
+                    Circle().fill(Color(hex: "FF5F56")).frame(width: 8, height: 8)
+                    Circle().fill(Color(hex: "FFBD2E")).frame(width: 8, height: 8)
+                    Circle().fill(Color(hex: "27C93F")).frame(width: 8, height: 8)
+                    Spacer()
+                    Text("ytskill - terminal")
+                        .font(.system(size: 9.5, design: .monospaced))
+                        .foregroundStyle(Color.white.opacity(0.5))
+                    Spacer()
+                    Spacer().frame(width: 36)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.08))
+                
+                // Content area
+                VStack(spacing: 12) {
+                    CommandLineInstructionRow(
+                        cmd: "ytskill list",
+                        desc: "列出当前所有已注册的技能脚本 (预设与自定义)"
+                    )
+                    CommandLineInstructionRow(
+                        cmd: "ytskill run system_garbage_cleanup",
+                        desc: "运行系统预设技能：垃圾清理 (清除无用缓存)"
+                    )
+                    CommandLineInstructionRow(
+                        cmd: "ytskill run reminders_manager --args '{\"title\":\"买牛奶\"}'",
+                        desc: "运行系统预设技能：提醒事项，支持传入参数"
+                    )
+                    CommandLineInstructionRow(
+                        cmd: "ytskill run search_web --args '{\"query\":\"Tahoe\"}'",
+                        desc: "运行系统预设技能：网页搜索，并传递搜索参数"
+                    )
+                }
+                .padding(12)
+                .background(Color.black.opacity(0.75))
             }
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.2), radius: 8, y: 4)
         }
         .padding(.vertical, 4)
     }

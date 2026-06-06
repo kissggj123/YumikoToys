@@ -171,6 +171,94 @@ final class UniversalLLMProvider: AIProvider {
             Task {
                 do {
                     let cleanBaseURL = capturedBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    if providerType == .poke {
+                        let endpoint = cleanBaseURL.isEmpty ? "https://poke.com/api/v1/inbound-sms/webhook" : cleanBaseURL
+                        guard let url = URL(string: endpoint) else { throw AIProviderError.invalidURL }
+                        
+                        var request = URLRequest(url: url)
+                        request.httpMethod = "POST"
+                        request.setValue("Bearer \(capturedApiKey)", forHTTPHeaderField: "Authorization")
+                        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                        
+                        let userMessage = messages.last(where: { $0.role == "user" })?.content ?? ""
+                        let payload: [String: Any] = [
+                            "message": userMessage
+                        ]
+                        
+                        request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
+                        
+                        let session = SmartProxyManager.makeSession(for: endpoint)
+                        var dataAndResponse: (Data, URLResponse)? = nil
+                        do {
+                            dataAndResponse = try await session.data(for: request)
+                        } catch {
+                            LoggerService.shared.warning("Proxy session failed for \(endpoint): \(error). Falling back to direct connection...")
+                            dataAndResponse = try await URLSession.shared.data(for: request)
+                        }
+                        
+                        guard let (data, response) = dataAndResponse else {
+                            throw AIProviderError.apiError("Failed to fetch from Poke")
+                        }
+                        
+                        guard let httpResponse = response as? HTTPURLResponse else {
+                            throw AIProviderError.invalidResponse
+                        }
+                        
+                        guard (200...299).contains(httpResponse.statusCode) else {
+                            let errorStr = String(data: data, encoding: .utf8) ?? "Status \(httpResponse.statusCode)"
+                            throw AIProviderError.apiError("HTTP \(httpResponse.statusCode): \(errorStr)")
+                        }
+                        
+                        func parsePokeResponse(_ data: Data) -> String? {
+                            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                                var extracted: String? = nil
+                                if let responseVal = json["response"] as? String { extracted = responseVal }
+                                else if let replyVal = json["reply"] as? String { extracted = replyVal }
+                                else if let messageVal = json["message"] as? String { extracted = messageVal }
+                                else if let contentVal = json["content"] as? String { extracted = contentVal }
+                                else if let textVal = json["text"] as? String { extracted = textVal }
+                                else if let outputVal = json["output"] as? String { extracted = outputVal }
+                                else if let choices = json["choices"] as? [[String: Any]],
+                                   let firstChoice = choices.first,
+                                   let msgDict = firstChoice["message"] as? [String: Any],
+                                   let contentVal = msgDict["content"] as? String {
+                                    extracted = contentVal
+                                } else {
+                                    for (_, value) in json {
+                                        if let str = value as? String {
+                                            extracted = str
+                                            break
+                                        }
+                                    }
+                                }
+                                
+                                if let extracted = extracted {
+                                    if extracted == "Message sent successfully" {
+                                        return "Message sent successfully! 🚀\n\n您的消息已成功投递至 Poke。Poke 助理将会直接在您的绑定渠道（如 iMessage / SMS / WhatsApp / Telegram）中为您发送并同步该条回复。"
+                                    }
+                                    return extracted
+                                }
+                            }
+                            if let plainText = String(data: data, encoding: .utf8) {
+                                let trimmed = plainText.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if trimmed == "Message sent successfully" {
+                                    return "Message sent successfully! 🚀\n\n您的消息已成功投递至 Poke。Poke 助理将会直接在您的绑定渠道（如 iMessage / SMS / WhatsApp / Telegram）中为您发送并同步该条回复。"
+                                }
+                                return trimmed
+                            }
+                            return nil
+                        }
+                        
+                        if let reply = parsePokeResponse(data) {
+                            continuation.yield(.textContent(reply))
+                        } else {
+                            throw AIProviderError.apiError("Empty response body")
+                        }
+                        continuation.finish()
+                        return
+                    }
+                    
                     let urlRequest: URLRequest
                     
                     if providerType == .anthropic {

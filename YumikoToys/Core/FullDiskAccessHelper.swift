@@ -394,7 +394,31 @@ public final class SkillService: ObservableObject {
                 }
                 """,
                 scriptType: "shell",
-                scriptContent: "networksetup -getairportnetwork en0"
+                scriptContent: """
+                WIFI_INT=$(networksetup -listallhardwareports 2>/dev/null | awk '/Hardware Port: Wi-Fi/{getline; print $2}')
+                if [ -z "$WIFI_INT" ]; then
+                    WIFI_INT="en0"
+                fi
+                
+                IPCONFIG_SSID=$(ipconfig getsummary "$WIFI_INT" 2>/dev/null | awk -F ': ' '/SSID/{print $2}' | xargs)
+                if [ -n "$IPCONFIG_SSID" ] && [ "$IPCONFIG_SSID" != "<redacted>" ]; then
+                    echo "Current Wi-Fi SSID: $IPCONFIG_SSID"
+                    exit 0
+                fi
+                
+                PROFILER_SSID=$(system_profiler SPAirPortDataType 2>/dev/null | awk '/Current Network Information:/{getline; print $0}' | sed 's/^[ \t]*//;s/:[ \t]*$//' | xargs)
+                if [ -n "$PROFILER_SSID" ]; then
+                    echo "Current Wi-Fi SSID: $PROFILER_SSID"
+                    exit 0
+                fi
+                
+                NS_OUT=$(networksetup -getairportnetwork "$WIFI_INT" 2>/dev/null)
+                if echo "$NS_OUT" | grep -q "Current Wi-Fi Network"; then
+                    echo "$NS_OUT"
+                else
+                    echo "Wi-Fi is enabled but not associated with a network, or permission is restricted. (Interface: $WIFI_INT)"
+                fi
+                """
             ),
             LLMSkill(
                 name: "change_wallpaper",

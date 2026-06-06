@@ -55,6 +55,19 @@ final class SettingsService: SettingsServiceProtocol {
         settingsSubject.send(settings)
         saveSettings()
         LoggerService.shared.debug("Settings updated")
+        
+        // 同步至字体管理器
+        FontManager.shared.updateActiveFont(
+            type: settings.selectedFont,
+            customPath: settings.customFontPath,
+            systemFamily: settings.selectedSystemFontFamily
+        )
+        
+        // 同步至 Poke 服务
+        PokeService.shared.updatePokeSettings(
+            enablePoke: settings.enablePoke,
+            apiKey: settings.pokeApiKey
+        )
     }
     
     func updateMode(_ mode: AppMode) {
@@ -89,6 +102,18 @@ final class SettingsService: SettingsServiceProtocol {
             settings = loaded
             settingsSubject.send(settings)
             LoggerService.shared.debug("Settings loaded from storage")
+            
+            // 初始化同步至字体管理器与 Poke
+            FontManager.shared.updateActiveFont(
+                type: settings.selectedFont,
+                customPath: settings.customFontPath,
+                systemFamily: settings.selectedSystemFontFamily
+            )
+            
+            PokeService.shared.updatePokeSettings(
+                enablePoke: settings.enablePoke,
+                apiKey: settings.pokeApiKey
+            )
         }
     }
 }

@@ -240,6 +240,8 @@ struct ChatSettingsView: View {
             return [("官方 NIM", "https://integrate.api.nvidia.com/v1")]
         case .glm:
             return [("官方", "https://open.bigmodel.cn/api/paas/v4")]
+        case .poke:
+            return [("Poke Webhook", "https://poke.com/api/v1/inbound-sms/webhook")]
         }
     }
 
@@ -740,7 +742,14 @@ final class ChatSettingsViewModel: ObservableObject {
         // 加载当前活跃的非 GLM 提供商配置
         if currentProvider != .glm {
             let activeConfig = settings.providerConfigs[currentProvider]
-            nvidiaAPIKey = activeConfig?.apiKey ?? ""
+            var apiKey = activeConfig?.apiKey ?? ""
+            if currentProvider == .poke && apiKey.isEmpty {
+                let appSettings = container.settingsService.settings
+                if let savedKey = appSettings.pokeApiKey, !savedKey.isEmpty {
+                    apiKey = savedKey
+                }
+            }
+            nvidiaAPIKey = apiKey
             nvidiaBaseURL = activeConfig?.apiURL ?? currentProvider.defaultBaseURL
             nvidiaSelectedModel = activeConfig?.model ?? ""
             nvidiaModels = activeConfig?.availableModels ?? []
@@ -805,6 +814,7 @@ final class ChatSettingsViewModel: ObservableObject {
             case .siliconflow: configs[.siliconflow] = .siliconflowDefault
             case .ollama: configs[.ollama] = .ollamaDefault
             case .nvidia: configs[.nvidia] = .nvidiaDefault
+            case .poke: configs[.poke] = .pokeDefault
             }
         }
         
@@ -826,7 +836,14 @@ final class ChatSettingsViewModel: ObservableObject {
             )
         } else {
             let config = settings.providerConfigs[provider]
-            nvidiaAPIKey = config?.apiKey ?? ""
+            var apiKey = config?.apiKey ?? ""
+            if provider == .poke && apiKey.isEmpty {
+                let appSettings = container.settingsService.settings
+                if let savedKey = appSettings.pokeApiKey, !savedKey.isEmpty {
+                    apiKey = savedKey
+                }
+            }
+            nvidiaAPIKey = apiKey
             nvidiaBaseURL = config?.apiURL ?? provider.defaultBaseURL
             nvidiaSelectedModel = config?.model ?? ""
             nvidiaModels = config?.availableModels ?? []
@@ -938,6 +955,8 @@ final class ChatSettingsViewModel: ObservableObject {
             return ProviderConfig.ollamaDefault.availableModels
         case .nvidia:
             return []
+        case .poke:
+            return ProviderConfig.pokeDefault.availableModels
         }
     }
 

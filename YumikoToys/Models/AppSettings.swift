@@ -53,8 +53,9 @@ enum AppMode: String, Codable, CaseIterable, Sendable, Identifiable {
 /// 字体设置
 enum AppFont: String, Codable, CaseIterable, Sendable, Identifiable {
     case system = "system"
-    case cute = "cute"           // AaGXLZGKADS 可爱字体
-    case custom = "custom"       // 外部字体
+    case cute = "cute"                 // AaGXLZGKADS 可爱字体
+    case systemCustom = "systemCustom" // 系统内置字体
+    case custom = "custom"             // 外部字体
     
     var id: String { rawValue }
     
@@ -62,6 +63,7 @@ enum AppFont: String, Codable, CaseIterable, Sendable, Identifiable {
         switch self {
         case .system: return "系统默认"
         case .cute: return "可爱字体"
+        case .systemCustom: return "系统内置"
         case .custom: return "外部字体"
         }
     }
@@ -70,6 +72,7 @@ enum AppFont: String, Codable, CaseIterable, Sendable, Identifiable {
         switch self {
         case .system: return "🐰"
         case .cute: return "🐱"
+        case .systemCustom: return "⚙️"
         case .custom: return "🐻"
         }
     }
@@ -320,6 +323,9 @@ struct AppSettings: Codable, Sendable {
     var selectedThemeColor: ThemeColor  // 状态栏主题色
     var customThemeColorHex: String  // 自定义主题色 Hex
     var customFontPath: String?  // 外部字体路径
+    var selectedSystemFontFamily: String? // 系统内置字体名称
+    var enablePoke: Bool // 是否开启 Poke 集成
+    var pokeApiKey: String? // Poke API Key
     var ntpConfiguration: NTPConfiguration  // NTP 服务器配置
 
     /// 默认对话模式
@@ -382,6 +388,9 @@ struct AppSettings: Codable, Sendable {
         selectedThemeColor: ThemeColor = .dark,  // 默认深色主题
         customThemeColorHex: String = "FF6B9D",
         customFontPath: String? = nil,
+        selectedSystemFontFamily: String? = nil,
+        enablePoke: Bool = false,
+        pokeApiKey: String? = nil,
         ntpConfiguration: NTPConfiguration = .default,
         defaultChatMode: ChatMode = .petCompanion,
         assistantConfig: AssistantConfig = .default,
@@ -429,6 +438,9 @@ struct AppSettings: Codable, Sendable {
         self.selectedThemeColor = selectedThemeColor
         self.customThemeColorHex = customThemeColorHex
         self.customFontPath = customFontPath
+        self.selectedSystemFontFamily = selectedSystemFontFamily
+        self.enablePoke = enablePoke
+        self.pokeApiKey = pokeApiKey
         self.ntpConfiguration = ntpConfiguration
         self.defaultChatMode = defaultChatMode
         self.assistantConfig = assistantConfig
@@ -487,6 +499,9 @@ struct AppSettings: Codable, Sendable {
         customThemeColorHex = decodedThemeHex
         
         customFontPath = try container.decodeIfPresent(String.self, forKey: .customFontPath)
+        selectedSystemFontFamily = try container.decodeIfPresent(String.self, forKey: .selectedSystemFontFamily)
+        enablePoke = try container.decodeIfPresent(Bool.self, forKey: .enablePoke) ?? false
+        pokeApiKey = try container.decodeIfPresent(String.self, forKey: .pokeApiKey)
         ntpConfiguration = try container.decodeIfPresent(NTPConfiguration.self, forKey: .ntpConfiguration) ?? .default
         defaultChatMode = try container.decodeIfPresent(ChatMode.self, forKey: .defaultChatMode) ?? .petCompanion
         assistantConfig = try container.decodeIfPresent(AssistantConfig.self, forKey: .assistantConfig) ?? .default

@@ -175,4 +175,18 @@ extension ProviderConfig {
             availableModels: []
         )
     }
+
+    /// Poke 默认配置
+    static var pokeDefault: ProviderConfig {
+        ProviderConfig(
+            apiURL: AIProviderType.poke.defaultBaseURL,
+            apiKey: "",
+            model: "poke-agent",
+            autoSelect: false,
+            fallbackModels: ["poke-agent"],
+            availableModels: [
+                AIModelInfo(id: "poke-agent", name: "Poke Agent", provider: .poke, description: "Poke 智能助手", supportsThinking: false, supportsVision: false, supportsTools: false)
+            ]
+        )
+    }
 }
