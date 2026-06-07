@@ -22,7 +22,11 @@ protocol BackgroundLearningServiceProtocol: ServiceLifecycle {
     func resetLearning()  // 重置学习状态
     func deduplicateExistingPreferences() async // 👈 【核心整合】全量历史偏好深度去重与垃圾词深度净化接口
     var isLearning: Bool { get }
+    var learningProgress: Double { get }
+    var learningStatus: String { get }
     var learningPublisher: AnyPublisher<Bool, Never> { get }
+    var learningProgressPublisher: AnyPublisher<Double, Never> { get }
+    var learningStatusPublisher: AnyPublisher<String, Never> { get }
     var learningResultsPublisher: AnyPublisher<LearningResult, Never> { get }
 }
 
@@ -52,6 +56,17 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
     @Published private(set) var isLearning: Bool = false
     var learningPublisher: AnyPublisher<Bool, Never> {
         $isLearning.eraseToAnyPublisher()
+    }
+
+    @Published private(set) var learningProgress: Double = 0.0
+    @Published private(set) var learningStatus: String = ""
+
+    var learningProgressPublisher: AnyPublisher<Double, Never> {
+        $learningProgress.eraseToAnyPublisher()
+    }
+
+    var learningStatusPublisher: AnyPublisher<String, Never> {
+        $learningStatus.eraseToAnyPublisher()
     }
 
     // 学习结果实时推送 Publisher
@@ -186,8 +201,13 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
         // 👈 【优化：避免无 FDA 时的重复弹窗】检测完全磁盘访问权限，如果未授予，则跳过后台学习并记录警告
         guard FullDiskAccessHelper.hasFullDiskAccess else {
             LoggerService.shared.warning("[BackgroundLearningService] 未授予完全磁盘访问权限 (FDA)，已跳过后台学习以防重复申请权限提示。")
+            learningStatus = "未授予完全磁盘访问权限，学习已跳过"
+            learningProgress = 0.0
             return
         }
+        
+        learningProgress = 0.05
+        learningStatus = "正在扫描历史会话文件..."
         
         // 👈 【核心 Bug 1 修复】物理载入沙盒中所有的历史会话文件，而不再依赖处于内存休眠状态的单个 currentConversationId。
         // 这彻底解决了在主界面点击“立即学习”时因为会话 ID 默认为 "default" 导致消息数判定为 0 从而静默跳过分析的严重时序 Bug。 [2]
@@ -198,11 +218,16 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
         // 如果物理消息总数没有增加，说明没有新产生的聊天内容，安全跳过计算，节约能效
         guard allMessages.count > lastAnalyzedMessageCount else {
             LoggerService.shared.debug("No new physical conversation logs detected. Skipping active learning.")
+            learningStatus = "无新增会话数据"
+            learningProgress = 1.0
             return
         }
         
         isLearning = true
         defer { isLearning = false }
+        
+        learningProgress = 0.15
+        learningStatus = "发现新消息，正在提取增量文本..."
         
         // 提取仅包含未分析部分的对话增量进行精密分析
         let unanalyzedMessages = Array(allMessages.suffix(allMessages.count - lastAnalyzedMessageCount))
@@ -213,12 +238,16 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
             let userMessageTexts = unanalyzedMessages.filter { $0.role == "user" }.map { $0.content }
             
             // 2. 运用原生 NLP 模块分析增量对话，提取偏好
+            learningProgress = 0.25
+            learningStatus = "正在分析词形特征与短语..."
             var newPreferences = analyzeConversations(unanalyzedMessages)
             
             // 3. 【调用第一个加载模型工作 - LocalSentimentService】 [1]
             // 如果本地情感分析模型已成功载入，我们直接对所有增量消息在本地（GPU上）进行极速、免流量的情感推理
             // 将高置信度的积极/消极心境指标作为本地高纯度情感偏好录入！
             if !userMessageTexts.isEmpty && sentimentService.isModelLoaded {
+                learningProgress = 0.40
+                learningStatus = "正在用本地情感模型分析心境特征..."
                 do {
                     let localSentimentResults = try await sentimentService.analyzeBatch(texts: userMessageTexts)
                     for (index, result) in localSentimentResults.enumerated() {
@@ -243,6 +272,13 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
             // 4. 使用 GLM 大模型辅助分析 / 5. 心理学画像分析
             let shouldAnalyzeGLM = unanalyzedMessages.count >= 5
             let shouldAnalyzePsychology = unanalyzedMessages.count >= 10 || psychologicalProfile == nil
+
+            learningProgress = 0.60
+            if shouldAnalyzeGLM || shouldAnalyzePsychology {
+                learningStatus = "正在结合大模型分析深层特征与心理画像..."
+            } else {
+                learningStatus = "增量分析中..."
+            }
 
             async let glmTask: [UserPreference]? = shouldAnalyzeGLM ? {
                 do {
@@ -276,6 +312,8 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
             }
             
             // 5. 合并学习结果并调用去重（此过程将直接调动第二个加载模型 BGE-M3 的语义 Embeddings 工作） [1]
+            learningProgress = 0.80
+            learningStatus = "正在对比并去重历史图式特征..."
             await mergePreferences(newPreferences)
             
             // 始终更新偏好计数，确保统计准确
@@ -287,15 +325,22 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
             lastAnalyzedMessageCount = allMessages.count // 更新游标
             
             // 👈 【核心 Bug 2 修复：落盘保护】只要推进了时序游标，就强制无条件保存结果到本地 JSON
-            // 彻底解决当用户聊了天，但本次分析没有学习到“新偏好”时，数据由于没有脏标记导致已分析对话数量被内存直接丢弃、无法保存的 Bug
             saveLearningResults()
             hasUnsavedChanges = false
 
             learningResultsSubject.send(learningResult)
 
+            learningProgress = 1.0
+            if newPreferences.isEmpty {
+                learningStatus = "分析完成，未提取到新的偏好特征"
+            } else {
+                learningStatus = "成功提取并学习了 \(newPreferences.count) 条新特征"
+            }
             LoggerService.shared.info("Learning completed: analyzed \(unanalyzedMessages.count) new messages, total preferences now \(learningResult.preferences.count)")
             
         } catch {
+            learningProgress = 1.0
+            learningStatus = "分析失败: \(error.localizedDescription)"
             LoggerService.shared.error("Learning process encountered an error: \(error)")
         }
     }
@@ -745,6 +790,12 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
         isLearning = true
         defer { isLearning = false }
         
+        let wasRecentlyExtracted = learningStatus.contains("成功") || learningStatus.contains("新特征")
+        let previousStatus = learningStatus
+        
+        learningProgress = 0.85
+        learningStatus = "正在全量检索并过滤无效历史偏好..."
+        
         LoggerService.shared.info("[BackgroundLearningService] 开始对现有 \(learningResult.preferences.count) 条历史偏好进行全量去重与垃圾词深度净化清洗...")
         
         // 1. 第一关卡：快速本地模糊字面量比对与垃圾词过滤器
@@ -765,6 +816,9 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
             }
         }
         
+        learningProgress = 0.92
+        learningStatus = "正在比对语义相关性并物理去重..."
+        
         // 2. 第二关卡：深度语义向量去重（在 BGE-M3 加载时，真正执行对已有数据的两两语义比对） [1]
         var finalPreferences: [UserPreference] = []
         for pref in uniquePreferences {
@@ -784,8 +838,17 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
             
             // 实时广播给 UI 弹窗刷新
             learningResultsSubject.send(learningResult)
+            
+            learningProgress = 1.0
+            learningStatus = "物理去重净化完成！共剔除了 \(removedCount) 条冗余偏好。"
             LoggerService.shared.info("[BackgroundLearningService] 深度全量物理清洗完成！共剔除了 \(removedCount) 条重复偏好。")
         } else {
+            learningProgress = 1.0
+            if wasRecentlyExtracted {
+                learningStatus = previousStatus
+            } else {
+                learningStatus = "特征库已是最简状态，无重复偏好。"
+            }
             LoggerService.shared.info("[BackgroundLearningService] 深度全量物理清洗完成，未检测到冗余偏好。")
         }
     }
@@ -821,7 +884,8 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
     // MARK: - Persistence
     
     private func saveLearningResults() {
-        let copyToSave = self.learningResult
+        var copyToSave = self.learningResult
+        copyToSave.stats.lastAnalyzedMessageCount = self.lastAnalyzedMessageCount
         Task {
             await dataStorageService.save(copyToSave, to: "learning/learning_results.json")
         }
@@ -830,6 +894,7 @@ final class BackgroundLearningService: BackgroundLearningServiceProtocol {
     private func loadLearningResults() async {
         if let result: LearningResult = await dataStorageService.load(LearningResult.self, from: "learning/learning_results.json") {
             learningResult = result
+            lastAnalyzedMessageCount = result.stats.lastAnalyzedMessageCount ?? 0
         }
     }
 }

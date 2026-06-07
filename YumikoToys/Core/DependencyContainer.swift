@@ -255,7 +255,7 @@ enum WindowType: String, CaseIterable {
     var defaultSize: NSSize {
         switch self {
         case .main: return NSSize(width: 560, height: 720)
-        case .settings: return NSSize(width: 500, height: 720)
+        case .settings: return NSSize(width: 780, height: 600)
         case .anniversaryManager: return NSSize(width: 540, height: 500)
         case .changelog: return NSSize(width: 460, height: 550)
         case .about: return NSSize(width: 350, height: 450)
@@ -402,8 +402,9 @@ final class WindowManager {
             
             // 设定最小和最大窗口尺寸
             if type.styleMask.contains(.resizable) {
-                window.contentMinSize = NSSize(width: min(type.defaultSize.width * 0.8, targetWidth),
-                                               height: min(type.defaultSize.height * 0.8, targetHeight))
+                let minW = (type == .main) ? 460.0 : min(type.defaultSize.width * 0.8, targetWidth)
+                let minH = (type == .main) ? 450.0 : min(type.defaultSize.height * 0.8, targetHeight)
+                window.contentMinSize = NSSize(width: minW, height: minH)
             } else {
                 window.contentMinSize = NSSize(width: targetWidth, height: targetHeight)
                 window.contentMaxSize = NSSize(width: targetWidth, height: targetHeight)

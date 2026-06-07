@@ -64,6 +64,11 @@ struct ComponentLayout: Codable, Identifiable, Sendable, Equatable {
     var customTitle: String?
     var customFontSizeScale: Double?  // 字体大小缩放 (0.8 - 1.5)
     var customColorHex: String?      // 自定义卡片背景/主题色 Hex
+    var customHeight: Double?          // 自定义高度 (单位: pt)
+    var customWidthScale: Double?      // 自定义宽度比例 (0.4 - 1.0)
+    var customOffsetX: Double?         // 自定义水平偏移 X
+    var customOffsetY: Double?         // 自定义垂直偏移 Y
+    var customPadding: Double?         // 自定义内边距
     
     var id: String { type.rawValue }
     
@@ -73,7 +78,12 @@ struct ComponentLayout: Codable, Identifiable, Sendable, Equatable {
         sortOrder: Int = 0,
         customTitle: String? = nil,
         customFontSizeScale: Double? = nil,
-        customColorHex: String? = nil
+        customColorHex: String? = nil,
+        customHeight: Double? = nil,
+        customWidthScale: Double? = nil,
+        customOffsetX: Double? = nil,
+        customOffsetY: Double? = nil,
+        customPadding: Double? = nil
     ) {
         self.type = type
         self.isVisible = isVisible
@@ -81,6 +91,11 @@ struct ComponentLayout: Codable, Identifiable, Sendable, Equatable {
         self.customTitle = customTitle
         self.customFontSizeScale = customFontSizeScale
         self.customColorHex = customColorHex
+        self.customHeight = customHeight
+        self.customWidthScale = customWidthScale
+        self.customOffsetX = customOffsetX
+        self.customOffsetY = customOffsetY
+        self.customPadding = customPadding
     }
     
     /// 默认布局配置

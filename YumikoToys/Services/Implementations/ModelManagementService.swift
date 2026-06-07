@@ -197,6 +197,58 @@ final class ModelManagementService: ObservableObject {
         LoggerService.shared.info("[ModelManagementService] 初始化完成")
     }
 
+    // MARK: - 模型禁用控制 (Model Disabling Controls)
+    
+    /// 检查指定模型是否已被禁用
+    func isModelDisabled(_ modelId: String) -> Bool {
+        let disabledIDs = UserDefaults.standard.stringArray(forKey: "disabledModelIDs") ?? []
+        return disabledIDs.contains(modelId)
+    }
+    
+    /// 设置模型的禁用状态
+    func setModelDisabled(_ modelId: String, disabled: Bool) {
+        var disabledIDs = UserDefaults.standard.stringArray(forKey: "disabledModelIDs") ?? []
+        if disabled {
+            if !disabledIDs.contains(modelId) {
+                disabledIDs.append(modelId)
+                UserDefaults.standard.set(disabledIDs, forKey: "disabledModelIDs")
+                LoggerService.shared.info("[ModelManagementService] 禁用模型: \(modelId)")
+                // 如果已加载，则立即卸载
+                if let model = models.first(where: { $0.id == modelId }), model.isLoaded {
+                    unloadModel(modelId)
+                }
+            }
+        } else {
+            if let index = disabledIDs.firstIndex(of: modelId) {
+                disabledIDs.remove(at: index)
+                UserDefaults.standard.set(disabledIDs, forKey: "disabledModelIDs")
+                LoggerService.shared.info("[ModelManagementService] 启用模型: \(modelId)")
+            }
+        }
+        objectWillChange.send()
+    }
+    
+    /// 一键禁用所有模型
+    func disableAllModels() {
+        var disabledIDs: [String] = []
+        for model in models {
+            disabledIDs.append(model.id)
+            if model.isLoaded {
+                unloadModel(model.id)
+            }
+        }
+        UserDefaults.standard.set(disabledIDs, forKey: "disabledModelIDs")
+        LoggerService.shared.info("[ModelManagementService] 一键禁用所有模型")
+        objectWillChange.send()
+    }
+    
+    /// 一键启用所有模型
+    func enableAllModels() {
+        UserDefaults.standard.removeObject(forKey: "disabledModelIDs")
+        LoggerService.shared.info("[ModelManagementService] 一键启用所有模型")
+        objectWillChange.send()
+    }
+
     // MARK: - 公开方法
 
     /// 初始化服务：创建存储目录并刷新所有模型状态
@@ -221,25 +273,35 @@ final class ModelManagementService: ObservableObject {
         // 刷新所有模型状态
         await refreshAllStatus()
 
-        // 自动加载所有已经下载但尚未加载的本地模型
-        for model in models {
-            if case .downloaded = downloadManager.state(for: model.id) {
-                let isLoaded: Bool
-                switch model.type {
-                case .embedding:
-                    isLoaded = embeddingService.isModelLoaded
-                case .sentiment:
-                    isLoaded = sentimentService.isModelLoaded
+        // 自动加载所有已经下载但尚未加载的本地模型（若启用了启动时自动加载）
+        if UserDefaults.standard.bool(forKey: "autoLoadModels") {
+            for model in models {
+                // 如果模型已被禁用，跳过自动加载
+                if isModelDisabled(model.id) {
+                    LoggerService.shared.info("[ModelManagementService] 模型 \(model.id) 已被禁用，跳过自动加载")
+                    continue
                 }
-                if !isLoaded {
-                    LoggerService.shared.info("[ModelManagementService] 发现已下载但未加载的模型 \(model.id)，执行自动加载...")
-                    do {
-                        try await loadModel(model.id)
-                    } catch {
-                        LoggerService.shared.error("[ModelManagementService] 自动加载模型 \(model.id) 失败: \(error.localizedDescription)")
+                
+                if case .downloaded = downloadManager.state(for: model.id) {
+                    let isLoaded: Bool
+                    switch model.type {
+                    case .embedding:
+                        isLoaded = embeddingService.isModelLoaded
+                    case .sentiment:
+                        isLoaded = sentimentService.isModelLoaded
+                    }
+                    if !isLoaded {
+                        LoggerService.shared.info("[ModelManagementService] 发现已下载但未加载的模型 \(model.id)，执行自动加载...")
+                        do {
+                            try await loadModel(model.id)
+                        } catch {
+                            LoggerService.shared.error("[ModelManagementService] 自动加载模型 \(model.id) 失败: \(error.localizedDescription)")
+                        }
                     }
                 }
             }
+        } else {
+            LoggerService.shared.info("[ModelManagementService] 启动时自动加载已禁用，跳过加载已下载模型")
         }
 
         isInitialized = true

@@ -253,6 +253,60 @@ struct ModelManagementSection: View {
 
             Spacer()
 
+            // 一键卸载按钮（当有模型加载时显示）
+            if modelService.models.contains(where: { $0.isLoaded }) {
+                Button {
+                    withAnimation {
+                        for model in modelService.models where model.isLoaded {
+                            modelService.unloadModel(model.id)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 10))
+                        Text("一键卸载")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule().fill(Color(hex: "FF9500"))
+                    )
+                }
+                .buttonStyle(.plain)
+                .transition(.opacity.combined(with: .scale))
+                .help("一键卸载所有已加载的模型以释放物理内存")
+            }
+
+            // 一键禁用/启用所有模型
+            let anyEnabled = modelService.models.contains { !modelService.isModelDisabled($0.id) }
+            Button {
+                withAnimation {
+                    if anyEnabled {
+                        modelService.disableAllModels()
+                    } else {
+                        modelService.enableAllModels()
+                    }
+                }
+            } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: anyEnabled ? "eye.slash.fill" : "eye.fill")
+                        .font(.system(size: 10))
+                    Text(anyEnabled ? "一键禁用" : "一键启用")
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(
+                    Capsule().fill(Color(hex: anyEnabled ? "FF3B30" : "34C759"))
+                )
+            }
+            .buttonStyle(.plain)
+            .help(anyEnabled ? "禁用所有模型，启动时将不会加载任何模型" : "启用所有已禁用的模型")
+
             // 内存使用统计
             HStack(spacing: 4) {
                 Image(systemName: "memorychip")
@@ -287,7 +341,14 @@ struct ModelManagementCard: View {
         }
     }
 
+    private var isModelDisabled: Bool {
+        modelService.isModelDisabled(model.id)
+    }
+
     private var statusColor: Color {
+        if isModelDisabled {
+            return Color(hex: "8E8E93")
+        }
         switch model.status {
         case .ready, .inference:
             return Color(hex: "34C759")
@@ -302,7 +363,17 @@ struct ModelManagementCard: View {
         }
     }
 
+    private var statusText: String {
+        if isModelDisabled {
+            return "已禁用"
+        }
+        return model.status.displayText
+    }
+
     private var statusDotPulse: Bool {
+        if isModelDisabled {
+            return false
+        }
         switch model.status {
         case .downloading, .loading, .inference(true):
             return true
@@ -393,7 +464,7 @@ struct ModelManagementCard: View {
                     .shadow(color: statusColor.opacity(0.5), radius: statusDotPulse ? 3 : 0)
                     .modifier(PulseDotModifier(isPulsing: statusDotPulse))
 
-                Text(model.status.displayText)
+                Text(statusText)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(statusColor)
             }
@@ -435,30 +506,41 @@ struct ModelManagementCard: View {
                 switch model.status {
                 case .notDownloaded:
                     downloadButton
-
+ 
                 case .downloaded:
                     loadButton
                     deleteButton
-
+ 
                 case .ready:
                     unloadButton
                     deleteButton
-
+ 
                 case .downloading, .loading:
                     ProgressView()
                         .controlSize(.small)
                         .frame(maxWidth: .infinity, alignment: .leading)
-
+ 
                 case .inference:
                     ProgressView()
                         .controlSize(.small)
                         .frame(maxWidth: .infinity, alignment: .leading)
-
+ 
                 case .error:
                     retryButton
                 }
+                
+                Spacer()
+                
+                // 禁用开关
+                Toggle("禁用模型", isOn: Binding(
+                    get: { isModelDisabled },
+                    set: { modelService.setModelDisabled(model.id, disabled: $0) }
+                ))
+                .toggleStyle(.checkbox)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
             }
-
+ 
             // 错误状态下显示详细错误信息
             if case .error(let message) = model.status {
                 Text(message)
@@ -469,7 +551,7 @@ struct ModelManagementCard: View {
             }
         }
     }
-
+ 
     private var downloadButton: some View {
         Button {
             Task { await modelService.downloadModel(model.id) }
@@ -490,7 +572,7 @@ struct ModelManagementCard: View {
         }
         .buttonStyle(.plain)
     }
-
+ 
     private var loadButton: some View {
         Button {
             Task {
@@ -508,10 +590,11 @@ struct ModelManagementCard: View {
             .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(hex: "34C759"))
+                    .fill(Color(hex: "34C759").opacity(isModelDisabled ? 0.4 : 1.0))
             )
         }
         .buttonStyle(.plain)
+        .disabled(isModelDisabled)
     }
 
     private var unloadButton: some View {
@@ -705,6 +788,14 @@ struct AdvancedModelSettings: View {
                         .foregroundStyle(.tertiary)
                 }
             }
+        }
+        .onChange(of: memoryBudgetGB) { oldValue, newValue in
+            ModelMemoryManager.shared.memoryBudget = UInt64(newValue * 1024 * 1024 * 1024)
+            LoggerService.shared.info("[AdvancedModelSettings] 内存预算更新为 \(newValue) GB")
+        }
+        .onAppear {
+            ModelMemoryManager.shared.memoryBudget = UInt64(memoryBudgetGB * 1024 * 1024 * 1024)
+            LoggerService.shared.info("[AdvancedModelSettings] 内存预算初始化为 \(memoryBudgetGB) GB")
         }
     }
 }

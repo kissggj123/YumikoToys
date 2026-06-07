@@ -357,6 +357,7 @@ struct AppSettings: Codable, Sendable {
 
     // MARK: - 上帝模式自适应配色与样式 (God Mode Customizations)
     var godModeEnabled: Bool
+    var isLayoutEditingEnabled: Bool // 👈 开启布局编辑模式
     var customBackgroundColorHex: String
     var customCardBackgroundColorHex: String
     var customTextColorHex: String
@@ -412,6 +413,7 @@ struct AppSettings: Codable, Sendable {
         proHumanScreenTimeTherapy: Double = 0.6,
         proHumanCognitiveResistance: Double = 0.5,
         godModeEnabled: Bool = false,
+        isLayoutEditingEnabled: Bool = false,
         customBackgroundColorHex: String = "1E1E2E",
         customCardBackgroundColorHex: String = "252538",
         customTextColorHex: String = "FFFFFF",
@@ -462,6 +464,7 @@ struct AppSettings: Codable, Sendable {
         self.proHumanScreenTimeTherapy = proHumanScreenTimeTherapy
         self.proHumanCognitiveResistance = proHumanCognitiveResistance
         self.godModeEnabled = godModeEnabled
+        self.isLayoutEditingEnabled = isLayoutEditingEnabled
         self.customBackgroundColorHex = customBackgroundColorHex
         self.customCardBackgroundColorHex = customCardBackgroundColorHex
         self.customTextColorHex = customTextColorHex
@@ -526,6 +529,7 @@ struct AppSettings: Codable, Sendable {
         proHumanCognitiveResistance = try container.decodeIfPresent(Double.self, forKey: .proHumanCognitiveResistance) ?? 0.5
 
         godModeEnabled = try container.decodeIfPresent(Bool.self, forKey: .godModeEnabled) ?? false
+        isLayoutEditingEnabled = try container.decodeIfPresent(Bool.self, forKey: .isLayoutEditingEnabled) ?? false
         customBackgroundColorHex = try container.decodeIfPresent(String.self, forKey: .customBackgroundColorHex) ?? "1E1E2E"
         customCardBackgroundColorHex = try container.decodeIfPresent(String.self, forKey: .customCardBackgroundColorHex) ?? "252538"
         customTextColorHex = try container.decodeIfPresent(String.self, forKey: .customTextColorHex) ?? "FFFFFF"

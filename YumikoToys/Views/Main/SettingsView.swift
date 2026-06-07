@@ -8,46 +8,138 @@
 import SwiftUI
 import Combine
 
+enum SettingsTab: String, CaseIterable, Identifiable {
+    case appearance = "appearance"
+    case godMode = "godMode"
+    case ai = "ai"
+    case system = "system"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .appearance: return "外观设置"
+        case .godMode: return "上帝模式"
+        case .ai: return "心智与 AI"
+        case .system: return "系统与数据"
+        }
+    }
+    
+    var iconName: String {
+        switch self {
+        case .appearance: return "paintbrush.fill"
+        case .godMode: return "wand.and.stars"
+        case .ai: return "brain.headset"
+        case .system: return "cpu"
+        }
+    }
+}
+
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
+    @State private var selectedTab: SettingsTab = .appearance
     @State private var expandedComponentId: String? = nil
     @State private var customHexInput: String = ""
     @State private var customMainHexInput: String = ""
 
     var body: some View {
-        ScrollView {
-            HStack {
-                Spacer(minLength: 20)
+        HStack(spacing: 0) {
+            // 左侧分类选择栏
+            VStack(alignment: .leading, spacing: 6) {
+                Spacer()
+                    .frame(height: 52)
                 
-                VStack(spacing: 20) {
-                    SettingsHeader()
-                        .padding(.top, 10)
-                    generalSettingsSection
-                    iconStyleSection
-                    statusBarIconStyleSection
-                    fontSection
-                    statusBarThemeColorSection
-                    mainWindowThemeColorSection
-                    godModeSection
-                    layoutSection
-                    preventSleepSection
-                    timeSyncSection
-                    pokeIntegrationSection
-                    modelManagementSection
-                    backgroundLearningSection
-                    psychologySettingsSection
-                    proHumanSettingsSection
-                    skillManagementSection
-                    dataManagementSection
-                    aboutSection
-                    footerText
+                HStack(spacing: 8) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: "5856D6"))
+                    Text("分类设置")
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
-                .frame(maxWidth: 460)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
                 
-                Spacer(minLength: 20)
+                ForEach(SettingsTab.allCases) { tab in
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedTab = tab
+                        }
+                    }) {
+                        HStack(spacing: 10) {
+                            Image(systemName: tab.iconName)
+                                .font(.system(size: 12, weight: .semibold))
+                                .frame(width: 18, height: 18)
+                                .foregroundStyle(selectedTab == tab ? .white : .secondary)
+                            
+                            Text(tab.displayName)
+                                .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
+                                .foregroundStyle(selectedTab == tab ? .white : .primary)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(selectedTab == tab ? 
+                                      LinearGradient(
+                                          colors: [Color(hex: "5856D6"), Color(hex: "AF52DE")],
+                                          startPoint: .leading,
+                                          endPoint: .trailing
+                                      ) : LinearGradient(colors: [.clear], startPoint: .leading, endPoint: .trailing)
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 10)
+                }
+                
+                Spacer()
             }
-            .padding(.top, 44) // Offset for traffic light buttons
-            .padding(.bottom, 28)
+            .frame(width: 160)
+            .background(Color.primary.opacity(0.02))
+            
+            Divider()
+            
+            // 右侧内容区域
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Spacer()
+                        .frame(height: 44) // 避开顶部信号灯区域
+                    
+                    SettingsHeader()
+                        .padding(.bottom, 6)
+                    
+                    switch selectedTab {
+                    case .appearance:
+                        generalSettingsSection
+                        iconStyleSection
+                        statusBarIconStyleSection
+                        fontSection
+                        statusBarThemeColorSection
+                        mainWindowThemeColorSection
+                    case .godMode:
+                        godModeSection
+                        layoutSection
+                    case .ai:
+                        pokeIntegrationSection
+                        modelManagementSection
+                        backgroundLearningSection
+                        psychologySettingsSection
+                        proHumanSettingsSection
+                    case .system:
+                        preventSleepSection
+                        timeSyncSection
+                        skillManagementSection
+                        dataManagementSection
+                        aboutSection
+                        footerText
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 28)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(settingsBackground)
@@ -777,6 +869,17 @@ struct SettingsView: View {
                     )
                 )
                 
+                SettingsToggleRow(
+                    icon: "slider.horizontal.3",
+                    iconColor: "AF52DE",
+                    title: "上帝模式布局控制",
+                    subtitle: "启用拖动与调整小组件大小（已锁定 / 正在编辑）",
+                    isOn: Binding(
+                        get: { viewModel.isLayoutEditingEnabled },
+                        set: { viewModel.updateLayoutEditing($0) }
+                    )
+                )
+                
                 if viewModel.godModeEnabled {
                     VStack(spacing: 10) {
                         Divider().background(Color.primary.opacity(0.08))
@@ -1062,93 +1165,11 @@ struct SettingsView: View {
                         
                         // 展开的可编辑属性
                         if expandedComponentId == layout.id {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Divider()
-                                    .background(Color.primary.opacity(0.08))
-                                    .padding(.bottom, 6)
-                                
-                                // 自定义标题
-                                HStack(spacing: 8) {
-                                    Text("自定义标题")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 80, alignment: .leading)
-                                    
-                                    TextField("默认: \(layout.type.displayName)", text: Binding(
-                                        get: { layout.customTitle ?? "" },
-                                        set: { val in
-                                            var newLayout = layout
-                                            newLayout.customTitle = val.isEmpty ? nil : val
-                                            viewModel.updateComponentLayout(newLayout)
-                                        }
-                                    ))
-                                    .textFieldStyle(.roundedBorder)
-                                    .font(.system(size: 12))
-                                }
-                                
-                                // 自定义字体大小
-                                HStack(spacing: 8) {
-                                    Text("字号大小")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 80, alignment: .leading)
-                                    
-                                    Slider(value: Binding(
-                                        get: { layout.customFontSizeScale ?? 1.0 },
-                                        set: { val in
-                                            var newLayout = layout
-                                            newLayout.customFontSizeScale = val
-                                            viewModel.updateComponentLayout(newLayout)
-                                        }
-                                    ), in: 0.8...1.5, step: 0.05)
-                                    
-                                    Text("\(Int((layout.customFontSizeScale ?? 1.0) * 100))%")
-                                        .font(.system(size: 11, design: .monospaced))
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 40, alignment: .trailing)
-                                }
-                                
-                                // 自定义卡片背景/主题色
-                                HStack(spacing: 8) {
-                                    Text("自定义主题色")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 80, alignment: .leading)
-                                    
-                                    Toggle("开启自定义卡片颜色", isOn: Binding(
-                                        get: { layout.customColorHex != nil },
-                                        set: { hasColor in
-                                            var newLayout = layout
-                                            newLayout.customColorHex = hasColor ? "FF6B9D" : nil
-                                            viewModel.updateComponentLayout(newLayout)
-                                        }
-                                    ))
-                                    .font(.system(size: 11))
-                                    .toggleStyle(.checkbox)
-                                    
-                                    Spacer()
-                                    
-                                    if let hexColor = layout.customColorHex {
-                                        ColorPicker("", selection: Binding(
-                                            get: {
-                                                Color(hex: hexColor)
-                                            },
-                                            set: { color in
-                                                if let hex = color.toHex(), !Color.isHexClose(hex, layout.customColorHex ?? "") {
-                                                    var newLayout = layout
-                                                    newLayout.customColorHex = hex
-                                                    viewModel.updateComponentLayout(newLayout)
-                                                }
-                                            }
-                                        ))
-                                        .labelsHidden()
-                                    }
-                                }
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.bottom, 12)
-                            .background(Color.primary.opacity(0.01))
-                            .transition(.opacity.combined(with: .move(edge: .top)))
+                            ComponentCustomizationPanel(layout: layout, viewModel: viewModel)
+                                .padding(.horizontal, 12)
+                                .padding(.bottom, 12)
+                                .background(Color.primary.opacity(0.01))
+                                .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
                     .background(
@@ -2593,6 +2614,7 @@ final class SettingsViewModel: ObservableObject {
 
     // 👈【核心新增】：上帝模式 (God Mode) 配色及圆角发布参数
     @Published var godModeEnabled = false
+    @Published var isLayoutEditingEnabled = false
     @Published var customBackgroundColorHex = "1E1E2E"
     @Published var customCardBackgroundColorHex = "252538"
     @Published var customTextColorHex = "FFFFFF"
@@ -2721,6 +2743,7 @@ final class SettingsViewModel: ObservableObject {
         
         // 读取上帝模式配置
         godModeEnabled = settings.godModeEnabled
+        isLayoutEditingEnabled = settings.isLayoutEditingEnabled
         customBackgroundColorHex = settings.customBackgroundColorHex
         customCardBackgroundColorHex = settings.customCardBackgroundColorHex
         customTextColorHex = settings.customTextColorHex
@@ -2817,6 +2840,7 @@ final class SettingsViewModel: ObservableObject {
                 self.pokeApiKey = updatedSettings.pokeApiKey ?? ""
                 
                 self.godModeEnabled = updatedSettings.godModeEnabled
+                self.isLayoutEditingEnabled = updatedSettings.isLayoutEditingEnabled
                 self.customBackgroundColorHex = updatedSettings.customBackgroundColorHex
                 self.customCardBackgroundColorHex = updatedSettings.customCardBackgroundColorHex
                 self.customTextColorHex = updatedSettings.customTextColorHex
@@ -2970,6 +2994,7 @@ final class SettingsViewModel: ObservableObject {
 
         // 加载上帝模式配置
         godModeEnabled = settings.godModeEnabled
+        isLayoutEditingEnabled = settings.isLayoutEditingEnabled
         customBackgroundColorHex = settings.customBackgroundColorHex
         customCardBackgroundColorHex = settings.customCardBackgroundColorHex
         customTextColorHex = settings.customTextColorHex
@@ -3059,6 +3084,14 @@ final class SettingsViewModel: ObservableObject {
         settings.godModeEnabled = enabled
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("God Mode status toggled to: \(enabled)")
+    }
+
+    func updateLayoutEditing(_ enabled: Bool) {
+        isLayoutEditingEnabled = enabled
+        var settings = container.settingsService.settings
+        settings.isLayoutEditingEnabled = enabled
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Layout editing status toggled to: \(enabled)")
     }
 
     func updateGodModeColors(
@@ -3704,6 +3737,216 @@ struct CommandLineInstructionView: View {
             .shadow(color: Color.black.opacity(0.2), radius: 8, y: 4)
         }
         .padding(.vertical, 4)
+    }
+}
+
+
+// MARK: - 上帝模式组件定制面板
+private struct ComponentCustomizationPanel: View {
+    let layout: ComponentLayout
+    @ObservedObject var viewModel: SettingsViewModel
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider()
+                .background(Color.primary.opacity(0.08))
+                .padding(.bottom, 6)
+            
+            // 自定义标题
+            HStack(spacing: 8) {
+                Text("自定义标题")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 80, alignment: .leading)
+                
+                TextField("默认: \(layout.type.displayName)", text: Binding(
+                    get: { layout.customTitle ?? "" },
+                    set: { val in
+                        var newLayout = layout
+                        newLayout.customTitle = val.isEmpty ? nil : val
+                        viewModel.updateComponentLayout(newLayout)
+                    }
+                ))
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 12))
+            }
+            
+            // 自定义字号大小
+            HStack(spacing: 8) {
+                Text("字号大小")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 80, alignment: .leading)
+                
+                Slider(value: Binding(
+                    get: { layout.customFontSizeScale ?? 1.0 },
+                    set: { val in
+                        var newLayout = layout
+                        newLayout.customFontSizeScale = val
+                        viewModel.updateComponentLayout(newLayout)
+                    }
+                ), in: 0.8...1.5, step: 0.05)
+                
+                Text("\(Int((layout.customFontSizeScale ?? 1.0) * 100))%")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 40, alignment: .trailing)
+            }
+            
+            // 自定义主题色
+            HStack(spacing: 8) {
+                Text("自定义主题色")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 80, alignment: .leading)
+                
+                Toggle("开启自定义卡片颜色", isOn: Binding(
+                    get: { layout.customColorHex != nil },
+                    set: { hasColor in
+                        var newLayout = layout
+                        newLayout.customColorHex = hasColor ? "FF6B9D" : nil
+                        viewModel.updateComponentLayout(newLayout)
+                    }
+                ))
+                .font(.system(size: 11))
+                .toggleStyle(.checkbox)
+                
+                Spacer()
+                
+                if let hexColor = layout.customColorHex {
+                    ColorPicker("", selection: Binding(
+                        get: {
+                            Color(hex: hexColor)
+                        },
+                        set: { color in
+                            if let hex = color.toHex(), !Color.isHexClose(hex, layout.customColorHex ?? "") {
+                                var newLayout = layout
+                                newLayout.customColorHex = hex
+                                viewModel.updateComponentLayout(newLayout)
+                            }
+                        }
+                    ))
+                    .labelsHidden()
+                }
+            }
+            
+            // 上帝模式拉伸与位置调整
+            if viewModel.godModeEnabled {
+                Divider()
+                    .background(Color.primary.opacity(0.08))
+                    .padding(.vertical, 4)
+                
+                Text("拉伸与位置调整 (上帝模式)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color(hex: "007AFF"))
+                
+                // 宽度比例
+                HStack(spacing: 8) {
+                    Text("宽度比例")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 80, alignment: .leading)
+                    
+                    Slider(value: Binding(
+                        get: { layout.customWidthScale ?? 1.0 },
+                        set: { val in
+                            var newLayout = layout
+                            newLayout.customWidthScale = val
+                            viewModel.updateComponentLayout(newLayout)
+                        }
+                    ), in: 0.4...1.0, step: 0.05)
+                    
+                    Text("\(Int((layout.customWidthScale ?? 1.0) * 100))%")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 40, alignment: .trailing)
+                }
+                
+                // 自定义高度
+                HStack(spacing: 8) {
+                    Text("自定义高度")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 80, alignment: .leading)
+                    
+                    Toggle("开启", isOn: Binding(
+                        get: { layout.customHeight != nil },
+                        set: { hasHeight in
+                            var newLayout = layout
+                            newLayout.customHeight = hasHeight ? 180 : nil
+                            viewModel.updateComponentLayout(newLayout)
+                        }
+                    ))
+                    .font(.system(size: 11))
+                    .toggleStyle(.checkbox)
+                    
+                    if let height = layout.customHeight {
+                        Slider(value: Binding(
+                            get: { height },
+                            set: { val in
+                                var newLayout = layout
+                                newLayout.customHeight = val
+                                viewModel.updateComponentLayout(newLayout)
+                            }
+                        ), in: 50...500, step: 5)
+                        
+                        Text("\(Int(height))px")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 45, alignment: .trailing)
+                    } else {
+                        Spacer()
+                        Text("自动适应")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                
+                // 水平偏移 X
+                HStack(spacing: 8) {
+                    Text("水平偏移 X")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 80, alignment: .leading)
+                    
+                    Slider(value: Binding(
+                        get: { layout.customOffsetX ?? 0 },
+                        set: { val in
+                            var newLayout = layout
+                            newLayout.customOffsetX = val == 0 ? nil : val
+                            viewModel.updateComponentLayout(newLayout)
+                        }
+                    ), in: -150...150, step: 2)
+                    
+                    Text("\(Int(layout.customOffsetX ?? 0))px")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 45, alignment: .trailing)
+                }
+                
+                // 垂直偏移 Y
+                HStack(spacing: 8) {
+                    Text("垂直偏移 Y")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 80, alignment: .leading)
+                    
+                    Slider(value: Binding(
+                        get: { layout.customOffsetY ?? 0 },
+                        set: { val in
+                            var newLayout = layout
+                            newLayout.customOffsetY = val == 0 ? nil : val
+                            viewModel.updateComponentLayout(newLayout)
+                        }
+                    ), in: -150...150, step: 2)
+                    
+                    Text("\(Int(layout.customOffsetY ?? 0))px")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 45, alignment: .trailing)
+                }
+            }
+        }
     }
 }
 

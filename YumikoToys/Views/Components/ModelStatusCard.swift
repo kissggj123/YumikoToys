@@ -135,6 +135,24 @@ struct ModelStatusCard: View {
                     )
             }
             .buttonStyle(.plain)
+
+            // 隐藏按钮
+            Button(action: {
+                withAnimation {
+                    DependencyContainer.shared.componentLayoutService.toggleVisibility(for: .modelStatus)
+                }
+            }) {
+                Image(systemName: "eye.slash")
+                    .font(.system(size: 11 * fontSizeScale))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20, height: 20)
+                    .background(
+                        Circle()
+                            .fill(Color.primary.opacity(0.06))
+                    )
+            }
+            .buttonStyle(.plain)
+            .help("隐藏此小组件（可在设置中重新启用）")
         }
     }
 

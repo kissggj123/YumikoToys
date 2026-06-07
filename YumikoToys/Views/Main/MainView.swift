@@ -17,52 +17,97 @@ struct MainView: View {
     var body: some View {
         HStack(spacing: 0) {
             // 左侧主内容区
-            ScrollView {
-                VStack(spacing: 24) {
-                    ForEach(ComponentLayout.visible(viewModel.componentLayouts)) { layout in
-                        switch layout.type {
-                        case .header:
-                            AppHeader(layout: layout)
-                        case .daysDisplay:
-                            if let info = viewModel.anniversaryInfo {
-                                DaysDisplayCard(
-                                    info: info,
-                                    countdownText: viewModel.countdownText,
-                                    onCopy: { message in
-                                        copyToClipboard(message)
-                                        toastMessage = "已复制整块文字信息"
-                                        withAnimation { showToast = true }
-                                    },
-                                    layout: layout
-                                )
+            ZStack(alignment: .bottom) {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        ForEach(ComponentLayout.visible(viewModel.componentLayouts)) { layout in
+                            GodModeCardContainer(
+                                layout: layout,
+                                godModeEnabled: viewModel.godModeEnabled && viewModel.isLayoutEditingEnabled,
+                                onUpdate: { newLayout in
+                                    viewModel.updateComponentLayout(newLayout)
+                                }
+                            ) {
+                                switch layout.type {
+                                case .header:
+                                    AppHeader(layout: layout)
+                                case .daysDisplay:
+                                    if let info = viewModel.anniversaryInfo {
+                                        DaysDisplayCard(
+                                            info: info,
+                                            countdownText: viewModel.countdownText,
+                                            onCopy: { message in
+                                                copyToClipboard(message)
+                                                toastMessage = "已复制整块文字信息"
+                                                withAnimation { showToast = true }
+                                            },
+                                            layout: layout
+                                        )
+                                    }
+                                case .backgroundLearning:
+                                    BackgroundLearningLogCard(
+                                        learningStats: viewModel.learningStats,
+                                        isEnabled: viewModel.isBackgroundLearningEnabled,
+                                        onOpenSettings: {
+                                            viewModel.openSettings()
+                                        },
+                                        onImmediateLearning: {
+                                            viewModel.performImmediateLearning()
+                                        },
+                                        onShowPreferences: {
+                                            viewModel.showLearnedPreferences = true
+                                        },
+                                        layout: layout
+                                    )
+                                case .modelStatus:
+                                    ModelStatusCard(
+                                        modelService: DependencyContainer.shared.modelManagementService,
+                                        onManageTapped: {
+                                            viewModel.openSettings()
+                                        },
+                                        layout: layout
+                                    )
+                                }
                             }
-                        case .backgroundLearning:
-                            BackgroundLearningLogCard(
-                                learningStats: viewModel.learningStats,
-                                isEnabled: viewModel.isBackgroundLearningEnabled,
-                                onOpenSettings: {
-                                    viewModel.openSettings()
-                                },
-                                onImmediateLearning: {
-                                    viewModel.performImmediateLearning()
-                                },
-                                onShowPreferences: {
-                                    viewModel.showLearnedPreferences = true
-                                },
-                                layout: layout
-                            )
-                        case .modelStatus:
-                            ModelStatusCard(
-                                modelService: DependencyContainer.shared.modelManagementService,
-                                onManageTapped: {
-                                    viewModel.openSettings()
-                                },
-                                layout: layout
-                            )
                         }
                     }
+                    .padding(.top, 28)
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, (viewModel.godModeEnabled && viewModel.isLayoutEditingEnabled) ? 100 : 28)
                 }
-                .padding(28)
+                
+                if viewModel.godModeEnabled {
+                    FloatingLayoutToolbar(
+                        viewModel: viewModel,
+                        isEditing: Binding(
+                            get: { viewModel.isLayoutEditingEnabled },
+                            set: { enabled in
+                                withAnimation {
+                                    viewModel.updateLayoutEditing(enabled)
+                                }
+                            }
+                        ),
+                        onReset: {
+                            withAnimation {
+                                DependencyContainer.shared.componentLayoutService.resetToDefault()
+                                UserDefaults.standard.removeObject(forKey: "customWindowWidth")
+                                UserDefaults.standard.removeObject(forKey: "customWindowHeight")
+                                self.adjustMainWindowSize(layouts: viewModel.componentLayouts)
+                                toastMessage = "布局已重置为默认"
+                                withAnimation { showToast = true }
+                            }
+                        },
+                        onSave: {
+                            toastMessage = "当前布局已保存并同步"
+                            withAnimation { showToast = true }
+                        },
+                        onChangeSize: { widthDelta, heightDelta in
+                            self.changeWindowSize(widthDelta: widthDelta, heightDelta: heightDelta)
+                        }
+                    )
+                    .padding(.bottom, 16)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
             .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
             
@@ -98,6 +143,90 @@ struct MainView: View {
             LearnedPreferencesSheet(viewModel: viewModel)
         }
         .preferredColorScheme(viewModel.resolvedTheme.isDarkTheme ? .dark : .light)
+        .onReceive(viewModel.$componentLayouts) { layouts in
+            self.adjustMainWindowSize(layouts: layouts)
+        }
+        .onReceive(viewModel.$godModeEnabled) { _ in
+            self.adjustMainWindowSize(layouts: viewModel.componentLayouts)
+        }
+        .onChange(of: viewModel.isLayoutEditingEnabled) { oldValue, newValue in
+            self.adjustMainWindowSize(layouts: viewModel.componentLayouts)
+        }
+    }
+    
+    private func adjustMainWindowSize(layouts: [ComponentLayout]) {
+        guard let window = DependencyContainer.shared.windowManager.getWindow(.main) else { return }
+        
+        let customWidth = UserDefaults.standard.double(forKey: "customWindowWidth")
+        let customHeight = UserDefaults.standard.double(forKey: "customWindowHeight")
+        
+        let targetWidth: CGFloat
+        let targetHeight: CGFloat
+        
+        if customWidth > 0 && customHeight > 0 {
+            targetWidth = CGFloat(customWidth)
+            targetHeight = CGFloat(customHeight)
+        } else {
+            let visibleLayouts = ComponentLayout.visible(layouts)
+            let maxWidthScale = visibleLayouts.map { $0.customWidthScale ?? 1.0 }.max() ?? 1.0
+            targetWidth = max(520, 364 * CGFloat(maxWidthScale) + 56 + 72)
+            
+            var elementsHeights: [CGFloat] = []
+            for layout in visibleLayouts {
+                let defaultHeight: CGFloat
+                switch layout.type {
+                case .header: defaultHeight = 60
+                case .daysDisplay: defaultHeight = 230
+                case .backgroundLearning: defaultHeight = 180
+                case .modelStatus: defaultHeight = 150
+                }
+                elementsHeights.append(CGFloat(layout.customHeight ?? Double(defaultHeight)))
+            }
+            
+            let totalSpacing: CGFloat = elementsHeights.isEmpty ? 0 : CGFloat(elementsHeights.count - 1) * 24
+            let bottomPadding: CGFloat = (viewModel.godModeEnabled && viewModel.isLayoutEditingEnabled) ? 100 : 28
+            targetHeight = max(580, elementsHeights.reduce(0, +) + totalSpacing + 28 + bottomPadding)
+        }
+        
+        let currentFrame = window.frame
+        let newX = currentFrame.minX
+        let newY = currentFrame.maxY - targetHeight
+        let newFrame = NSRect(x: newX, y: newY, width: targetWidth, height: targetHeight)
+        
+        window.contentMinSize = NSSize(width: 460, height: 450)
+        window.contentMaxSize = NSSize(width: 2000, height: 2000)
+        
+        DispatchQueue.main.async {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.3
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                window.animator().setFrame(newFrame, display: true)
+            }
+        }
+    }
+    
+    private func changeWindowSize(widthDelta: CGFloat, heightDelta: CGFloat) {
+        guard let window = DependencyContainer.shared.windowManager.getWindow(.main) else { return }
+        
+        let currentFrame = window.frame
+        let newWidth = max(460, currentFrame.width + widthDelta)
+        let newHeight = max(450, currentFrame.height + heightDelta)
+        
+        UserDefaults.standard.set(Double(newWidth), forKey: "customWindowWidth")
+        UserDefaults.standard.set(Double(newHeight), forKey: "customWindowHeight")
+        
+        let newX = currentFrame.minX
+        let newY = currentFrame.maxY - newHeight
+        let newFrame = NSRect(x: newX, y: newY, width: newWidth, height: newHeight)
+        
+        window.contentMinSize = NSSize(width: 460, height: 450)
+        window.contentMaxSize = NSSize(width: 2000, height: 2000)
+        
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            window.animator().setFrame(newFrame, display: true)
+        }
     }
 }
 
@@ -168,68 +297,76 @@ struct DaysDisplayCard: View {
     var body: some View {
         VStack(spacing: 20) {
             // 标题行
-            HStack(spacing: 8) {
-                PixelAvatarView(emoji: info.anniversary.displayAvatar, size: 28)
-                
-                // 观测目标标识（可点击复制）
-                Text(titleText)
-                    .font(.system(size: 18 * fontSizeScale, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .onTapGesture {
-                        onCopy(getFormattedCopyText())
-                    }
-                    .onHover { hovering in
-                        hoveredElement = hovering ? .name : nil
-                    }
-                    .overlay {
-                        if hoveredElement == .name {
-                            Rectangle()
-                                .fill(Color.primary.opacity(0.1))
-                                .frame(height: 1)
-                                .offset(y: 8)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    PixelAvatarView(emoji: info.anniversary.displayAvatar, size: 28)
+                    
+                    // 观测目标标识（可点击复制）
+                    Text(titleText)
+                        .font(.system(size: 18 * fontSizeScale, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .onTapGesture {
+                            onCopy(getFormattedCopyText())
                         }
-                    }
+                        .onHover { hovering in
+                            hoveredElement = hovering ? .name : nil
+                        }
+                        .overlay {
+                            if hoveredElement == .name {
+                                Rectangle()
+                                    .fill(Color.primary.opacity(0.1))
+                                    .frame(height: 1)
+                                    .offset(y: 8)
+                            }
+                        }
+                    
+                    Spacer()
+                }
                 
-                // 周期历时显示
+                // 第二行：周期、相对标尺、性别、模式标签
                 let petAge = PetAgeCalculator.calculate(
                     from: info.anniversary.startDate,
                     emoji: info.anniversary.displayAvatar
                 )
-                Text(petAge.displayText)
-                    .font(.system(size: 12 * fontSizeScale))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(
-                        Capsule()
-                            .fill(Color.secondary.opacity(0.1))
-                    )
-                
-                // 相对时间标尺
-                Text(petAge.humanAgeDecimalText)
-                    .font(.system(size: 11 * fontSizeScale, design: .monospaced))
-                    .foregroundStyle(daysFirstColor)
-                
-                // 性别图标
-                if let gender = info.anniversary.petGender {
-                    Text(gender.emoji)
-                        .font(.system(size: 14 * fontSizeScale))
-                        .foregroundStyle(gender.color)
+                HStack(spacing: 8) {
+                    // 周期历时显示
+                    Text(petAge.displayText)
+                        .font(.system(size: 12 * fontSizeScale))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color.secondary.opacity(0.1))
+                        )
+                    
+                    // 相对时间标尺
+                    Text(petAge.humanAgeDecimalText)
+                        .font(.system(size: 11 * fontSizeScale, design: .monospaced))
+                        .foregroundStyle(daysFirstColor)
+                    
+                    // 性别图标
+                    if let gender = info.anniversary.petGender {
+                        Text(gender.emoji)
+                            .font(.system(size: 14 * fontSizeScale))
+                            .foregroundStyle(gender.color)
+                    }
+                    
+                    Spacer()
+                    
+                    // 模式类型标签
+                    Text(info.anniversary.type.displayName)
+                        .font(.system(size: 10 * fontSizeScale))
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(typeGradient)
+                        )
                 }
-                
-                Spacer()
-                
-                // 模式类型标签
-                Text(info.anniversary.type.displayName)
-                    .font(.system(size: 10 * fontSizeScale))
-                    .fontWeight(.medium)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule()
-                            .fill(typeGradient)
-                    )
+                .padding(.leading, 36) // 28 (头像) + 8 (间距) = 36
             }
             
             // 发展历程展示（可点击复制）
@@ -548,6 +685,8 @@ final class MainViewModel: ObservableObject {
     
     @Published var selectedThemeColor: ThemeColor = .dark
     @Published var customThemeColorHex: String = "FF6B9D"
+    @Published var godModeEnabled: Bool = false
+    @Published var isLayoutEditingEnabled: Bool = false // 👈 布局编辑模式状态
     
     var resolvedTheme: ResolvedTheme {
         ResolvedTheme(color: selectedThemeColor, customHex: customThemeColorHex)
@@ -593,6 +732,8 @@ final class MainViewModel: ObservableObject {
                 self?.isBackgroundLearningEnabled = settings.isBackgroundLearningEnabled
                 self?.selectedThemeColor = settings.mainWindowThemeColor
                 self?.customThemeColorHex = settings.customMainWindowThemeColorHex
+                self?.godModeEnabled = settings.godModeEnabled
+                self?.isLayoutEditingEnabled = settings.isLayoutEditingEnabled
             }
             .store(in: &cancellables)
 
@@ -607,6 +748,8 @@ final class MainViewModel: ObservableObject {
         componentLayouts = container.componentLayoutService.loadLayouts()
         selectedThemeColor = container.settingsService.settings.mainWindowThemeColor
         customThemeColorHex = container.settingsService.settings.customMainWindowThemeColorHex
+        godModeEnabled = container.settingsService.settings.godModeEnabled
+        isLayoutEditingEnabled = container.settingsService.settings.isLayoutEditingEnabled
 
         // 订阅后台学习服务状态变化，实时更新学习统计
         if let learningService = container.backgroundLearningService {
@@ -708,6 +851,16 @@ final class MainViewModel: ObservableObject {
         case .quit:
             NSApp.terminate(nil)
         }
+    }
+    
+    func updateComponentLayout(_ layout: ComponentLayout) {
+        container.componentLayoutService.updateLayout(layout)
+    }
+    
+    func updateLayoutEditing(_ enabled: Bool) {
+        var settings = container.settingsService.settings
+        settings.isLayoutEditingEnabled = enabled
+        container.settingsService.updateSettings(settings)
     }
 }
 
@@ -2175,6 +2328,515 @@ private struct CuteEmptyState: View {
         }
         .padding(.vertical, 50)
         .onAppear { floatAnimation = true }
+    }
+}
+
+// MARK: - 上帝模式组件容器 (拉伸与位置调整)
+// MARK: - 上帝模式组件容器 (拉伸与位置调整)
+struct GodModeCardContainer<Content: View>: View {
+    let layout: ComponentLayout
+    let godModeEnabled: Bool
+    let onUpdate: (ComponentLayout) -> Void
+    let content: Content
+    
+    @State private var dragOffset: CGSize = .zero
+    @State private var isHovering = false
+    
+    // 边缘拉伸相关状态
+    enum ResizeEdge {
+        case top, bottom, left, right
+    }
+    @State private var activeResizeEdge: ResizeEdge? = nil
+    @State private var edgeDragOffset: CGSize = .zero
+    @State private var hoveredEdge: ResizeEdge? = nil
+    
+    // 四角拉伸相关状态
+    enum ResizeCorner {
+        case topLeft, topRight, bottomLeft, bottomRight
+    }
+    @State private var activeResizeCorner: ResizeCorner? = nil
+    @State private var cornerDragOffset: CGSize = .zero
+    @State private var hoveredCorner: ResizeCorner? = nil
+    
+    init(
+        layout: ComponentLayout,
+        godModeEnabled: Bool,
+        onUpdate: @escaping (ComponentLayout) -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.layout = layout
+        self.godModeEnabled = godModeEnabled
+        self.onUpdate = onUpdate
+        self.content = content()
+    }
+    
+    private var defaultHeight: CGFloat {
+        switch layout.type {
+        case .header: return 60
+        case .daysDisplay: return 230
+        case .backgroundLearning: return 180
+        case .modelStatus: return 150
+        }
+    }
+    
+    var body: some View {
+        let widthScale = layout.customWidthScale ?? 1.0
+        let currentWidth: CGFloat = 364
+        
+        // 动态计算当前的宽度与高度
+        var targetWidth = currentWidth * CGFloat(widthScale)
+        var targetHeight = layout.customHeight ?? Double(defaultHeight)
+        
+        var offsetX = layout.customOffsetX ?? 0.0
+        var offsetY = layout.customOffsetY ?? 0.0
+        
+        if godModeEnabled {
+            if activeResizeEdge == .left {
+                let deltaW = -edgeDragOffset.width
+                targetWidth = max(140, targetWidth + deltaW)
+                let actualDeltaW = targetWidth - currentWidth * CGFloat(widthScale)
+                offsetX -= Double(actualDeltaW)
+            } else if activeResizeEdge == .right {
+                targetWidth = max(140, targetWidth + edgeDragOffset.width)
+            } else if activeResizeEdge == .top {
+                let deltaH = -edgeDragOffset.height
+                targetHeight = max(50, targetHeight + Double(deltaH))
+                let actualDeltaH = targetHeight - (layout.customHeight ?? Double(defaultHeight))
+                offsetY -= Double(actualDeltaH)
+            } else if activeResizeEdge == .bottom {
+                targetHeight = max(50, targetHeight + Double(edgeDragOffset.height))
+            }
+            
+            // 四角动态拉伸计算
+            if let corner = activeResizeCorner {
+                switch corner {
+                case .topLeft:
+                    let deltaW = -cornerDragOffset.width
+                    targetWidth = max(140, targetWidth + deltaW)
+                    let actualDeltaW = targetWidth - currentWidth * CGFloat(widthScale)
+                    offsetX -= Double(actualDeltaW)
+                    
+                    let deltaH = -cornerDragOffset.height
+                    targetHeight = max(50, targetHeight + Double(deltaH))
+                    let actualDeltaH = targetHeight - (layout.customHeight ?? Double(defaultHeight))
+                    offsetY -= Double(actualDeltaH)
+                case .topRight:
+                    targetWidth = max(140, targetWidth + cornerDragOffset.width)
+                    
+                    let deltaH = -cornerDragOffset.height
+                    targetHeight = max(50, targetHeight + Double(deltaH))
+                    let actualDeltaH = targetHeight - (layout.customHeight ?? Double(defaultHeight))
+                    offsetY -= Double(actualDeltaH)
+                case .bottomLeft:
+                    let deltaW = -cornerDragOffset.width
+                    targetWidth = max(140, targetWidth + deltaW)
+                    let actualDeltaW = targetWidth - currentWidth * CGFloat(widthScale)
+                    offsetX -= Double(actualDeltaW)
+                    
+                    targetHeight = max(50, targetHeight + Double(cornerDragOffset.height))
+                case .bottomRight:
+                    targetWidth = max(140, targetWidth + cornerDragOffset.width)
+                    targetHeight = max(50, targetHeight + Double(cornerDragOffset.height))
+                }
+            }
+        }
+        
+        let finalOffsetX = offsetX + Double(dragOffset.width)
+        let finalOffsetY = offsetY + Double(dragOffset.height)
+        
+        return ZStack {
+            content
+                .frame(width: targetWidth)
+                .frame(height: layout.customHeight != nil || activeResizeEdge != nil || activeResizeCorner != nil ? CGFloat(targetHeight) : nil)
+                .clipped()
+            
+            if godModeEnabled {
+                // 1. 上下左右边缘拉伸手柄
+                borderHandle(edge: .top, width: targetWidth, height: 8, targetWidth: targetWidth, targetHeight: CGFloat(targetHeight), currentWidth: currentWidth, widthScale: widthScale)
+                    .offset(y: -CGFloat(targetHeight) / 2)
+                
+                borderHandle(edge: .bottom, width: targetWidth, height: 8, targetWidth: targetWidth, targetHeight: CGFloat(targetHeight), currentWidth: currentWidth, widthScale: widthScale)
+                    .offset(y: CGFloat(targetHeight) / 2)
+                
+                borderHandle(edge: .left, width: 8, height: CGFloat(targetHeight), targetWidth: targetWidth, targetHeight: CGFloat(targetHeight), currentWidth: currentWidth, widthScale: widthScale)
+                    .offset(x: -targetWidth / 2)
+                
+                borderHandle(edge: .right, width: 8, height: CGFloat(targetHeight), targetWidth: targetWidth, targetHeight: CGFloat(targetHeight), currentWidth: currentWidth, widthScale: widthScale)
+                    .offset(x: targetWidth / 2)
+                
+                // 2. 四角拉伸手柄
+                cornerHandle(corner: .topLeft, targetWidth: targetWidth, targetHeight: CGFloat(targetHeight), currentWidth: currentWidth, widthScale: widthScale)
+                    .offset(x: -targetWidth / 2, y: -CGFloat(targetHeight) / 2)
+                
+                cornerHandle(corner: .topRight, targetWidth: targetWidth, targetHeight: CGFloat(targetHeight), currentWidth: currentWidth, widthScale: widthScale)
+                    .offset(x: targetWidth / 2, y: -CGFloat(targetHeight) / 2)
+                
+                cornerHandle(corner: .bottomLeft, targetWidth: targetWidth, targetHeight: CGFloat(targetHeight), currentWidth: currentWidth, widthScale: widthScale)
+                    .offset(x: -targetWidth / 2, y: CGFloat(targetHeight) / 2)
+                
+                cornerHandle(corner: .bottomRight, targetWidth: targetWidth, targetHeight: CGFloat(targetHeight), currentWidth: currentWidth, widthScale: widthScale)
+                    .offset(x: targetWidth / 2, y: CGFloat(targetHeight) / 2)
+                
+                if isHovering && activeResizeEdge == nil && activeResizeCorner == nil {
+                    // 操作控制栏
+                    VStack {
+                        HStack {
+                            // 拖动位置手柄 (蓝色) - 使用 .global 坐标空间，防止鬼畜闪动
+                            Image(systemName: "arrow.up.and.down.and.left.and.right")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 24, height: 24)
+                                .background(
+                                    Circle()
+                                        .fill(LinearGradient(colors: [Color.blue, Color.blue.opacity(0.8)], startPoint: .top, endPoint: .bottom))
+                                )
+                                .shadow(color: .black.opacity(0.15), radius: 3, x: 0, y: 1.5)
+                                .gesture(
+                                    DragGesture(coordinateSpace: .global)
+                                        .onChanged { val in
+                                            dragOffset = val.translation
+                                        }
+                                        .onEnded { val in
+                                            var newLayout = layout
+                                            newLayout.customOffsetX = (layout.customOffsetX ?? 0) + Double(val.translation.width)
+                                            newLayout.customOffsetY = (layout.customOffsetY ?? 0) + Double(val.translation.height)
+                                            dragOffset = .zero
+                                            onUpdate(newLayout)
+                                        }
+                                )
+                                .help("按住拖动调整组件位置")
+                            
+                            Spacer()
+                            
+                            // 单独重置按钮 (灰色)
+                            Button(action: {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                    var newLayout = layout
+                                    newLayout.customOffsetX = nil
+                                    newLayout.customOffsetY = nil
+                                    newLayout.customWidthScale = nil
+                                    newLayout.customHeight = nil
+                                    onUpdate(newLayout)
+                                }
+                            }) {
+                                Image(systemName: "arrow.counterclockwise")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 24, height: 24)
+                                    .background(
+                                        Circle()
+                                            .fill(LinearGradient(colors: [Color.gray, Color.gray.opacity(0.8)], startPoint: .top, endPoint: .bottom))
+                                    )
+                                    .shadow(color: .black.opacity(0.15), radius: 3, x: 0, y: 1.5)
+                            }
+                            .buttonStyle(.plain)
+                            .help("恢复该组件的默认位置与大小")
+                        }
+                        .padding(8)
+                        
+                        Spacer()
+                    }
+                }
+            }
+        }
+        .frame(width: targetWidth)
+        .frame(height: layout.customHeight != nil || activeResizeEdge != nil || activeResizeCorner != nil ? CGFloat(targetHeight) : nil)
+        .offset(x: CGFloat(finalOffsetX), y: CGFloat(finalOffsetY))
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovering = hovering
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func borderHandle(
+        edge: ResizeEdge,
+        width: CGFloat,
+        height: CGFloat,
+        targetWidth: CGFloat,
+        targetHeight: CGFloat,
+        currentWidth: CGFloat,
+        widthScale: Double
+    ) -> some View {
+        let isCurrent = activeResizeEdge == edge
+        let isHovered = hoveredEdge == edge
+        
+        Rectangle()
+            .fill(isCurrent || isHovered ? Color.purple.opacity(0.15) : Color.clear)
+            .frame(width: width, height: height)
+            .contentShape(Rectangle())
+            .overlay(
+                Group {
+                    if isCurrent || isHovered {
+                        if edge == .top || edge == .bottom {
+                            Rectangle()
+                                .fill(LinearGradient(colors: [Color.purple, Color.blue], startPoint: .leading, endPoint: .trailing))
+                                .frame(height: 2)
+                        } else {
+                            Rectangle()
+                                .fill(LinearGradient(colors: [Color.purple, Color.blue], startPoint: .top, endPoint: .bottom))
+                                .frame(width: 2)
+                        }
+                    }
+                }
+            )
+            .onHover { hovering in
+                if hovering {
+                    hoveredEdge = edge
+                    if edge == .top || edge == .bottom {
+                        NSCursor.resizeUpDown.set()
+                    } else {
+                        NSCursor.resizeLeftRight.set()
+                    }
+                } else {
+                    if hoveredEdge == edge {
+                        hoveredEdge = nil
+                        NSCursor.arrow.set()
+                    }
+                }
+            }
+            .gesture(
+                DragGesture(coordinateSpace: .global)
+                    .onChanged { val in
+                        if activeResizeEdge == nil {
+                            activeResizeEdge = edge
+                        }
+                        edgeDragOffset = val.translation
+                    }
+                    .onEnded { val in
+                        var newLayout = layout
+                        if edge == .left {
+                            let deltaW = -val.translation.width
+                            let newWidth = max(140, currentWidth * CGFloat(widthScale) + deltaW)
+                            let actualDeltaW = newWidth - currentWidth * CGFloat(widthScale)
+                            newLayout.customWidthScale = max(0.4, min(2.0, Double(newWidth / currentWidth)))
+                            newLayout.customOffsetX = (layout.customOffsetX ?? 0) - Double(actualDeltaW)
+                        } else if edge == .right {
+                            let newWidth = max(140, currentWidth * CGFloat(widthScale) + val.translation.width)
+                            newLayout.customWidthScale = max(0.4, min(2.0, Double(newWidth / currentWidth)))
+                        } else if edge == .top {
+                            let deltaH = -val.translation.height
+                            let newHeight = max(50, (layout.customHeight ?? Double(defaultHeight)) + Double(deltaH))
+                            let actualDeltaH = newHeight - (layout.customHeight ?? Double(defaultHeight))
+                            newLayout.customHeight = newHeight
+                            newLayout.customOffsetY = (layout.customOffsetY ?? 0) - Double(actualDeltaH)
+                        } else if edge == .bottom {
+                            let newHeight = max(50, (layout.customHeight ?? Double(defaultHeight)) + Double(val.translation.height))
+                            newLayout.customHeight = newHeight
+                        }
+                        
+                        edgeDragOffset = .zero
+                        activeResizeEdge = nil
+                        onUpdate(newLayout)
+                    }
+            )
+    }
+    
+    @ViewBuilder
+    private func cornerHandle(
+        corner: ResizeCorner,
+        targetWidth: CGFloat,
+        targetHeight: CGFloat,
+        currentWidth: CGFloat,
+        widthScale: Double
+    ) -> some View {
+        let isCurrent = activeResizeCorner == corner
+        let isHovered = hoveredCorner == corner
+        
+        Circle()
+            .fill(isCurrent || isHovered
+                  ? LinearGradient(colors: [Color.purple, Color.blue], startPoint: .topLeading, endPoint: .bottomTrailing)
+                  : LinearGradient(colors: [Color.primary.opacity(0.3), Color.primary.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing))
+            .frame(width: 10, height: 10)
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: 1.5)
+            )
+            .shadow(color: (isCurrent || isHovered ? Color.purple : Color.black).opacity(0.3), radius: 3, x: 0, y: 1)
+            .scaleEffect(isCurrent || isHovered ? 1.3 : 1.0)
+            .animation(.spring(response: 0.15), value: isHovered)
+            .contentShape(Circle())
+            .onHover { hovering in
+                if hovering {
+                    hoveredCorner = corner
+                    NSCursor.pointingHand.set()
+                } else {
+                    if hoveredCorner == corner {
+                        hoveredCorner = nil
+                        NSCursor.arrow.set()
+                    }
+                }
+            }
+            .gesture(
+                DragGesture(coordinateSpace: .global)
+                    .onChanged { val in
+                        if activeResizeCorner == nil {
+                            activeResizeCorner = corner
+                        }
+                        cornerDragOffset = val.translation
+                    }
+                    .onEnded { val in
+                        var newLayout = layout
+                        
+                        switch corner {
+                        case .topLeft:
+                            let deltaW = -val.translation.width
+                            let newWidth = max(140, currentWidth * CGFloat(widthScale) + deltaW)
+                            let actualDeltaW = newWidth - currentWidth * CGFloat(widthScale)
+                            newLayout.customWidthScale = max(0.4, min(2.0, Double(newWidth / currentWidth)))
+                            newLayout.customOffsetX = (layout.customOffsetX ?? 0) - Double(actualDeltaW)
+                            
+                            let deltaH = -val.translation.height
+                            let newHeight = max(50, (layout.customHeight ?? Double(defaultHeight)) + Double(deltaH))
+                            let actualDeltaH = newHeight - (layout.customHeight ?? Double(defaultHeight))
+                            newLayout.customHeight = newHeight
+                            newLayout.customOffsetY = (layout.customOffsetY ?? 0) - Double(actualDeltaH)
+                            
+                        case .topRight:
+                            let newWidth = max(140, currentWidth * CGFloat(widthScale) + val.translation.width)
+                            newLayout.customWidthScale = max(0.4, min(2.0, Double(newWidth / currentWidth)))
+                            
+                            let deltaH = -val.translation.height
+                            let newHeight = max(50, (layout.customHeight ?? Double(defaultHeight)) + Double(deltaH))
+                            let actualDeltaH = newHeight - (layout.customHeight ?? Double(defaultHeight))
+                            newLayout.customHeight = newHeight
+                            newLayout.customOffsetY = (layout.customOffsetY ?? 0) - Double(actualDeltaH)
+                            
+                        case .bottomLeft:
+                            let deltaW = -val.translation.width
+                            let newWidth = max(140, currentWidth * CGFloat(widthScale) + deltaW)
+                            let actualDeltaW = newWidth - currentWidth * CGFloat(widthScale)
+                            newLayout.customWidthScale = max(0.4, min(2.0, Double(newWidth / currentWidth)))
+                            newLayout.customOffsetX = (layout.customOffsetX ?? 0) - Double(actualDeltaW)
+                            
+                            let newHeight = max(50, (layout.customHeight ?? Double(defaultHeight)) + Double(val.translation.height))
+                            newLayout.customHeight = newHeight
+                            
+                        case .bottomRight:
+                            let newWidth = max(140, currentWidth * CGFloat(widthScale) + val.translation.width)
+                            newLayout.customWidthScale = max(0.4, min(2.0, Double(newWidth / currentWidth)))
+                            
+                            let newHeight = max(50, (layout.customHeight ?? Double(defaultHeight)) + Double(val.translation.height))
+                            newLayout.customHeight = newHeight
+                        }
+                        
+                        cornerDragOffset = .zero
+                        activeResizeCorner = nil
+                        onUpdate(newLayout)
+                    }
+            )
+    }
+}
+
+// MARK: - 上帝模式独立悬浮控制工具栏
+struct FloatingLayoutToolbar: View {
+    @ObservedObject var viewModel: MainViewModel
+    @Binding var isEditing: Bool
+    let onReset: () -> Void
+    let onSave: () -> Void
+    let onChangeSize: (CGFloat, CGFloat) -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Image(systemName: "wand.and.stars")
+                    .foregroundStyle(viewModel.resolvedTheme.accentColor)
+                    .font(.system(size: 14, weight: .bold))
+                
+                Text("上帝模式布局控制")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                // 启用/锁定编辑 Toggle
+                Toggle(isEditing ? "正在编辑" : "已锁定", isOn: $isEditing)
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: 11))
+            }
+            
+            if isEditing {
+                Divider()
+                    .background(Color.primary.opacity(0.1))
+                
+                HStack(spacing: 12) {
+                    // 重置布局
+                    Button(action: onReset) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.counterclockwise")
+                            Text("重置")
+                        }
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.gray))
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // 保存布局
+                    Button(action: onSave) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle")
+                            Text("保存")
+                        }
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(viewModel.resolvedTheme.accentColor))
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Spacer()
+                    
+                    // 手动调整窗体大小
+                    HStack(spacing: 8) {
+                        Text("窗体:")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        
+                        HStack(spacing: 2) {
+                            Text("宽")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.tertiary)
+                            Button(action: { onChangeSize(-20, 0) }) {
+                                Image(systemName: "minus.square")
+                            }
+                            .buttonStyle(.plain)
+                            Button(action: { onChangeSize(20, 0) }) {
+                                Image(systemName: "plus.square")
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        
+                        HStack(spacing: 2) {
+                            Text("高")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.tertiary)
+                            Button(action: { onChangeSize(0, -20) }) {
+                                Image(systemName: "minus.square")
+                            }
+                            .buttonStyle(.plain)
+                            Button(action: { onChangeSize(0, 20) }) {
+                                Image(systemName: "plus.square")
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .frame(width: 364)
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 

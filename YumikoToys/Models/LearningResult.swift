@@ -97,6 +97,7 @@ struct LearningStats: Codable, Sendable, Hashable, Equatable {
     var totalPreferencesLearned: Int
     var lastLearningDate: Date?
     var isLearningEnabled: Bool
+    var lastAnalyzedMessageCount: Int? // 记录落盘游标
 }
 
 /// 学习结果模型
