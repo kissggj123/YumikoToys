@@ -114,6 +114,9 @@ final class UniversalLLMProvider: AIProvider {
         
         if providerType != .ollama && !apiKey.isEmpty {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            if providerType == .mimo {
+                request.setValue(apiKey, forHTTPHeaderField: "api-key")
+            }
         }
         
         let session = SmartProxyManager.makeSession(for: endpoint)
@@ -306,6 +309,9 @@ final class UniversalLLMProvider: AIProvider {
                         
                         if providerType != .ollama && !capturedApiKey.isEmpty {
                             request.setValue("Bearer \(capturedApiKey)", forHTTPHeaderField: "Authorization")
+                            if providerType == .mimo {
+                                request.setValue(capturedApiKey, forHTTPHeaderField: "api-key")
+                            }
                         }
                         
                         let openAIMessages = buildOpenAIMessages(messages, systemPrompt: systemPrompt)

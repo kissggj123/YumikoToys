@@ -634,12 +634,27 @@ extension ThemeColor {
 
 struct StatusBarView: View {
     @StateObject private var viewModel = StatusBarViewModel()
+    @ObservedObject private var pluginService = PluginService.shared
     let onShowMainWindow: () -> Void
     let onQuit: () -> Void
+
+    private var customDaysDisplayTitle: String? {
+        let layouts = DependencyContainer.shared.componentLayoutService.currentLayouts
+        if let layout = layouts.first(where: { $0.type == .daysDisplay }),
+           let title = layout.customTitle, !title.isEmpty {
+            return title
+        }
+        return nil
+    }
 
     // 主题色选择
     @State private var themeColor: ThemeColor = .dark
     @State private var showThemePicker: Bool = false
+    
+    // 插件系统状态
+    @State private var pluginRunningLogs = ""
+    @State private var showLogsSheet = false
+    @State private var showPluginConfig = false
 
     // 悬浮动效状态
     @State private var isDaysCardHovered = false
@@ -672,6 +687,14 @@ struct StatusBarView: View {
             // 防休眠开关
             preventSleepSection
                 .padding(16)
+
+            Divider()
+                .padding(.horizontal, 16)
+
+            // 🔌 插件系统
+            pluginsSection
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
 
             Divider()
                 .padding(.horizontal, 16)
@@ -906,25 +929,48 @@ struct StatusBarView: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(AppConfig.appName)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(themeColor.textColor)
-                    .lineLimit(1)
+                if let customTitle = customDaysDisplayTitle {
+                    Text(customTitle)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(themeColor.textColor)
+                        .lineLimit(1)
 
-                HStack(spacing: 4) {
-                    Text("🥕")
-                        .font(.system(size: 10))
-                    Text("可可皇后")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(themeColor.accentColor)
+                    HStack(spacing: 4) {
+                        Text("🥕")
+                            .font(.system(size: 10))
+                        Text(viewModel.anniversaryInfo?.anniversary.displayPetName ?? "可可")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(themeColor.accentColor)
+                            .lineLimit(1)
+                        Text("·")
+                            .font(.system(size: 10))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                        Text("v\(AppConfig.version)")
+                            .font(.system(size: 10))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .lineLimit(1)
+                    }
+                } else {
+                    Text(AppConfig.appName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(themeColor.textColor)
                         .lineLimit(1)
-                    Text("·")
-                        .font(.system(size: 10))
-                        .foregroundStyle(themeColor.secondaryTextColor)
-                    Text("v\(AppConfig.version)")
-                        .font(.system(size: 10))
-                        .foregroundStyle(themeColor.secondaryTextColor)
-                        .lineLimit(1)
+
+                    HStack(spacing: 4) {
+                        Text("🥕")
+                            .font(.system(size: 10))
+                        Text("可可皇后")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(themeColor.accentColor)
+                            .lineLimit(1)
+                        Text("·")
+                            .font(.system(size: 10))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                        Text("v\(AppConfig.version)")
+                            .font(.system(size: 10))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .lineLimit(1)
+                    }
                 }
             }
             
@@ -955,7 +1001,7 @@ struct StatusBarView: View {
                     .animation(.spring(response: 0.25, dampingFraction: 0.5), value: isAvatarHovered)
                     .onHover { isAvatarHovered = $0 }
                 
-                Text(info.anniversary.displayPetName)
+                Text(customDaysDisplayTitle ?? info.anniversary.displayPetName)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(1)
@@ -1170,6 +1216,307 @@ struct StatusBarView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+    
+    // MARK: - 插件系统 UI
+    
+    private var pluginsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // MARK: 插件区头部（含日志 + 配置按钮）
+            HStack(spacing: 6) {
+                Text("🔌 YumiScript 插件系统")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(themeColor.textColor)
+                
+                Spacer()
+                
+                if !pluginRunningLogs.isEmpty {
+                    Button(action: { showLogsSheet = true }) {
+                        HStack(spacing: 2) {
+                            Circle().fill(Color.green).frame(width: 5, height: 5)
+                            Text("查看日志")
+                                .font(.system(size: 9))
+                                .foregroundStyle(themeColor.accentColor)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showLogsSheet) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("YumiScript 运行日志")
+                                .font(.system(size: 10, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.top, 8)
+                            ScrollView {
+                                Text(pluginRunningLogs)
+                                    .font(.system(size: 9, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                                    .padding(8)
+                            }
+                            .frame(width: 260, height: 180)
+                        }
+                    }
+                }
+                
+                // ⚙️ 显示配置按钮
+                Button(action: { showPluginConfig.toggle() }) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 10))
+                        .foregroundStyle(themeColor.secondaryTextColor)
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showPluginConfig, arrowEdge: .trailing) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("状态栏插件显示控制")
+                            .font(.system(size: 11, weight: .bold))
+                            .padding(.bottom, 2)
+                        
+                        Picker("显示模版", selection: Binding(
+                            get: { pluginService.activeLayoutPreset },
+                            set: { preset in pluginService.applyPreset(preset) }
+                        )) {
+                            ForEach(PluginLayoutPreset.allCases) { preset in
+                                Text(preset.displayName).tag(preset)
+                             }
+                        }
+                        .pickerStyle(.menu)
+                        .font(.system(size: 10))
+                        
+                        Divider()
+                        
+                        // 内置快捷操作区
+                        Toggle(isOn: Binding(
+                            get: { pluginService.showBuiltinQuickActions },
+                            set: { _ in pluginService.toggleBuiltinQuickActions() }
+                        )) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "camera.viewfinder")
+                                    .font(.system(size: 10))
+                                    .frame(width: 14)
+                                Text("内置快捷操作（截图/录屏）")
+                                    .font(.system(size: 11))
+                            }
+                        }
+                        .toggleStyle(.switch)
+                        
+                        // 快速启动区
+                        Toggle(isOn: Binding(
+                            get: { pluginService.showQuickLaunchSection },
+                            set: { _ in pluginService.toggleQuickLaunchSection() }
+                        )) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.up.right.square")
+                                    .font(.system(size: 10))
+                                    .frame(width: 14)
+                                Text("快速启动应用")
+                                    .font(.system(size: 11))
+                            }
+                        }
+                        .toggleStyle(.switch)
+                        
+                        // 自定义插件区
+                        Toggle(isOn: Binding(
+                            get: { pluginService.showCustomPluginsSection },
+                            set: { _ in pluginService.toggleCustomPluginsSection() }
+                        )) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "puzzlepiece.extension")
+                                    .font(.system(size: 10))
+                                    .frame(width: 14)
+                                Text("扩展插件")
+                                    .font(.system(size: 11))
+                            }
+                        }
+                        .toggleStyle(.switch)
+                        
+                        Divider()
+                        
+                        // 单个插件的可见性控制
+                        if !pluginService.customPlugins.isEmpty {
+                            Text("单个插件状态栏显示")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            
+                            ForEach(pluginService.customPlugins) { plugin in
+                                Toggle(isOn: Binding(
+                                    get: { pluginService.isVisibleInStatusBar(pluginId: plugin.id) },
+                                    set: { newVal in pluginService.setVisibility(pluginId: plugin.id, visible: newVal) }
+                                )) {
+                                    Text(plugin.name)
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(plugin.isEnabled ? .primary : .secondary)
+                                }
+                                .toggleStyle(.switch)
+                                .disabled(!plugin.isEnabled)
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        // 全部隐藏/全部显示
+                        HStack(spacing: 8) {
+                            Button("全部显示") {
+                                pluginService.showBuiltinQuickActions = true
+                                pluginService.showQuickLaunchSection = true
+                                pluginService.showCustomPluginsSection = true
+                                for plugin in pluginService.customPlugins {
+                                    pluginService.setVisibility(pluginId: plugin.id, visible: true)
+                                }
+                                pluginService.saveVisibilitySettings()
+                            }
+                            .font(.system(size: 10))
+                            .buttonStyle(.bordered)
+                            
+                            Button("全部隐藏") {
+                                pluginService.showBuiltinQuickActions = false
+                                pluginService.showQuickLaunchSection = false
+                                pluginService.showCustomPluginsSection = false
+                                for plugin in pluginService.customPlugins {
+                                    pluginService.setVisibility(pluginId: plugin.id, visible: false)
+                                }
+                                pluginService.saveVisibilitySettings()
+                            }
+                            .font(.system(size: 10))
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                    .padding(14)
+                    .frame(width: 240)
+                }
+            }
+            
+            // MARK: 内置快捷操作（截图/录屏）
+            if pluginService.showBuiltinQuickActions {
+                HStack(spacing: 8) {
+                    // 截图
+                    Button(action: {
+                        Task {
+                            let logs = await YumiScriptEngine.execute("screenshot")
+                            pluginRunningLogs = logs
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "camera.viewfinder")
+                                .font(.system(size: 10))
+                            Text("屏幕截图")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .foregroundStyle(themeColor.textColor)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.buttonBackgroundColor))
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // 录屏
+                    Button(action: {
+                        Task {
+                            let logs = await YumiScriptEngine.execute("record 5")
+                            pluginRunningLogs = logs
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "video")
+                                .font(.system(size: 10))
+                            Text("5秒录屏")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .foregroundStyle(themeColor.textColor)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.buttonBackgroundColor))
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Spacer()
+                }
+            }
+            
+            // MARK: 快速启动应用列表
+            if pluginService.showQuickLaunchSection && !pluginService.quickLaunchApps.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("🚀 快速启动")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(themeColor.secondaryTextColor)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(pluginService.quickLaunchApps) { app in
+                                Button(action: {
+                                    Task {
+                                        let logs = await YumiScriptEngine.execute("launch \"\(app.name)\"")
+                                        pluginRunningLogs = logs
+                                    }
+                                }) {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "arrow.up.right.square")
+                                            .font(.system(size: 9))
+                                        Text(app.name)
+                                            .font(.system(size: 10, weight: .medium))
+                                    }
+                                    .foregroundStyle(themeColor.textColor)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Capsule().fill(themeColor.buttonBackgroundColor))
+                                    .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+                .padding(.top, 4)
+            }
+            
+            // MARK: 自定义插件列表（支持单个可见性控制）
+            if pluginService.showCustomPluginsSection {
+                let activePlugins = pluginService.customPlugins.filter {
+                    $0.isEnabled && pluginService.isVisibleInStatusBar(pluginId: $0.id)
+                }
+                if !activePlugins.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("🧩 扩展插件")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(activePlugins) { plugin in
+                                    Button(action: {
+                                        Task {
+                                            let logs = await YumiScriptEngine.execute(plugin.scriptContent)
+                                            pluginRunningLogs = logs
+                                        }
+                                    }) {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: plugin.icon)
+                                                .font(.system(size: 9))
+                                            Text(plugin.name)
+                                                .font(.system(size: 10, weight: .medium))
+                                        }
+                                        .foregroundStyle(themeColor.textColor)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Capsule().fill(themeColor.buttonBackgroundColor))
+                                        .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 4)
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(themeColor.cardBackgroundColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(themeColor.borderColor, lineWidth: 1)
+        )
     }
 }
 

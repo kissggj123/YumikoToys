@@ -131,6 +131,7 @@ struct SettingsView: View {
                         preventSleepSection
                         timeSyncSection
                         skillManagementSection
+                        PluginManagementSectionView()
                         dataManagementSection
                         aboutSection
                         footerText
@@ -573,6 +574,80 @@ struct SettingsView: View {
                 isOn: $viewModel.showMainWindowOnManualLaunch,
                 onToggle: { value in viewModel.updateShowMainWindowOnManualLaunch(value) }
             )
+            
+            Divider()
+                .padding(.vertical, 4)
+            
+            VStack(alignment: .leading, spacing: 10) {
+                SettingsToggleRow(
+                    icon: "sidebar.right",
+                    iconColor: "007AFF",
+                    title: "隐藏底部布局编辑栏",
+                    subtitle: "隐藏上帝模式下的底部浮动控制栏，使用侧边栏笔形图标编辑",
+                    isOn: $viewModel.hideFloatingLayoutToolbar,
+                    onToggle: { viewModel.updateHideFloatingLayoutToolbar($0) }
+                )
+                
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: "007AFF"))
+                        .frame(width: 24, height: 24)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("状态栏特效雨选项")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("选择在状态栏展示的华丽粒子特效雨")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Picker("", selection: Binding(
+                        get: { viewModel.activeSpecialEffect },
+                        set: { viewModel.selectSpecialEffect($0) }
+                    )) {
+                        ForEach(SpecialEffectType.allCases) { effect in
+                            Text(effect.displayName).tag(effect)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 160)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                
+                HStack(spacing: 8) {
+                    Image(systemName: "camera")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: "007AFF"))
+                        .frame(width: 24, height: 24)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("截图快捷键预设")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("使用全局快捷键唤起快速区域截图")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Picker("", selection: Binding(
+                        get: { viewModel.screenshotHotkeyPreset },
+                        set: { viewModel.selectScreenshotHotkeyPreset($0) }
+                    )) {
+                        ForEach(ScreenshotHotkeyPreset.allCases) { preset in
+                            Text(preset.displayName).tag(preset)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 160)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+            }
         }
     }
     
@@ -2258,6 +2333,314 @@ private struct SettingsHeader: View, Equatable {
     }
 }
 
+// MARK: - YumiScript 插件管理 Section
+struct PluginManagementSectionView: View {
+    @ObservedObject var pluginService = PluginService.shared
+    @State private var showingEditor = false
+    @State private var selectedPlugin: YumiPlugin? = nil
+    @State private var newAppName = ""
+    @State private var showingAppPicker = false
+    
+    var body: some View {
+        SettingsSection(title: "YumiScript 插件与快速启动管理", icon: "powerplug", iconColor: "34C759") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("🧩 YumiScript 插件配置")
+                    .font(.system(size: 12, weight: .bold))
+                
+                Text("配置状态栏中可快速执行的 YumiScript 插件，支持模块化和自定义编写。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 4)
+                
+                // 插件列表
+                VStack(spacing: 8) {
+                    ForEach(pluginService.customPlugins) { plugin in
+                        HStack {
+                            Image(systemName: plugin.icon.isEmpty ? "powerplug" : plugin.icon)
+                                .font(.system(size: 12))
+                                .frame(width: 20, height: 20)
+                                .foregroundStyle(plugin.isEnabled ? .green : .secondary)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 6) {
+                                    Text(plugin.name)
+                                        .font(.system(size: 12, weight: .bold))
+                                    Text("(\(plugin.id))")
+                                        .font(.system(size: 9, design: .monospaced))
+                                        .foregroundStyle(.tertiary)
+                                }
+                                Text(plugin.description)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            HStack(spacing: 12) {
+                                Toggle("", isOn: Binding(
+                                    get: { plugin.isEnabled },
+                                    set: { newValue in
+                                        var updated = plugin
+                                        updated.isEnabled = newValue
+                                        pluginService.addOrUpdatePlugin(updated)
+                                    }
+                                ))
+                                .toggleStyle(SwitchToggleStyle(tint: .green))
+                                .labelsHidden()
+                                
+                                Button(action: {
+                                    selectedPlugin = plugin
+                                    showingEditor = true
+                                }) {
+                                    Text("编辑")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(Color(hex: "007AFF"))
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button(action: {
+                                    pluginService.deletePlugin(id: plugin.id)
+                                }) {
+                                    Text("删除")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(10)
+                        .background(Color.primary.opacity(0.02))
+                        .cornerRadius(10)
+                    }
+                }
+                
+                Button(action: {
+                    selectedPlugin = YumiPlugin(
+                        id: "plugin_\(UUID().uuidString.prefix(6).lowercased())",
+                        name: "自定义新插件",
+                        icon: "powerplug",
+                        description: "执行自定义 YumiScript 脚本指令",
+                        isEnabled: true,
+                        scriptContent: """
+                        # YumiScript 自定义脚本
+                        notify "自定义通知" "Hello YumiScript!"
+                        """
+                    )
+                    showingEditor = true
+                }) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("新增自定义插件")
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(hex: "34C759"))
+                    .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 8)
+                
+                Divider()
+                    .padding(.vertical, 4)
+                
+                Text("🚀 状态栏快速启动应用配置")
+                    .font(.system(size: 12, weight: .bold))
+                
+                Text("添加或移除展示在状态栏弹出菜单中的快速启动应用。点击对应应用时将自动通过 `launch` 指令激活。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                
+                HStack(spacing: 8) {
+                    TextField("输入应用英文/拼音名称（如 Safari, Xcode）", text: $newAppName)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 11))
+                    
+                    Button(action: {
+                        let name = newAppName.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !name.isEmpty {
+                            pluginService.addQuickLaunchApp(name: name)
+                            newAppName = ""
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                            Text("添加")
+                        }
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color(hex: "007AFF"))
+                        .cornerRadius(6)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(newAppName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                
+                Button(action: {
+                    showingAppPicker = true
+                }) {
+                    HStack {
+                        Image(systemName: "list.bullet.rectangle.portrait")
+                        Text("从已安装应用批量选择")
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .background(Color(hex: "007AFF"))
+                    .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 4)
+                
+                if !pluginService.quickLaunchApps.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(pluginService.quickLaunchApps) { app in
+                                HStack(spacing: 4) {
+                                    Text(app.name)
+                                        .font(.system(size: 10, weight: .semibold))
+                                    
+                                    Button(action: {
+                                        pluginService.deleteQuickLaunchApp(id: app.id)
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.primary.opacity(0.04))
+                                .cornerRadius(6)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                                )
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                } else {
+                    Text("暂无快速启动应用，请在上方输入框添加应用。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .italic()
+                        .padding(.vertical, 4)
+                }
+            }
+        }
+        .sheet(item: $selectedPlugin) { plugin in
+            PluginEditorView(plugin: plugin, selectedPlugin: $selectedPlugin)
+        }
+        .sheet(isPresented: $showingAppPicker) {
+            AppPickerView(isPresented: $showingAppPicker)
+        }
+    }
+}
+
+struct PluginEditorView: View {
+    @State var plugin: YumiPlugin
+    @Binding var selectedPlugin: YumiPlugin?
+    @ObservedObject var pluginService = PluginService.shared
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("编辑 YumiScript 插件")
+                    .font(.system(size: 14, weight: .bold))
+                Spacer()
+                Button("关闭") {
+                    selectedPlugin = nil
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal)
+            .padding(.top)
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("插件标识 (ID，唯一)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        TextField("例如: quick_launch", text: $plugin.id)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("插件名称")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        TextField("例如: 快速启动应用", text: $plugin.name)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("图标名称 (SFSymbol)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        TextField("例如: rocket / camera / video / powerplug", text: $plugin.icon)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12, design: .monospaced))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("插件用途描述")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        TextField("简要描述插件的功能", text: $plugin.description)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("YumiScript 脚本内容")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        TextEditor(text: $plugin.scriptContent)
+                            .font(.system(size: 12, design: .monospaced))
+                            .frame(height: 180)
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.1), lineWidth: 1))
+                    }
+                    
+                    Button(action: {
+                        pluginService.addOrUpdatePlugin(plugin)
+                        selectedPlugin = nil
+                    }) {
+                        Text("保存插件")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .background(Color(hex: "34C759"))
+                            .cornerRadius(6)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 8)
+                }
+                .padding(.horizontal)
+            }
+        }
+        .frame(width: 450, height: 500)
+        .onAppear {
+            if let sel = selectedPlugin {
+                self.plugin = sel
+            }
+        }
+        .onChange(of: selectedPlugin) { newPlugin in
+            if let newPlugin = newPlugin {
+                self.plugin = newPlugin
+            }
+        }
+    }
+}
+
 // MARK: - 设置分组
 
 private struct SettingsSection<Content: View>: View {
@@ -2611,6 +2994,11 @@ final class SettingsViewModel: ObservableObject {
     @Published var customMainWindowThemeColorHex: String = "FF6B9D"
     @Published var showMainWindowOnAutoLaunch: Bool = false
     @Published var showMainWindowOnManualLaunch: Bool = true
+    
+    // v4.5.0 settings
+    @Published var hideFloatingLayoutToolbar: Bool = false
+    @Published var activeSpecialEffect: SpecialEffectType = .emoji
+    @Published var screenshotHotkeyPreset: ScreenshotHotkeyPreset = .none
 
     // 👈【核心新增】：上帝模式 (God Mode) 配色及圆角发布参数
     @Published var godModeEnabled = false
@@ -2741,6 +3129,11 @@ final class SettingsViewModel: ObservableObject {
         showMainWindowOnAutoLaunch = settings.showMainWindowOnAutoLaunch
         showMainWindowOnManualLaunch = settings.showMainWindowOnManualLaunch
         
+        // 读取 v4.5.0 配置
+        hideFloatingLayoutToolbar = settings.hideFloatingLayoutToolbar
+        activeSpecialEffect = settings.activeSpecialEffect
+        screenshotHotkeyPreset = settings.screenshotHotkeyPreset
+        
         // 读取上帝模式配置
         godModeEnabled = settings.godModeEnabled
         isLayoutEditingEnabled = settings.isLayoutEditingEnabled
@@ -2831,6 +3224,10 @@ final class SettingsViewModel: ObservableObject {
                 self.customMainWindowThemeColorHex = updatedSettings.customMainWindowThemeColorHex
                 self.showMainWindowOnAutoLaunch = updatedSettings.showMainWindowOnAutoLaunch
                 self.showMainWindowOnManualLaunch = updatedSettings.showMainWindowOnManualLaunch
+                
+                self.hideFloatingLayoutToolbar = updatedSettings.hideFloatingLayoutToolbar
+                self.activeSpecialEffect = updatedSettings.activeSpecialEffect
+                self.screenshotHotkeyPreset = updatedSettings.screenshotHotkeyPreset
                 self.selectedFont = updatedSettings.selectedFont
                 self.selectedIconStyle = updatedSettings.selectedIconStyle
                 self.statusBarIconStyle = updatedSettings.statusBarIconStyle
@@ -2961,6 +3358,31 @@ final class SettingsViewModel: ObservableObject {
         container.settingsService.updateSettings(settings)
     }
 
+    func updateHideFloatingLayoutToolbar(_ hide: Bool) {
+        hideFloatingLayoutToolbar = hide
+        var settings = container.settingsService.settings
+        settings.hideFloatingLayoutToolbar = hide
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Hide floating layout toolbar toggled to: \(hide)")
+    }
+    
+    func selectSpecialEffect(_ effect: SpecialEffectType) {
+        activeSpecialEffect = effect
+        var settings = container.settingsService.settings
+        settings.activeSpecialEffect = effect
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Special effect changed to: \(effect.displayName)")
+    }
+    
+    func selectScreenshotHotkeyPreset(_ preset: ScreenshotHotkeyPreset) {
+        screenshotHotkeyPreset = preset
+        var settings = container.settingsService.settings
+        settings.screenshotHotkeyPreset = preset
+        container.settingsService.updateSettings(settings)
+        GlobalHotkeyManager.shared.setupHotkey(preset: preset)
+        LoggerService.shared.info("Screenshot hotkey preset changed to: \(preset.displayName)")
+    }
+
     /// 重新加载设置（在视图出现时调用，确保获取已持久化的设置）
     func reloadSettings() {
         let settings = container.settingsService.settings
@@ -3007,6 +3429,10 @@ final class SettingsViewModel: ObservableObject {
         customMainWindowThemeColorHex = settings.customMainWindowThemeColorHex
         showMainWindowOnAutoLaunch = settings.showMainWindowOnAutoLaunch
         showMainWindowOnManualLaunch = settings.showMainWindowOnManualLaunch
+        
+        hideFloatingLayoutToolbar = settings.hideFloatingLayoutToolbar
+        activeSpecialEffect = settings.activeSpecialEffect
+        screenshotHotkeyPreset = settings.screenshotHotkeyPreset
         savedColorSchemes = settings.savedColorSchemes
         activeColorSchemeName = settings.activeColorSchemeName
         

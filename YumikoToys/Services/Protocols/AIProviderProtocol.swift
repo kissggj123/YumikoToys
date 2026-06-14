@@ -32,6 +32,7 @@ enum AIProviderType: String, Codable, CaseIterable, Identifiable, Sendable {
     case ollama = "ollama"
     case nvidia = "nvidia"
     case poke = "poke"
+    case mimo = "mimo"
 
     var id: String { rawValue }
 
@@ -46,6 +47,7 @@ enum AIProviderType: String, Codable, CaseIterable, Identifiable, Sendable {
         case .ollama: return "Ollama (本地)"
         case .nvidia: return "NVIDIA NIM"
         case .poke: return "Poke AI (MCP)"
+        case .mimo: return "小米 MiMo"
         }
     }
 
@@ -60,6 +62,7 @@ enum AIProviderType: String, Codable, CaseIterable, Identifiable, Sendable {
         case .ollama: return "🦙"
         case .nvidia: return "🅝"
         case .poke: return "🅟"
+        case .mimo: return "🅜"
         }
     }
 
@@ -83,6 +86,8 @@ enum AIProviderType: String, Codable, CaseIterable, Identifiable, Sendable {
             return "https://integrate.api.nvidia.com/v1"
         case .poke:
             return "https://poke.com/api/v1/inbound-sms/webhook"
+        case .mimo:
+            return "https://api.xiaomimimo.com/v1"
         }
     }
 }

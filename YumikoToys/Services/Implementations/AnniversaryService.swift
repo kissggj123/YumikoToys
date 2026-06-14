@@ -246,6 +246,36 @@ final class AnniversaryService: AnniversaryServiceProtocol {
             lastMinute = currentMinute
             statusBarTextSubject.send(calc.shortString)
         }
+        
+        // 写入 Widget 同步文件
+        writeWidgetSyncData(anniversary: anniversary, calc: calc, milestones: milestones)
+    }
+    
+    private func writeWidgetSyncData(anniversary: Anniversary, calc: AnniversaryCalculation, milestones: [AnniversaryMilestone]) {
+        let name = DependencyContainer.shared.componentLayoutService.currentLayouts.first(where: { $0.type == .daysDisplay })?.customTitle ?? anniversary.displayPetName
+        let syncData = WidgetSyncData(
+            petName: name,
+            avatar: anniversary.displayAvatar,
+            startDate: anniversary.startDate,
+            totalDays: calc.totalDays,
+            milestones: milestones.map { WidgetMilestone(label: $0.label, date: $0.formattedDate, countDisplay: $0.countDisplay) }
+        )
+        
+        guard let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let folderURL = appSupportURL.appendingPathComponent("com.Lite.YumikoToys")
+        let fileURL = folderURL.appendingPathComponent("widget.json")
+        
+        do {
+            if !FileManager.default.fileExists(atPath: folderURL.path) {
+                try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
+            }
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(syncData)
+            try data.write(to: fileURL)
+        } catch {
+            LoggerService.shared.error("Failed to write widget sync data: \(error)")
+        }
     }
     
     // MARK: - 异步持久化
@@ -301,4 +331,18 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         saveAnniversariesSync()
         LoggerService.shared.info("Created default anniversary")
     }
+}
+
+struct WidgetSyncData: Codable {
+    let petName: String
+    let avatar: String
+    let startDate: Date
+    let totalDays: Double
+    let milestones: [WidgetMilestone]
+}
+
+struct WidgetMilestone: Codable {
+    let label: String
+    let date: String
+    let countDisplay: String
 }

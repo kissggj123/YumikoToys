@@ -369,8 +369,44 @@ final class WindowManager {
             let maxWidth = screenFrame.width - 40
             let maxHeight = screenFrame.height - 40
             
-            let targetWidth = min(type.defaultSize.width, maxWidth)
-            let targetHeight = min(type.defaultSize.height, maxHeight)
+            var targetWidth = min(type.defaultSize.width, maxWidth)
+            var targetHeight = min(type.defaultSize.height, maxHeight)
+            
+            if type == .main {
+                let customWidth = UserDefaults.standard.double(forKey: "customWindowWidth")
+                let customHeight = UserDefaults.standard.double(forKey: "customWindowHeight")
+                if customWidth > 0 && customHeight > 0 {
+                    // customWidth/customHeight are window frame sizes, convert to content sizes
+                    let dummyWindow = NSWindow(contentRect: .zero, styleMask: type.styleMask, backing: .buffered, defer: false)
+                    let contentRect = dummyWindow.contentRect(forFrameRect: NSRect(x: 0, y: 0, width: CGFloat(customWidth), height: CGFloat(customHeight)))
+                    targetWidth = min(contentRect.width, maxWidth)
+                    targetHeight = min(contentRect.height, maxHeight)
+                } else {
+                    let settings = DependencyContainer.shared.settingsService.settings
+                    let layouts = DependencyContainer.shared.componentLayoutService.loadLayouts()
+                    let visibleLayouts = ComponentLayout.visible(layouts)
+                    let maxWidthScale = visibleLayouts.map { $0.customWidthScale ?? 1.0 }.max() ?? 1.0
+                    let calcWidth = max(520, 364 * CGFloat(maxWidthScale) + 56 + 72)
+                    
+                    var elementsHeights: [CGFloat] = []
+                    for layout in visibleLayouts {
+                        let defaultHeight: CGFloat
+                        switch layout.type {
+                        case .header: defaultHeight = 60
+                        case .daysDisplay: defaultHeight = 230
+                        case .backgroundLearning: defaultHeight = 180
+                        case .modelStatus: defaultHeight = 150
+                        }
+                        elementsHeights.append(CGFloat(layout.customHeight ?? Double(defaultHeight)))
+                    }
+                    let totalSpacing: CGFloat = elementsHeights.isEmpty ? 0 : CGFloat(elementsHeights.count - 1) * 24
+                    let bottomPadding: CGFloat = settings.godModeEnabled ? 100 : 28
+                    let calcHeight = max(580, elementsHeights.reduce(0, +) + totalSpacing + 28 + bottomPadding)
+                    
+                    targetWidth = min(calcWidth, maxWidth)
+                    targetHeight = min(calcHeight, maxHeight)
+                }
+            }
             
             // 创建新窗口
             let window = NSWindow(

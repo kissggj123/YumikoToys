@@ -45,11 +45,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     nonisolated func applicationDidFinishLaunching(_ notification: Notification) {
+        let isAutoLaunch = launchedAsLogInItem
         Task { @MainActor in
             await initializeApp()
             
             let settings = DependencyContainer.shared.settingsService.settings
-            let isAutoLaunch = launchedAsLogInItem
             
             if isAutoLaunch {
                 if settings.showMainWindowOnAutoLaunch {
@@ -128,24 +128,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     /// 检测是否为开机自启动
-    private var launchedAsLogInItem: Bool {
-        guard let event = NSAppleEventManager.shared().currentAppleEvent else {
-            return false
+    private nonisolated var launchedAsLogInItem: Bool {
+        // 1. 现代 macOS Login Item (SMAppService) 检测：父进程为 launchd (PID 1)
+        if getppid() == 1 {
+            return true
         }
-        // eventID 'oapp' = 0x6f617070, eventClass 'aevt' = 0x61657674
-        let isOapp = event.eventClass == 0x61657674 && event.eventID == 0x6f617070
-        guard isOapp else { return false }
         
-        // keyAEPropData 'prpt' = 0x70727074
-        if let propData = event.paramDescriptor(forKeyword: 0x70727074) {
-            // 'lgin' = 0x6c67696e
-            return propData.enumCodeValue == 0x6c67696e
+        // 2. 传统 Apple Event 检测
+        if let event = NSAppleEventManager.shared().currentAppleEvent {
+            let isOapp = event.eventClass == 0x61657674 && event.eventID == 0x6f617070
+            if isOapp, let propData = event.paramDescriptor(forKeyword: 0x70727074) {
+                return propData.enumCodeValue == 0x6c67696e
+            }
         }
+        
         return false
     }
     
     nonisolated func applicationWillTerminate(_ notification: Notification) {
         Task { @MainActor in
+            GlobalHotkeyManager.shared.unregisterHotkey()
             DependencyContainer.shared.shutdown()
             LoggerService.shared.info("Application will terminate")
         }
@@ -174,6 +176,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // 后台并行初始化所有服务
         await DependencyContainer.shared.initialize()
+        
+        // Setup global hotkey for screenshot
+        let preset = DependencyContainer.shared.settingsService.settings.screenshotHotkeyPreset
+        GlobalHotkeyManager.shared.setupHotkey(preset: preset)
         
         // 服务初始化完成后，刷新状态栏标题（此时数据已就绪）
         statusBarManager?.refreshAfterServicesInitialized()

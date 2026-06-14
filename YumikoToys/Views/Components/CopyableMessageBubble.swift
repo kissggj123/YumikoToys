@@ -618,17 +618,22 @@ struct BubbleAgentStepView: View {
         return (content, "")
     }
 
-    private var parsedHeader: (icon: String, title: String, subtitle: String) {
+    private var parsedHeader: (icon: String, title: String, subtitle: String, isSuccess: Bool) {
         let parsed = extractedContent
-        var title = "Agent 步骤执行中"
+        var title = "调用工具"
         var icon = "🔧"
+        var isSuccess = true
 
         let lowercasedPrefix = parsed.prefix.lowercased()
-        if lowercasedPrefix.contains("web_search") || lowercasedPrefix.contains("search") {
-            title = "联网搜索完成"
+        if lowercasedPrefix.contains("error") || lowercasedPrefix.contains("failed") || content.lowercased().contains("error") {
+            isSuccess = false
+            title = "工具异常"
+            icon = "⚠️"
+        } else if lowercasedPrefix.contains("web_search") || lowercasedPrefix.contains("search") {
+            title = "联网搜索"
             icon = "🌐"
         } else if lowercasedPrefix.contains("file") || lowercasedPrefix.contains("parse") || lowercasedPrefix.contains("read") {
-            title = "文档解析完成"
+            title = "解析文件"
             icon = "📄"
         }
 
@@ -637,7 +642,7 @@ struct BubbleAgentStepView: View {
         subtitle = subtitle.replacingOccurrences(of: "调用工具:", with: "")
         subtitle = subtitle.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return (icon, title, subtitle)
+        return (icon, title, subtitle, isSuccess)
     }
 
     private var formattedContent: String {
@@ -647,9 +652,9 @@ struct BubbleAgentStepView: View {
                let json = try? JSONSerialization.jsonObject(with: data),
                let prettyData = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys]),
                let prettyString = String(data: prettyData, encoding: .utf8) {
-                return "```json\n\(prettyString)\n```"
+                return prettyString
             }
-            return "```json\n\(parsed.json)\n```"
+            return parsed.json
         }
         return content
     }
@@ -657,52 +662,74 @@ struct BubbleAgentStepView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: { withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() } }) {
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
+                    Rectangle()
+                        .fill(parsedHeader.isSuccess ? Color(hex: "10B981") : Color(hex: "EF4444"))
+                        .frame(width: 4, height: 20)
+                        .cornerRadius(2)
+                    
                     Text(parsedHeader.icon)
                         .font(.system(size: 13))
 
-                    Text(parsedHeader.title)
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(accentColor)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text(parsedHeader.title)
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .foregroundColor(.white)
+                            
+                            Text(parsedHeader.isSuccess ? "SUCCESS" : "ERROR")
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(parsedHeader.isSuccess ? Color(hex: "10B981").opacity(0.15) : Color(hex: "EF4444").opacity(0.15))
+                                .foregroundColor(parsedHeader.isSuccess ? Color(hex: "10B981") : Color(hex: "EF4444"))
+                                .cornerRadius(3)
+                        }
 
-                    if !parsedHeader.subtitle.isEmpty {
-                        Text("· \(parsedHeader.subtitle)")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                        if !parsedHeader.subtitle.isEmpty {
+                            Text(parsedHeader.subtitle)
+                                .font(.system(size: 9, design: .monospaced))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
                     }
 
                     Spacer()
 
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(accentColor)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(accentColor.opacity(0.08))
-                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(hex: "1E1E2E"))
             }
             .buttonStyle(.plain)
 
             if isExpanded {
-                VStack(alignment: .leading, spacing: 4) {
-                    MarkdownContentView(markdown: formattedContent)
+                VStack(alignment: .leading, spacing: 0) {
+                    Divider()
+                        .background(Color.white.opacity(0.08))
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        Text(formattedContent)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(Color(hex: "A6ACCD"))
+                            .padding(12)
+                            .textSelection(.enabled)
+                    }
                 }
-                .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.primary.opacity(0.02))
-                )
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "151521"))
             }
         }
+        .background(Color(hex: "1E1E2E"))
+        .cornerRadius(8)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(accentColor.opacity(0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
         )
         .frame(maxWidth: 680, alignment: .leading)
+        .shadow(color: Color.black.opacity(0.15), radius: 3, x: 0, y: 1)
     }
 }

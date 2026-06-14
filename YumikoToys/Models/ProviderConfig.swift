@@ -189,4 +189,20 @@ extension ProviderConfig {
             ]
         )
     }
+
+    /// MiMo 默认配置
+    static var mimoDefault: ProviderConfig {
+        ProviderConfig(
+            apiURL: AIProviderType.mimo.defaultBaseURL,
+            apiKey: "",
+            model: "mimo-v2.5",
+            autoSelect: false,
+            fallbackModels: ["mimo-v2.5", "mimo-v2.5-pro", "mimo-v2-flash"],
+            availableModels: [
+                AIModelInfo(id: "mimo-v2.5", name: "MiMo v2.5", provider: .mimo, description: "小米 MiMo 核心旗舰模型", supportsThinking: false, supportsVision: true, supportsTools: true),
+                AIModelInfo(id: "mimo-v2.5-pro", name: "MiMo v2.5 Pro", provider: .mimo, description: "小米 MiMo 专业旗舰模型", supportsThinking: true, supportsVision: true, supportsTools: true),
+                AIModelInfo(id: "mimo-v2-flash", name: "MiMo v2 Flash", provider: .mimo, description: "小米 MiMo 极速响应模型", supportsThinking: false, supportsVision: false, supportsTools: true)
+            ]
+        )
+    }
 }

@@ -32,6 +32,7 @@ struct Conversation: Codable, Identifiable, Equatable, Sendable {
     var petAnniversaryId: String?  // 关联的宠物纪念日ID
     var isPinned: Bool  // 是否置顶
     var chatMode: ChatMode?  // 对话所属模式
+    var agentId: String?  // 关联的 Agent ID
 
     var mode: ChatMode {
         get { chatMode ?? .petCompanion }
@@ -43,7 +44,8 @@ struct Conversation: Codable, Identifiable, Equatable, Sendable {
         title: String = "新对话",
         petAnniversaryId: String? = nil,
         isPinned: Bool = false,
-        chatMode: ChatMode = .petCompanion
+        chatMode: ChatMode = .petCompanion,
+        agentId: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -53,6 +55,7 @@ struct Conversation: Codable, Identifiable, Equatable, Sendable {
         self.petAnniversaryId = petAnniversaryId
         self.isPinned = isPinned
         self.chatMode = chatMode
+        self.agentId = agentId
     }
 
     /// 生成显示标题（基于最新消息）
@@ -115,12 +118,21 @@ final class ConversationService: ObservableObject {
 
     /// 创建新对话
     @discardableResult
-    func createConversation(title: String = "新对话", petAnniversaryId: String? = nil, chatMode: ChatMode = .petCompanion) -> Conversation {
-        let conversation = Conversation(title: title, petAnniversaryId: petAnniversaryId, chatMode: chatMode)
+    func createConversation(title: String = "新对话", petAnniversaryId: String? = nil, chatMode: ChatMode = .petCompanion, agentId: String? = nil) -> Conversation {
+        let conversation = Conversation(title: title, petAnniversaryId: petAnniversaryId, chatMode: chatMode, agentId: agentId)
         conversations.insert(conversation, at: 0)
         currentConversationId = conversation.id
         Task { await saveConversations() }
         return conversation
+    }
+
+    /// 更新会话 Agent ID
+    func updateAgent(for id: UUID, agentId: String?) {
+        if let index = conversations.firstIndex(where: { $0.id == id }) {
+            conversations[index].agentId = agentId
+            conversations[index].updatedAt = Date()
+            Task { await saveConversations() }
+        }
     }
 
     /// 删除对话

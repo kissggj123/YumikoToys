@@ -16,6 +16,7 @@
 		FC0664792FC0914300CABB99 /* SplashMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664782FC0914300CABB99 /* SplashMarkdown */; };
 		FC06647B2FC0914300CABB99 /* SplashTokenizer in Frameworks */ = {isa = PBXBuildFile; productRef = FC06647A2FC0914300CABB99 /* SplashTokenizer */; };
 		FC06647E2FC0916C00CABB99 /* Highlightr in Frameworks */ = {isa = PBXBuildFile; productRef = FC06647D2FC0916C00CABB99 /* Highlightr */; };
+		FC3FCE1E2CB69C52008D8C7C /* YumikoWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		FC5F1B1D2FBEB15D004B2F34 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B1C2FBEB15D004B2F34 /* MLX */; };
 		FC5F1B1F2FBEB15D004B2F34 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B1E2FBEB15D004B2F34 /* MLXFFT */; };
 		FC5F1B212FBEB15D004B2F34 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B202FBEB15D004B2F34 /* MLXFast */; };
@@ -151,6 +152,15 @@
 		FC6553222FC373980093B726 /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552142FC373980093B726 /* FontManager.swift */; };
 		FC6553B12FD000010093B726 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553B02FD000010093B726 /* Theme.swift */; };
 		FC6553FF0000000000000001 /* FullDiskAccessHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */; };
+		FC6559012FC373980093B726 /* AgentManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559022FC373980093B726 /* AgentManagerService.swift */; };
+		FC6559032FC373980093B726 /* PluginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559042FC373980093B726 /* PluginService.swift */; };
+		FC6559052FC373980093B726 /* YumiScriptEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559062FC373980093B726 /* YumiScriptEngine.swift */; };
+		FC6559072FC373980093B726 /* AgentsSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559082FC373980093B726 /* AgentsSidebarView.swift */; };
+		FC6559092FC373980093B726 /* SkillsSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65590A2FC373980093B726 /* SkillsSidebarView.swift */; };
+		FC65590B2FC373980093B726 /* ScreenMediaHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65590C2FC373980093B726 /* ScreenMediaHelper.swift */; };
+		FC65590D2FC373980093B726 /* GlobalHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65590E2FC373980093B726 /* GlobalHotkeyManager.swift */; };
+		FC65590F2FC373980093B726 /* AppScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559102FC373980093B726 /* AppScanner.swift */; };
+		FC6559112FC373980093B726 /* AppPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559122FC373980093B726 /* AppPickerView.swift */; };
 		FCA5AF182FC0992D00E668DB /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = FCA5AF172FC0992D00E668DB /* CoreXLSX */; };
 		FCB283B32E43D77A00FA3D4A /* MediaKeyTap in Frameworks */ = {isa = PBXBuildFile; productRef = FCB283B22E43D77A00FA3D4A /* MediaKeyTap */; };
 		FCC24F1C2FBED23D00A64686 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = FCC24F1B2FBED23D00A64686 /* HuggingFace */; };
@@ -175,6 +185,15 @@
 			dstSubfolder = Wrapper;
 			files = (
 			);
+		};
+		FC3FCE1D2CB69C52008D8C7C /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				FC3FCE1E2CB69C52008D8C7C /* YumikoWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
 		};
 		FCF267362E114015007230B1 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -201,6 +220,7 @@
 		FC077BDC29DC8BA000914E98 /* IOBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOBluetooth.framework; path = System/Library/Frameworks/IOBluetooth.framework; sourceTree = SDKROOT; };
 		FC077BDE29DC8BDF00914E98 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoToysHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = YumikoWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC6552082FC373980093B726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FC6552092FC373980093B726 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FC65520A2FC373980093B726 /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
@@ -334,6 +354,15 @@
 		FC6552A22FC373980093B726 /* YumikoToysApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumikoToysApp.swift; sourceTree = "<group>"; };
 		FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessHelper.swift; sourceTree = "<group>"; };
 		FC6553B02FD000010093B726 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		FC6559022FC373980093B726 /* AgentManagerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentManagerService.swift; sourceTree = "<group>"; };
+		FC6559042FC373980093B726 /* PluginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginService.swift; sourceTree = "<group>"; };
+		FC6559062FC373980093B726 /* YumiScriptEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumiScriptEngine.swift; sourceTree = "<group>"; };
+		FC6559082FC373980093B726 /* AgentsSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsSidebarView.swift; sourceTree = "<group>"; };
+		FC65590A2FC373980093B726 /* SkillsSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsSidebarView.swift; sourceTree = "<group>"; };
+		FC65590C2FC373980093B726 /* ScreenMediaHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenMediaHelper.swift; sourceTree = "<group>"; };
+		FC65590E2FC373980093B726 /* GlobalHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkeyManager.swift; sourceTree = "<group>"; };
+		FC6559102FC373980093B726 /* AppScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppScanner.swift; sourceTree = "<group>"; };
+		FC6559122FC373980093B726 /* AppPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPickerView.swift; sourceTree = "<group>"; };
 		FCF267382E114015007230B1 /* YumikoCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YumikoCLI; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -341,6 +370,11 @@
 		FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = YumikoToysHelper;
+			sourceTree = "<group>";
+		};
+		FC3FCE1B2CB69C52008D8C7C /* YumikoWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YumikoWidget;
 			sourceTree = "<group>";
 		};
 		FCF267392E114015007230B1 /* YumikoCLI */ = {
@@ -380,6 +414,11 @@
 			files = (
 			);
 		};
+		FC3FCE172CB69C52008D8C7C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 		FCF267352E114015007230B1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
@@ -408,6 +447,7 @@
 				FCF267392E114015007230B1 /* YumikoCLI */,
 				1EE4E20B24F97E240097C32C /* Products */,
 				1E5B4D0F25FBFA4800092422 /* Frameworks */,
+				FC1805402FDEEC6F001A6517 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -417,8 +457,17 @@
 				1EE4E20A24F97E240097C32C /* YumikoToys.app */,
 				FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */,
 				FCF267382E114015007230B1 /* YumikoCLI */,
+				FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FC1805402FDEEC6F001A6517 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				FC3FCE1B2CB69C52008D8C7C /* YumikoWidget */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		FC65520E2FC373980093B726 /* Assets */ = {
@@ -444,6 +493,9 @@
 		FC65521C2FC373980093B726 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				FC65590C2FC373980093B726 /* ScreenMediaHelper.swift */,
+				FC65590E2FC373980093B726 /* GlobalHotkeyManager.swift */,
+				FC6559102FC373980093B726 /* AppScanner.swift */,
 				FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */,
 				FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */,
 				FC6552112FC373980093B726 /* AppState.swift */,
@@ -557,6 +609,9 @@
 		FC6552612FC373980093B726 /* Implementations */ = {
 			isa = PBXGroup;
 			children = (
+				FC6559022FC373980093B726 /* AgentManagerService.swift */,
+				FC6559042FC373980093B726 /* PluginService.swift */,
+				FC6559062FC373980093B726 /* YumiScriptEngine.swift */,
 				FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */,
 				FC6552422FC373980093B726 /* AgentFileService.swift */,
 				FC6552432FC373980093B726 /* AgentService.swift */,
@@ -632,6 +687,9 @@
 		FC65528C2FC373980093B726 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				FC6559122FC373980093B726 /* AppPickerView.swift */,
+				FC6559082FC373980093B726 /* AgentsSidebarView.swift */,
+				FC65590A2FC373980093B726 /* SkillsSidebarView.swift */,
 				FC65526C2FC373980093B726 /* AgentStepView.swift */,
 				FC65526D2FC373980093B726 /* AnniversaryCard.swift */,
 				FC65526E2FC373980093B726 /* AppHeader.swift */,
@@ -771,6 +829,7 @@
 				1EE4E20624F97E240097C32C /* Sources */,
 				1EE4E20724F97E240097C32C /* Frameworks */,
 				1EE4E20824F97E240097C32C /* Resources */,
+				FC3FCE1D2CB69C52008D8C7C /* Embed App Extensions */,
 				1E5B4D3625FBFC4000092422 /* Embed XPC Services */,
 				1E5B4D6E25FBFE9100092422 /* CopyFiles */,
 				1E5B4DE725FC25B000092422 /* ShellScript */,
@@ -819,6 +878,24 @@
 			productName = YumikoToysHelper;
 			productReference = FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */;
 			productType = "com.apple.product-type.application";
+		};
+		FC3FCE192CB69C52008D8C7C /* YumikoWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FC3FCE262CB69C53008D8C7C /* Build configuration list for PBXNativeTarget "YumikoWidget" */;
+			buildPhases = (
+				FC3FCE162CB69C52008D8C7C /* Sources */,
+				FC3FCE172CB69C52008D8C7C /* Frameworks */,
+				FC3FCE182CB69C52008D8C7C /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				FC3FCE1B2CB69C52008D8C7C /* YumikoWidget */,
+			);
+			name = YumikoWidget;
+			productName = YumikoWidget;
+			productReference = FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		FCF267372E114015007230B1 /* YumikoCLI */ = {
 			isa = PBXNativeTarget;
@@ -893,6 +970,7 @@
 				1EE4E20924F97E240097C32C /* YumikoToys */,
 				FC3FCE192CB69C52008D8C7B /* YumikoToysHelper */,
 				FCF267372E114015007230B1 /* YumikoCLI */,
+				FC3FCE192CB69C52008D8C7C /* YumikoWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -920,6 +998,11 @@
 			);
 		};
 		FC3FCE182CB69C52008D8C7B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		FC3FCE182CB69C52008D8C7C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -953,6 +1036,15 @@
 		1EE4E20624F97E240097C32C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
+				FC65590B2FC373980093B726 /* ScreenMediaHelper.swift in Sources */,
+				FC65590D2FC373980093B726 /* GlobalHotkeyManager.swift in Sources */,
+				FC65590F2FC373980093B726 /* AppScanner.swift in Sources */,
+				FC6559112FC373980093B726 /* AppPickerView.swift in Sources */,
+				FC6559012FC373980093B726 /* AgentManagerService.swift in Sources */,
+				FC6559032FC373980093B726 /* PluginService.swift in Sources */,
+				FC6559052FC373980093B726 /* YumiScriptEngine.swift in Sources */,
+				FC6559072FC373980093B726 /* AgentsSidebarView.swift in Sources */,
+				FC6559092FC373980093B726 /* SkillsSidebarView.swift in Sources */,
 				FC6553FF0000000000000001 /* FullDiskAccessHelper.swift in Sources */,
 				FC6552B42FC373980093B726 /* MainView.swift in Sources */,
 				FC6552B52FC373980093B726 /* UploadedFile.swift in Sources */,
@@ -1070,6 +1162,11 @@
 			);
 		};
 		FC3FCE162CB69C52008D8C7B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		FC3FCE162CB69C52008D8C7C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
@@ -1214,6 +1311,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = YES;
 				CLANG_ANALYZER_SECURITY_KEYCHAIN_API = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = YumikoToys/Assets/YumikoToysDebug.entitlements;
@@ -1225,16 +1323,28 @@
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				INFOPLIST_FILE = YumikoToys/Assets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 4.3.4;
+				MARKETING_VERSION = 4.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "YumikoToys/Assets/YumikoToys-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1247,6 +1357,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = YES;
 				CLANG_ANALYZER_SECURITY_KEYCHAIN_API = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = YumikoToys/Assets/YumikoToys.entitlements;
@@ -1257,16 +1368,28 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				INFOPLIST_FILE = YumikoToys/Assets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 4.3.4;
+				MARKETING_VERSION = 4.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "YumikoToys/Assets/YumikoToys-Bridging-Header.h";
 				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
@@ -1282,12 +1405,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = YumikoToysHelper/YumikoToysHelper.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1301,10 +1425,34 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "YumikoToys.BunnyCC-Days.YumikoToysHelper";
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoToysHelper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FC3FCE272CB69C53008D8C7C /* Debug configuration for PBXNativeTarget "YumikoWidget" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YumikoWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -1317,12 +1465,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = YumikoToysHelper/YumikoToysHelper.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1336,9 +1485,33 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "YumikoToys.BunnyCC-Days.YumikoToysHelper";
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoToysHelper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		FC3FCE282CB69C53008D8C7C /* Release configuration for PBXNativeTarget "YumikoWidget" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YumikoWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -1348,6 +1521,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1355,6 +1529,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.CLI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1368,6 +1543,7 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1375,6 +1551,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.CLI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -1405,6 +1582,14 @@
 			buildConfigurations = (
 				FC3FCE272CB69C53008D8C7B /* Debug configuration for PBXNativeTarget "YumikoToysHelper" */,
 				FC3FCE282CB69C53008D8C7B /* Release configuration for PBXNativeTarget "YumikoToysHelper" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		FC3FCE262CB69C53008D8C7C /* Build configuration list for PBXNativeTarget "YumikoWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC3FCE272CB69C53008D8C7C /* Debug configuration for PBXNativeTarget "YumikoWidget" */,
+				FC3FCE282CB69C53008D8C7C /* Release configuration for PBXNativeTarget "YumikoWidget" */,
 			);
 			defaultConfigurationName = Release;
 		};

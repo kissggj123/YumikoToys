@@ -45,7 +45,8 @@ struct APISettings: Codable, Sendable {
             .siliconflow: .siliconflowDefault,
             .ollama: .ollamaDefault,
             .nvidia: .nvidiaDefault,
-            .poke: .pokeDefault
+            .poke: .pokeDefault,
+            .mimo: .mimoDefault
         ]
         self.providerConfigsArray = configs.map { ProviderConfigEntry(provider: $0.key, config: $0.value) }
         self.estimatedSentTokens = estimatedSentTokens
@@ -108,7 +109,8 @@ struct APISettings: Codable, Sendable {
                 .siliconflow: .siliconflowDefault,
                 .ollama: .ollamaDefault,
                 .nvidia: .nvidiaDefault,
-                .poke: .pokeDefault
+                .poke: .pokeDefault,
+                .mimo: .mimoDefault
             ]
             
             for (p, defaultConfig) in allDefaults {
@@ -147,7 +149,8 @@ struct APISettings: Codable, Sendable {
                 .siliconflow: .siliconflowDefault,
                 .ollama: .ollamaDefault,
                 .nvidia: .nvidiaDefault,
-                .poke: .pokeDefault
+                .poke: .pokeDefault,
+                .mimo: .mimoDefault
             ]
             
             providerConfigsArray = configsMap.map { ProviderConfigEntry(provider: $0.key, config: $0.value) }

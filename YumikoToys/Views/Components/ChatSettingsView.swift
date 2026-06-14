@@ -242,6 +242,8 @@ struct ChatSettingsView: View {
             return [("官方", "https://open.bigmodel.cn/api/paas/v4")]
         case .poke:
             return [("Poke Webhook", "https://poke.com/api/v1/inbound-sms/webhook")]
+        case .mimo:
+            return [("官方", "https://api.xiaomimimo.com/v1")]
         }
     }
 
@@ -815,6 +817,7 @@ final class ChatSettingsViewModel: ObservableObject {
             case .ollama: configs[.ollama] = .ollamaDefault
             case .nvidia: configs[.nvidia] = .nvidiaDefault
             case .poke: configs[.poke] = .pokeDefault
+            case .mimo: configs[.mimo] = .mimoDefault
             }
         }
         
@@ -957,6 +960,8 @@ final class ChatSettingsViewModel: ObservableObject {
             return []
         case .poke:
             return ProviderConfig.pokeDefault.availableModels
+        case .mimo:
+            return ProviderConfig.mimoDefault.availableModels
         }
     }
 

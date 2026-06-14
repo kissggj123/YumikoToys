@@ -13,6 +13,7 @@ struct MainView: View {
     @StateObject private var viewModel = MainViewModel.shared
     @State private var showToast = false
     @State private var toastMessage = ""
+    @State private var isFirstLayout = true
     
     var body: some View {
         HStack(spacing: 0) {
@@ -73,10 +74,10 @@ struct MainView: View {
                     }
                     .padding(.top, 28)
                     .padding(.horizontal, 28)
-                    .padding(.bottom, (viewModel.godModeEnabled && viewModel.isLayoutEditingEnabled) ? 100 : 28)
+                    .padding(.bottom, (viewModel.godModeEnabled && !viewModel.hideFloatingLayoutToolbar) ? 100 : 28)
                 }
                 
-                if viewModel.godModeEnabled {
+                if viewModel.godModeEnabled && !viewModel.hideFloatingLayoutToolbar {
                     FloatingLayoutToolbar(
                         viewModel: viewModel,
                         isEditing: Binding(
@@ -162,10 +163,12 @@ struct MainView: View {
         
         let targetWidth: CGFloat
         let targetHeight: CGFloat
+        let isFrameSize: Bool
         
         if customWidth > 0 && customHeight > 0 {
             targetWidth = CGFloat(customWidth)
             targetHeight = CGFloat(customHeight)
+            isFrameSize = true
         } else {
             let visibleLayouts = ComponentLayout.visible(layouts)
             let maxWidthScale = visibleLayouts.map { $0.customWidthScale ?? 1.0 }.max() ?? 1.0
@@ -184,23 +187,41 @@ struct MainView: View {
             }
             
             let totalSpacing: CGFloat = elementsHeights.isEmpty ? 0 : CGFloat(elementsHeights.count - 1) * 24
-            let bottomPadding: CGFloat = (viewModel.godModeEnabled && viewModel.isLayoutEditingEnabled) ? 100 : 28
+            let bottomPadding: CGFloat = viewModel.godModeEnabled ? 100 : 28
             targetHeight = max(580, elementsHeights.reduce(0, +) + totalSpacing + 28 + bottomPadding)
+            isFrameSize = false
         }
         
-        let currentFrame = window.frame
-        let newX = currentFrame.minX
-        let newY = currentFrame.maxY - targetHeight
-        let newFrame = NSRect(x: newX, y: newY, width: targetWidth, height: targetHeight)
+        let finalFrame: NSRect
+        if isFrameSize {
+            let currentFrame = window.frame
+            let newX = currentFrame.minX
+            let newY = currentFrame.maxY - targetHeight
+            finalFrame = NSRect(x: newX, y: newY, width: targetWidth, height: targetHeight)
+        } else {
+            let contentRect = NSRect(x: 0, y: 0, width: targetWidth, height: targetHeight)
+            let frameRect = window.frameRect(forContentRect: contentRect)
+            let currentFrame = window.frame
+            let newX = currentFrame.minX
+            let newY = currentFrame.maxY - frameRect.height
+            finalFrame = NSRect(x: newX, y: newY, width: frameRect.width, height: frameRect.height)
+        }
         
         window.contentMinSize = NSSize(width: 460, height: 450)
         window.contentMaxSize = NSSize(width: 2000, height: 2000)
         
-        DispatchQueue.main.async {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.3
-                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                window.animator().setFrame(newFrame, display: true)
+        if isFirstLayout {
+            window.setFrame(finalFrame, display: true)
+            DispatchQueue.main.async {
+                self.isFirstLayout = false
+            }
+        } else {
+            DispatchQueue.main.async {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.3
+                    context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                    window.animator().setFrame(finalFrame, display: true)
+                }
             }
         }
     }
@@ -302,23 +323,57 @@ struct DaysDisplayCard: View {
                     PixelAvatarView(emoji: info.anniversary.displayAvatar, size: 28)
                     
                     // 观测目标标识（可点击复制）
-                    Text(titleText)
-                        .font(.system(size: 18 * fontSizeScale, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .onTapGesture {
-                            onCopy(getFormattedCopyText())
-                        }
-                        .onHover { hovering in
-                            hoveredElement = hovering ? .name : nil
-                        }
-                        .overlay {
-                            if hoveredElement == .name {
-                                Rectangle()
-                                    .fill(Color.primary.opacity(0.1))
-                                    .frame(height: 1)
-                                    .offset(y: 8)
+                    Group {
+                        if let customTitle = layout?.customTitle, !customTitle.isEmpty {
+                            if customTitle.count <= 8 {
+                                HStack(alignment: .bottom, spacing: 4) {
+                                    Text(titleText)
+                                        .font(.system(size: 18 * fontSizeScale, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                    Text("(\(info.anniversary.displayPetName))")
+                                        .font(.system(size: 12 * fontSizeScale))
+                                        .foregroundStyle(.secondary)
+                                }
+                            } else {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(titleText)
+                                        .font(.system(size: 18 * fontSizeScale, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                    Text("原名: \(info.anniversary.displayPetName)")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.secondary)
+                                }
                             }
+                        } else {
+                            Text(titleText)
+                                .font(.system(size: 18 * fontSizeScale, weight: .semibold))
+                                .foregroundStyle(.primary)
                         }
+                    }
+                    .onTapGesture {
+                        onCopy(getFormattedCopyText())
+                    }
+                    .onHover { hovering in
+                        hoveredElement = hovering ? .name : nil
+                    }
+                    .overlay {
+                        if hoveredElement == .name {
+                            Rectangle()
+                                .fill(Color.primary.opacity(0.1))
+                                .frame(height: 1)
+                                .offset(y: 8)
+                        }
+                    }
+                    
+                    if let customTitle = layout?.customTitle, !customTitle.isEmpty {
+                        Button(action: {}) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("原始宠物名: \(info.anniversary.displayPetName)")
+                    }
                     
                     Spacer()
                 }
@@ -547,6 +602,7 @@ struct DaysDisplayCard: View {
 struct QuickActionsSidebar: View {
     let onItemTap: (MenuItemIdentifier) -> Void
     @ObservedObject var viewModel: MainViewModel
+    @State private var isPencilHovered = false
     
     var body: some View {
         VStack(spacing: 6) {
@@ -558,6 +614,26 @@ struct QuickActionsSidebar: View {
                 ) {
                     onItemTap(button.menuItemIdentifier)
                 }
+            }
+            
+            if viewModel.godModeEnabled && viewModel.hideFloatingLayoutToolbar {
+                Button(action: {
+                    withAnimation {
+                        viewModel.updateLayoutEditing(!viewModel.isLayoutEditingEnabled)
+                    }
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 16))
+                            .foregroundStyle(viewModel.isLayoutEditingEnabled ? Color(hex: viewModel.customThemeColorHex) : .primary)
+                        Text(viewModel.isLayoutEditingEnabled ? "完成" : "编辑布局")
+                            .font(.system(size: 9))
+                            .foregroundStyle(viewModel.isLayoutEditingEnabled ? Color(hex: viewModel.customThemeColorHex) : .primary)
+                    }
+                    .frame(width: 48, height: 48)
+                }
+                .buttonStyle(SidebarButtonStyle(isHovered: isPencilHovered, isDestructive: false, isLoading: false))
+                .onHover { isPencilHovered = $0 }
             }
             
             Spacer()
@@ -687,6 +763,7 @@ final class MainViewModel: ObservableObject {
     @Published var customThemeColorHex: String = "FF6B9D"
     @Published var godModeEnabled: Bool = false
     @Published var isLayoutEditingEnabled: Bool = false // 👈 布局编辑模式状态
+    @Published var hideFloatingLayoutToolbar: Bool = false
     
     var resolvedTheme: ResolvedTheme {
         ResolvedTheme(color: selectedThemeColor, customHex: customThemeColorHex)
@@ -734,6 +811,7 @@ final class MainViewModel: ObservableObject {
                 self?.customThemeColorHex = settings.customMainWindowThemeColorHex
                 self?.godModeEnabled = settings.godModeEnabled
                 self?.isLayoutEditingEnabled = settings.isLayoutEditingEnabled
+                self?.hideFloatingLayoutToolbar = settings.hideFloatingLayoutToolbar
             }
             .store(in: &cancellables)
 
@@ -750,6 +828,7 @@ final class MainViewModel: ObservableObject {
         customThemeColorHex = container.settingsService.settings.customMainWindowThemeColorHex
         godModeEnabled = container.settingsService.settings.godModeEnabled
         isLayoutEditingEnabled = container.settingsService.settings.isLayoutEditingEnabled
+        hideFloatingLayoutToolbar = container.settingsService.settings.hideFloatingLayoutToolbar
 
         // 订阅后台学习服务状态变化，实时更新学习统计
         if let learningService = container.backgroundLearningService {
@@ -1880,11 +1959,13 @@ struct ResilienceTrajectoryChart: View {
                 var path = Path()
                 
                 // 起始点基于当前应激
-                let startY = height * CGFloat(0.8 - (stress * 0.5))
+                let startFactor = 0.8 - (stress * 0.5)
+                let startY = height * CGFloat(startFactor)
                 path.move(to: CGPoint(x: 0, y: startY))
                 
                 // 终点基于抗逆韧性与元认知觉察
-                let targetY = height * CGFloat(0.2 + (1.0 - (resilience * 0.5 + metacognition * 0.2)) * 0.4)
+                let targetFactor = 0.2 + (1.0 - (resilience * 0.5 + metacognition * 0.2)) * 0.4
+                let targetY = height * CGFloat(targetFactor)
                 
                 // 绘制一条平滑的心理稳态收敛控制曲线 (Bézier Curve)
                 let control1 = CGPoint(x: width * 0.35, y: startY - (startY - targetY) * 0.1)

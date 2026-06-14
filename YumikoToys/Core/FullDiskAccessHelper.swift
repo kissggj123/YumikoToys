@@ -207,21 +207,6 @@ public final class SkillService: ObservableObject {
                 scriptContent: ""
             ),
             LLMSkill(
-                name: "run_shell_command",
-                description: "执行自定义 Terminal 终端 shell 脚本指令，并获取返回的控制台输出。",
-                parametersJSON: """
-                {
-                    "type": "object",
-                    "properties": {
-                        "command": {"type": "string", "description": "要执行的 Shell 指令或脚本内容，例如 ls -la 或 ps aux"}
-                    },
-                    "required": ["command"]
-                }
-                """,
-                scriptType: "shell",
-                scriptContent: "{{command}}"
-            ),
-            LLMSkill(
                 name: "open_macos_application",
                 description: "通过 AppleScript 运行/唤醒指定的 macOS 应用程序。",
                 parametersJSON: """
@@ -551,6 +536,242 @@ public final class SkillService: ObservableObject {
                 """,
                 scriptType: "shell",
                 scriptContent: "Q=\"{{query}}\"; ENCODED=$(python3 -c \"import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))\" \"$Q\" 2>/dev/null || echo \"$Q\"); curl -s -L -m 15 --user-agent \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)\" \"https://html.duckduckgo.com/html/?q=$ENCODED\" | grep -oE 'class=\"result__url[^>]+>[^<]+' | head -n 5 | sed 's/.*>//g;s/[ \t]*$//g'"
+            ),
+            
+            // MARK: - 专业心理学 Skills (v4.4.0)
+            
+            LLMSkill(
+                name: "cbt_cognitive_restructuring",
+                description: "CBT 认知重构工具：引导用户识别触发事件、自动化思维、认知扭曲类型，并构建更平衡的替代思维，生成结构化的认知重构报告。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "triggering_event": {"type": "string", "description": "触发负面情绪的具体事件或情境描述"},
+                        "automatic_thought": {"type": "string", "description": "事件发生时的第一反应想法（自动化思维）"},
+                        "emotion": {"type": "string", "description": "当时的情绪类型，如：焦虑、悲伤、愤怒、恐惧"},
+                        "emotion_intensity": {"type": "number", "description": "情绪强度评分 0-10，10 为最强烈"},
+                        "distortion_type": {"type": "string", "description": "认知扭曲类型，如：灾难化、过度泛化、非黑即白、读心术、情绪推理等（可选）"}
+                    },
+                    "required": ["triggering_event", "automatic_thought", "emotion", "emotion_intensity"]
+                }
+                """,
+                scriptType: "openclaw",
+                scriptContent: """
+                ## CBT 认知重构分析报告
+                
+                **触发事件**：{{triggering_event}}
+                **自动化思维**：{{automatic_thought}}
+                **情绪**：{{emotion}}（强度：{{emotion_intensity}}/10）
+                
+                ### 苏格拉底式质询
+                1. 支持这个想法的证据是什么？
+                2. 反对这个想法的证据是什么？
+                3. 最坏/最好/最可能的结果分别是什么？
+                4. 如果是你的好友有这个想法，你会怎么告诉他？
+                5. 这个想法是否存在{{distortion_type}}的认知扭曲？
+                
+                请基于以上框架进行认知重构，生成平衡的替代思维，并设计一个本周可执行的行为实验。
+                """
+            ),
+            LLMSkill(
+                name: "dbt_emotion_tracking",
+                description: "DBT 情绪强度追踪：采用 DBT 情感温度计方法，帮助用户识别、命名并追踪情绪强度变化，并提供适合当前情绪强度的调节策略。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "emotion_name": {"type": "string", "description": "当前的主要情绪名称，如：愤怒、悲伤、焦虑、空虚、羞耻"},
+                        "intensity": {"type": "number", "description": "情绪强度 0-100 的情感温度计评分"},
+                        "body_sensation": {"type": "string", "description": "身体上感受到的位置和感觉，如：胸口紧绷、喉咙哽咽（可选）"},
+                        "trigger": {"type": "string", "description": "触发因素（可选）"},
+                        "urge": {"type": "string", "description": "当前的行动冲动，如：想发火、想逃离（可选）"}
+                    },
+                    "required": ["emotion_name", "intensity"]
+                }
+                """,
+                scriptType: "openclaw",
+                scriptContent: """
+                ## DBT 情绪追踪记录
+                
+                情绪：{{emotion_name}} | 强度：{{intensity}}/100
+                身体感受：{{body_sensation}}
+                触发因素：{{trigger}}
+                行动冲动：{{urge}}
+                
+                ### 基于强度的干预策略选择
+                - **0-30（低强度）**：正念觉察、情绪命名练习
+                - **31-60（中强度）**：TIPP 技能（温度、剧烈运动、调整呼吸、放松）
+                - **61-80（高强度）**：痛苦耐受技能 ACCEPTS、IMPROVE
+                - **81-100（危机强度）**：安全计划激活，寻求即时支持
+                
+                请根据当前情绪强度 {{intensity}} 提供最适合的 DBT 调节策略，并引导用户完成一个情绪调节练习步骤。
+                """
+            ),
+            LLMSkill(
+                name: "act_values_clarification",
+                description: "ACT 价值澄清练习：引导用户探索并澄清不同生命领域的核心价值观，并帮助识别当前行为与价值观的一致程度，制定价值驱动的行动计划。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "life_domain": {"type": "string", "description": "要探索的生命领域，如：亲密关系、职业、家庭、健康、个人成长、社区贡献、灵性"},
+                        "current_struggle": {"type": "string", "description": "在该领域当前面临的挣扎或困境"},
+                        "ideal_self_description": {"type": "string", "description": "在该领域中，理想中的自己是什么样子的（可选）"}
+                    },
+                    "required": ["life_domain", "current_struggle"]
+                }
+                """,
+                scriptType: "openclaw",
+                scriptContent: """
+                ## ACT 价值澄清工作表
+                
+                **生命领域**：{{life_domain}}
+                **当前挣扎**：{{current_struggle}}
+                **理想自我**：{{ideal_self_description}}
+                
+                ### 价值探索问题
+                1. 在{{life_domain}}这个领域，对你来说什么是真正重要的？
+                2. 如果你在这个领域完全按照内心所想生活，你会做什么不同的事？
+                3. 是什么阻碍了你向着重要的方向前进？（想法？规则？回避？）
+                4. 愿意带着这种不舒适继续前行吗？
+                
+                请引导用户澄清该领域的核心价值，并制定一个「价值驱动的微小承诺行动」（小到明天就能做到的一步）。
+                """
+            ),
+            LLMSkill(
+                name: "mindfulness_body_scan",
+                description: "MBSR 正念身体扫描引导：提供结构化的身体扫描冥想脚本，引导用户以非评判的觉察力逐步关注全身各部位的感觉，促进身心放松与当下连接。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "duration_minutes": {"type": "number", "description": "引导时长（分钟），建议 5-45 分钟，默认 15 分钟"},
+                        "focus_area": {"type": "string", "description": "特别关注的身体区域，如：头颈部、腰背部、全身（默认全身）"},
+                        "intention": {"type": "string", "description": "本次练习的意图，如：放松入睡、减压、减轻疼痛（可选）"}
+                    },
+                    "required": ["duration_minutes"]
+                }
+                """,
+                scriptType: "openclaw",
+                scriptContent: """
+                ## 正念身体扫描引导（{{duration_minutes}} 分钟版本）
+                
+                意图：{{intention}} | 关注区域：{{focus_area}}
+                
+                请生成一段完整的、温和的正念身体扫描引导词，时长约 {{duration_minutes}} 分钟，遵循 MBSR 标准协议：
+                1. 开场安顿与意图设置（1-2分钟）
+                2. 呼吸锚定（1分钟）
+                3. 从脚趾开始逐步向上扫描（主体部分），重点关注 {{focus_area}}
+                4. 当注意力游荡时温和引导回来的指导语
+                5. 结束时的整体感受觉察与慢慢回到当下
+                
+                语言风格：温和、缓慢、非评判，使用第二人称「你」，句子短而有停顿感。
+                """
+            ),
+            LLMSkill(
+                name: "ifs_parts_dialogue",
+                description: "IFS 内在家庭系统部分对话：引导用户识别并与内在的保护性部分（管理者/消防员）或被流放部分进行对话，促进内在系统理解与整合。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "presenting_part": {"type": "string", "description": "当前浮现的内在部分描述，如：一个不断自我批评的声音、一个想放弃一切的部分"},
+                        "part_type": {"type": "string", "description": "部分类型：manager（管理者）/ firefighter（消防员）/ exile（流放者），若不确定可填 unknown"},
+                        "what_part_does": {"type": "string", "description": "这个部分通常做什么？它的行为模式是什么？"},
+                        "what_part_fears": {"type": "string", "description": "你猜测这个部分最害怕什么会发生？（可选）"}
+                    },
+                    "required": ["presenting_part", "part_type", "what_part_does"]
+                }
+                """,
+                scriptType: "openclaw",
+                scriptContent: """
+                ## IFS 内在部分对话框架
+                
+                **浮现部分**：{{presenting_part}}
+                **部分类型**：{{part_type}}
+                **行为模式**：{{what_part_does}}
+                **核心恐惧**：{{what_part_fears}}
+                
+                ### 与部分建立关系的引导步骤
+                1. 首先检查「自性」(Self) 的在场程度——当前有几分平静、好奇与慈悲？
+                2. 带着好奇而非评判，向这个部分问候：「你好，我注意到你了。」
+                3. 询问这个部分：「你在试图保护我什么？」
+                4. 倾听并感谢它的保护意图，不论策略是否有效
+                5. 询问：「如果你不再需要做这些，你希望做什么？」
+                
+                请以 IFS 治疗师的身份，引导用户与这个{{part_type}}类型的部分展开对话，帮助理解其保护角色并建立慈悲连接。
+                """
+            ),
+            LLMSkill(
+                name: "narrative_externalization",
+                description: "叙事疗法外化技术：帮助用户将问题从自身「我是问题」中分离，通过命名和外化问题，找回自主性和例外经验，重写生命叙事。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "problem_description": {"type": "string", "description": "用户描述的主要困扰或问题"},
+                        "problem_name": {"type": "string", "description": "给问题起一个名字（如「那个批评者」「焦虑怪兽」），用于外化处理（可选）"},
+                        "exception_moments": {"type": "string", "description": "问题没有那么强烈或完全不存在的时刻，具体描述（可选）"}
+                    },
+                    "required": ["problem_description"]
+                }
+                """,
+                scriptType: "openclaw",
+                scriptContent: """
+                ## 叙事疗法外化对话框架
+                
+                **主要困扰**：{{problem_description}}
+                **问题外化名称**：{{problem_name}}
+                **例外时刻**：{{exception_moments}}
+                
+                ### 叙事外化引导步骤
+                1. **命名与外化**：引导用户为问题命名，将「我很焦虑」转化为「焦虑在影响我」
+                2. **绘制影响地图**：「{{problem_name}}在你生活的哪些领域产生了影响？」
+                3. **评估与立场**：「你对这些影响有什么感受？这符合你想要的生活吗？」
+                4. **挖掘例外经验**：探索{{exception_moments}}，寻找用户对问题的抵抗资源
+                5. **重写叙事**：「这些例外说明了你具备哪些被忽视的能力和价值？」
+                
+                请以叙事治疗师身份，运用外化语言和苏格拉底式提问，帮助用户将问题从自我认同中分离，并发现厚实的替代叙事。
+                """
+            ),
+            LLMSkill(
+                name: "attachment_assessment",
+                description: "依恋风格评估：通过探索性问题评估用户的成人依恋风格（安全型/焦虑型/回避型/混乱型），并提供依恋模式与关系行为的深度解析。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "relationship_concern": {"type": "string", "description": "用户在亲密关系中的主要困扰或问题"},
+                        "early_attachment": {"type": "string", "description": "早年与主要照料者（父母）的关系特点描述（可选）"},
+                        "current_pattern": {"type": "string", "description": "在当前亲密关系中的行为模式（可选，如：容易嫉妒、害怕亲密、总是距离感等）"}
+                    },
+                    "required": ["relationship_concern"]
+                }
+                """,
+                scriptType: "openclaw",
+                scriptContent: """
+                ## 依恋风格评估与分析
+                
+                **关系困扰**：{{relationship_concern}}
+                **早期依恋经历**：{{early_attachment}}
+                **当前行为模式**：{{current_pattern}}
+                
+                ### 依恋评估维度
+                基于以上信息，请从以下维度进行评估：
+                
+                **1. 依恋焦虑维度**（对被遗弃/拒绝的担心程度）
+                - 关注迹象：频繁寻求保证、嫉妒、分离焦虑、过度依赖
+                
+                **2. 依恋回避维度**（对亲密/依赖的不适程度）
+                - 关注迹象：情感压抑、强调独立、回避承诺、情感距离感
+                
+                **3. 内在工作模型**
+                - 对自我的信念：我是值得被爱的吗？
+                - 对他人的信念：他人是可信赖和可依靠的吗？
+                
+                请提供初步的依恋倾向分析，解释这些模式可能的早年形成原因，以及在当前关系中的具体表现，并提供1-2个促进安全依恋的实践建议。
+                """
             )
         ]
     }
@@ -560,6 +781,12 @@ public final class SkillService: ObservableObject {
     }
     
     public func executeSkill(name: String, arguments: [String: Any]) async -> String {
+        // 兼容已移除的内置 run_shell_command 技能，将其无缝重定向到底层 runShell 执行
+        if name == "run_shell_command" {
+            let command = arguments["command"] as? String ?? ""
+            return await runShell(command)
+        }
+        
         guard let skill = getAllSkills().first(where: { $0.name == name }) else {
             return "{\"error\": \"未找到对应技能: \(name)\"}"
         }
@@ -697,7 +924,7 @@ public final class SkillService: ObservableObject {
         return clean.uppercased()
     }
     
-    private func runShell(_ script: String) async -> String {
+    public func runShell(_ script: String) async -> String {
         let task = Process()
         task.launchPath = "/bin/zsh"
         task.arguments = ["-c", script]
@@ -726,7 +953,7 @@ public final class SkillService: ObservableObject {
         }
     }
     
-    private func runAppleScript(_ script: String) async -> String {
+    public func runAppleScript(_ script: String) async -> String {
         guard let appleScript = NSAppleScript(source: script) else {
             return "{\"error\": \"无法创建 AppleScript 实例\"}"
         }

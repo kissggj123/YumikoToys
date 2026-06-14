@@ -16,6 +16,7 @@ struct AIChatView: View {
     @FocusState private var isInputFocused: Bool
     @State private var isUserScrolling = false
     @State private var lastUserScrollTime = Date()
+    @State private var selectedSidebarTab = 0
 
     private let userScrollTimeout: TimeInterval = 3.0
 
@@ -28,28 +29,70 @@ struct AIChatView: View {
 
     var body: some View {
         NavigationSplitView {
-            ConversationSidebarView(
-                conversationService: conversationService,
-                chatMode: viewModel.chatMode,
-                themeColor: viewModel.resolvedTheme,
-                onSelectConversation: { id in
-                    conversationService.switchToConversation(id)
-                    viewModel.switchConversation(to: id)
-                },
-                onNewConversation: {
-                    let defaultTitle = viewModel.chatMode == .aiAssistant ? "新 Pro Human 对话" : "新宠物对话"
-                    let newConv = conversationService.createConversation(title: defaultTitle, chatMode: viewModel.chatMode)
-                    viewModel.startNewConversation(id: newConv.id)
-                },
-                onDeleteConversation: { id in
-                    conversationService.deleteConversation(id)
-                    viewModel.deleteConversation(id)
-                },
-                onRenameConversation: { id, newTitle in
-                    conversationService.updateTitle(for: id, title: newTitle)
+            if viewModel.chatMode == .aiAssistant {
+                VStack(spacing: 0) {
+                    Picker("", selection: $selectedSidebarTab) {
+                        Text("对话").tag(0)
+                        Text("代理人").tag(1)
+                        Text("技能").tag(2)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(8)
+                    .background(Color(hex: "0A0F0D"))
+                    
+                    if selectedSidebarTab == 0 {
+                        ConversationSidebarView(
+                            conversationService: conversationService,
+                            chatMode: viewModel.chatMode,
+                            themeColor: viewModel.resolvedTheme,
+                            onSelectConversation: { id in
+                                conversationService.switchToConversation(id)
+                                viewModel.switchConversation(to: id)
+                            },
+                            onNewConversation: {
+                                let newConv = conversationService.createConversation(title: "新 Pro Human 对话", chatMode: .aiAssistant)
+                                viewModel.startNewConversation(id: newConv.id)
+                            },
+                            onDeleteConversation: { id in
+                                conversationService.deleteConversation(id)
+                                viewModel.deleteConversation(id)
+                            },
+                            onRenameConversation: { id, newTitle in
+                                conversationService.updateTitle(for: id, title: newTitle)
+                            }
+                        )
+                    } else if selectedSidebarTab == 1 {
+                        AgentsSidebarView(conversationService: conversationService, viewModel: viewModel)
+                    } else {
+                        SkillsSidebarView()
+                    }
                 }
-            )
-            .frame(minWidth: 180, idealWidth: 220, maxWidth: 260)
+                .background(Color(hex: "0A0F0D"))
+                .frame(minWidth: 200, idealWidth: 240, maxWidth: 280)
+            } else {
+                ConversationSidebarView(
+                    conversationService: conversationService,
+                    chatMode: viewModel.chatMode,
+                    themeColor: viewModel.resolvedTheme,
+                    onSelectConversation: { id in
+                        conversationService.switchToConversation(id)
+                        viewModel.switchConversation(to: id)
+                    },
+                    onNewConversation: {
+                        let defaultTitle = viewModel.chatMode == .aiAssistant ? "新 Pro Human 对话" : "新宠物对话"
+                        let newConv = conversationService.createConversation(title: defaultTitle, chatMode: viewModel.chatMode)
+                        viewModel.startNewConversation(id: newConv.id)
+                    },
+                    onDeleteConversation: { id in
+                        conversationService.deleteConversation(id)
+                        viewModel.deleteConversation(id)
+                    },
+                    onRenameConversation: { id, newTitle in
+                        conversationService.updateTitle(for: id, title: newTitle)
+                    }
+                )
+                .frame(minWidth: 180, idealWidth: 220, maxWidth: 260)
+            }
         } detail: {
             chatDetailView
         }
@@ -68,6 +111,7 @@ struct AIChatView: View {
         }
         .modelSwitchNotification(manager: viewModel.modelCompatibilityManager)
         .onAppear {
+            viewModel.setConversationService(conversationService)
             Task {
                 await conversationService.loadConversations()
                 switchConversationForMode(viewModel.chatMode)

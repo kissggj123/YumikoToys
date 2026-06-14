@@ -74,18 +74,27 @@ struct GradientButtonStyle: ButtonStyle {
     }
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .overlay(
-                LinearGradient(
-                    colors: [fromColor.opacity(0.8), toColor.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .opacity(configuration.isPressed ? 0.7 : (isActive ? 1.0 : 0.3))
+        // Precompute gradient and target opacity to avoid type-checking complexity
+        let baseGradient = LinearGradient(
+            colors: [fromColor.opacity(0.8), toColor.opacity(0.8)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+
+        let overlayOpacity: Double = configuration.isPressed ? 0.7 : (isActive ? 1.0 : 0.3)
+
+        return configuration.label
+            // Use background with explicit opacity to avoid ambiguous overloads on LinearGradient
+            .background(
+                baseGradient
+                    .opacity(overlayOpacity)
             )
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
             .brightness(configuration.isPressed ? 0.1 : 0)
-            .animation(.spring(response: 0.12, dampingFraction: 0.75), value: configuration.isPressed)
+            .animation(
+                .spring(response: 0.12, dampingFraction: 0.75),
+                value: configuration.isPressed
+            )
     }
 }
 

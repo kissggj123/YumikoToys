@@ -92,6 +92,12 @@ final class AIChatViewModel: ObservableObject {
         ModelCompatibilityManager(availableModels: availableModels)
     }()
 
+    @Published var conversationService: ConversationService? = nil
+
+    func setConversationService(_ service: ConversationService) {
+        self.conversationService = service
+    }
+
     init() {
         let appSettings = container.settingsService.settings
         themeColor = appSettings.mainWindowThemeColor
@@ -451,462 +457,638 @@ final class AIChatViewModel: ObservableObject {
         activeTasks[currentId] = Task {
             var searchSources: [SearchSource] = []
 
-            // 1. 自动开启或调用深度学习联网及agent的能力 (Auto-triggers based on query intent)
-            let queryLower = content.lowercased()
-            let requiresSearch = queryLower.contains("最新") || queryLower.contains("今天") || queryLower.contains("新闻") || queryLower.contains("搜索") || queryLower.contains("查一下") || queryLower.contains("实时")
-            let requiresAgent = queryLower.contains("文件") || queryLower.contains("代码") || queryLower.contains("写一") || queryLower.contains("编写") || queryLower.contains("创建") || queryLower.contains("运行")
-            let requiresDeepThinking = queryLower.contains("为什么") || queryLower.contains("分析") || queryLower.contains("设计") || queryLower.contains("架构") || queryLower.contains("怎么")
-            
-            let isPoke = activeProvider == .poke
-            let finalWebSearch = !isPoke && (enableWebSearch || requiresSearch)
-            let finalAgentMode = !isPoke && (enableAgentMode || requiresAgent)
-            let finalDeepThinking = !isPoke && (enableDeepThinking || requiresDeepThinking)
-
-            let resolved = self.resolveModelAndCapabilities()
-            var activeModel = resolved.model
-            let enableThinking = finalDeepThinking
-            let enableAgentMode = finalAgentMode
-            let enableWebSearch = finalWebSearch
-            let usePreInjectedSearch = enableWebSearch && !enableAgentMode && !isPoke
-
-            defer {
-                activeTasks[currentId] = nil
-                runningStreams[currentId] = nil
-                if currentConversationId == currentId { isLoading = false }
-                objectWillChange.send()
-            }
-
-            guard !Task.isCancelled else { return }
-
-            // 🧠 2. 上下文记忆联想 (Context Memory Association)
-            let relevantMemory = await getRelevantMemoryContext(for: content)
-            let fileContents = await getFileContentsSummary(query: content)
-            var finalUserPrompt = relevantMemory + content + fileContents
-
-            let userMsg = ChatMessage(role: "user", content: content)
-            await MainActor.run {
-                uploadedFiles.removeAll()
-                inputText = ""
-                messages.append(userMsg)
-                messages.sort(by: { $0.timestamp < $1.timestamp })
-            }
-            
-            // 同步用户消息到 Poke
-            let userContentCopy = content
-            Task.detached {
-                PokeService.shared.sendMessage("[User]: \(userContentCopy)")
-            }
-
-            // 同步写入持久化历史
-            var history = container.glmService.getConversationHistory(
-                for: currentId.uuidString
-            )
-            history.append(userMsg)
-            container.glmService.replaceConversationHistory(
-                history,
-                for: currentId.uuidString
-            )
-
-            do {
-                // 直接注入式联网搜索（通过 SmartProxyManager）
-                var injectedContext = ""
-                if usePreInjectedSearch {
-                    LoggerService.shared.info(
-                        "Checking if web search is needed for query: \(content)"
-                    )
-                    let needsSearch = await checkNeedsSearch(
-                        query: content,
-                        apiKey: providerKey,
-                        baseURL: providerURL,
-                        model: activeModel
-                    )
-                    LoggerService.shared.info(
-                        "checkNeedsSearch result: \(needsSearch)"
-                    )
-
-                    if needsSearch && !Task.isCancelled {
+            // Link Skill Recognition
+            let lowerContent = content.lowercased()
+            if lowerContent.contains("http://") || lowerContent.contains("https://") {
+                if let url = self.extractURL(from: content) {
+                    let isLikelySkill = url.pathExtension == "zip" || url.pathExtension == "md" || url.pathExtension == "json" || url.absoluteString.contains("skill")
+                    
+                    if isLikelySkill {
                         await MainActor.run {
-                            if currentConversationId == currentId {
-                                messages.append(ChatMessage(role: "assistant", content: AppPromptService.shared.searchStatusMessage("searching")))
-                                messages.sort(by: { $0.timestamp < $1.timestamp })
-                                objectWillChange.send()
-                            }
-                        }
-
-                        let appSettings = container.settingsService.settings
-                        let searchService = UnifiedSearchService(
-                            assistantConfig: appSettings.assistantConfig
-                        )
-                        let searchResults: [SearchSource]
-                        do {
-                            // 3. 协同生成多维度检索词，并行化多路召回 (Collaborative Parallel Search)
-                            let query2 = content + " 最新 实时"
-                            let query3 = content + " 动态 资讯"
-                            
-                            async let res1 = try? searchService.search(query: content, maxResults: 3)
-                            async let res2 = try? searchService.search(query: query2, maxResults: 3)
-                            async let res3 = try? searchService.search(query: query3, maxResults: 3)
-                            
-                            let (all1, all2, all3) = await (res1, res2, res3)
-                            
-                            var mergedSources: [SearchSource] = []
-                            var seenUrls = Set<String>()
-                            
-                            let addSources = { (sources: [SearchSource]) in
-                                for src in sources {
-                                    if !seenUrls.contains(src.url) {
-                                        seenUrls.insert(src.url)
-                                        mergedSources.append(src)
-                                    }
-                                }
-                            }
-                            
-                            if let s1 = all1?.sources { addSources(s1) }
-                            if let s2 = all2?.sources { addSources(s2) }
-                            if let s3 = all3?.sources { addSources(s3) }
-                            
-                            searchResults = Array(mergedSources.prefix(6))
-                        } catch {
-                            LoggerService.shared.error(
-                                "Unified search failed: \(error)"
+                            let downloadNotice = ChatMessage(
+                                role: "assistant",
+                                content: "🔍 检测到大模型技能链接，正在尝试下载并解析导入...",
+                                isAgentStep: true
                             )
-                            searchResults = []
+                            self.messages.append(downloadNotice)
+                            self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                            self.objectWillChange.send()
                         }
-
+                        
+                        let activeAgentId = self.conversationService?.conversations.first(where: { $0.id == currentId })?.agentId
+                        let importResult = await self.importSkillFromURL(url: url, agentId: activeAgentId)
+                        
                         await MainActor.run {
-                            if currentConversationId == currentId
-                                && messages.last?.content == AppPromptService.shared.searchStatusMessage("searching")
-                            {
-                                messages.removeLast()
-                            }
-                        }
-
-                        if !searchResults.isEmpty {
-                            searchSources = searchResults
-                            var searchSnippet = ""
-                            for (idx, src) in searchResults.enumerated() {
-                                searchSnippet +=
-                                    "[\(idx + 1)] [来源: \(src.title)] - 摘要: \(src.snippet)\n"
-                            }
-
-                            // 对齐 Python 版本：英文指令 + 中文内容，模型遵循效果更好
-                            injectedContext = AppPromptService.shared.searchInjection(snippet: searchSnippet, question: content)
-                            finalUserPrompt = relevantMemory + injectedContext + fileContents
-                            LoggerService.shared.info(
-                                "Search context injected. Context length: \(injectedContext.count) chars"
+                            let resultNotice = ChatMessage(
+                                role: "assistant",
+                                content: importResult.message,
+                                isAgentStep: true
                             )
-                        } else {
-                            // 搜索无结果：不注入任何额外内容，让模型直接用自身知识回答
-                            LoggerService.shared.info(
-                                "No search results found. Proceeding without search context."
-                            )
+                            self.messages.append(resultNotice)
+                            self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                            
+                            self.inputText = ""
+                            self.isLoading = false
+                            self.objectWillChange.send()
                         }
+                        return
                     }
                 }
+            }
 
-                var systemPrompt = await buildSystemPrompt(userQuery: content, resolvedAgentMode: enableAgentMode, resolvedWebSearch: enableWebSearch)
-                let isNativeReasoner =
-                    activeModel.contains("reasoner")
-                    || activeModel.contains("thinking")
-                    || activeModel.contains("r1")
+            var autoPlayCount = 0
+            var currentQueryContent = content
+            var shouldAutoPlay = true
+            
+            while shouldAutoPlay && autoPlayCount < 4 {
+                shouldAutoPlay = false
+                
+                let queryLower = currentQueryContent.lowercased()
+                let requiresSearch = queryLower.contains("最新") || queryLower.contains("今天") || queryLower.contains("新闻") || queryLower.contains("搜索") || queryLower.contains("查一下") || queryLower.contains("实时")
+                let requiresAgent = queryLower.contains("文件") || queryLower.contains("代码") || queryLower.contains("写一") || queryLower.contains("编写") || queryLower.contains("创建") || queryLower.contains("运行")
+                let requiresDeepThinking = queryLower.contains("为什么") || queryLower.contains("分析") || queryLower.contains("设计") || queryLower.contains("架构") || queryLower.contains("怎么")
+                
+                let isPoke = activeProvider == .poke
+                let finalWebSearch = !isPoke && (enableWebSearch || requiresSearch)
+                let finalAgentMode = !isPoke && (enableAgentMode || requiresAgent)
+                let finalDeepThinking = !isPoke && (enableDeepThinking || requiresDeepThinking)
 
-                // 🧠 强制激发所有大模型（如 Kimi / GLM）进入思维链模式
-                systemPrompt += AppPromptService.shared.deepThinkingEnforcer()
+                let resolved = self.resolveModelAndCapabilities()
+                var activeModel = resolved.model
+                let enableThinking = finalDeepThinking
+                let enableAgentMode = finalAgentMode
+                let enableWebSearch = finalWebSearch
+                let usePreInjectedSearch = enableWebSearch && !enableAgentMode && !isPoke
+
+                defer {
+                    if !shouldAutoPlay {
+                        self.activeTasks[currentId] = nil
+                        self.runningStreams[currentId] = nil
+                        if self.currentConversationId == currentId { self.isLoading = false }
+                        self.objectWillChange.send()
+                    }
+                }
 
                 guard !Task.isCancelled else { return }
 
-                // 🔄【多轮退避与自动降级重试 (Auto-Fallback) 循环】
-                let maxRetries = 2
-                var iteration = 0
-                var continueReasoning = true
+                // 🧠 2. 上下文记忆联想 (Context Memory Association)
+                let relevantMemory = await self.getRelevantMemoryContext(for: currentQueryContent)
+                let fileContents = await self.getFileContentsSummary(query: currentQueryContent)
+                var finalUserPrompt = relevantMemory + currentQueryContent + fileContents
 
-                while continueReasoning && iteration < 5 {
-                    guard !Task.isCancelled else { break }
-                    iteration += 1
-                    continueReasoning = false
-
-                    // 将 prunedHistory 的组装彻底移入 while 循环内部！
-                    let limit = getModelContextLimit(model: activeModel)
-                    let safetyMarginLimit = Int(Double(limit) * 0.8)
-                    var totalTokens = estimateTokens(text: systemPrompt)
-                    var prunedHistory: [ChatMessage] = []
-
-                    var currentPayload = messages
-                    if !injectedContext.isEmpty,
-                        let lastUserIdx = currentPayload.lastIndex(where: {
-                            $0.role == "user"
-                        })
-                    {
-                        currentPayload[lastUserIdx].content = finalUserPrompt
+                if autoPlayCount == 0 {
+                    let userMsg = ChatMessage(role: "user", content: currentQueryContent)
+                    await MainActor.run {
+                        self.uploadedFiles.removeAll()
+                        self.inputText = ""
+                        self.messages.append(userMsg)
+                        self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                    }
+                    
+                    // 同步用户消息到 Poke
+                    let userContentCopy = currentQueryContent
+                    Task.detached {
+                        PokeService.shared.sendMessage("[User]: \(userContentCopy)")
                     }
 
-                    for msg in currentPayload.reversed() {
-                        let msgTokens = estimateTokens(text: msg.content)
-                        if totalTokens + msgTokens < safetyMarginLimit {
-                            prunedHistory.insert(msg, at: 0)
-                            totalTokens += msgTokens
-                        } else {
-                            break
-                        }
-                    }
-
-                    for attempt in 0..<maxRetries {
-                        guard !Task.isCancelled else { break }
-
-                        do {
-                            let universalProvider = UniversalLLMProvider(
-                                providerType: activeProvider
-                            )
-                            universalProvider.updateAPIKey(providerKey)
-                            universalProvider.updateBaseURL(providerURL)
-
-                            var tools: [AgentToolDefinition]? = nil
-                            if enableAgentMode {
-                                let agentService = AgentService(
-                                    dataStorage: container.dataStorageService
-                                )
-                                tools = agentService.getBuiltInTools(
-                                    includeWebSearch: enableWebSearch
-                                )
-                            }
-
-                            let appSettings = container.settingsService.settings
-                            let finalTemp = appSettings.enablePsychologyParams ? appSettings.psychologyTempScale : nil
-                            let finalTopP = appSettings.enablePsychologyParams ? appSettings.psychologyTopP : nil
-                            let finalPresence = appSettings.enablePsychologyParams ? appSettings.psychologyPresencePenalty : nil
-                            let finalFrequency = appSettings.enablePsychologyParams ? appSettings.psychologyFrequencyPenalty : nil
-
-                            let eventStream =
-                                universalProvider.streamChatWithEvents(
-                                    messages: prunedHistory,
-                                    systemPrompt: systemPrompt,
-                                    model: activeModel,
-                                    enableThinking: enableThinking,
-                                    tools: tools,
-                                    temperature: finalTemp,
-                                    topP: finalTopP,
-                                    presencePenalty: finalPresence,
-                                    frequencyPenalty: finalFrequency
-                                )
-
-                            for try await event in eventStream {
-                                if Task.isCancelled { break }
-                                switch event {
-                                case .thinkingContent(let text):
-                                    updateStreamState(
-                                        for: currentId,
-                                        chunk: text,
-                                        type: .thinking
-                                    )
-                                case .textContent(let text):
-                                    updateStreamState(
-                                        for: currentId,
-                                        chunk: text,
-                                        type: .text
-                                    )
-                                case .toolCall(_, let name, let arguments):
-                                    let resultString: String
-
-                                    if name == "web_search" {
-                                        let argsData =
-                                            arguments.data(using: .utf8)
-                                            ?? Data()
-                                        let args =
-                                            (try? JSONSerialization.jsonObject(
-                                                with: argsData
-                                            )) as? [String: Any]
-                                        let q =
-                                            args?["query"] as? String ?? content
-
-                                        let appSettings = container
-                                            .settingsService.settings
-                                        let searchService =
-                                            UnifiedSearchService(
-                                                assistantConfig: appSettings
-                                                    .assistantConfig
-                                            )
-                                        let res: [SearchSource]
-                                        do {
-                                            let unifiedResult =
-                                                try await searchService.search(
-                                                    query: q,
-                                                    maxResults: 5
-                                                )
-                                            res = unifiedResult.sources
-                                        } catch {
-                                            LoggerService.shared.error(
-                                                "Agent unified search failed: \(error)"
-                                            )
-                                            res = []
-                                        }
-                                        searchSources = res
-                                        var formatted = ""
-                                        for (idx, src) in res.enumerated() {
-                                            formatted +=
-                                                "[\(idx + 1)] 摘要: \(src.snippet)\n"
-                                        }
-                                        resultString =
-                                            formatted.isEmpty
-                                            ? "{\"error\": \"未找到相关结果\"}"
-                                            : formatted
-                                    } else {
-                                        let agentService = AgentService(
-                                            dataStorage: container
-                                                .dataStorageService
-                                        )
-                                        resultString =
-                                            await agentService.executeTool(
-                                                name: name,
-                                                arguments: arguments
-                                            )
-                                    }
-
-                                    let stepMsg = ChatMessage(
-                                        role: "assistant",
-                                        content:
-                                            "🔧 调用工具: \(name)\n\(resultString)",
-                                        isAgentStep: true
-                                    )
-                                    if currentConversationId == currentId {
-                                        await MainActor.run {
-                                            messages.append(stepMsg)
-                                            messages.sort(by: { $0.timestamp < $1.timestamp })
-                                            objectWillChange.send()
-                                        }
-                                    }
-                                    var currentHistory = container.glmService
-                                        .getConversationHistory(
-                                            for: currentId.uuidString
-                                        )
-                                    currentHistory.append(stepMsg)
-                                    container.glmService
-                                        .replaceConversationHistory(
-                                            currentHistory,
-                                            for: currentId.uuidString
-                                        )
-                                    continueReasoning = true
-                                }
-                            }
-
-                            // 本轮成功，退出重试
-                            break
-
-                        } catch {
-                            if attempt == 0 {
-                                LoggerService.shared.warning(
-                                    "API Provider failed: \(error). Initiating Fallback protocol..."
-                                )
-                                if let fallbackModel = snapshotAvailableModels.first(
-                                    where: {
-                                        $0.id.contains("kimi")
-                                            || $0.id.contains("glm")
-                                    })
-                                {
-                                    activeModel = fallbackModel.id
-                                    let fallbackMsg = ChatMessage(
-                                        role: "assistant",
-                                        content:
-                                            "⚠️ 当前节点响应阻塞，已自动切至备用稳定节点 (\(fallbackModel.name)) 进行重试...",
-                                        isAgentStep: true
-                                    )
-                                    if currentConversationId == currentId {
-                                        await MainActor.run {
-                                            messages.append(fallbackMsg)
-                                            messages.sort(by: { $0.timestamp < $1.timestamp })
-                                            objectWillChange.send()
-                                        }
-                                    }
-                                    var currentHistory = container.glmService
-                                        .getConversationHistory(
-                                            for: currentId.uuidString
-                                        )
-                                    currentHistory.append(fallbackMsg)
-                                    container.glmService
-                                        .replaceConversationHistory(
-                                            currentHistory,
-                                            for: currentId.uuidString
-                                        )
-                                    continue  // 重试
-                                }
-                            }
-                            throw error
-                        }
-                    }
-                }
-
-                if let finalStream = runningStreams[currentId] {
-                    let parsed = parseInlineThinking(finalStream.content)
-
-                    // 兜底：如果流式输出为空，提供友好的提示
-                    let displayContent: String
-                    if parsed.content.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ).isEmpty {
-                        displayContent = AppPromptService.shared.streamEmptyFallback(hasSearch: !searchSources.isEmpty)
-                        LoggerService.shared.warning(
-                            "Stream completed with empty content for conversation \(currentId)"
-                        )
-                    } else {
-                        displayContent = parsed.content
-                    }
-
-                    let finalAssistantMsg = ChatMessage(
-                        role: "assistant",
-                        content: displayContent,
-                        thinkingContent: parsed.thinking
-                            ?? (finalStream.thinkingContent.isEmpty
-                                ? nil : finalStream.thinkingContent),
-                        searchSources: searchSources.isEmpty
-                            ? nil : searchSources
-                    )
+                    // 同步写入持久化历史
                     var history = container.glmService.getConversationHistory(
                         for: currentId.uuidString
                     )
-                    history.append(finalAssistantMsg)
+                    history.append(userMsg)
                     container.glmService.replaceConversationHistory(
                         history,
                         for: currentId.uuidString
                     )
-                    
-                    // 同步助手回复到 Poke
-                    let assistantContentCopy = displayContent
-                    Task.detached {
-                        PokeService.shared.sendMessage("[Assistant]: \(assistantContentCopy)")
-                    }
-
-                    await MainActor.run {
-                        if let lastIdx = messages.lastIndex(where: { $0.role == "assistant" && !$0.isAgentStep }) {
-                            messages[lastIdx] = finalAssistantMsg
-                        } else {
-                            messages.append(finalAssistantMsg)
-                        }
-                        messages.sort(by: { $0.timestamp < $1.timestamp })
-                        objectWillChange.send()
-                    }
-
-                    // 估算并累加本次对话消耗的 Token 用量
-                    _ = container.apiSettingsService.estimateTokens(
-                        sent: content,
-                        received: displayContent
-                    )
                 }
 
-            } catch {
-                LoggerService.shared.error("AI chat failed: \(error)")
-                if currentConversationId == currentId {
-                    await MainActor.run {
-                        messages.append(
-                            ChatMessage(
-                                role: "assistant",
-                                content:
-                                    "❌ **服务连接严重故障**\n\n```\n\(error.localizedDescription)\n```\n多次重试均遭拒绝。请检查网络环境或模型状态。"
-                            )
+                var displayContent = ""
+
+                do {
+                    // 直接注入式联网搜索（通过 SmartProxyManager）
+                    var injectedContext = ""
+                    if usePreInjectedSearch {
+                        LoggerService.shared.info(
+                            "Checking if web search is needed for query: \(currentQueryContent)"
                         )
-                        messages.sort(by: { $0.timestamp < $1.timestamp })
-                        objectWillChange.send()
+                        let needsSearch = await self.checkNeedsSearch(
+                            query: currentQueryContent,
+                            apiKey: providerKey,
+                            baseURL: providerURL,
+                            model: activeModel
+                        )
+                        LoggerService.shared.info(
+                            "self.checkNeedsSearch result: \(needsSearch)"
+                        )
+
+                        if needsSearch && !Task.isCancelled {
+                            await MainActor.run {
+                                if self.currentConversationId == currentId {
+                                    self.messages.append(ChatMessage(role: "assistant", content: AppPromptService.shared.searchStatusMessage("searching")))
+                                    self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                                    self.objectWillChange.send()
+                                }
+                            }
+
+                            let appSettings = container.settingsService.settings
+                            let searchService = UnifiedSearchService(
+                                assistantConfig: appSettings.assistantConfig
+                            )
+                            let searchResults: [SearchSource]
+                            do {
+                                // 3. 协同生成多维度检索词，并行化多路召回 (Collaborative Parallel Search)
+                                let query2 = currentQueryContent + " 最新 实时"
+                                let query3 = currentQueryContent + " 动态 资讯"
+                                
+                                async let res1 = try? searchService.search(query: currentQueryContent, maxResults: 3)
+                                async let res2 = try? searchService.search(query: query2, maxResults: 3)
+                                async let res3 = try? searchService.search(query: query3, maxResults: 3)
+                                
+                                let (all1, all2, all3) = await (res1, res2, res3)
+                                
+                                var mergedSources: [SearchSource] = []
+                                var seenUrls = Set<String>()
+                                
+                                let addSources = { (sources: [SearchSource]) in
+                                    for src in sources {
+                                        if !seenUrls.contains(src.url) {
+                                            seenUrls.insert(src.url)
+                                            mergedSources.append(src)
+                                        }
+                                    }
+                                }
+                                
+                                if let s1 = all1?.sources { addSources(s1) }
+                                if let s2 = all2?.sources { addSources(s2) }
+                                if let s3 = all3?.sources { addSources(s3) }
+                                
+                                searchResults = Array(mergedSources.prefix(6))
+                            } catch {
+                                LoggerService.shared.error(
+                                    "Unified search failed: \(error)"
+                                )
+                                searchResults = []
+                            }
+
+                            await MainActor.run {
+                                if self.currentConversationId == currentId
+                                    && self.messages.last?.content == AppPromptService.shared.searchStatusMessage("searching")
+                                {
+                                    self.messages.removeLast()
+                                }
+                            }
+
+                            if !searchResults.isEmpty {
+                                searchSources = searchResults
+                                var searchSnippet = ""
+                                for (idx, src) in searchResults.enumerated() {
+                                    searchSnippet +=
+                                        "[\(idx + 1)] [来源: \(src.title)] - 摘要: \(src.snippet)\n"
+                                }
+
+                                // 对齐 Python 版本：英文指令 + 中文内容，模型遵循效果更好
+                                injectedContext = AppPromptService.shared.searchInjection(snippet: searchSnippet, question: currentQueryContent)
+                                finalUserPrompt = relevantMemory + injectedContext + fileContents
+                                LoggerService.shared.info(
+                                    "Search context injected. Context length: \(injectedContext.count) chars"
+                                )
+                            } else {
+                                // 搜索无结果：不注入任何额外内容，让模型直接用自身知识回答
+                                LoggerService.shared.info(
+                                    "No search results found. Proceeding without search context."
+                                )
+                            }
+                        }
+                    }
+
+                    var systemPrompt = await buildSystemPrompt(userQuery: currentQueryContent, resolvedAgentMode: enableAgentMode, resolvedWebSearch: enableWebSearch)
+                    let isNativeReasoner =
+                        activeModel.contains("reasoner")
+                        || activeModel.contains("thinking")
+                        || activeModel.contains("r1")
+
+                    // 🧠 强制激发所有大模型（如 Kimi / GLM）进入思维链模式
+                    systemPrompt += AppPromptService.shared.deepThinkingEnforcer()
+
+                    guard !Task.isCancelled else { return }
+
+                    // 🔄【多轮退避与自动降级重试 (Auto-Fallback) 循环】
+                    let maxRetries = 2
+                    var iteration = 0
+                    var continueReasoning = true
+
+                    while continueReasoning && iteration < 5 {
+                        guard !Task.isCancelled else { break }
+                        iteration += 1
+                        continueReasoning = false
+
+                        // 将 prunedHistory 的组装彻底移入 while 循环内部！
+                        let limit = self.getModelContextLimit(model: activeModel)
+                        let safetyMarginLimit = Int(Double(limit) * 0.8)
+                        var totalTokens = self.estimateTokens(text: systemPrompt)
+                        var prunedHistory: [ChatMessage] = []
+
+                        var currentPayload = self.messages
+                        if !injectedContext.isEmpty,
+                            let lastUserIdx = currentPayload.lastIndex(where: {
+                                $0.role == "user"
+                            })
+                        {
+                            currentPayload[lastUserIdx].content = finalUserPrompt
+                        }
+
+                        for msg in currentPayload.reversed() {
+                            let msgTokens = self.estimateTokens(text: msg.content)
+                            if totalTokens + msgTokens < safetyMarginLimit {
+                                prunedHistory.insert(msg, at: 0)
+                                totalTokens += msgTokens
+                            } else {
+                                break
+                            }
+                        }
+
+                        for attempt in 0..<maxRetries {
+                            guard !Task.isCancelled else { break }
+
+                            do {
+                                let universalProvider = UniversalLLMProvider(
+                                    providerType: activeProvider
+                                )
+                                universalProvider.updateAPIKey(providerKey)
+                                universalProvider.updateBaseURL(providerURL)
+
+                                var tools: [AgentToolDefinition]? = nil
+                                if enableAgentMode {
+                                    let agentService = AgentService(
+                                        dataStorage: container.dataStorageService
+                                    )
+                                    var activeTools = agentService.getBuiltInTools(
+                                        includeWebSearch: enableWebSearch
+                                    )
+                                    
+                                    // 追加智能体绑定的自定义 Skill 作为大模型 Tool 调用
+                                    if let conversation = self.conversationService?.conversations.first(where: { $0.id == currentId }),
+                                       let agentId = conversation.agentId,
+                                       let agent = AgentManagerService.shared.customAgents.first(where: { $0.id == agentId }) {
+                                        
+                                        let allSkills = SkillService.shared.getAllSkills()
+                                        for skillName in agent.selectedSkillNames {
+                                            if let skill = allSkills.first(where: { $0.name == skillName }),
+                                               skill.scriptType != "openclaw" {
+                                                if let data = skill.parametersJSON.data(using: .utf8),
+                                                   let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                                                    activeTools.append(AgentToolDefinition(
+                                                        name: skill.name,
+                                                         description: skill.description,
+                                                         parameters: dict
+                                                    ))
+                                                }
+                                            }
+                                        }
+                                    }
+                                    tools = activeTools
+                                }
+
+                                let appSettings = container.settingsService.settings
+                                let finalTemp = appSettings.enablePsychologyParams ? appSettings.psychologyTempScale : nil
+                                let finalTopP = appSettings.enablePsychologyParams ? appSettings.psychologyTopP : nil
+                                let finalPresence = appSettings.enablePsychologyParams ? appSettings.psychologyPresencePenalty : nil
+                                let finalFrequency = appSettings.enablePsychologyParams ? appSettings.psychologyFrequencyPenalty : nil
+
+                                let eventStream =
+                                    universalProvider.streamChatWithEvents(
+                                        messages: prunedHistory,
+                                        systemPrompt: systemPrompt,
+                                        model: activeModel,
+                                        enableThinking: enableThinking,
+                                        tools: tools,
+                                        temperature: finalTemp,
+                                        topP: finalTopP,
+                                        presencePenalty: finalPresence,
+                                        frequencyPenalty: finalFrequency
+                                    )
+
+                                for try await event in eventStream {
+                                    if Task.isCancelled { break }
+                                    switch event {
+                                    case .thinkingContent(let text):
+                                        self.updateStreamState(
+                                            for: currentId,
+                                            chunk: text,
+                                            type: .thinking
+                                        )
+                                    case .textContent(let text):
+                                        self.updateStreamState(
+                                            for: currentId,
+                                            chunk: text,
+                                            type: .text
+                                        )
+                                    case .toolCall(_, let name, let arguments):
+                                        // 🛡️ 崩溃防范：工具执行前检查 Task 是否已被取消
+                                        guard !Task.isCancelled else { break }
+                                        
+                                        let resultString: String
+
+                                        if name == "web_search" {
+                                            let rawArgs = arguments.trimmingCharacters(in: .whitespacesAndNewlines)
+                                            let argsData = rawArgs.isEmpty ? "{}" .data(using: .utf8)! : (rawArgs.data(using: .utf8) ?? Data())
+                                            let args = (try? JSONSerialization.jsonObject(with: argsData)) as? [String: Any]
+                                            let q = args?["query"] as? String ?? currentQueryContent
+
+                                            let appSettings = container.settingsService.settings
+                                            let searchService = UnifiedSearchService(
+                                                assistantConfig: appSettings.assistantConfig
+                                            )
+                                            let res: [SearchSource]
+                                            do {
+                                                let unifiedResult = try await searchService.search(
+                                                    query: q,
+                                                    maxResults: 5
+                                                )
+                                                res = unifiedResult.sources
+                                            } catch {
+                                                LoggerService.shared.error(
+                                                    "Agent unified search failed: \(error)"
+                                                )
+                                                res = []
+                                            }
+                                            guard !Task.isCancelled else { break }
+                                            searchSources = res
+                                            var formatted = ""
+                                            for (idx, src) in res.enumerated() {
+                                                formatted += "[\(idx + 1)] 摘要: \(src.snippet)\n"
+                                            }
+                                            resultString = formatted.isEmpty
+                                                ? "{\"error\": \"未找到相关结果\"}"
+                                                : formatted
+                                        } else if SkillService.shared.getAllSkills().contains(where: { $0.name == name }) {
+                                            let rawArgs = arguments.trimmingCharacters(in: .whitespacesAndNewlines)
+                                            let argsData = rawArgs.isEmpty ? "{}" .data(using: .utf8)! : (rawArgs.data(using: .utf8) ?? "{}".data(using: .utf8)!)
+                                            let parsedArgs: [String: Any]
+                                            if let parsed = (try? JSONSerialization.jsonObject(with: argsData)) as? [String: Any] {
+                                                parsedArgs = parsed
+                                            } else {
+                                                LoggerService.shared.warning(
+                                                    "Skill \(name): failed to parse arguments JSON, using empty args. Raw: \(rawArgs.prefix(200))"
+                                                )
+                                                parsedArgs = [:]
+                                            }
+                                            guard !Task.isCancelled else { break }
+                                            resultString = await SkillService.shared.executeSkill(
+                                                name: name, arguments: parsedArgs
+                                            )
+                                        } else {
+                                            let agentService = AgentService(
+                                                dataStorage: container.dataStorageService
+                                            )
+                                            guard !Task.isCancelled else { break }
+                                            resultString = await agentService.executeTool(
+                                                name: name,
+                                                arguments: arguments
+                                            )
+                                        }
+
+                                        guard !Task.isCancelled else { break }
+                                        
+                                        let stepMsg = ChatMessage(
+                                            role: "assistant",
+                                            content: "🔧 调用工具: \(name)\n\(resultString)",
+                                            isAgentStep: true
+                                        )
+                                        if self.currentConversationId == currentId {
+                                            await MainActor.run {
+                                                self.messages.append(stepMsg)
+                                                if self.messages.count > 1 {
+                                                    self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                                                }
+                                                self.objectWillChange.send()
+                                            }
+                                        }
+                                        if self.currentConversationId == currentId || self.currentConversationId == nil {
+                                            var currentHistory = container.glmService
+                                                .getConversationHistory(
+                                                    for: currentId.uuidString
+                                                )
+                                            currentHistory.append(stepMsg)
+                                            container.glmService
+                                                .replaceConversationHistory(
+                                                    currentHistory,
+                                                    for: currentId.uuidString
+                                                )
+                                        }
+                                        continueReasoning = true
+                                    }
+                                }
+
+                                break
+
+                            } catch {
+                                if attempt == 0 {
+                                    LoggerService.shared.warning(
+                                        "API Provider failed: \(error). Initiating Fallback protocol..."
+                                    )
+                                    if let fallbackModel = snapshotAvailableModels.first(
+                                        where: {
+                                            $0.id.contains("kimi")
+                                                || $0.id.contains("glm")
+                                        })
+                                    {
+                                        activeModel = fallbackModel.id
+                                        let fallbackMsg = ChatMessage(
+                                            role: "assistant",
+                                            content:
+                                                "⚠️ 当前节点响应阻塞，已自动切至备用稳定节点 (\(fallbackModel.name)) 进行重试...",
+                                            isAgentStep: true
+                                        )
+                                        if self.currentConversationId == currentId {
+                                            await MainActor.run {
+                                                self.messages.append(fallbackMsg)
+                                                self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                                                self.objectWillChange.send()
+                                            }
+                                        }
+                                        var currentHistory = container.glmService
+                                            .getConversationHistory(
+                                                for: currentId.uuidString
+                                            )
+                                        currentHistory.append(fallbackMsg)
+                                        container.glmService
+                                            .replaceConversationHistory(
+                                                currentHistory,
+                                                for: currentId.uuidString
+                                            )
+                                        continue
+                                    }
+                                }
+                                throw error
+                            }
+                        }
+                    }
+
+                    if let finalStream = self.runningStreams[currentId] {
+                        let parsed = self.parseInlineThinking(finalStream.content)
+
+                        if parsed.content.trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        ).isEmpty {
+                            displayContent = AppPromptService.shared.streamEmptyFallback(hasSearch: !searchSources.isEmpty)
+                            LoggerService.shared.warning(
+                                "Stream completed with empty content for conversation \(currentId)"
+                            )
+                        } else {
+                            displayContent = parsed.content
+                        }
+
+                        let finalAssistantMsg = ChatMessage(
+                            role: "assistant",
+                            content: displayContent,
+                            thinkingContent: parsed.thinking
+                                ?? (finalStream.thinkingContent.isEmpty
+                                    ? nil : finalStream.thinkingContent),
+                            searchSources: searchSources.isEmpty
+                                ? nil : searchSources
+                        )
+                        var history = container.glmService.getConversationHistory(
+                            for: currentId.uuidString
+                        )
+                        history.append(finalAssistantMsg)
+                        container.glmService.replaceConversationHistory(
+                            history,
+                            for: currentId.uuidString
+                        )
+                        
+                        let assistantContentCopy = displayContent
+                        Task.detached {
+                            PokeService.shared.sendMessage("[Assistant]: \(assistantContentCopy)")
+                        }
+
+                        await MainActor.run {
+                            if let lastIdx = self.messages.lastIndex(where: { $0.role == "assistant" && !$0.isAgentStep }) {
+                                self.messages[lastIdx] = finalAssistantMsg
+                            } else {
+                                self.messages.append(finalAssistantMsg)
+                            }
+                            self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                            self.objectWillChange.send()
+                        }
+
+                        _ = container.apiSettingsService.estimateTokens(
+                            sent: currentQueryContent,
+                            received: displayContent
+                        )
+                    }
+
+                } catch {
+                    LoggerService.shared.error("AI chat failed: \(error)")
+                    if self.currentConversationId == currentId {
+                        await MainActor.run {
+                            self.messages.append(
+                                ChatMessage(
+                                    role: "assistant",
+                                    content:
+                                        "❌ **服务连接严重故障**\n\n```\n\(error.localizedDescription)\n```\n多次重试均遭拒绝。请检查网络环境或模型状态。"
+                                )
+                            )
+                            self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                            self.objectWillChange.send()
+                        }
+                    }
+                }
+
+                // --- Auto-Dialogue Loop Trigger Check ---
+                if enableAgentMode && !displayContent.isEmpty {
+                    let triggers = ["接下来", "下一步", "正在尝试", "自动分析", "继续进行", "准备下单", "正在查找", "正在查询"]
+                    if triggers.contains(where: { displayContent.contains($0) }) {
+                        autoPlayCount += 1
+                        shouldAutoPlay = true
+                        
+                        let autoPlayMsg = ChatMessage(
+                            role: "user",
+                            content: "[智能体自动触发] 请根据当前阶段的输出与状态，自动继续执行后续步骤。",
+                            isAgentStep: true
+                        )
+                        
+                        await MainActor.run {
+                            self.messages.append(autoPlayMsg)
+                            self.messages.sort(by: { $0.timestamp < $1.timestamp })
+                            
+                            self.runningStreams[currentId] = RunningStreamState()
+                            self.objectWillChange.send()
+                        }
+                        
+                        var history = container.glmService.getConversationHistory(for: currentId.uuidString)
+                        history.append(autoPlayMsg)
+                        container.glmService.replaceConversationHistory(history, for: currentId.uuidString)
+                        
+                        currentQueryContent = autoPlayMsg.content
                     }
                 }
             }
+        }
+    }
+
+    // MARK: - Link Skill Recognition Helpers
+
+    private func extractURL(from text: String) -> URL? {
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        let matches = detector?.matches(in: text, options: [], range: NSRange(text.startIndex..., in: text))
+        if let match = matches?.first, let range = Range(match.range, in: text) {
+            return URL(string: String(text[range]))
+        }
+        return nil
+    }
+
+    private struct SkillImportResult {
+        let success: Bool
+        let message: String
+    }
+
+    private func importSkillFromURL(url: URL, agentId: String?) async -> SkillImportResult {
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let skillName = url.deletingPathExtension().lastPathComponent
+            let ext = url.pathExtension.lowercased()
+
+            if ext == "json" {
+                // Parse as LLMSkill JSON
+                if let skill = try? JSONDecoder().decode(LLMSkill.self, from: data) {
+                    SkillService.shared.addOrUpdateSkill(skill)
+                    // Auto-bind to current agent if provided
+                    if let agentId = agentId,
+                       let agentIdx = AgentManagerService.shared.customAgents.firstIndex(where: { $0.id == agentId }) {
+                        if !AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.contains(skill.name) {
+                            AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.append(skill.name)
+                            AgentManagerService.shared.saveAgents()
+                        }
+                    }
+                    return SkillImportResult(success: true, message: "✅ 技能「\(skill.name)」已成功导入并绑定至当前智能体。")
+                } else {
+                    return SkillImportResult(success: false, message: "⚠️ 技能 JSON 格式无法解析，请确认文件格式正确。")
+                }
+            } else if ext == "md" {
+                // Treat markdown content as a skill script
+                let content = String(data: data, encoding: .utf8) ?? ""
+                let skill = LLMSkill(
+                    name: skillName,
+                    description: "从链接导入的技能: \(url.lastPathComponent)",
+                    parametersJSON: "{}",
+                    scriptType: "yumiscript",
+                    scriptContent: content
+                )
+                SkillService.shared.addOrUpdateSkill(skill)
+                if let agentId = agentId,
+                   let agentIdx = AgentManagerService.shared.customAgents.firstIndex(where: { $0.id == agentId }) {
+                    if !AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.contains(skillName) {
+                        AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.append(skillName)
+                        AgentManagerService.shared.saveAgents()
+                    }
+                }
+                return SkillImportResult(success: true, message: "✅ 技能「\(skillName)」(Markdown) 已成功导入。")
+            } else {
+                return SkillImportResult(success: false, message: "⚠️ 链接格式不支持自动导入（需要 .json / .md）。")
+            }
+        } catch {
+            return SkillImportResult(success: false, message: "❌ 技能导入失败：\(error.localizedDescription)")
         }
     }
 

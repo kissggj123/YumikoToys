@@ -350,7 +350,18 @@ final class StatusBarManager: NSObject {
     
     private func updateStatusBarTitle(withDays days: Double) {
         self.currentDays = days
-        self.currentLine1 = container.anniversaryService.activeAnniversaryInfo?.anniversary.parsedStatusBarLine1(days: days) ?? "兔可可已到来"
+        var line1 = container.anniversaryService.activeAnniversaryInfo?.anniversary.parsedStatusBarLine1(days: days) ?? "兔可可已到来"
+        
+        if let info = container.anniversaryService.activeAnniversaryInfo {
+            let layouts = container.componentLayoutService.currentLayouts
+            if let layout = layouts.first(where: { $0.type == .daysDisplay }),
+               let customTitle = layout.customTitle, !customTitle.isEmpty {
+                let originalName = info.anniversary.displayPetName
+                line1 = line1.replacingOccurrences(of: originalName, with: customTitle)
+            }
+        }
+        
+        self.currentLine1 = line1
         updateStatusBarRepresentation()
     }
     
@@ -543,28 +554,41 @@ struct EmojiRainView: View {
         let scale: CGFloat
         let startRotation: Double
         let rotationSpeed: Double
+        let swaySpeed: Double
+        let swayAmplitude: CGFloat
+        let swayPhase: Double
+        let pulseSpeed: Double
     }
     
     @State private var particles: [EmojiParticle] = []
     @State private var startDate = Date()
-    
-    private let emojiPresets = ["🐰", "🥕", "🐱", "🐶", "🐹", "🦊", "🐼", "🐸", "🐻", "🐾", "🥕", "🐰"]
     
     var body: some View {
         GeometryReader { geo in
             if !particles.isEmpty {
                 TimelineView(.animation(minimumInterval: 0.016)) { context in
                     let elapsed = context.date.timeIntervalSince(startDate)
+                    let effectType = DependencyContainer.shared.settingsService.settings.activeSpecialEffect
                     
                     ZStack {
                         ForEach(particles) { p in
                             let currentY = p.startY + p.speed * CGFloat(elapsed)
+                            
+                            // Horizontal sway
+                            let sway = sin(elapsed * p.swaySpeed + p.swayPhase) * p.swayAmplitude
+                            let currentX = p.xRatio * geo.size.width + (effectType == .sakura || effectType == .heart ? sway : 0)
+                            
+                            // Rotation
                             let currentRotation = p.startRotation + p.rotationSpeed * elapsed
                             
+                            // Scale pulsation (star blinking)
+                            let scalePulsation = effectType == .star ? (1.0 + 0.25 * sin(elapsed * p.pulseSpeed)) : 1.0
+                            let currentScale = p.scale * CGFloat(scalePulsation)
+                            
                             Text(p.emoji)
-                                .font(.system(size: 32 * p.scale))
+                                .font(.system(size: 32 * currentScale))
                                 .rotationEffect(.degrees(currentRotation))
-                                .position(x: p.xRatio * geo.size.width, y: currentY)
+                                .position(x: currentX, y: currentY)
                         }
                     }
                 }
@@ -573,17 +597,48 @@ struct EmojiRainView: View {
         .ignoresSafeArea()
         .onAppear {
             startDate = Date()
-            let count = 45
+            let effectType = DependencyContainer.shared.settingsService.settings.activeSpecialEffect
             
+            let emojiPresets: [String]
+            switch effectType {
+            case .emoji:
+                emojiPresets = ["🐰", "🥕", "🐱", "🐶", "🐹", "🦊", "🐼", "🐸", "🐻", "🐾", "🥕", "🐰"]
+            case .sakura:
+                emojiPresets = ["🌸", "💮", "🌺", "🍃", "🌸", "💮"]
+            case .star:
+                emojiPresets = ["⭐", "✨", "🌟", "💫", "⭐", "✨"]
+            case .heart:
+                emojiPresets = ["❤️", "💖", "💝", "💕", "💘", "💓"]
+            }
+            
+            let count = 45
             particles = (0..<count).map { _ in
-                EmojiParticle(
+                let isHeart = effectType == .heart
+                
+                let startY: CGFloat
+                let speed: CGFloat
+                if isHeart {
+                    // Rise up from bottom
+                    startY = screenHeight + CGFloat.random(in: 50...150)
+                    speed = CGFloat.random(in: -450...(-250))
+                } else {
+                    // Fall down from top
+                    startY = CGFloat.random(in: -150...(-50))
+                    speed = CGFloat.random(in: 450...780)
+                }
+                
+                return EmojiParticle(
                     emoji: emojiPresets.randomElement()!,
                     xRatio: CGFloat.random(in: 0.02...0.98),
-                    startY: CGFloat.random(in: -150...(-50)),
-                    speed: CGFloat.random(in: 450...780),
+                    startY: startY,
+                    speed: speed,
                     scale: CGFloat.random(in: 0.6...1.3),
                     startRotation: Double.random(in: 0...360),
-                    rotationSpeed: Double.random(in: 120...240)
+                    rotationSpeed: effectType == .sakura ? Double.random(in: 30...90) : Double.random(in: 120...240),
+                    swaySpeed: Double.random(in: 2.0...5.0),
+                    swayAmplitude: CGFloat.random(in: 15...40),
+                    swayPhase: Double.random(in: 0...(2 * .pi)),
+                    pulseSpeed: Double.random(in: 8.0...15.0)
                 )
             }
         }

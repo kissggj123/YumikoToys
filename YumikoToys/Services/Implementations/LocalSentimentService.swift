@@ -157,6 +157,10 @@ final class LocalSentimentService: LocalSentimentServiceProtocol, ObservableObje
     
     private func loadModel() async {
         guard !isModelLoaded else { return }
+        if DependencyContainer.shared.modelManagementService.isModelDisabled(modelId) {
+            LoggerService.shared.info("Model \(modelId) is disabled, skipping loadModel.")
+            return
+        }
         
         let weightsPath = modelURL.appendingPathComponent("model.safetensors")
         let configPath = modelURL.appendingPathComponent("config.json")

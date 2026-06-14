@@ -309,6 +309,42 @@ enum ProHumanInteractionStyle: String, Codable, CaseIterable, Identifiable, Send
     }
 }
 
+enum SpecialEffectType: String, Codable, CaseIterable, Identifiable, Sendable {
+    case emoji = "emoji"
+    case sakura = "sakura"
+    case star = "star"
+    case heart = "heart"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .emoji: return "表情雨 (经典)"
+        case .sakura: return "樱花散落 (清雅)"
+        case .star: return "繁星闪烁 (璀璨)"
+        case .heart: return "爱心气泡 (浪漫)"
+        }
+    }
+}
+
+enum ScreenshotHotkeyPreset: String, Codable, CaseIterable, Identifiable, Sendable {
+    case none = "none"
+    case cmdShift6 = "cmdShift6"
+    case optionS = "optionS"
+    case controlShiftS = "ctrlShiftS"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .none: return "关闭"
+        case .cmdShift6: return "⌘ + ⇧ + 6 (区域截图)"
+        case .optionS: return "⌥ + S (区域截图)"
+        case .controlShiftS: return "⌃ + ⇧ + S (区域截图)"
+        }
+    }
+}
+
 /// 应用设置
 struct AppSettings: Codable, Sendable {
     var currentMode: AppMode
@@ -376,6 +412,11 @@ struct AppSettings: Codable, Sendable {
     var savedColorSchemes: [ColorScheme]
     var activeColorSchemeName: String?
 
+    // MARK: - v4.5.0 新增配置
+    var hideFloatingLayoutToolbar: Bool
+    var activeSpecialEffect: SpecialEffectType
+    var screenshotHotkeyPreset: ScreenshotHotkeyPreset
+
     init(
         currentMode: AppMode = .normal,
         isBackgroundLearningEnabled: Bool = false,
@@ -426,7 +467,10 @@ struct AppSettings: Codable, Sendable {
         showMainWindowOnAutoLaunch: Bool = false,
         showMainWindowOnManualLaunch: Bool = true,
         savedColorSchemes: [ColorScheme] = [],
-        activeColorSchemeName: String? = nil
+        activeColorSchemeName: String? = nil,
+        hideFloatingLayoutToolbar: Bool = false,
+        activeSpecialEffect: SpecialEffectType = .emoji,
+        screenshotHotkeyPreset: ScreenshotHotkeyPreset = .none
     ) {
         self.currentMode = currentMode
         self.isBackgroundLearningEnabled = isBackgroundLearningEnabled
@@ -478,6 +522,9 @@ struct AppSettings: Codable, Sendable {
         self.showMainWindowOnManualLaunch = showMainWindowOnManualLaunch
         self.savedColorSchemes = savedColorSchemes
         self.activeColorSchemeName = activeColorSchemeName
+        self.hideFloatingLayoutToolbar = hideFloatingLayoutToolbar
+        self.activeSpecialEffect = activeSpecialEffect
+        self.screenshotHotkeyPreset = screenshotHotkeyPreset
     }
 
     static let `default` = AppSettings()
@@ -544,6 +591,9 @@ struct AppSettings: Codable, Sendable {
         showMainWindowOnManualLaunch = try container.decodeIfPresent(Bool.self, forKey: .showMainWindowOnManualLaunch) ?? true
         savedColorSchemes = try container.decodeIfPresent([ColorScheme].self, forKey: .savedColorSchemes) ?? []
         activeColorSchemeName = try container.decodeIfPresent(String.self, forKey: .activeColorSchemeName)
+        hideFloatingLayoutToolbar = try container.decodeIfPresent(Bool.self, forKey: .hideFloatingLayoutToolbar) ?? false
+        activeSpecialEffect = try container.decodeIfPresent(SpecialEffectType.self, forKey: .activeSpecialEffect) ?? .emoji
+        screenshotHotkeyPreset = try container.decodeIfPresent(ScreenshotHotkeyPreset.self, forKey: .screenshotHotkeyPreset) ?? .none
     }
 }
 
