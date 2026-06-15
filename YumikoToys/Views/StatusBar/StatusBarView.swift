@@ -635,10 +635,20 @@ extension ThemeColor {
 struct StatusBarView: View {
     @StateObject private var viewModel = StatusBarViewModel()
     @ObservedObject private var pluginService = PluginService.shared
+    @ObservedObject private var screenMedia = ScreenMediaHelper.shared
     let onShowMainWindow: () -> Void
     let onQuit: () -> Void
+    var onScreenshotTriggered: (() -> Void)? = nil
 
     private var customDaysDisplayTitle: String? {
+        let settings = DependencyContainer.shared.settingsService.settings
+        
+        // 优先使用用户在设置中输入的自定义名称
+        if settings.statusBarTextMode == .customTitle && !settings.customStatusBarText.isEmpty {
+            return settings.customStatusBarText
+        }
+        
+        // 回退到布局组件中的 customTitle
         let layouts = DependencyContainer.shared.componentLayoutService.currentLayouts
         if let layout = layouts.first(where: { $0.type == .daysDisplay }),
            let title = layout.customTitle, !title.isEmpty {
@@ -664,46 +674,69 @@ struct StatusBarView: View {
     @State private var isThemeBtnHovered = false
     @State private var isAvatarHovered = false
 
+    // Tab 导航
+    @State private var selectedTab: StatusBarTab = .anniversary
+
+    enum StatusBarTab: String, CaseIterable {
+        case anniversary = "anniversary"
+        case plugins = "plugins"
+        case screenshot = "screenshot"
+
+        var title: String {
+            switch self {
+            case .anniversary: return "纪念日"
+            case .plugins: return "插件"
+            case .screenshot: return "截图"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .anniversary: return "calendar.badge.clock"
+            case .plugins: return "puzzlepiece.extension.fill"
+            case .screenshot: return "camera.viewfinder"
+            }
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            // 头部
+            // Fixed header (avatar + days mini display + theme)
             headerView
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
                 .padding(.bottom, 12)
 
-            Divider()
-                .padding(.horizontal, 16)
+            Divider().padding(.horizontal, 16)
 
-            // 天数展示
-            if let info = viewModel.anniversaryInfo {
-                daysPreview(info: info, countdown: viewModel.shortCountdown)
-                    .padding(16)
+            // Tab navigation
+            tabNavigationBar
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
 
-                Divider()
-                    .padding(.horizontal, 16)
+            Divider().padding(.horizontal, 16)
+
+            // Tab content — macOS 不支持 .page TabViewStyle，用 Group+switch 实现
+            Group {
+                switch selectedTab {
+                case .anniversary:
+                    anniversaryTabContent
+                case .plugins:
+                    pluginsTabContent
+                case .screenshot:
+                    screenshotTabContent
+                }
             }
+            .frame(height: 280)
+            .animation(.easeInOut(duration: 0.2), value: selectedTab)
 
-            // 防休眠开关
-            preventSleepSection
-                .padding(16)
+            Divider().padding(.horizontal, 16)
 
-            Divider()
-                .padding(.horizontal, 16)
-
-            // 🔌 插件系统
-            pluginsSection
-                .padding(.horizontal, 16)
-                .padding(.bottom, 12)
-
-            Divider()
-                .padding(.horizontal, 16)
-
-            // 底部按钮
+            // Fixed bottom buttons
             bottomButtons
                 .padding(16)
 
-            // 主题色选择器（底部）
+            // Theme picker
             if showThemePicker {
                 themeColorPicker
                     .padding(.horizontal, 16)
@@ -712,14 +745,10 @@ struct StatusBarView: View {
             }
         }
         .frame(width: 340)
-        // 关键：允许垂直方向完全自适应内容高度，防止 popover 被裁剪或留下空白
-        .fixedSize(horizontal: false, vertical: true)
-        // 【修复】根据主题色设置背景
         .background(themeColor.backgroundColor)
         .preferredColorScheme(themeColor.isDarkTheme ? .dark : .light)
         .onAppear {
             viewModel.onAppear()
-            // 【修复】在 onAppear 中读取保存的主题色
             themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
         }
         .onDisappear { viewModel.onDisappear() }
@@ -730,6 +759,486 @@ struct StatusBarView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Tab 导航栏
+
+    private var tabNavigationBar: some View {
+        HStack(spacing: 4) {
+            ForEach(StatusBarTab.allCases, id: \.self) { tab in
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        selectedTab = tab
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: 10))
+                        Text(tab.title)
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                    }
+                    .foregroundStyle(selectedTab == tab ? themeColor.backgroundColor : themeColor.textColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule()
+                            .fill(selectedTab == tab ? themeColor.accentColor : themeColor.buttonBackgroundColor)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
+        }
+    }
+
+    // MARK: - 纪念日 Tab
+
+    private var anniversaryTabContent: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 0) {
+                if let info = viewModel.anniversaryInfo {
+                    daysPreview(info: info, countdown: viewModel.shortCountdown)
+                        .padding(12)
+                    Divider().padding(.horizontal, 12)
+                }
+                preventSleepSection
+                    .padding(12)
+            }
+        }
+    }
+
+    // MARK: - 插件 Tab
+
+    private var pluginsTabContent: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 8) {
+                // 插件区头部（含日志 + 配置按钮）
+                HStack(spacing: 6) {
+                    Text("🔌 YumiScript")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(themeColor.textColor)
+
+                    Spacer()
+
+                    if !pluginRunningLogs.isEmpty {
+                        Button(action: { showLogsSheet = true }) {
+                            HStack(spacing: 2) {
+                                Circle().fill(Color.green).frame(width: 5, height: 5)
+                                Text("查看日志")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(themeColor.accentColor)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showLogsSheet) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("YumiScript 运行日志")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .padding(.horizontal, 8)
+                                    .padding(.top, 8)
+                                ScrollView {
+                                    Text(pluginRunningLogs)
+                                        .font(.system(size: 9, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                        .padding(8)
+                                }
+                                .frame(width: 260, height: 180)
+                            }
+                        }
+                    }
+
+                    Button(action: { showPluginConfig.toggle() }) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 10))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showPluginConfig, arrowEdge: .trailing) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("状态栏插件显示控制")
+                                .font(.system(size: 11, weight: .bold))
+                                .padding(.bottom, 2)
+
+                            Picker("显示模版", selection: Binding(
+                                get: { pluginService.activeLayoutPreset },
+                                set: { preset in pluginService.applyPreset(preset) }
+                            )) {
+                                ForEach(PluginLayoutPreset.allCases) { preset in
+                                    Text(preset.displayName).tag(preset)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .font(.system(size: 10))
+
+                            Divider()
+
+                            Picker("快速启动显示", selection: Binding(
+                                get: { DependencyContainer.shared.settingsService.settings.quickLaunchDisplayMode },
+                                set: { mode in
+                                    var settings = DependencyContainer.shared.settingsService.settings
+                                    settings.quickLaunchDisplayMode = mode
+                                    DependencyContainer.shared.settingsService.updateSettings(settings)
+                                }
+                            )) {
+                                ForEach(QuickLaunchDisplayMode.allCases) { mode in
+                                    Text(mode.displayName).tag(mode)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .font(.system(size: 10))
+
+                            Picker("图标大小", selection: Binding(
+                                get: { DependencyContainer.shared.settingsService.settings.quickLaunchIconSize },
+                                set: { size in
+                                    var settings = DependencyContainer.shared.settingsService.settings
+                                    settings.quickLaunchIconSize = size
+                                    DependencyContainer.shared.settingsService.updateSettings(settings)
+                                }
+                            )) {
+                                ForEach(QuickLaunchIconSize.allCases) { size in
+                                    Text(size.displayName).tag(size)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .font(.system(size: 10))
+
+                            Toggle(isOn: Binding(
+                                get: { DependencyContainer.shared.settingsService.settings.allowMultipleInstances },
+                                set: { enabled in
+                                    var settings = DependencyContainer.shared.settingsService.settings
+                                    settings.allowMultipleInstances = enabled
+                                    DependencyContainer.shared.settingsService.updateSettings(settings)
+                                }
+                            )) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "square.stack.3d.up")
+                                        .font(.system(size: 10))
+                                        .frame(width: 14)
+                                    Text("允许多开应用")
+                                        .font(.system(size: 11))
+                                }
+                            }
+                            .toggleStyle(.switch)
+
+                            Divider()
+
+                            Toggle(isOn: Binding(
+                                get: { pluginService.showQuickLaunchSection },
+                                set: { _ in pluginService.toggleQuickLaunchSection() }
+                            )) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.up.right.square")
+                                        .font(.system(size: 10))
+                                        .frame(width: 14)
+                                    Text("快速启动应用")
+                                        .font(.system(size: 11))
+                                }
+                            }
+                            .toggleStyle(.switch)
+
+                            Toggle(isOn: Binding(
+                                get: { pluginService.showCustomPluginsSection },
+                                set: { _ in pluginService.toggleCustomPluginsSection() }
+                            )) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "puzzlepiece.extension")
+                                        .font(.system(size: 10))
+                                        .frame(width: 14)
+                                    Text("扩展插件")
+                                        .font(.system(size: 11))
+                                }
+                            }
+                            .toggleStyle(.switch)
+
+                            Divider()
+
+                            if !pluginService.customPlugins.isEmpty {
+                                Text("单个插件状态栏显示")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+
+                                ForEach(pluginService.customPlugins) { plugin in
+                                    Toggle(isOn: Binding(
+                                        get: { pluginService.isVisibleInStatusBar(pluginId: plugin.id) },
+                                        set: { newVal in pluginService.setVisibility(pluginId: plugin.id, visible: newVal) }
+                                    )) {
+                                        Text(plugin.name)
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(plugin.isEnabled ? .primary : .secondary)
+                                    }
+                                    .toggleStyle(.switch)
+                                    .disabled(!plugin.isEnabled)
+                                }
+                            }
+
+                            Divider()
+
+                            HStack(spacing: 8) {
+                                Button("全部显示") {
+                                    pluginService.showQuickLaunchSection = true
+                                    pluginService.showCustomPluginsSection = true
+                                    for plugin in pluginService.customPlugins {
+                                        pluginService.setVisibility(pluginId: plugin.id, visible: true)
+                                    }
+                                    pluginService.saveVisibilitySettings()
+                                }
+                                .font(.system(size: 10))
+                                .buttonStyle(.bordered)
+
+                                Button("全部隐藏") {
+                                    pluginService.showQuickLaunchSection = false
+                                    pluginService.showCustomPluginsSection = false
+                                    for plugin in pluginService.customPlugins {
+                                        pluginService.setVisibility(pluginId: plugin.id, visible: false)
+                                    }
+                                    pluginService.saveVisibilitySettings()
+                                }
+                                .font(.system(size: 10))
+                                .buttonStyle(.bordered)
+                            }
+                        }
+                        .padding(14)
+                        .frame(width: 240)
+                    }
+                }
+                .padding(.horizontal, 4)
+
+                // 快速启动应用列表
+                if pluginService.showQuickLaunchSection && !pluginService.quickLaunchApps.isEmpty {
+                    let displayMode = DependencyContainer.shared.settingsService.settings.quickLaunchDisplayMode
+                    let iconSize = DependencyContainer.shared.settingsService.settings.quickLaunchIconSize
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("🚀 快速启动")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(pluginService.quickLaunchApps) { app in
+                                    Button(action: {
+                                        Task {
+                                            let logs = await YumiScriptEngine.execute("launch \"\(app.name)\"")
+                                            pluginRunningLogs = logs
+                                        }
+                                    }) {
+                                        HStack(spacing: 3) {
+                                            if displayMode != .nameOnly {
+                                                if let iconName = app.iconName {
+                                                    AppIconImageView(appName: app.name, iconName: iconName, size: iconSize.sizeValue, bundlePath: app.bundlePath)
+                                                } else {
+                                                    Image(systemName: "arrow.up.right.square")
+                                                        .font(.system(size: iconSize.sizeValue * 0.75))
+                                                }
+                                            }
+                                            if displayMode != .iconOnly {
+                                                Text(app.name)
+                                                    .font(.system(size: iconSize.fontValue, weight: .medium))
+                                            }
+                                        }
+                                        .foregroundStyle(themeColor.textColor)
+                                        .padding(.horizontal, iconSize == .large ? 10 : 8)
+                                        .padding(.vertical, iconSize == .large ? 6 : 4)
+                                        .background(Capsule().fill(themeColor.buttonBackgroundColor))
+                                        .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help(app.name)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 4)
+                }
+
+                // 自定义插件列表
+                if pluginService.showCustomPluginsSection {
+                    let activePlugins = pluginService.customPlugins.filter {
+                        $0.isEnabled && pluginService.isVisibleInStatusBar(pluginId: $0.id)
+                    }
+                    if !activePlugins.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("🧩 扩展插件")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundStyle(themeColor.secondaryTextColor)
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 6) {
+                                    ForEach(activePlugins) { plugin in
+                                        Button(action: {
+                                            Task {
+                                                let logs = await YumiScriptEngine.execute(plugin.scriptContent)
+                                                pluginRunningLogs = logs
+                                            }
+                                        }) {
+                                            HStack(spacing: 3) {
+                                                Image(systemName: plugin.icon)
+                                                    .font(.system(size: 9))
+                                                Text(plugin.name)
+                                                    .font(.system(size: 10, weight: .medium))
+                                            }
+                                            .foregroundStyle(themeColor.textColor)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Capsule().fill(themeColor.buttonBackgroundColor))
+                                            .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+            }
+            .padding(12)
+        }
+    }
+
+    // MARK: - 截图 Tab
+
+    private var screenshotTabContent: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+                // 截图按钮网格
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("截图")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(themeColor.secondaryTextColor)
+                        .padding(.horizontal, 4)
+
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
+                        screenshotButton(title: "区域截图", icon: "square.dashed", action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.captureArea()
+                        })
+                        screenshotButton(title: "全屏截图", icon: "rectangle.on.rectangle", action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.captureFullscreen()
+                        })
+                        screenshotButton(title: "多屏截图", icon: "rectangle.split.2x2", action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.captureAllScreens()
+                        })
+                        screenshotButton(title: "标注工具", icon: "pencil.tip.crop.circle", action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.openScreenshotAnnotation()
+                        })
+                    }
+                }
+
+                Divider().padding(.horizontal, 4)
+
+                // 录屏
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("录屏")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(themeColor.secondaryTextColor)
+                        .padding(.horizontal, 4)
+
+                    if screenMedia.isRecording {
+                        Button(action: { ScreenMediaHelper.shared.stopRecording() }) {
+                            HStack {
+                                Image(systemName: "stop.circle.fill").foregroundStyle(.red)
+                                Text("停止录屏").font(.system(size: 11, weight: .medium))
+                                Spacer()
+                                Circle().fill(.red).frame(width: 6, height: 6).opacity(0.8)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(.red.opacity(0.12)))
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Button(action: { ScreenMediaHelper.shared.startRecording() }) {
+                            HStack {
+                                Image(systemName: "record.circle")
+                                Text("开始录屏").font(.system(size: 11, weight: .medium))
+                                Spacer()
+                            }
+                            .foregroundStyle(themeColor.textColor)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.buttonBackgroundColor))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                Divider().padding(.horizontal, 4)
+
+                // 设置
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("设置")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(themeColor.secondaryTextColor)
+                        .padding(.horizontal, 4)
+
+                    HStack {
+                        Text("全局快捷键")
+                            .font(.system(size: 11))
+                            .foregroundStyle(themeColor.textColor)
+                        Spacer()
+                        Picker("", selection: Binding(
+                            get: { DependencyContainer.shared.settingsService.settings.screenshotHotkeyPreset },
+                            set: { preset in
+                                var settings = DependencyContainer.shared.settingsService.settings
+                                settings.screenshotHotkeyPreset = preset
+                                DependencyContainer.shared.settingsService.updateSettings(settings)
+                                GlobalHotkeyManager.shared.setupHotkey(preset: preset)
+                            }
+                        )) {
+                            ForEach(ScreenshotHotkeyPreset.allCases) { preset in
+                                Text(preset.displayName).tag(preset)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .font(.system(size: 11))
+                        .frame(width: 130)
+                    }
+
+                    HStack {
+                        Text("输出模式")
+                            .font(.system(size: 11))
+                            .foregroundStyle(themeColor.textColor)
+                        Spacer()
+                        Picker("", selection: Binding(
+                            get: { DependencyContainer.shared.settingsService.settings.screenshotOutputMode },
+                            set: { mode in
+                                var settings = DependencyContainer.shared.settingsService.settings
+                                settings.screenshotOutputMode = mode
+                                DependencyContainer.shared.settingsService.updateSettings(settings)
+                            }
+                        )) {
+                            ForEach(ScreenshotOutputMode.allCases) { mode in
+                                Text(mode.displayName).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .font(.system(size: 11))
+                        .frame(width: 130)
+                    }
+                }
+            }
+            .padding(12)
+        }
+    }
+
+    private func screenshotButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                Text(title)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundStyle(themeColor.textColor)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.buttonBackgroundColor))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(themeColor.borderColor.opacity(0.5), lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - 主题色切换按钮
@@ -1283,6 +1792,59 @@ struct StatusBarView: View {
                         
                         Divider()
                         
+                        // 快速启动显示模式
+                        Picker("快速启动显示", selection: Binding(
+                            get: { DependencyContainer.shared.settingsService.settings.quickLaunchDisplayMode },
+                            set: { mode in
+                                var settings = DependencyContainer.shared.settingsService.settings
+                                settings.quickLaunchDisplayMode = mode
+                                DependencyContainer.shared.settingsService.updateSettings(settings)
+                            }
+                        )) {
+                            ForEach(QuickLaunchDisplayMode.allCases) { mode in
+                                Text(mode.displayName).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .font(.system(size: 10))
+                        
+                        // 截图输出模式
+                        Picker("截图输出", selection: Binding(
+                            get: { DependencyContainer.shared.settingsService.settings.screenshotOutputMode },
+                            set: { mode in
+                                var settings = DependencyContainer.shared.settingsService.settings
+                                settings.screenshotOutputMode = mode
+                                DependencyContainer.shared.settingsService.updateSettings(settings)
+                            }
+                        )) {
+                            ForEach(ScreenshotOutputMode.allCases) { mode in
+                                Text(mode.displayName).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .font(.system(size: 10))
+                        
+                        // 允许多开
+                        Toggle(isOn: Binding(
+                            get: { DependencyContainer.shared.settingsService.settings.allowMultipleInstances },
+                            set: { enabled in
+                                var settings = DependencyContainer.shared.settingsService.settings
+                                settings.allowMultipleInstances = enabled
+                                DependencyContainer.shared.settingsService.updateSettings(settings)
+                            }
+                        )) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "square.stack.3d.up")
+                                    .font(.system(size: 10))
+                                    .frame(width: 14)
+                                Text("允许多开应用")
+                                    .font(.system(size: 11))
+                            }
+                        }
+                        .toggleStyle(.switch)
+                        
+                        Divider()
+                        
                         // 内置快捷操作区
                         Toggle(isOn: Binding(
                             get: { pluginService.showBuiltinQuickActions },
@@ -1292,7 +1854,7 @@ struct StatusBarView: View {
                                 Image(systemName: "camera.viewfinder")
                                     .font(.system(size: 10))
                                     .frame(width: 14)
-                                Text("内置快捷操作（截图/录屏）")
+                                Text("截图工具（区域/全屏/录屏）")
                                     .font(.system(size: 11))
                             }
                         }
@@ -1386,53 +1948,190 @@ struct StatusBarView: View {
             
             // MARK: 内置快捷操作（截图/录屏）
             if pluginService.showBuiltinQuickActions {
-                HStack(spacing: 8) {
-                    // 截图
-                    Button(action: {
-                        Task {
-                            let logs = await YumiScriptEngine.execute("screenshot")
-                            pluginRunningLogs = logs
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Text("📸 截图工具")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                        
+                        Spacer()
+                        
+                        // 显示当前快捷键
+                        let hotkeyPreset = DependencyContainer.shared.settingsService.settings.screenshotHotkeyPreset
+                        if hotkeyPreset != .none {
+                            Text(hotkeyPreset.displayName)
+                                .font(.system(size: 8, design: .monospaced))
+                                .foregroundStyle(themeColor.secondaryTextColor)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 2)
+                                .background(Capsule().fill(themeColor.borderColor.opacity(0.3)))
                         }
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "camera.viewfinder")
-                                .font(.system(size: 10))
-                            Text("屏幕截图")
-                                .font(.system(size: 10, weight: .medium))
-                        }
-                        .foregroundStyle(themeColor.textColor)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.buttonBackgroundColor))
                     }
-                    .buttonStyle(.plain)
                     
-                    // 录屏
-                    Button(action: {
-                        Task {
-                            let logs = await YumiScriptEngine.execute("record 5")
-                            pluginRunningLogs = logs
+                    // 截图模式按钮行
+                    HStack(spacing: 4) {
+                        // 区域截图
+                        Button(action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.captureArea()
+                        }) {
+                            VStack(spacing: 2) {
+                                Image(systemName: "square.dashed")
+                                    .font(.system(size: 11))
+                                Text("区域")
+                                    .font(.system(size: 8, weight: .medium))
+                            }
+                            .foregroundStyle(themeColor.textColor)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
                         }
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "video")
-                                .font(.system(size: 10))
-                            Text("5秒录屏")
-                                .font(.system(size: 10, weight: .medium))
+                        .buttonStyle(.plain)
+                        .help("区域截图 (快捷键)")
+                        
+                        // 全屏截图
+                        Button(action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.captureFullscreen()
+                        }) {
+                            VStack(spacing: 2) {
+                                Image(systemName: "rectangle.on.rectangle")
+                                    .font(.system(size: 11))
+                                Text("全屏")
+                                    .font(.system(size: 8, weight: .medium))
+                            }
+                            .foregroundStyle(themeColor.textColor)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
                         }
-                        .foregroundStyle(themeColor.textColor)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.buttonBackgroundColor))
+                        .buttonStyle(.plain)
+                        
+                        // TouchBar 截图
+                        Button(action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.captureTouchBar()
+                        }) {
+                            VStack(spacing: 2) {
+                                Image(systemName: "rectangle.dashed")
+                                    .font(.system(size: 11))
+                                Text("TouchBar")
+                                    .font(.system(size: 8, weight: .medium))
+                            }
+                            .foregroundStyle(themeColor.textColor)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                        }
+                        .buttonStyle(.plain)
+                        
+                        // 多屏截图
+                        Button(action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.captureAllScreens()
+                        }) {
+                            VStack(spacing: 2) {
+                                Image(systemName: "rectangle.split.2x2")
+                                    .font(.system(size: 11))
+                                Text("多屏")
+                                    .font(.system(size: 8, weight: .medium))
+                            }
+                            .foregroundStyle(themeColor.textColor)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                     
-                    Spacer()
+                    // 录屏按钮
+                    HStack(spacing: 4) {
+                        Button(action: {
+                            ScreenMediaHelper.shared.startRecording()
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "record.circle")
+                                    .font(.system(size: 9))
+                                Text("开始录屏")
+                                    .font(.system(size: 9, weight: .medium))
+                            }
+                            .foregroundStyle(screenMedia.isRecording ? .red : themeColor.textColor)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 3)
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(screenMedia.isRecording)
+                        
+                        if screenMedia.isRecording {
+                            Button(action: {
+                                ScreenMediaHelper.shared.stopRecording()
+                            }) {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "stop.circle.fill")
+                                        .font(.system(size: 9))
+                                    Text("停止")
+                                        .font(.system(size: 9, weight: .medium))
+                                }
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 3)
+                                .background(RoundedRectangle(cornerRadius: 4).fill(.red))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        
+                        // 标注工具按钮
+                        Button(action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.openScreenshotAnnotation()
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "pencil.tip.crop.circle")
+                                    .font(.system(size: 9))
+                                Text("标注")
+                                    .font(.system(size: 9, weight: .medium))
+                            }
+                            .foregroundStyle(themeColor.textColor)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 3)
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    // 快捷键设置
+                    HStack(spacing: 4) {
+                        Text("全局快捷键:")
+                            .font(.system(size: 8))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                        
+                        Picker("", selection: Binding(
+                            get: { DependencyContainer.shared.settingsService.settings.screenshotHotkeyPreset },
+                            set: { preset in
+                                var settings = DependencyContainer.shared.settingsService.settings
+                                settings.screenshotHotkeyPreset = preset
+                                DependencyContainer.shared.settingsService.updateSettings(settings)
+                                GlobalHotkeyManager.shared.setupHotkey(preset: preset)
+                            }
+                        )) {
+                            ForEach(ScreenshotHotkeyPreset.allCases) { preset in
+                                Text(preset.displayName).tag(preset)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .font(.system(size: 8))
+                        .frame(width: 120)
+                    }
                 }
+                .padding(6)
+                .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.borderColor.opacity(0.15)))
             }
             
             // MARK: 快速启动应用列表
             if pluginService.showQuickLaunchSection && !pluginService.quickLaunchApps.isEmpty {
+                let displayMode = DependencyContainer.shared.settingsService.settings.quickLaunchDisplayMode
+                let iconSize = DependencyContainer.shared.settingsService.settings.quickLaunchIconSize
                 VStack(alignment: .leading, spacing: 4) {
                     Text("🚀 快速启动")
                         .font(.system(size: 9, weight: .bold, design: .rounded))
@@ -1448,18 +2147,27 @@ struct StatusBarView: View {
                                     }
                                 }) {
                                     HStack(spacing: 3) {
-                                        Image(systemName: "arrow.up.right.square")
-                                            .font(.system(size: 9))
-                                        Text(app.name)
-                                            .font(.system(size: 10, weight: .medium))
+                                        if displayMode != .nameOnly {
+                                            if let iconName = app.iconName {
+                                                AppIconImageView(appName: app.name, iconName: iconName, size: iconSize.sizeValue, bundlePath: app.bundlePath)
+                                            } else {
+                                                Image(systemName: "arrow.up.right.square")
+                                                    .font(.system(size: iconSize.sizeValue * 0.75))
+                                            }
+                                        }
+                                        if displayMode != .iconOnly {
+                                            Text(app.name)
+                                                .font(.system(size: iconSize.fontValue, weight: .medium))
+                                        }
                                     }
                                     .foregroundStyle(themeColor.textColor)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, iconSize == .large ? 10 : 8)
+                                    .padding(.vertical, iconSize == .large ? 6 : 4)
                                     .background(Capsule().fill(themeColor.buttonBackgroundColor))
                                     .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
                                 }
                                 .buttonStyle(.plain)
+                                .help(app.name)
                             }
                         }
                     }
@@ -1640,5 +2348,76 @@ struct ThemeColorButton: View {
         .scaleEffect(isHovered ? 1.1 : 1.0)
         .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isHovered)
         .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - App Icon Image View
+
+struct AppIconImageView: View {
+    let appName: String
+    let iconName: String
+    let size: CGFloat
+    var bundlePath: String? = nil
+    
+    @State private var appIcon: NSImage?
+    
+    var body: some View {
+        Group {
+            if let icon = appIcon {
+                Image(nsImage: icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "app.fill")
+                    .font(.system(size: size * 0.8))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: size * 0.2))
+        .task {
+            await loadAppIconAsync()
+        }
+    }
+    
+    private func loadAppIconAsync() async {
+        let path = bundlePath
+        let icon = await Task.detached(priority: .utility) { () -> NSImage? in
+            if let path = path, FileManager.default.fileExists(atPath: path) {
+                let nsIcon = NSWorkspace.shared.icon(forFile: path)
+                if nsIcon.isValid && nsIcon.size.width > 0 {
+                    nsIcon.size = NSSize(width: size * 2, height: size * 2)
+                    return nsIcon
+                }
+            }
+            let searchDirs = ["/Applications", "/System/Applications", "/System/Library/CoreServices"]
+            for dir in searchDirs {
+                let appPath = (dir as NSString).appendingPathComponent("\(appName).app")
+                if FileManager.default.fileExists(atPath: appPath) {
+                    let nsIcon = NSWorkspace.shared.icon(forFile: appPath)
+                    if nsIcon.isValid && nsIcon.size.width > 0 {
+                        nsIcon.size = NSSize(width: size * 2, height: size * 2)
+                        return nsIcon
+                    }
+                }
+            }
+            for dir in searchDirs {
+                if let items = try? FileManager.default.contentsOfDirectory(atPath: dir) {
+                    for item in items where item.hasSuffix(".app") {
+                        let nameWithoutExt = (item as NSString).deletingPathExtension
+                        if nameWithoutExt.localizedCaseInsensitiveContains(appName) || appName.localizedCaseInsensitiveContains(nameWithoutExt) {
+                            let fullPath = (dir as NSString).appendingPathComponent(item)
+                            let nsIcon = NSWorkspace.shared.icon(forFile: fullPath)
+                            if nsIcon.isValid && nsIcon.size.width > 0 {
+                                nsIcon.size = NSSize(width: size * 2, height: size * 2)
+                                return nsIcon
+                            }
+                        }
+                    }
+                }
+            }
+            return nil
+        }.value
+        self.appIcon = icon
     }
 }

@@ -153,10 +153,13 @@ extension ProviderConfig {
         ProviderConfig(
             apiURL: AIProviderType.ollama.defaultBaseURL,
             apiKey: "",
-            model: "llama3",
+            model: "qwen2.5:0.5b",
             autoSelect: false,
-            fallbackModels: ["llama3", "qwen2.5"],
+            fallbackModels: ["qwen2.5:0.5b", "qwen2.5:1.5b", "deepseek-r1:1.5b"],
             availableModels: [
+                AIModelInfo(id: "qwen2.5:0.5b", name: "Qwen 2.5 0.5B (极轻量本地)", provider: .ollama, description: "阿里开源 0.5B 极轻量对话模型，适合本地快速流畅运行", supportsThinking: false, supportsVision: false, supportsTools: true),
+                AIModelInfo(id: "qwen2.5:1.5b", name: "Qwen 2.5 1.5B (轻量本地)", provider: .ollama, description: "阿里开源 1.5B 轻量级对话模型，适合本地流畅运行", supportsThinking: false, supportsVision: false, supportsTools: true),
+                AIModelInfo(id: "deepseek-r1:1.5b", name: "DeepSeek R1 1.5B (本地推理)", provider: .ollama, description: "本地跑的 1.5B 推理模型，支持深度思考", supportsThinking: true, supportsVision: false, supportsTools: false),
                 AIModelInfo(id: "llama3", name: "Llama 3", provider: .ollama, description: "Meta 开源模型", supportsThinking: false, supportsVision: false, supportsTools: true),
                 AIModelInfo(id: "qwen2.5", name: "Qwen 2.5", provider: .ollama, description: "阿里开源千问大模型", supportsThinking: false, supportsVision: false, supportsTools: true),
                 AIModelInfo(id: "deepseek-r1", name: "DeepSeek R1", provider: .ollama, description: "本地跑的 R1 推理模型", supportsThinking: true, supportsVision: false, supportsTools: false)

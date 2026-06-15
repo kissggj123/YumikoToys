@@ -314,25 +314,29 @@ final class UniversalLLMProvider: AIProvider {
                             }
                         }
                         
-                        let openAIMessages = buildOpenAIMessages(messages, systemPrompt: systemPrompt)
+                        let isReasoningModel = model.lowercased().contains("reasoner") || model.lowercased().contains("thinking") || model.lowercased().contains("think") || model.lowercased().contains("r1")
                         
+                        let openAIMessages = buildOpenAIMessages(messages, systemPrompt: systemPrompt, isReasoningModel: isReasoningModel)
+
                         var payload: [String: Any] = [
                             "model": model,
                             "messages": openAIMessages,
-                            "stream": true,
-                            "temperature": temperature ?? 0.6
+                            "stream": true
                         ]
-                        if let tp = topP {
-                            payload["top_p"] = tp
-                        }
-                        if let pp = presencePenalty {
-                            payload["presence_penalty"] = pp
-                        }
-                        if let fp = frequencyPenalty {
-                            payload["frequency_penalty"] = fp
+                        
+                        if !isReasoningModel {
+                            payload["temperature"] = temperature ?? 0.6
+                            if let tp = topP {
+                                payload["top_p"] = tp
+                            }
+                            if let pp = presencePenalty {
+                                payload["presence_penalty"] = pp
+                            }
+                            if let fp = frequencyPenalty {
+                                payload["frequency_penalty"] = fp
+                            }
                         }
                         
-                        let isReasoningModel = model.lowercased().contains("reasoner") || model.lowercased().contains("thinking") || model.lowercased().contains("think") || model.lowercased().contains("r1")
                         if let tools = tools, !tools.isEmpty && !isReasoningModel {
                             var toolsArray: [[String: Any]] = []
                             for tool in tools {
@@ -364,8 +368,82 @@ final class UniversalLLMProvider: AIProvider {
                         bytesAndResponse = try await URLSession.shared.bytes(for: urlRequest)
                     }
                     
-                    guard let (bytes, response) = bytesAndResponse else {
+                    guard var (bytes, response) = bytesAndResponse else {
                         throw AIProviderError.apiError("Failed to connect to stream")
+                    }
+                    
+                    // 🛡️ 自动降级与清洗重试逻辑：如遇 400 等 HTTP 错误，尝试剥离所有高级/非标生成参数并合并系统提示词后重试
+                    if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
+                        let statusCode = httpResponse.statusCode
+                        LoggerService.shared.warning("Stream request failed with status \(statusCode). Attempting sanitized fallback request...")
+                        
+                        if let bodyData = urlRequest.httpBody,
+                           var payloadObj = (try? JSONSerialization.jsonObject(with: bodyData)) as? [String: Any] {
+                            
+                            // 1. 剥离所有可能引发不兼容错误的生成参数
+                            payloadObj.removeValue(forKey: "temperature")
+                            payloadObj.removeValue(forKey: "top_p")
+                            payloadObj.removeValue(forKey: "presence_penalty")
+                            payloadObj.removeValue(forKey: "frequency_penalty")
+                            payloadObj.removeValue(forKey: "tools")
+                            payloadObj.removeValue(forKey: "tool_choice")
+                            
+                            // 2. 针对不支持 system 角色的模型，动态将 system 消息合并进第一个 user 消息
+                            if var messagesArray = payloadObj["messages"] as? [[String: Any]] {
+                                if let systemIdx = messagesArray.firstIndex(where: { ($0["role"] as? String) == "system" }),
+                                   let systemPrompt = messagesArray[systemIdx]["content"] as? String {
+                                    messagesArray.remove(at: systemIdx)
+                                    if let userIdx = messagesArray.firstIndex(where: { ($0["role"] as? String) == "user" }),
+                                       let userContent = messagesArray[userIdx]["content"] as? String {
+                                        let mergedContent = """
+                                        [System Instructions]
+                                        \(systemPrompt)
+                                        
+                                        [User Message]
+                                        \(userContent)
+                                        """
+                                        messagesArray[userIdx]["content"] = mergedContent
+                                    } else {
+                                        messagesArray.insert(["role": "user", "content": systemPrompt], at: 0)
+                                    }
+                                    payloadObj["messages"] = messagesArray
+                                }
+                            }
+                            
+                            var retryRequest = urlRequest
+                            retryRequest.httpBody = try? JSONSerialization.data(withJSONObject: payloadObj)
+                            
+                            let retrySession = SmartProxyManager.makeSession(for: retryRequest.url?.absoluteString ?? "")
+                            do {
+                                let (rBytes, rResponse) = try await retrySession.bytes(for: retryRequest)
+                                if let rHttp = rResponse as? HTTPURLResponse, (200...299).contains(rHttp.statusCode) {
+                                    LoggerService.shared.info("Sanitized fallback request succeeded!")
+                                    bytes = rBytes
+                                    response = rResponse
+                                } else {
+                                    let status = (rResponse as? HTTPURLResponse)?.statusCode ?? 0
+                                    LoggerService.shared.warning("Sanitized proxy request returned status \(status), trying direct...")
+                                    let (dirBytes, dirResponse) = try await URLSession.shared.bytes(for: retryRequest)
+                                    if let dirHttp = dirResponse as? HTTPURLResponse, (200...299).contains(dirHttp.statusCode) {
+                                        LoggerService.shared.info("Sanitized direct fallback request succeeded!")
+                                        bytes = dirBytes
+                                        response = dirResponse
+                                    }
+                                }
+                            } catch {
+                                LoggerService.shared.warning("Sanitized fallback request with proxy failed: \(error). Trying direct...")
+                                do {
+                                    let (dirBytes, dirResponse) = try await URLSession.shared.bytes(for: retryRequest)
+                                    if let dirHttp = dirResponse as? HTTPURLResponse, (200...299).contains(dirHttp.statusCode) {
+                                        LoggerService.shared.info("Sanitized direct fallback request succeeded!")
+                                        bytes = dirBytes
+                                        response = dirResponse
+                                    }
+                                } catch {
+                                    LoggerService.shared.error("Sanitized direct fallback request failed: \(error)")
+                                }
+                            }
+                        }
                     }
                     
                     guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
@@ -489,18 +567,57 @@ final class UniversalLLMProvider: AIProvider {
     
     // MARK: - Message Helpers
     
-    private func buildOpenAIMessages(_ messages: [ChatMessage], systemPrompt: String?) -> [[String: Any]] {
+    private func buildOpenAIMessages(_ messages: [ChatMessage], systemPrompt: String?, isReasoningModel: Bool) -> [[String: Any]] {
         var result: [[String: Any]] = []
-        if let systemPrompt = systemPrompt, !systemPrompt.isEmpty {
-            result.append(["role": "system", "content": systemPrompt])
-        }
+        let filtered = messages.filter { !$0.isAgentStep }
         
-        for message in messages {
-            if message.isAgentStep { continue }
-            result.append([
-                "role": message.role,
-                "content": message.content
-            ])
+        if isReasoningModel {
+            // For reasoning models, merge system prompt into the first user message to avoid HTTP 400
+            if let systemPrompt = systemPrompt, !systemPrompt.isEmpty {
+                var firstUserIdx: Int? = nil
+                for (idx, msg) in filtered.enumerated() {
+                    if msg.role == "user" {
+                        firstUserIdx = idx
+                        break
+                    }
+                }
+                
+                if let idx = firstUserIdx {
+                    for (i, msg) in filtered.enumerated() {
+                        if i == idx {
+                            let merged = """
+                            [System Instructions]
+                            \(systemPrompt)
+                            
+                            [User Message]
+                            \(msg.content)
+                            """
+                            result.append(["role": "user", "content": merged])
+                        } else {
+                            result.append(["role": msg.role, "content": msg.content])
+                        }
+                    }
+                } else {
+                    result.append(["role": "user", "content": systemPrompt])
+                    for msg in filtered {
+                        result.append(["role": msg.role, "content": msg.content])
+                    }
+                }
+            } else {
+                for msg in filtered {
+                    result.append(["role": msg.role, "content": msg.content])
+                }
+            }
+        } else {
+            if let systemPrompt = systemPrompt, !systemPrompt.isEmpty {
+                result.append(["role": "system", "content": systemPrompt])
+            }
+            for message in filtered {
+                result.append([
+                    "role": message.role,
+                    "content": message.content
+                ])
+            }
         }
         return result
     }

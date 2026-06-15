@@ -50,7 +50,7 @@ struct AIChatView: View {
                                 viewModel.switchConversation(to: id)
                             },
                             onNewConversation: {
-                                let newConv = conversationService.createConversation(title: "新 Pro Human 对话", chatMode: .aiAssistant)
+                                let newConv = conversationService.createConversation(title: "新 Yumiko Claw 对话", chatMode: .aiAssistant)
                                 viewModel.startNewConversation(id: newConv.id)
                             },
                             onDeleteConversation: { id in
@@ -79,7 +79,7 @@ struct AIChatView: View {
                         viewModel.switchConversation(to: id)
                     },
                     onNewConversation: {
-                        let defaultTitle = viewModel.chatMode == .aiAssistant ? "新 Pro Human 对话" : "新宠物对话"
+                        let defaultTitle = viewModel.chatMode == .aiAssistant ? "新 Yumiko Claw 对话" : "新宠物对话"
                         let newConv = conversationService.createConversation(title: defaultTitle, chatMode: viewModel.chatMode)
                         viewModel.startNewConversation(id: newConv.id)
                     },
@@ -150,7 +150,7 @@ struct AIChatView: View {
                 )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.chatMode == .aiAssistant ? "Pro Human" : viewModel.characterName)
+                    Text(viewModel.chatMode == .aiAssistant ? "Yumiko Claw" : viewModel.characterName)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(viewModel.chatMode == .aiAssistant ? .white : viewModel.resolvedTheme.textColor)
 
@@ -602,7 +602,7 @@ struct AIChatView: View {
             conversationService.switchToConversation(lastActive.id)
             viewModel.switchConversation(to: lastActive.id)
         } else {
-            let defaultTitle = mode == .aiAssistant ? "新 Pro Human 对话" : "新宠物对话"
+            let defaultTitle = mode == .aiAssistant ? "新 Yumiko Claw 对话" : "新宠物对话"
             let newConv = conversationService.createConversation(title: defaultTitle, chatMode: mode)
             viewModel.startNewConversation(id: newConv.id)
         }

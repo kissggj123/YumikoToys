@@ -314,6 +314,9 @@ enum SpecialEffectType: String, Codable, CaseIterable, Identifiable, Sendable {
     case sakura = "sakura"
     case star = "star"
     case heart = "heart"
+    case snowflake = "snowflake"
+    case firework = "firework"
+    case bubble = "bubble"
     
     var id: String { rawValue }
     
@@ -323,6 +326,9 @@ enum SpecialEffectType: String, Codable, CaseIterable, Identifiable, Sendable {
         case .sakura: return "樱花散落 (清雅)"
         case .star: return "繁星闪烁 (璀璨)"
         case .heart: return "爱心气泡 (浪漫)"
+        case .snowflake: return "冰晶雪花 (纯洁)"
+        case .firework: return "璀璨烟花 (喜庆)"
+        case .bubble: return "梦幻气泡 (绚丽)"
         }
     }
 }
@@ -332,15 +338,157 @@ enum ScreenshotHotkeyPreset: String, Codable, CaseIterable, Identifiable, Sendab
     case cmdShift6 = "cmdShift6"
     case optionS = "optionS"
     case controlShiftS = "ctrlShiftS"
+    case fnF1 = "fnF1"
+    case fnF2 = "fnF2"
+    case fnF3 = "fnF3"
+    case fnF4 = "fnF4"
+    case fnF5 = "fnF5"
+    case fnF6 = "fnF6"
+    case fnF7 = "fnF7"
+    case fnF8 = "fnF8"
+    case fnF9 = "fnF9"
+    case fnF10 = "fnF10"
+    case fnF11 = "fnF11"
+    case fnF12 = "fnF12"
+    case controlShift4 = "ctrlShift4"
+    case controlShift3 = "ctrlShift3"
     
     var id: String { rawValue }
     
     var displayName: String {
         switch self {
         case .none: return "关闭"
-        case .cmdShift6: return "⌘ + ⇧ + 6 (区域截图)"
-        case .optionS: return "⌥ + S (区域截图)"
-        case .controlShiftS: return "⌃ + ⇧ + S (区域截图)"
+        case .cmdShift6: return "⌘ + ⇧ + 6"
+        case .optionS: return "⌥ + S"
+        case .controlShiftS: return "⌃ + ⇧ + S"
+        case .fnF1: return "Fn + F1"
+        case .fnF2: return "Fn + F2"
+        case .fnF3: return "Fn + F3"
+        case .fnF4: return "Fn + F4"
+        case .fnF5: return "Fn + F5"
+        case .fnF6: return "Fn + F6"
+        case .fnF7: return "Fn + F7"
+        case .fnF8: return "Fn + F8"
+        case .fnF9: return "Fn + F9"
+        case .fnF10: return "Fn + F10"
+        case .fnF11: return "Fn + F11"
+        case .fnF12: return "Fn + F12"
+        case .controlShift4: return "⌃ + ⇧ + 4"
+        case .controlShift3: return "⌃ + ⇧ + 3"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .none: return "不设置全局快捷键"
+        case .cmdShift6, .optionS, .controlShiftS: return "区域截图"
+        case .fnF1, .fnF2, .fnF3, .fnF4, .fnF5, .fnF6, .fnF7, .fnF8, .fnF9, .fnF10, .fnF11, .fnF12: return "区域截图"
+        case .controlShift4: return "全屏截图"
+        case .controlShift3: return "全屏截图"
+        }
+    }
+}
+
+enum QuickLaunchDisplayMode: String, Codable, CaseIterable, Identifiable, Sendable {
+    case iconOnly = "iconOnly"
+    case nameOnly = "nameOnly"
+    case iconAndName = "iconAndName"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .iconOnly: return "仅图标"
+        case .nameOnly: return "仅名称"
+        case .iconAndName: return "图标 + 名称"
+        }
+    }
+}
+
+enum QuickLaunchIconSize: String, Codable, CaseIterable, Identifiable, Sendable {
+    case small = "small"
+    case medium = "medium"
+    case large = "large"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .small: return "小"
+        case .medium: return "中"
+        case .large: return "大"
+        }
+    }
+    
+    var sizeValue: CGFloat {
+        switch self {
+        case .small: return 12
+        case .medium: return 18
+        case .large: return 24
+        }
+    }
+    
+    var fontValue: CGFloat {
+        switch self {
+        case .small: return 9
+        case .medium: return 12
+        case .large: return 15
+        }
+    }
+}
+
+enum ScreenshotOutputMode: String, Codable, CaseIterable, Identifiable, Sendable {
+    case clipboardOnly = "clipboardOnly"
+    case fileOnly = "fileOnly"
+    case both = "both"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .clipboardOnly: return "仅复制到剪贴板"
+        case .fileOnly: return "仅保存到文件"
+        case .both: return "同时复制和保存"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .clipboardOnly: return "截图后直接复制到剪贴板，不保存文件"
+        case .fileOnly: return "截图后保存到桌面文件"
+        case .both: return "截图后同时保存文件并复制到剪贴板"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .clipboardOnly: return "doc.on.clipboard"
+        case .fileOnly: return "square.and.arrow.down"
+        case .both: return "doc.on.clipboard.fill"
+        }
+    }
+}
+
+enum StatusBarTextMode: String, Codable, CaseIterable, Identifiable, Sendable {
+    case customTitle = "customTitle"    // 使用自定义标题（布局组件中的 customTitle）
+    case originalName = "originalName"  // 使用原始宠物名
+    case godMode = "godMode"            // 上帝模式自定义文本
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .customTitle: return "自定义标题"
+        case .originalName: return "原始宠物名"
+        case .godMode: return "上帝模式自定义"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .customTitle: return "使用布局组件中设置的自定义标题"
+        case .originalName: return "始终显示宠物的原始名称"
+        case .godMode: return "完全自定义状态栏显示文本"
         }
     }
 }
@@ -416,6 +564,26 @@ struct AppSettings: Codable, Sendable {
     var hideFloatingLayoutToolbar: Bool
     var activeSpecialEffect: SpecialEffectType
     var screenshotHotkeyPreset: ScreenshotHotkeyPreset
+    
+    // MARK: - 状态栏文字显示模式
+    var statusBarTextMode: StatusBarTextMode
+    var customStatusBarText: String
+    
+    // MARK: - 快速启动显示模式
+    var quickLaunchDisplayMode: QuickLaunchDisplayMode
+    var quickLaunchIconSize: QuickLaunchIconSize
+    
+    // MARK: - 截图输出模式
+    var screenshotOutputMode: ScreenshotOutputMode
+    
+    // MARK: - 允许多开
+    var allowMultipleInstances: Bool
+    
+    // MARK: - 主动式助理设置 (Proactive Assistant)
+    var enableProactiveAssistant: Bool
+    var proactiveHeartbeatInterval: Double // 心跳间隔时间，单位为分钟
+    var proactiveAutoExecuteTasks: Bool    // 是否自动执行自动化任务而不提示用户
+    var proactiveEnabledTriggers: [String] // 开启的检测领域，如 ["health", "performance", "emotion", "workspace"]
 
     init(
         currentMode: AppMode = .normal,
@@ -470,7 +638,17 @@ struct AppSettings: Codable, Sendable {
         activeColorSchemeName: String? = nil,
         hideFloatingLayoutToolbar: Bool = false,
         activeSpecialEffect: SpecialEffectType = .emoji,
-        screenshotHotkeyPreset: ScreenshotHotkeyPreset = .none
+        screenshotHotkeyPreset: ScreenshotHotkeyPreset = .none,
+        statusBarTextMode: StatusBarTextMode = .customTitle,
+        customStatusBarText: String = "",
+        quickLaunchDisplayMode: QuickLaunchDisplayMode = .iconAndName,
+        quickLaunchIconSize: QuickLaunchIconSize = .small,
+        screenshotOutputMode: ScreenshotOutputMode = .fileOnly,
+        allowMultipleInstances: Bool = false,
+        enableProactiveAssistant: Bool = false,
+        proactiveHeartbeatInterval: Double = 15.0,
+        proactiveAutoExecuteTasks: Bool = false,
+        proactiveEnabledTriggers: [String] = ["health", "performance", "emotion", "workspace"]
     ) {
         self.currentMode = currentMode
         self.isBackgroundLearningEnabled = isBackgroundLearningEnabled
@@ -525,6 +703,16 @@ struct AppSettings: Codable, Sendable {
         self.hideFloatingLayoutToolbar = hideFloatingLayoutToolbar
         self.activeSpecialEffect = activeSpecialEffect
         self.screenshotHotkeyPreset = screenshotHotkeyPreset
+        self.statusBarTextMode = statusBarTextMode
+        self.customStatusBarText = customStatusBarText
+        self.quickLaunchDisplayMode = quickLaunchDisplayMode
+        self.quickLaunchIconSize = quickLaunchIconSize
+        self.screenshotOutputMode = screenshotOutputMode
+        self.allowMultipleInstances = allowMultipleInstances
+        self.enableProactiveAssistant = enableProactiveAssistant
+        self.proactiveHeartbeatInterval = proactiveHeartbeatInterval
+        self.proactiveAutoExecuteTasks = proactiveAutoExecuteTasks
+        self.proactiveEnabledTriggers = proactiveEnabledTriggers
     }
 
     static let `default` = AppSettings()
@@ -594,6 +782,17 @@ struct AppSettings: Codable, Sendable {
         hideFloatingLayoutToolbar = try container.decodeIfPresent(Bool.self, forKey: .hideFloatingLayoutToolbar) ?? false
         activeSpecialEffect = try container.decodeIfPresent(SpecialEffectType.self, forKey: .activeSpecialEffect) ?? .emoji
         screenshotHotkeyPreset = try container.decodeIfPresent(ScreenshotHotkeyPreset.self, forKey: .screenshotHotkeyPreset) ?? .none
+        statusBarTextMode = try container.decodeIfPresent(StatusBarTextMode.self, forKey: .statusBarTextMode) ?? .customTitle
+        customStatusBarText = try container.decodeIfPresent(String.self, forKey: .customStatusBarText) ?? ""
+        quickLaunchDisplayMode = try container.decodeIfPresent(QuickLaunchDisplayMode.self, forKey: .quickLaunchDisplayMode) ?? .iconAndName
+        quickLaunchIconSize = try container.decodeIfPresent(QuickLaunchIconSize.self, forKey: .quickLaunchIconSize) ?? .small
+        screenshotOutputMode = try container.decodeIfPresent(ScreenshotOutputMode.self, forKey: .screenshotOutputMode) ?? .fileOnly
+        allowMultipleInstances = try container.decodeIfPresent(Bool.self, forKey: .allowMultipleInstances) ?? false
+        
+        enableProactiveAssistant = try container.decodeIfPresent(Bool.self, forKey: .enableProactiveAssistant) ?? false
+        proactiveHeartbeatInterval = try container.decodeIfPresent(Double.self, forKey: .proactiveHeartbeatInterval) ?? 15.0
+        proactiveAutoExecuteTasks = try container.decodeIfPresent(Bool.self, forKey: .proactiveAutoExecuteTasks) ?? false
+        proactiveEnabledTriggers = try container.decodeIfPresent([String].self, forKey: .proactiveEnabledTriggers) ?? ["health", "performance", "emotion", "workspace"]
     }
 }
 
@@ -623,7 +822,7 @@ enum MenuItemIdentifier: String, Identifiable, CaseIterable {
         switch self {
         case .layoutManager: return "界面布局管理（显示/排序）"
         case .anniversaryManager: return "管理宠物名片"
-        case .aiChat: return "AI 对话"
+        case .aiChat: return "Yumiko Claw"
         case .changelog: return "更新了什么"
         case .about: return "关于 YumikoToys"
         case .quit: return "退出运行"

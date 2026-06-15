@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import AppKit
 
 /// 自定义插件模型
 struct YumiPlugin: Codable, Identifiable, Sendable, Equatable {
@@ -22,6 +23,8 @@ struct YumiPlugin: Codable, Identifiable, Sendable, Equatable {
 struct QuickLaunchApp: Codable, Identifiable, Sendable, Equatable {
     var id: String { name }
     var name: String
+    var iconName: String?
+    var bundlePath: String?
 }
 
 /// 插件系统服务
@@ -53,6 +56,7 @@ final class PluginService: ObservableObject {
         loadPlugins()
         loadQuickLaunchApps()
         loadVisibilitySettings()
+        backfillMissingAppIcons()
     }
     
     // MARK: - Plugin Presets
@@ -236,9 +240,139 @@ final class PluginService: ObservableObject {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         if !quickLaunchApps.contains(where: { $0.name.lowercased() == trimmed.lowercased() }) {
-            quickLaunchApps.append(QuickLaunchApp(name: trimmed))
+            let (iconName, appPath) = Self.resolveAppIconInfo(for: trimmed)
+            quickLaunchApps.append(QuickLaunchApp(name: trimmed, iconName: iconName, bundlePath: appPath))
             saveQuickLaunchApps()
         }
+    }
+    
+    func backfillMissingAppIcons() {
+        var updated = false
+        for i in quickLaunchApps.indices {
+            if quickLaunchApps[i].iconName == nil || quickLaunchApps[i].bundlePath == nil {
+                let (iconName, appPath) = Self.resolveAppIconInfo(for: quickLaunchApps[i].name)
+                quickLaunchApps[i].iconName = quickLaunchApps[i].iconName ?? iconName
+                quickLaunchApps[i].bundlePath = quickLaunchApps[i].bundlePath ?? appPath
+                updated = true
+            }
+        }
+        // 也回退 bundlePath 有效但 iconName 为空的情况
+        for i in quickLaunchApps.indices {
+            if quickLaunchApps[i].iconName == nil, let path = quickLaunchApps[i].bundlePath, FileManager.default.fileExists(atPath: path) {
+                if let bundle = Bundle(path: path) {
+                    quickLaunchApps[i].iconName = Self.extractIconName(from: bundle)
+                    updated = true
+                }
+            }
+        }
+        if updated {
+            saveQuickLaunchApps()
+        }
+    }
+    
+    /// 后台异步刷新所有快速启动应用的图标
+    func refreshAllAppIcons() {
+        Task.detached(priority: .utility) { [weak self] in
+            guard let self = self else { return }
+            await MainActor.run {
+                for i in self.quickLaunchApps.indices {
+                    let (iconName, appPath) = Self.resolveAppIconInfo(for: self.quickLaunchApps[i].name)
+                    self.quickLaunchApps[i].iconName = iconName ?? self.quickLaunchApps[i].iconName
+                    self.quickLaunchApps[i].bundlePath = appPath ?? self.quickLaunchApps[i].bundlePath
+                }
+                self.saveQuickLaunchApps()
+            }
+        }
+    }
+    
+    static func resolveAppIconInfo(for appName: String) -> (iconName: String?, bundlePath: String?) {
+        let searchDirs = ["/Applications", "/System/Applications", "/System/Library/CoreServices", "/Library/CoreServices"]
+        
+        // 1. 精确匹配：直接拼接路径
+        for dir in searchDirs {
+            let appPath = (dir as NSString).appendingPathComponent("\(appName).app")
+            if FileManager.default.fileExists(atPath: appPath),
+               let bundle = Bundle(path: appPath) {
+                return (extractIconName(from: bundle), appPath)
+            }
+        }
+        
+        // 2. 扩展名变体匹配 (如 Xcode → Xcode.app)
+        for dir in searchDirs {
+            let appPath = (dir as NSString).appendingPathComponent("\(appName).app")
+            if !FileManager.default.fileExists(atPath: appPath) {
+                // 尝试带空格/特殊字符的变体
+                let variants = [
+                    "\(appName).app",
+                    "\(appName).app",
+                    appName.replacingOccurrences(of: " ", with: "").appending(".app")
+                ]
+                for variant in variants {
+                    let path = (dir as NSString).appendingPathComponent(variant)
+                    if FileManager.default.fileExists(atPath: path),
+                       let bundle = Bundle(path: path) {
+                        return (extractIconName(from: bundle), path)
+                    }
+                }
+            }
+        }
+        
+        // 3. 模糊匹配：遍历目录中的 .app 文件
+        for dir in searchDirs {
+            if let items = try? FileManager.default.contentsOfDirectory(atPath: dir) {
+                for item in items where item.hasSuffix(".app") {
+                    let nameWithoutExt = (item as NSString).deletingPathExtension
+                    if nameWithoutExt.localizedCaseInsensitiveContains(appName) || appName.localizedCaseInsensitiveContains(nameWithoutExt) {
+                        let fullPath = (dir as NSString).appendingPathComponent(item)
+                        if let bundle = Bundle(path: fullPath) {
+                            return (extractIconName(from: bundle), fullPath)
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 4. 最终回退：使用 NSWorkspace 查找已安装应用
+        let commonBundleIdentifiers = [
+            "Terminal": "com.apple.Terminal",
+            "Safari": "com.apple.Safari",
+            "Xcode": "com.apple.dt.Xcode",
+            "Finder": "com.apple.finder",
+            "Notes": "com.apple.Notes",
+            "Calendar": "com.apple.iCal",
+            "Photos": "com.apple.Photos",
+            "Music": "com.apple.Music",
+            "Messages": "com.apple.MobileSMS",
+            "Mail": "com.apple.mail",
+            "Maps": "com.apple.Maps",
+            "FaceTime": "com.apple.FaceTime",
+            "System Preferences": "com.apple.systempreferences",
+            "System Settings": "com.apple.systempreferences"
+        ]
+        if let bundleId = commonBundleIdentifiers[appName],
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
+            let path = appURL.path
+            if let bundle = Bundle(path: path) {
+                return (extractIconName(from: bundle), path)
+            }
+        }
+        
+        return (nil, nil)
+    }
+    
+    private static func extractIconName(from bundle: Bundle) -> String? {
+        if let iconFiles = bundle.infoDictionary?["CFBundleIconName"] as? String, !iconFiles.isEmpty {
+            return iconFiles
+        }
+        if let iconFilename = bundle.infoDictionary?["CFBundleIconFile"] as? String, !iconFilename.isEmpty {
+            let name = (iconFilename as NSString).deletingPathExtension
+            return name.isEmpty ? nil : name
+        }
+        return nil
+    }
+    
+    static func resolveAppIconName(for appName: String) -> String? {
+        return resolveAppIconInfo(for: appName).iconName
     }
     
     func deleteQuickLaunchApp(id: String) {

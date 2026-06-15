@@ -17,7 +17,7 @@ enum ChatMode: String, Codable, CaseIterable, Identifiable, Sendable {
     var displayName: String {
         switch self {
         case .petCompanion: return "宠物陪伴"
-        case .aiAssistant: return "Pro Human"
+        case .aiAssistant: return "Yumiko Claw"
         }
     }
 

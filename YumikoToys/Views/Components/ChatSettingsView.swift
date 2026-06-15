@@ -14,6 +14,8 @@ struct ChatSettingsView: View {
     @StateObject private var viewModel = ChatSettingsViewModel()
     @State private var selectedTab = 0
     @State private var appeared = false
+    @StateObject private var ollamaSetup = OllamaSetupService.shared
+    @State private var selectedOllamaModel = "qwen2.5:0.5b"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -84,7 +86,17 @@ struct ChatSettingsView: View {
         .scaleEffect(appeared ? 1.0 : 0.95)
         .opacity(appeared ? 1 : 0)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appeared)
-        .onAppear { appeared = true }
+        .onAppear {
+            appeared = true
+            Task {
+                await ollamaSetup.checkStatus()
+            }
+        }
+        .onChange(of: ollamaSetup.status) { newStatus in
+            if case .success = newStatus {
+                viewModel.loadSettings()
+            }
+        }
         .onDisappear {
             // 👈 在设置面板消失时，自动进行兜底保存
             viewModel.saveSettings()
@@ -290,6 +302,10 @@ struct ChatSettingsView: View {
                 glmConfigCard
             } else {
                 nvidiaConfigCard
+                
+                if viewModel.currentProvider == .ollama {
+                    ollamaSetupCard
+                }
             }
 
             // Token 用量
@@ -602,6 +618,247 @@ struct ChatSettingsView: View {
                     }
                 }
             }
+        }
+    }
+
+    private var ollamaSetupCard: some View {
+        cuteSectionCard(title: "一键配置本地模型 (Ollama 一键通)", icon: "🦙") {
+            VStack(alignment: .leading, spacing: 12) {
+                // 1. 本地极简模型选择
+                Text("选择本地极简模型 (自动配置，无需任何 key)")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.secondary)
+                
+                HStack(spacing: 8) {
+                    ForEach([
+                        ("qwen2.5:0.5b", "Qwen 0.5B", "350MB", "⚡ 极速"),
+                        ("qwen2.5:1.5b", "Qwen 1.5B", "900MB", "🌟 推荐"),
+                        ("deepseek-r1:1.5b", "R1 1.5B", "900MB", "🧠 推理")
+                    ], id: \.0) { modelId, name, size, tag in
+                        let isSelected = selectedOllamaModel == modelId
+                        Button {
+                            selectedOllamaModel = modelId
+                        } label: {
+                            VStack(spacing: 4) {
+                                Text(tag)
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundStyle(isSelected ? .white : .secondary)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Capsule().fill(isSelected ? Color.white.opacity(0.2) : Color.primary.opacity(0.05)))
+                                
+                                Text(name)
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(isSelected ? .white : .primary)
+                                
+                                Text(size)
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(isSelected ? 
+                                          AnyShapeStyle(LinearGradient(colors: [Color(hex: "4FA8FF"), Color(hex: "22D3EE")], startPoint: .topLeading, endPoint: .bottomTrailing)) : 
+                                          AnyShapeStyle(Color.primary.opacity(0.04)))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(isSelected ? Color.clear : Color.primary.opacity(0.08), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                
+                Divider().opacity(0.3)
+                
+                // 2. 当前环境状态展示
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        statusIndicator(for: ollamaSetup.status)
+                        
+                        Text(ollamaSetup.status.displayText)
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(.primary)
+                        
+                        Spacer()
+                        
+                        // 刷新按钮
+                        if ollamaSetup.status == .idle || ollamaSetup.status == .running || ollamaSetup.status == .installedButNotRunning {
+                            Button(action: {
+                                Task {
+                                    await ollamaSetup.checkStatus()
+                                }
+                            }) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .help("刷新状态")
+                        }
+                    }
+                    
+                    // 动态操作按钮与进度条
+                    switch ollamaSetup.status {
+                    case .idle, .notInstalled, .failed:
+                        if ollamaSetup.status == .notInstalled {
+                            Button(action: {
+                                ollamaSetup.installOllama()
+                            }) {
+                                HStack {
+                                    Image(systemName: "square.and.arrow.down")
+                                    Text("一键自动下载并配置 Ollama (约180MB)")
+                                }
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(LinearGradient(colors: [Color(hex: "34C759"), Color(hex: "28CD41")], startPoint: .leading, endPoint: .trailing))
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            Button(action: {
+                                Task {
+                                    await ollamaSetup.pullModel(modelId: selectedOllamaModel)
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.down.circle")
+                                    Text("一键拉取并配置本地 \(selectedOllamaModel)")
+                                }
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(LinearGradient(colors: [Color(hex: "4FA8FF"), Color(hex: "22D3EE")], startPoint: .leading, endPoint: .trailing))
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        
+                    case .installingOllama(let progress):
+                        VStack(alignment: .leading, spacing: 6) {
+                            ProgressView(value: progress)
+                                .progressViewStyle(.linear)
+                                .tint(Color(hex: "34C759"))
+                            
+                            HStack {
+                                Text("下载中...")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Button("取消") {
+                                    ollamaSetup.cancelInstallation()
+                                }
+                                .font(.caption2)
+                                .foregroundStyle(.red)
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        
+                    case .installedButNotRunning:
+                        Button(action: {
+                            Task {
+                                await ollamaSetup.startOllama()
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "play.circle")
+                                    .font(.system(size: 12))
+                                Text("启动本地 Ollama 服务")
+                            }
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(LinearGradient(colors: [Color(hex: "FF9500"), Color(hex: "FFAC30")], startPoint: .leading, endPoint: .trailing))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        
+                    case .startingOllama, .checking:
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .scaleEffect(0.6)
+                            Text(ollamaSetup.status == .checking ? "检测状态中..." : "启动后台服务中...")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 4)
+                        
+                    case .running, .success:
+                        Button(action: {
+                            Task {
+                                await ollamaSetup.pullModel(modelId: selectedOllamaModel)
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.down.circle")
+                                Text("下载并一键激活本地模型 \(selectedOllamaModel)")
+                            }
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(LinearGradient(colors: [Color(hex: "4FA8FF"), Color(hex: "22D3EE")], startPoint: .leading, endPoint: .trailing))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        
+                    case .pullingModel(_, let progress, let statusText):
+                        VStack(alignment: .leading, spacing: 6) {
+                            ProgressView(value: progress)
+                                .progressViewStyle(.linear)
+                                .tint(Color(hex: "22D3EE"))
+                            
+                            HStack {
+                                Text(statusText)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text(String(format: "%.1f%%", progress * 100))
+                                    .font(.caption2.monospaced())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+                .padding(10)
+                .background(Color.primary.opacity(0.02))
+                .cornerRadius(10)
+            }
+        }
+    }
+    
+    private func statusIndicator(for status: OllamaSetupStatus) -> some View {
+        Circle()
+            .fill(statusColor(for: status))
+            .frame(width: 8, height: 8)
+    }
+    
+    private func statusColor(for status: OllamaSetupStatus) -> Color {
+        switch status {
+        case .idle: return .gray
+        case .checking, .startingOllama: return .orange
+        case .notInstalled: return .red
+        case .installingOllama, .pullingModel: return .blue
+        case .installedButNotRunning: return .orange
+        case .running: return .green
+        case .success: return .green
+        case .failed: return .red
         }
     }
 

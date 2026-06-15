@@ -24,6 +24,7 @@ struct YumikoToysApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var statusBarManager: StatusBarManager?
+    private var isSecondInstance = false
     
     // MARK: - Lifecycle
     
@@ -51,6 +52,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             let settings = DependencyContainer.shared.settingsService.settings
             
+            // 检查是否允许多开
+            if !settings.allowMultipleInstances {
+                let runningApps = NSRunningApplication.runningApplications(
+                    withBundleIdentifier: Bundle.main.bundleIdentifier ?? ""
+                )
+                if runningApps.count > 1 {
+                    isSecondInstance = true
+                    // 通知已有实例并退出
+                    DistributedNotificationCenter.default().postNotificationName(
+                        Notification.Name("com.Lite.YumikoToys.ActivateExistingInstance"),
+                        object: nil
+                    )
+                    NSApp.terminate(nil)
+                    return
+                }
+            }
+            
+            // 监听激活通知
+            DistributedNotificationCenter.default().addObserver(
+                self,
+                selector: #selector(activateExistingInstance),
+                name: Notification.Name("com.Lite.YumikoToys.ActivateExistingInstance"),
+                object: nil
+            )
+            
             if isAutoLaunch {
                 if settings.showMainWindowOnAutoLaunch {
                     showMainWindow()
@@ -61,6 +87,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+    
+    @objc private func activateExistingInstance() {
+        NSApp.activate(ignoringOtherApps: true)
+        showMainWindow()
     }
     
     @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {

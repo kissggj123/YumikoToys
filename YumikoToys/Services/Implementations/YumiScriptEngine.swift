@@ -7,10 +7,15 @@
 
 import Foundation
 import AppKit
+import ScreenCaptureKit
 
 /// YumiScript 核心执行引擎
 @MainActor
 final class YumiScriptEngine {
+    
+    private static var hasScreenRecordingPermission: Bool {
+        CGPreflightScreenCaptureAccess()
+    }
     
     /// 执行一段 YumiScript 脚本并返回包含所有日志信息的输出文本
     static func execute(_ script: String) async -> String {
@@ -54,6 +59,11 @@ final class YumiScriptEngine {
                 }
                 
             case "screenshot":
+                guard hasScreenRecordingPermission else {
+                    CGRequestScreenCaptureAccess()
+                    logs.append(" 截图失败: 需要屏幕录制权限，请在系统设置中授予")
+                    continue
+                }
                 // 截图保存路径，留空则默认保存到桌面
                 let path: String
                 if argsStr.isEmpty {
@@ -74,6 +84,11 @@ final class YumiScriptEngine {
                 }
                 
             case "record":
+                guard hasScreenRecordingPermission else {
+                    CGRequestScreenCaptureAccess()
+                    logs.append(" 录屏失败: 需要屏幕录制权限，请在系统设置中授予")
+                    continue
+                }
                 // 格式：record <持续秒数> <保存绝对路径>
                 let argsParts = argsStr.components(separatedBy: " ")
                 let duration = argsParts.first.flatMap(Int.init) ?? 5

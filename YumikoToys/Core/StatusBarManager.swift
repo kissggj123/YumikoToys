@@ -122,6 +122,9 @@ final class StatusBarManager: NSObject {
             },
             onQuit: { [weak self] in
                 self?.quitApp()
+            },
+            onScreenshotTriggered: { [weak self] in
+                self?.closePopover()
             }
         )
         
@@ -182,7 +185,7 @@ final class StatusBarManager: NSObject {
         
         // 使用主线程绑定的 Task 管理延迟释放，保障销毁完全闭环
         rainTask = Task { [weak self, weak window] in
-            try? await Task.sleep(nanoseconds: 2_000_000_000) // 延迟 2.0 秒（即动画完全播放结束）
+            try? await Task.sleep(nanoseconds: 3_500_000_000) // 延迟 3.5 秒（即动画完全播放结束）
             
             guard !Task.isCancelled else { return }
             
@@ -350,14 +353,46 @@ final class StatusBarManager: NSObject {
     
     private func updateStatusBarTitle(withDays days: Double) {
         self.currentDays = days
-        var line1 = container.anniversaryService.activeAnniversaryInfo?.anniversary.parsedStatusBarLine1(days: days) ?? "兔可可已到来"
+        let settings = container.settingsService.settings
+        let textMode = settings.statusBarTextMode
         
-        if let info = container.anniversaryService.activeAnniversaryInfo {
-            let layouts = container.componentLayoutService.currentLayouts
-            if let layout = layouts.first(where: { $0.type == .daysDisplay }),
-               let customTitle = layout.customTitle, !customTitle.isEmpty {
+        var line1: String
+        
+        switch textMode {
+        case .godMode:
+            // 上帝模式：使用完全自定义文本
+            line1 = settings.customStatusBarText.isEmpty ? "兔可可已到来" : settings.customStatusBarText
+            // 支持模板变量替换
+            if let info = container.anniversaryService.activeAnniversaryInfo {
+                line1 = line1.replacingOccurrences(of: "{name}", with: info.anniversary.displayPetName)
+                line1 = line1.replacingOccurrences(of: "{days}", with: String(format: "%.0f", days))
+                line1 = line1.replacingOccurrences(of: "{emoji}", with: info.anniversary.displayAvatar)
+                line1 = line1.replacingOccurrences(of: "{species}", with: info.anniversary.species ?? "宠物")
+            }
+            
+        case .originalName:
+            // 始终使用原始宠物名
+            line1 = container.anniversaryService.activeAnniversaryInfo?.anniversary.parsedStatusBarLine1(days: days) ?? "兔可可已到来"
+            
+        case .customTitle:
+            // 使用自定义标题（优先使用用户输入的 customStatusBarText，其次使用布局组件中的 customTitle）
+            line1 = container.anniversaryService.activeAnniversaryInfo?.anniversary.parsedStatusBarLine1(days: days) ?? "兔可可已到来"
+            
+            if let info = container.anniversaryService.activeAnniversaryInfo {
                 let originalName = info.anniversary.displayPetName
-                line1 = line1.replacingOccurrences(of: originalName, with: customTitle)
+                let customText = settings.customStatusBarText
+                
+                if !customText.isEmpty {
+                    // 用户在设置中输入了自定义名称，直接替换
+                    line1 = line1.replacingOccurrences(of: originalName, with: customText)
+                } else {
+                    // 回退到布局组件中的 customTitle
+                    let layouts = container.componentLayoutService.currentLayouts
+                    if let layout = layouts.first(where: { $0.type == .daysDisplay }),
+                       let customTitle = layout.customTitle, !customTitle.isEmpty {
+                        line1 = line1.replacingOccurrences(of: originalName, with: customTitle)
+                    }
+                }
             }
         }
         
@@ -483,9 +518,11 @@ final class AdaptiveHostingController<Content: View>: NSHostingController<Conten
         
         let idealSize = self.view.fittingSize
         if idealSize.width > 0 && idealSize.height > 0 {
-            if popover?.contentSize.height != idealSize.height {
+            let maxHeight = (NSScreen.main?.frame.height ?? 800) * 0.7
+            let cappedHeight = min(idealSize.height, maxHeight)
+            if popover?.contentSize.height != cappedHeight {
                 DispatchQueue.main.async { [weak self] in
-                    self?.popover?.contentSize = idealSize
+                    self?.popover?.contentSize = NSSize(width: idealSize.width, height: cappedHeight)
                 }
             }
         }
@@ -502,7 +539,7 @@ fileprivate func colorizePopoverBackground(in view: NSView, color: NSColor) {
         effectView.layer?.backgroundColor = color.cgColor
         effectView.alphaValue = 1.0
         effectView.state = .inactive
-    } else if className.contains("Popover") {
+    } else if className.contains("Popover") || className.contains("NSThemeFrame") || className.contains("NSView") {
         view.wantsLayer = true
         view.layer?.backgroundColor = color.cgColor
     }
@@ -542,6 +579,8 @@ private class EventMonitor {
 
 // MARK: - 无状态物理下落粒子雨 (Emoji Rain - Timeline 驱动)
 
+// MARK: - 无状态物理下落粒子雨 (Emoji Rain - Timeline 驱动)
+
 struct EmojiRainView: View {
     let screenHeight: CGFloat
     
@@ -558,6 +597,52 @@ struct EmojiRainView: View {
         let swayAmplitude: CGFloat
         let swayPhase: Double
         let pulseSpeed: Double
+        
+        // Advanced properties for special effects (snowflake, firework, bubble)
+        var fireworkGroup: Int = 0
+        var fireworkAngle: Double = 0.0
+        var fireworkSpeed: CGFloat = 0.0
+        var fireworkStartOffset: Double = 0.0
+        var fireworkExplosionXRatio: CGFloat = 0.5
+        var fireworkExplosionY: CGFloat = 0.0
+        
+        init(
+            emoji: String,
+            xRatio: CGFloat,
+            startY: CGFloat,
+            speed: CGFloat,
+            scale: CGFloat,
+            startRotation: Double,
+            rotationSpeed: Double,
+            swaySpeed: Double,
+            swayAmplitude: CGFloat,
+            swayPhase: Double,
+            pulseSpeed: Double,
+            fireworkGroup: Int = 0,
+            fireworkAngle: Double = 0.0,
+            fireworkSpeed: CGFloat = 0.0,
+            fireworkStartOffset: Double = 0.0,
+            fireworkExplosionXRatio: CGFloat = 0.5,
+            fireworkExplosionY: CGFloat = 0.0
+        ) {
+            self.emoji = emoji
+            self.xRatio = xRatio
+            self.startY = startY
+            self.speed = speed
+            self.scale = scale
+            self.startRotation = startRotation
+            self.rotationSpeed = rotationSpeed
+            self.swaySpeed = swaySpeed
+            self.swayAmplitude = swayAmplitude
+            self.swayPhase = swayPhase
+            self.pulseSpeed = pulseSpeed
+            self.fireworkGroup = fireworkGroup
+            self.fireworkAngle = fireworkAngle
+            self.fireworkSpeed = fireworkSpeed
+            self.fireworkStartOffset = fireworkStartOffset
+            self.fireworkExplosionXRatio = fireworkExplosionXRatio
+            self.fireworkExplosionY = fireworkExplosionY
+        }
     }
     
     @State private var particles: [EmojiParticle] = []
@@ -570,25 +655,121 @@ struct EmojiRainView: View {
                     let elapsed = context.date.timeIntervalSince(startDate)
                     let effectType = DependencyContainer.shared.settingsService.settings.activeSpecialEffect
                     
-                    ZStack {
-                        ForEach(particles) { p in
-                            let currentY = p.startY + p.speed * CGFloat(elapsed)
+                    Canvas { canvasContext, size in
+                        for p in particles {
+                            var currentX: CGFloat = 0
+                            var currentY: CGFloat = 0
+                            var currentRotation: Double = 0
+                            var currentScale: CGFloat = 1.0
+                            var opacity: Double = 1.0
+                            var currentEmoji = p.emoji
                             
-                            // Horizontal sway
-                            let sway = sin(elapsed * p.swaySpeed + p.swayPhase) * p.swayAmplitude
-                            let currentX = p.xRatio * geo.size.width + (effectType == .sakura || effectType == .heart ? sway : 0)
+                            switch effectType {
+                            case .emoji:
+                                currentY = p.startY + p.speed * CGFloat(elapsed)
+                                currentX = p.xRatio * size.width
+                                currentRotation = p.startRotation + p.rotationSpeed * elapsed
+                                currentScale = p.scale
+                                opacity = 1.0
+                                
+                            case .sakura:
+                                currentY = p.startY + p.speed * CGFloat(elapsed)
+                                let sway = sin(elapsed * p.swaySpeed + p.swayPhase) * p.swayAmplitude
+                                currentX = p.xRatio * size.width + sway
+                                currentRotation = p.startRotation + p.rotationSpeed * elapsed
+                                currentScale = p.scale
+                                opacity = 1.0
+                                
+                            case .star:
+                                currentY = p.startY + p.speed * CGFloat(elapsed)
+                                currentX = p.xRatio * size.width
+                                currentRotation = p.startRotation + p.rotationSpeed * elapsed
+                                let scalePulsation = 1.0 + 0.25 * sin(elapsed * p.pulseSpeed)
+                                currentScale = p.scale * CGFloat(scalePulsation)
+                                opacity = 1.0
+                                
+                            case .heart:
+                                currentY = p.startY + p.speed * CGFloat(elapsed)
+                                let sway = sin(elapsed * p.swaySpeed + p.swayPhase) * p.swayAmplitude
+                                currentX = p.xRatio * size.width + sway
+                                currentRotation = p.startRotation + p.rotationSpeed * elapsed
+                                currentScale = p.scale
+                                opacity = 1.0
+                                
+                            case .snowflake:
+                                currentY = p.startY + p.speed * 0.45 * CGFloat(elapsed)
+                                let sway = sin(elapsed * p.swaySpeed * 0.8 + p.swayPhase) * p.swayAmplitude * 1.3
+                                currentX = p.xRatio * size.width + sway
+                                currentRotation = p.startRotation + p.rotationSpeed * 0.5 * elapsed
+                                currentScale = p.scale
+                                let bottomDist = size.height - currentY
+                                if bottomDist < 150 {
+                                    opacity = max(0.0, Double(bottomDist / 150.0))
+                                } else {
+                                    opacity = 1.0
+                                }
+                                
+                            case .bubble:
+                                currentY = p.startY + p.speed * 0.55 * CGFloat(elapsed)
+                                let sway = sin(elapsed * p.swaySpeed + p.swayPhase) * p.swayAmplitude * 1.5
+                                currentX = p.xRatio * size.width + sway
+                                currentRotation = 0.0
+                                let pulse = 1.0 + 0.15 * sin(elapsed * p.pulseSpeed)
+                                currentScale = p.scale * CGFloat(pulse)
+                                if currentY < 150 {
+                                    opacity = max(0.0, Double(currentY / 150.0))
+                                } else {
+                                    opacity = 1.0
+                                }
+                                
+                            case .firework:
+                                let t = elapsed - p.fireworkStartOffset
+                                if t < 0 {
+                                    opacity = 0.0
+                                } else if t < 0.75 {
+                                    let ratio = t / 0.75
+                                    let explosionX = p.fireworkExplosionXRatio * size.width
+                                    currentX = size.width / 2.0 + (explosionX - size.width / 2.0) * ratio
+                                    currentY = size.height - (size.height - p.fireworkExplosionY) * ratio
+                                    currentRotation = 0.0
+                                    currentScale = 0.8
+                                    opacity = 1.0
+                                    currentEmoji = "☄️"
+                                } else {
+                                    let sparkTime = t - 0.75
+                                    let sparkLifetime = 0.95
+                                    if sparkTime >= sparkLifetime {
+                                        opacity = 0.0
+                                    } else {
+                                        let explosionX = p.fireworkExplosionXRatio * size.width
+                                        let drag: Double = 1.8
+                                        let gravity: Double = 320.0
+                                        let decay = (1.0 - exp(-sparkTime * drag)) / drag
+                                        let dx = p.fireworkSpeed * cos(p.fireworkAngle) * CGFloat(decay)
+                                        let dy = p.fireworkSpeed * sin(p.fireworkAngle) * CGFloat(decay) + 0.5 * CGFloat(gravity * sparkTime * sparkTime)
+                                        
+                                        currentX = explosionX + dx
+                                        currentY = p.fireworkExplosionY + dy
+                                        currentRotation = p.startRotation + p.rotationSpeed * sparkTime
+                                        currentScale = p.scale * (1.0 - CGFloat(sparkTime / sparkLifetime))
+                                        opacity = max(0.0, 1.0 - sparkTime / sparkLifetime)
+                                    }
+                                }
+                            }
                             
-                            // Rotation
-                            let currentRotation = p.startRotation + p.rotationSpeed * elapsed
-                            
-                            // Scale pulsation (star blinking)
-                            let scalePulsation = effectType == .star ? (1.0 + 0.25 * sin(elapsed * p.pulseSpeed)) : 1.0
-                            let currentScale = p.scale * CGFloat(scalePulsation)
-                            
-                            Text(p.emoji)
-                                .font(.system(size: 32 * currentScale))
-                                .rotationEffect(.degrees(currentRotation))
-                                .position(x: currentX, y: currentY)
+                            if opacity > 0 {
+                                var particleContext = canvasContext
+                                particleContext.opacity = opacity
+                                
+                                let resolved = canvasContext.resolve(
+                                    Text(currentEmoji)
+                                        .font(.system(size: 32 * currentScale))
+                                )
+                                
+                                particleContext.translateBy(x: currentX, y: currentY)
+                                particleContext.rotate(by: Angle(degrees: currentRotation))
+                                particleContext.draw(resolved, at: .zero)
+                            }
                         }
                     }
                 }
@@ -609,37 +790,74 @@ struct EmojiRainView: View {
                 emojiPresets = ["⭐", "✨", "🌟", "💫", "⭐", "✨"]
             case .heart:
                 emojiPresets = ["❤️", "💖", "💝", "💕", "💘", "💓"]
+            case .snowflake:
+                emojiPresets = ["❄️", "🌨️", "✨", "❄️", "🌨️"]
+            case .bubble:
+                emojiPresets = ["🫧", "🫧", "🔵", "⚪", "🫧"]
+            case .firework:
+                emojiPresets = ["🎆", "🎇", "✨", "💥", "🔴", "🔵", "🟡", "🟢", "⭐"]
             }
             
             let count = 45
-            particles = (0..<count).map { _ in
-                let isHeart = effectType == .heart
-                
-                let startY: CGFloat
-                let speed: CGFloat
-                if isHeart {
-                    // Rise up from bottom
-                    startY = screenHeight + CGFloat.random(in: 50...150)
-                    speed = CGFloat.random(in: -450...(-250))
-                } else {
-                    // Fall down from top
-                    startY = CGFloat.random(in: -150...(-50))
-                    speed = CGFloat.random(in: 450...780)
+            if effectType == .firework {
+                particles = (0..<count).map { idx in
+                    let fireworkIndex = idx / 15
+                    let startOffset = Double(fireworkIndex) * 0.45 // 0.0s, 0.45s, 0.9s
+                    let explosionXRatio = CGFloat(0.25 + Double(fireworkIndex) * 0.25) + CGFloat.random(in: -0.05...0.05)
+                    let explosionY = screenHeight * CGFloat.random(in: 0.22...0.42)
+                    
+                    let angle = Double(idx % 15) / 15.0 * 2.0 * .pi + Double.random(in: -0.12...0.12)
+                    let sparkSpeed = CGFloat.random(in: 180...380)
+                    
+                    return EmojiParticle(
+                        emoji: emojiPresets.randomElement()!,
+                        xRatio: explosionXRatio,
+                        startY: screenHeight,
+                        speed: 0,
+                        scale: CGFloat.random(in: 0.7...1.2),
+                        startRotation: Double.random(in: 0...360),
+                        rotationSpeed: Double.random(in: 60...180),
+                        swaySpeed: 0,
+                        swayAmplitude: 0,
+                        swayPhase: 0,
+                        pulseSpeed: 0,
+                        fireworkGroup: fireworkIndex,
+                        fireworkAngle: angle,
+                        fireworkSpeed: sparkSpeed,
+                        fireworkStartOffset: startOffset,
+                        fireworkExplosionXRatio: explosionXRatio,
+                        fireworkExplosionY: explosionY
+                    )
                 }
-                
-                return EmojiParticle(
-                    emoji: emojiPresets.randomElement()!,
-                    xRatio: CGFloat.random(in: 0.02...0.98),
-                    startY: startY,
-                    speed: speed,
-                    scale: CGFloat.random(in: 0.6...1.3),
-                    startRotation: Double.random(in: 0...360),
-                    rotationSpeed: effectType == .sakura ? Double.random(in: 30...90) : Double.random(in: 120...240),
-                    swaySpeed: Double.random(in: 2.0...5.0),
-                    swayAmplitude: CGFloat.random(in: 15...40),
-                    swayPhase: Double.random(in: 0...(2 * .pi)),
-                    pulseSpeed: Double.random(in: 8.0...15.0)
-                )
+            } else {
+                particles = (0..<count).map { _ in
+                    let isHeart = effectType == .heart
+                    let isBubble = effectType == .bubble
+                    
+                    let startY: CGFloat
+                    let speed: CGFloat
+                    if isHeart || isBubble {
+                        startY = screenHeight + CGFloat.random(in: 50...150)
+                        speed = CGFloat.random(in: -480...(-280))
+                    } else {
+                        startY = CGFloat.random(in: -150...(-50))
+                        speed = CGFloat.random(in: 450...780)
+                    }
+                    
+                    return EmojiParticle(
+                        emoji: emojiPresets.randomElement()!,
+                        xRatio: CGFloat.random(in: 0.02...0.98),
+                        startY: startY,
+                        speed: speed,
+                        scale: CGFloat.random(in: 0.6...1.3),
+                        startRotation: Double.random(in: 0...360),
+                        rotationSpeed: effectType == .sakura ? Double.random(in: 30...90) : Double.random(in: 120...240),
+                        swaySpeed: Double.random(in: 2.0...5.0),
+                        swayAmplitude: CGFloat.random(in: 15...40),
+                        swayPhase: Double.random(in: 0...(2 * .pi)),
+                        pulseSpeed: Double.random(in: 8.0...15.0)
+                    )
+                }
             }
         }
     }

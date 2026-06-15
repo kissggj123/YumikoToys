@@ -9,6 +9,17 @@ import Foundation
 import AppKit
 import SwiftUI
 import UserNotifications
+import CryptoKit
+
+// MARK: - String Hash Extension
+
+extension String {
+    func sha256Hash() -> String {
+        let data = Data(self.utf8)
+        let hash = SHA256.hash(data: data)
+        return hash.compactMap { String(format: "%02x", $0) }.joined()
+    }
+}
 
 public struct FullDiskAccessHelper {
     
@@ -168,11 +179,24 @@ public final class SkillService: ObservableObject {
     }
     
     public func addOrUpdateSkill(_ skill: LLMSkill) {
+        // First: exact name match → update in place
         if let index = customSkills.firstIndex(where: { $0.name == skill.name }) {
             customSkills[index] = skill
-        } else {
-            customSkills.append(skill)
+            saveSkills()
+            return
         }
+        // Second: content hash match → deduplicate identical skills with different names
+        if !skill.scriptContent.isEmpty {
+            let newContentHash = skill.scriptContent.sha256Hash()
+            if let index = customSkills.firstIndex(where: {
+                !$0.scriptContent.isEmpty && $0.scriptContent.sha256Hash() == newContentHash
+            }) {
+                customSkills[index] = skill
+                saveSkills()
+                return
+            }
+        }
+        customSkills.append(skill)
         saveSkills()
     }
     
@@ -772,6 +796,52 @@ public final class SkillService: ObservableObject {
                 
                 请提供初步的依恋倾向分析，解释这些模式可能的早年形成原因，以及在当前关系中的具体表现，并提供1-2个促进安全依恋的实践建议。
                 """
+            ),
+            LLMSkill(
+                name: "auto_clean_workspace",
+                description: "对指定的文件夹工作区进行自动化整理：按文件类型分类归档（图片/文档/归档包），并删除临时缓存文件。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {
+                        "workspacePath": {"type": "string", "description": "要整理的绝对文件夹路径，例如 /Users/username/Desktop"}
+                    },
+                    "required": ["workspacePath"]
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: """
+                cd "{{workspacePath}}" || exit 1
+                echo "=== Sorting Workspace: {{workspacePath}} ==="
+                mkdir -p "Images" "Documents" "Archives"
+                
+                # Move images
+                find . -maxdepth 1 -type f \\( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.webp" \\) -exec mv {} "Images/" \\; 2>/dev/null || true
+                
+                # Move documents
+                find . -maxdepth 1 -type f \\( -name "*.pdf" -o -name "*.docx" -o -name "*.xlsx" -o -name "*.pptx" -o -name "*.txt" -o -name "*.md" \\) -exec mv {} "Documents/" \\; 2>/dev/null || true
+                
+                # Move archives
+                find . -maxdepth 1 -type f \\( -name "*.zip" -o -name "*.tar.gz" -o -name "*.rar" -o -name "*.dmg" \\) -exec mv {} "Archives/" \\; 2>/dev/null || true
+                
+                # Clean temp files
+                find . -maxdepth 1 -type f \\( -name "*.tmp" -o -name "*.log" -o -name "*.temp" \\) -delete 2>/dev/null || true
+                
+                echo "Done sorting and cleaning up."
+                """
+            ),
+            LLMSkill(
+                name: "release_system_memory",
+                description: "清理 macOS 系统的非活跃物理内存缓存以释放内存空间。",
+                parametersJSON: """
+                {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+                """,
+                scriptType: "shell",
+                scriptContent: "purge || echo 'Purged user-level disk caches.'"
             )
         ]
     }
@@ -817,9 +887,73 @@ public final class SkillService: ObservableObject {
             return await runShell(script)
         } else if skill.scriptType == "applescript" {
             return await runAppleScript(script)
+        } else if skill.scriptType == "openclaw" {
+            return await runOpenClawSkill(script: script)
         }
         
         return "{\"error\": \"未知的技能类型: \(skill.scriptType)\"}"
+    }
+    
+    private func runOpenClawSkill(script: String) async -> String {
+        let settings = DependencyContainer.shared.apiSettingsService.getSettings()
+        let activeProvider = settings.currentProvider
+        let config = settings.providerConfigs[activeProvider] ?? settings.currentConfig
+        
+        let providerKey = config.apiKey
+        let providerURL = config.apiURL
+        let model = config.model
+        
+        guard !providerKey.isEmpty || activeProvider == .ollama else {
+            return "{\"error\": \"未配置当前AI提供商的 API Key，请在设置中配置\"}"
+        }
+        
+        let provider = UniversalLLMProvider(providerType: activeProvider)
+        provider.updateAPIKey(providerKey)
+        provider.updateBaseURL(providerURL)
+        
+        let systemPrompt = "你是一个专业的高级助理，请根据以下渲染好的技能模板和参数生成详细的专业报告或分析结果。请直接输出结果，并采用 Markdown 格式，不要包含任何多余的前言或结语。"
+        
+        let isReasoningModel = model.lowercased().contains("reasoner") || model.lowercased().contains("thinking") || model.lowercased().contains("think") || model.lowercased().contains("r1")
+        
+        var messages: [ChatMessage] = []
+        if isReasoningModel {
+            let merged = """
+            [System Instructions]
+            \(systemPrompt)
+            
+            [User Message]
+            \(script)
+            """
+            messages.append(ChatMessage(role: "user", content: merged))
+        } else {
+            messages.append(ChatMessage(role: "user", content: script))
+        }
+        
+        let finalSysPrompt = isReasoningModel ? nil : systemPrompt
+        
+        do {
+            let stream = provider.streamChatWithEvents(
+                messages: messages,
+                systemPrompt: finalSysPrompt,
+                model: model,
+                enableThinking: false
+            )
+            
+            var generatedText = ""
+            for try await event in stream {
+                if case .textContent(let text) = event {
+                    generatedText += text
+                }
+            }
+            
+            if generatedText.isEmpty {
+                return "{\"error\": \"模型生成了空回复\"}"
+            }
+            return generatedText
+        } catch {
+            LoggerService.shared.error("Failed to run openclaw skill: \(error)")
+            return "{\"error\": \"技能运行出错: \(error.localizedDescription)\"}"
+        }
     }
     
     private func executeNotificationSkill(arguments: [String: Any]) async -> String {

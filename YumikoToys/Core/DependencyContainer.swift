@@ -52,6 +52,11 @@ final class DependencyContainer: ObservableObject {
         services["backgroundLearning"] as? BackgroundLearningService
     }
 
+    /// 主动助理服务
+    var proactiveAgentService: ProactiveAgentService? {
+        services["proactiveAgent"] as? ProactiveAgentService
+    }
+
     // MARK: - Initialization
 
     private init() {
@@ -161,6 +166,20 @@ final class DependencyContainer: ObservableObject {
 
         services["backgroundLearning"] = backgroundLearningService
 
+        // 初始化主动助理服务
+        let proactiveAgent = ProactiveAgentService(
+            settingsService: settingsService,
+            apiSettingsService: apiSettingsService,
+            backgroundLearningService: backgroundLearningService
+        )
+        await proactiveAgent.initialize()
+        services["proactiveAgent"] = proactiveAgent
+        
+        // 如果开启了主动助理，启动心跳
+        if settingsService.settings.enableProactiveAssistant {
+            proactiveAgent.startService()
+        }
+
         // 第四阶段：启动时间同步
         await timeSyncService.start()
 
@@ -172,6 +191,7 @@ final class DependencyContainer: ObservableObject {
     
     @MainActor
     func shutdown() {
+        proactiveAgentService?.stopService()
         anniversaryService.stop()
         preventSleepService.stop()
         settingsService.stop()
@@ -248,7 +268,7 @@ enum WindowType: String, CaseIterable {
         case .anniversaryManager: return "宠物名片"
         case .changelog: return "更新日志"
         case .about: return "关于 YumikoToys"
-        case .aiChat: return "AI 对话"
+        case .aiChat: return "Yumiko Claw"
         }
     }
     

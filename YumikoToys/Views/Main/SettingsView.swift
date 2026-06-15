@@ -12,6 +12,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case appearance = "appearance"
     case godMode = "godMode"
     case ai = "ai"
+    case proactive = "proactive"
     case system = "system"
     
     var id: String { rawValue }
@@ -21,6 +22,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .appearance: return "外观设置"
         case .godMode: return "上帝模式"
         case .ai: return "心智与 AI"
+        case .proactive: return "智能助理"
         case .system: return "系统与数据"
         }
     }
@@ -30,6 +32,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .appearance: return "paintbrush.fill"
         case .godMode: return "wand.and.stars"
         case .ai: return "brain.headset"
+        case .proactive: return "sparkles"
         case .system: return "cpu"
         }
     }
@@ -115,6 +118,7 @@ struct SettingsView: View {
                         generalSettingsSection
                         iconStyleSection
                         statusBarIconStyleSection
+                        statusBarTextModeSection
                         fontSection
                         statusBarThemeColorSection
                         mainWindowThemeColorSection
@@ -127,6 +131,8 @@ struct SettingsView: View {
                         backgroundLearningSection
                         psychologySettingsSection
                         proHumanSettingsSection
+                    case .proactive:
+                        proactiveSettingsSection
                     case .system:
                         preventSleepSection
                         timeSyncSection
@@ -1287,6 +1293,97 @@ struct SettingsView: View {
         }
     }
     
+    private var statusBarTextModeSection: some View {
+        SettingsSection(title: "状态栏文字", icon: "textformat.abc", iconColor: "FF6B9D") {
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(StatusBarTextMode.allCases) { mode in
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            viewModel.selectStatusBarTextMode(mode)
+                        }) {
+                            HStack(spacing: 10) {
+                                Image(systemName: viewModel.statusBarTextMode == mode ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(viewModel.statusBarTextMode == mode ? Color(hex: "FF6B9D") : .secondary)
+                                    .font(.system(size: 14))
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(mode.displayName)
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(.primary)
+                                    Text(mode.description)
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(viewModel.statusBarTextMode == mode ? Color(hex: "FF6B9D").opacity(0.1) : Color.primary.opacity(0.02))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(viewModel.statusBarTextMode == mode ? Color(hex: "FF6B9D").opacity(0.3) : Color.clear, lineWidth: 1)
+                    )
+                }
+                
+                // 自定义标题输入框（customTitle 模式）
+                if viewModel.statusBarTextMode == .customTitle {
+                    Divider().background(Color.primary.opacity(0.08))
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("自定义宠物名称")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        
+                        TextField("输入自定义名称...", text: Binding(
+                            get: { viewModel.customStatusBarText },
+                            set: { viewModel.updateCustomStatusBarText($0) }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 12))
+                        
+                        Text("输入的名称将替换状态栏中的原始宠物名")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                
+                // 上帝模式自定义文本输入框
+                if viewModel.statusBarTextMode == .godMode {
+                    Divider().background(Color.primary.opacity(0.08))
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("自定义状态栏文本")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        
+                        TextField("输入自定义文本...", text: Binding(
+                            get: { viewModel.customStatusBarText },
+                            set: { viewModel.updateCustomStatusBarText($0) }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 12))
+                        
+                        Text("点击变量可插入到文本框:")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+                        
+                        HStack(spacing: 6) {
+                            VariableTag(name: "{name}", description: "宠物名")
+                            VariableTag(name: "{days}", description: "天数")
+                            VariableTag(name: "{emoji}", description: "头像")
+                            VariableTag(name: "{species}", description: "品种")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     private var fontSection: some View {
         SettingsSection(title: "字体设置", icon: "textformat", iconColor: "5856D6") {
             VStack(spacing: 8) {
@@ -1476,6 +1573,145 @@ struct SettingsView: View {
         .animation(.easeInOut(duration: 0.2), value: viewModel.isTimeSyncing)
     }
     
+    private var proactiveSettingsSection: some View {
+        VStack(spacing: 20) {
+            SettingsSection(title: "主动心跳助理 (Heartbeat Mode)", icon: "sparkles", iconColor: "9C27B0") {
+                SettingsToggleRow(
+                    icon: "sparkles",
+                    iconColor: viewModel.enableProactiveAssistant ? "34C759" : "9C27B0",
+                    title: "启用主动智能助理",
+                    subtitle: "允许助手在后台定时自我唤醒，检测环境并主动向你发起关怀或自动执行任务",
+                    isOn: Binding(
+                        get: { viewModel.enableProactiveAssistant },
+                        set: { _ in viewModel.toggleProactiveAssistant() }
+                    )
+                )
+                
+                if viewModel.enableProactiveAssistant {
+                    // 心跳检测间隔滑块
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("心跳分析检查频率: \(Int(viewModel.proactiveHeartbeatInterval)) 分钟")
+                                .font(.system(size: 12, weight: .medium))
+                            Spacer()
+                        }
+                        Slider(value: Binding(
+                            get: { viewModel.proactiveHeartbeatInterval },
+                            set: { val in viewModel.updateProactiveHeartbeatInterval(val) }
+                        ), in: 5.0...60.0, step: 5.0)
+                        .tint(Color(hex: "9C27B0"))
+                        
+                        Text("每隔 \(Int(viewModel.proactiveHeartbeatInterval)) 分钟，智能助理将默默收集一次系统运行状态、情绪趋势与日程安排，进行主动意图决策。")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.top, 4)
+                    
+                    Divider().padding(.vertical, 4)
+                    
+                    // 主动触发器细分选择
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("后台心跳监测范围")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.primary)
+                            .padding(.bottom, 2)
+                        
+                        let triggers = [
+                            ("health", "📅 健康作息关怀 (连续工作、熬夜、午休提醒)"),
+                            ("performance", "🖥️ 系统性能监控 (CPU 满载、物理内存溢出警示)"),
+                            ("emotion", "🧠 情绪与心境净化 (根据聊天日志进行 CBT 心理安慰气泡推送)"),
+                            ("workspace", "📁 工作区文件整理 (检测到临时文件堆积时提示自动整理)")
+                        ]
+                        
+                        ForEach(triggers, id: \.0) { triggerId, displayName in
+                            Button(action: { viewModel.toggleProactiveTrigger(triggerId) }) {
+                                HStack {
+                                    Image(systemName: viewModel.proactiveEnabledTriggers.contains(triggerId) ? "checkmark.circle.fill" : "circle")
+                                        .foregroundStyle(viewModel.proactiveEnabledTriggers.contains(triggerId) ? .purple : .secondary)
+                                    Text(displayName)
+                                        .font(.system(size: 11))
+                                    Spacer()
+                                }
+                                .padding(.vertical, 2)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    
+                    Divider().padding(.vertical, 4)
+                    
+                    // 自动执行模式
+                    SettingsToggleRow(
+                        icon: "bolt.fill",
+                        iconColor: viewModel.proactiveAutoExecuteTasks ? "FFCC00" : "8E8E93",
+                        title: "静默执行任务",
+                        subtitle: "开启后，心跳整理工作区时无需向你弹窗确认，直接执行静默归档与清理任务",
+                        isOn: Binding(
+                            get: { viewModel.proactiveAutoExecuteTasks },
+                            set: { _ in viewModel.toggleProactiveAutoExecuteTasks() }
+                        )
+                    )
+                }
+            }
+            
+            if viewModel.enableProactiveAssistant {
+                // 主动助理运行日志卡片
+                SettingsSection(title: "助理心跳活动日志", icon: "doc.text.fill", iconColor: "607D8B") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("后台监测与自动化流水记录")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            
+                            Button("清除日志") {
+                                viewModel.clearProactiveLogs()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            
+                            Button("刷新") {
+                                viewModel.refreshProactiveLogs()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                        
+                        if viewModel.proactiveLogs.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 24))
+                                    .foregroundStyle(.tertiary)
+                                Text("尚无活动日志。启用并等待心跳唤醒或生成主动提醒。")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 120)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.black.opacity(0.12)))
+                        } else {
+                            ScrollView {
+                                LazyVStack(alignment: .leading, spacing: 6) {
+                                    ForEach(viewModel.proactiveLogs.reversed(), id: \.self) { log in
+                                        Text(log)
+                                            .font(.system(size: 11, design: .monospaced))
+                                            .foregroundStyle(.primary)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(0.04)))
+                                    }
+                                }
+                            }
+                            .frame(height: 180)
+                            .padding(4)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.black.opacity(0.12)))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private var pokeIntegrationSection: some View {
         SettingsSection(title: "Poke 集成", icon: "link", iconColor: "00C7BE") {
             VStack(alignment: .leading, spacing: 12) {
@@ -1901,7 +2137,7 @@ struct SettingsView: View {
     }
 
     private var proHumanSettingsSection: some View {
-        SettingsSection(title: "Pro Human 自定义设置", icon: "🌱", iconColor: "34C759") {
+        SettingsSection(title: "Yumiko Claw 自定义设置", icon: "🌱", iconColor: "34C759") {
             VStack(alignment: .leading, spacing: 12) {
                 // 使命重心选择
                 VStack(alignment: .leading, spacing: 6) {
@@ -1943,7 +2179,7 @@ struct SettingsView: View {
                         Image(systemName: "hand.raised.fill")
                             .font(.system(size: 13))
                             .foregroundStyle(Color(hex: "34C759"))
-                        Text("Pro Human 交互风格")
+                        Text("Yumiko Claw 交互风格")
                             .font(.system(size: 13, weight: .medium))
                         Spacer()
                         Picker("", selection: Binding(
@@ -2983,6 +3219,8 @@ final class SettingsViewModel: ObservableObject {
     @Published var selectedFont: AppFont = .cute
     @Published var selectedIconStyle: IconStyle = .pixelAnimal
     @Published var statusBarIconStyle: IconStyle = .originalHattie
+    @Published var statusBarTextMode: StatusBarTextMode = .customTitle
+    @Published var customStatusBarText: String = ""
     @Published var customFontPath: String?
     @Published var selectedSystemFontFamily: String?
     @Published var enablePoke = false
@@ -3068,6 +3306,13 @@ final class SettingsViewModel: ObservableObject {
     @Published var proHumanScreenTimeTherapy: Double = 0.6
     @Published var proHumanCognitiveResistance: Double = 0.5
 
+    // 主动助理设置
+    @Published var enableProactiveAssistant = false
+    @Published var proactiveHeartbeatInterval: Double = 15.0
+    @Published var proactiveAutoExecuteTasks = false
+    @Published var proactiveEnabledTriggers: [String] = ["health", "performance", "emotion", "workspace"]
+    @Published var proactiveLogs: [String] = []
+
     // 技能编辑器状态属性
     @Published var customSkills: [LLMSkill] = []
     @Published var showSkillEditor = false
@@ -3134,6 +3379,10 @@ final class SettingsViewModel: ObservableObject {
         activeSpecialEffect = settings.activeSpecialEffect
         screenshotHotkeyPreset = settings.screenshotHotkeyPreset
         
+        // 读取状态栏文字配置
+        statusBarTextMode = settings.statusBarTextMode
+        customStatusBarText = settings.customStatusBarText
+        
         // 读取上帝模式配置
         godModeEnabled = settings.godModeEnabled
         isLayoutEditingEnabled = settings.isLayoutEditingEnabled
@@ -3178,6 +3427,15 @@ final class SettingsViewModel: ObservableObject {
         proHumanSelfReflectionInterval = settings.proHumanSelfReflectionInterval
         proHumanScreenTimeTherapy = settings.proHumanScreenTimeTherapy
         proHumanCognitiveResistance = settings.proHumanCognitiveResistance
+
+        // 读取主动助理设置
+        enableProactiveAssistant = settings.enableProactiveAssistant
+        proactiveHeartbeatInterval = settings.proactiveHeartbeatInterval
+        proactiveAutoExecuteTasks = settings.proactiveAutoExecuteTasks
+        proactiveEnabledTriggers = settings.proactiveEnabledTriggers
+        if let proactiveAgent = container.proactiveAgentService {
+            proactiveLogs = proactiveAgent.activityLogs
+        }
 
         // 初始化技能列表
         refreshSkillsList()
@@ -3247,6 +3505,11 @@ final class SettingsViewModel: ObservableObject {
                 self.customCornerRadius = updatedSettings.customCornerRadius
                 self.savedColorSchemes = updatedSettings.savedColorSchemes
                 self.activeColorSchemeName = updatedSettings.activeColorSchemeName
+                
+                self.enableProactiveAssistant = updatedSettings.enableProactiveAssistant
+                self.proactiveHeartbeatInterval = updatedSettings.proactiveHeartbeatInterval
+                self.proactiveAutoExecuteTasks = updatedSettings.proactiveAutoExecuteTasks
+                self.proactiveEnabledTriggers = updatedSettings.proactiveEnabledTriggers
             }
             .store(in: &cancellables)
     }
@@ -3309,6 +3572,67 @@ final class SettingsViewModel: ObservableObject {
         LoggerService.shared.info("System custom font family changed to: \(trimmed)")
     }
     
+    // MARK: - 主动式助理设置 (Proactive Assistant)
+    
+    func toggleProactiveAssistant() {
+        enableProactiveAssistant.toggle()
+        var settings = container.settingsService.settings
+        settings.enableProactiveAssistant = enableProactiveAssistant
+        container.settingsService.updateSettings(settings)
+        
+        // 唤起或暂停心跳服务
+        if enableProactiveAssistant {
+            container.proactiveAgentService?.startService()
+        } else {
+            container.proactiveAgentService?.stopService()
+        }
+        
+        LoggerService.shared.info("Proactive assistant toggled to: \(enableProactiveAssistant)")
+    }
+    
+    func updateProactiveHeartbeatInterval(_ val: Double) {
+        proactiveHeartbeatInterval = val
+        var settings = container.settingsService.settings
+        settings.proactiveHeartbeatInterval = val
+        container.settingsService.updateSettings(settings)
+        
+        // 重置心跳计时器
+        container.proactiveAgentService?.restartTimer()
+        
+        LoggerService.shared.info("Proactive heartbeat interval updated to: \(val) minutes")
+    }
+    
+    func toggleProactiveAutoExecuteTasks() {
+        proactiveAutoExecuteTasks.toggle()
+        var settings = container.settingsService.settings
+        settings.proactiveAutoExecuteTasks = proactiveAutoExecuteTasks
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Proactive auto execute tasks toggled to: \(proactiveAutoExecuteTasks)")
+    }
+    
+    func toggleProactiveTrigger(_ trigger: String) {
+        if proactiveEnabledTriggers.contains(trigger) {
+            proactiveEnabledTriggers.removeAll(where: { $0 == trigger })
+        } else {
+            proactiveEnabledTriggers.append(trigger)
+        }
+        var settings = container.settingsService.settings
+        settings.proactiveEnabledTriggers = proactiveEnabledTriggers
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Proactive trigger \(trigger) toggled")
+    }
+    
+    func refreshProactiveLogs() {
+        if let proactiveAgent = container.proactiveAgentService {
+            proactiveLogs = proactiveAgent.activityLogs
+        }
+    }
+    
+    func clearProactiveLogs() {
+        container.proactiveAgentService?.clearLogs()
+        proactiveLogs = []
+    }
+    
     func toggleEnablePoke() {
         enablePoke.toggle()
         var settings = container.settingsService.settings
@@ -3340,6 +3664,21 @@ final class SettingsViewModel: ObservableObject {
         settings.statusBarIconStyle = style
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("Status bar icon style changed to: \(style.displayName)")
+    }
+    
+    func selectStatusBarTextMode(_ mode: StatusBarTextMode) {
+        statusBarTextMode = mode
+        var settings = container.settingsService.settings
+        settings.statusBarTextMode = mode
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Status bar text mode changed to: \(mode.displayName)")
+    }
+    
+    func updateCustomStatusBarText(_ text: String) {
+        customStatusBarText = text
+        var settings = container.settingsService.settings
+        settings.customStatusBarText = text
+        container.settingsService.updateSettings(settings)
     }
     
     func selectNTPServer(_ preset: NTPServerPreset) {
@@ -4376,6 +4715,43 @@ private struct ComponentCustomizationPanel: View {
     }
 }
 
+// MARK: - 可点击变量标签
+
+struct VariableTag: View {
+    let name: String
+    let description: String
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(name, forType: .string)
+        }) {
+            HStack(spacing: 3) {
+                Text(name)
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color(hex: "FF6B9D"))
+                Text(description)
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(isHovered ? Color(hex: "FF6B9D").opacity(0.15) : Color.primary.opacity(0.05))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(Color(hex: "FF6B9D").opacity(isHovered ? 0.4 : 0.2), lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help("点击复制 \(name) 到剪贴板")
+    }
+}
 
 // MARK: - Font Picker Error
 

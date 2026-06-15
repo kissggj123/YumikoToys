@@ -13,6 +13,7 @@
 
 import Foundation
 import Combine
+import WidgetKit
 
 @MainActor
 final class AnniversaryService: AnniversaryServiceProtocol {
@@ -55,6 +56,8 @@ final class AnniversaryService: AnniversaryServiceProtocol {
     
     private var updateTimer: Timer?
     private var lastMinute = -1  // 追踪分钟变化，用于状态栏更新
+    private var lastSyncedDayCount = -1
+    private var lastSyncedAnniversaryId: UUID? = nil
     
     private let storageKey = "yumikotoys.anniversaries"
     private let activeIdKey = "yumikotoys.activeAnniversaryId"
@@ -179,6 +182,7 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         activeAnniversaryInfo = AnniversaryInfo.calculate(from: anniversary, referenceDate: ntpTime)
         activeAnniversaryInfoSubject.send(activeAnniversaryInfo)
         updateStatusBarLine1()
+        syncWidgetData(forceReload: true)
     }
     
     /// 更新状态栏第一行文字
@@ -214,6 +218,25 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         LoggerService.shared.debug("AnniversaryService timer stopped")
     }
     
+    /// 智能同步 Widget 并刷新
+    private func syncWidgetData(forceReload: Bool = false) {
+        guard let anniversary = activeAnniversary else { return }
+        let ntpTime = timeSyncService.currentTime()
+        let calc = AnniversaryInfo.calculateTime(from: anniversary.startDate, referenceDate: ntpTime)
+        let dayCount = Int(calc.totalDays)
+        
+        if forceReload || dayCount != lastSyncedDayCount || anniversary.id != lastSyncedAnniversaryId {
+            lastSyncedDayCount = dayCount
+            lastSyncedAnniversaryId = anniversary.id
+            
+            let milestones = AnniversaryInfo.calculateMilestones(from: anniversary.startDate, referenceDate: ntpTime)
+            writeWidgetSyncData(anniversary: anniversary, calc: calc, milestones: milestones)
+            
+            WidgetCenter.shared.reloadAllTimelines()
+            LoggerService.shared.info("Widget timeline reloaded for: \(anniversary.title)")
+        }
+    }
+    
     /// 每秒触发：计算并推送最新数据
     private func tick() {
         guard let anniversary = activeAnniversary else { 
@@ -247,34 +270,55 @@ final class AnniversaryService: AnniversaryServiceProtocol {
             statusBarTextSubject.send(calc.shortString)
         }
         
-        // 写入 Widget 同步文件
-        writeWidgetSyncData(anniversary: anniversary, calc: calc, milestones: milestones)
+        // 智能更新 Widget
+        syncWidgetData(forceReload: false)
     }
     
     private func writeWidgetSyncData(anniversary: Anniversary, calc: AnniversaryCalculation, milestones: [AnniversaryMilestone]) {
+        let bubbleText = UserDefaults.standard.string(forKey: "YumikoToys_ProactiveBubbleText")
         let name = DependencyContainer.shared.componentLayoutService.currentLayouts.first(where: { $0.type == .daysDisplay })?.customTitle ?? anniversary.displayPetName
         let syncData = WidgetSyncData(
             petName: name,
             avatar: anniversary.displayAvatar,
             startDate: anniversary.startDate,
             totalDays: calc.totalDays,
-            milestones: milestones.map { WidgetMilestone(label: $0.label, date: $0.formattedDate, countDisplay: $0.countDisplay) }
+            milestones: milestones.map { WidgetMilestone(label: $0.label, date: $0.formattedDate, countDisplay: $0.countDisplay) },
+            proactiveBubbleText: bubbleText
         )
         
-        guard let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
-        let folderURL = appSupportURL.appendingPathComponent("com.Lite.YumikoToys")
-        let fileURL = folderURL.appendingPathComponent("widget.json")
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(syncData) else { return }
         
-        do {
-            if !FileManager.default.fileExists(atPath: folderURL.path) {
-                try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
+        // Write to multiple locations for self-signed compatibility
+        let fileManager = FileManager.default
+        var writePaths: [URL] = []
+        
+        // 1. Application Support (primary path)
+        if let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let folderURL = appSupportURL.appendingPathComponent("com.Lite.YumikoToys")
+            writePaths.append(folderURL.appendingPathComponent("widget.json"))
+        }
+        
+        // 2. App Groups shared container (if available)
+        if let sharedContainer = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.Lite.YumikoToys") {
+            writePaths.append(sharedContainer.appendingPathComponent("widget.json"))
+        }
+        
+        // 3. Home directory Application Support (fallback for self-signed)
+        let homeAppSupport = fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/com.Lite.YumikoToys")
+        writePaths.append(homeAppSupport.appendingPathComponent("widget.json"))
+        
+        for fileURL in writePaths {
+            let folderURL = fileURL.deletingLastPathComponent()
+            do {
+                if !fileManager.fileExists(atPath: folderURL.path) {
+                    try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
+                }
+                try data.write(to: fileURL)
+            } catch {
+                // Continue to next path
             }
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            let data = try encoder.encode(syncData)
-            try data.write(to: fileURL)
-        } catch {
-            LoggerService.shared.error("Failed to write widget sync data: \(error)")
         }
     }
     
@@ -339,6 +383,7 @@ struct WidgetSyncData: Codable {
     let startDate: Date
     let totalDays: Double
     let milestones: [WidgetMilestone]
+    let proactiveBubbleText: String?
 }
 
 struct WidgetMilestone: Codable {

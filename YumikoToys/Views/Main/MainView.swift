@@ -109,6 +109,18 @@ struct MainView: View {
                     .padding(.bottom, 16)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+                
+                // Resize handle overlay — only active in god mode
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        WindowResizeHandle(onDrag: { deltaWidth, deltaHeight in
+                            self.changeWindowSize(widthDelta: deltaWidth, heightDelta: deltaHeight)
+                        })
+                    }
+                }
+                .allowsHitTesting(viewModel.godModeEnabled)
             }
             .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
             
@@ -148,9 +160,6 @@ struct MainView: View {
             self.adjustMainWindowSize(layouts: layouts)
         }
         .onReceive(viewModel.$godModeEnabled) { _ in
-            self.adjustMainWindowSize(layouts: viewModel.componentLayouts)
-        }
-        .onChange(of: viewModel.isLayoutEditingEnabled) { oldValue, newValue in
             self.adjustMainWindowSize(layouts: viewModel.componentLayouts)
         }
     }
@@ -269,6 +278,7 @@ struct DaysDisplayCard: View {
     @State private var isHovered = false
     @State private var pulseAnimation = false
     @State private var hoveredElement: CopyableElement?
+    @State private var showPetInfoPopover = false
     
     enum CopyableElement: String {
         case days = "天数"
@@ -366,13 +376,29 @@ struct DaysDisplayCard: View {
                     }
                     
                     if let customTitle = layout?.customTitle, !customTitle.isEmpty {
-                        Button(action: {}) {
+                        Button(action: { showPetInfoPopover.toggle() }) {
                             Image(systemName: "info.circle")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
-                        .help("原始宠物名: \(info.anniversary.displayPetName)")
+                        .popover(isPresented: $showPetInfoPopover, arrowEdge: .bottom) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("原始宠物名")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                Text(info.anniversary.displayPetName)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                if !customTitle.isEmpty {
+                                    Text("自定义标题: \(customTitle)")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(10)
+                        }
+                        .help("查看原始宠物名")
                     }
                     
                     Spacer()
@@ -2525,8 +2551,13 @@ struct GodModeCardContainer<Content: View>: View {
         let finalOffsetX = offsetX + Double(dragOffset.width)
         let finalOffsetY = offsetY + Double(dragOffset.height)
         
+        let widthRatio = targetWidth / currentWidth
+        let heightRatio = CGFloat(targetHeight) / defaultHeight
+        let contentScale = min(widthRatio, heightRatio)
+        
         return ZStack {
             content
+                .scaleEffect(contentScale, anchor: .topLeading)
                 .frame(width: targetWidth)
                 .frame(height: layout.customHeight != nil || activeResizeEdge != nil || activeResizeCorner != nil ? CGFloat(targetHeight) : nil)
                 .clipped()
@@ -2818,31 +2849,114 @@ struct FloatingLayoutToolbar: View {
     let onSave: () -> Void
     let onChangeSize: (CGFloat, CGFloat) -> Void
     
+    // Window size sliders state - initialized from current window
+    @State private var windowWidth: CGFloat = 560
+    @State private var windowHeight: CGFloat = 700
+    @State private var contentScale: CGFloat = 1.0
+    
+    private var currentWindow: NSWindow? {
+        DependencyContainer.shared.windowManager.getWindow(.main)
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            // Header row
             HStack(spacing: 12) {
                 Image(systemName: "wand.and.stars")
                     .foregroundStyle(viewModel.resolvedTheme.accentColor)
                     .font(.system(size: 14, weight: .bold))
                 
-                Text("上帝模式布局控制")
+                Text("布局编辑器")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.primary)
                 
                 Spacer()
                 
-                // 启用/锁定编辑 Toggle
-                Toggle(isEditing ? "正在编辑" : "已锁定", isOn: $isEditing)
+                // Auto layout button
+                Button(action: autoLayout) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 10))
+                        Text("自动")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(viewModel.resolvedTheme.accentColor))
+                }
+                .buttonStyle(.plain)
+                .help("根据内容自动计算最优窗口大小")
+                
+                Toggle(isEditing ? "编辑中" : "已锁定", isOn: $isEditing)
                     .toggleStyle(.checkbox)
                     .font(.system(size: 11))
             }
             
             if isEditing {
-                Divider()
-                    .background(Color.primary.opacity(0.1))
+                Divider().background(Color.primary.opacity(0.1))
                 
-                HStack(spacing: 12) {
-                    // 重置布局
+                // Window size sliders
+                VStack(spacing: 8) {
+                    // Width slider
+                    HStack(spacing: 8) {
+                        Text("宽")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, alignment: .trailing)
+                        
+                        Slider(value: $windowWidth, in: 460...1200, step: 10) { editing in
+                            if !editing { applyWindowSize() }
+                        }
+                        .onChange(of: windowWidth) { _ in applyWindowSize() }
+                        
+                        Text("\(Int(windowWidth))")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 36, alignment: .trailing)
+                    }
+                    
+                    // Height slider
+                    HStack(spacing: 8) {
+                        Text("高")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, alignment: .trailing)
+                        
+                        Slider(value: $windowHeight, in: 450...1200, step: 10) { editing in
+                            if !editing { applyWindowSize() }
+                        }
+                        .onChange(of: windowHeight) { _ in applyWindowSize() }
+                        
+                        Text("\(Int(windowHeight))")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 36, alignment: .trailing)
+                    }
+                    
+                    // Content scale slider
+                    HStack(spacing: 8) {
+                        Text("缩放")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, alignment: .trailing)
+                        
+                        Slider(value: $contentScale, in: 0.7...1.5, step: 0.05)
+                            .onChange(of: contentScale) { newScale in
+                                applyContentScale(newScale)
+                            }
+                        
+                        Text(String(format: "%.0f%%", contentScale * 100))
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 36, alignment: .trailing)
+                    }
+                }
+                
+                Divider().background(Color.primary.opacity(0.1))
+                
+                // Action buttons
+                HStack(spacing: 8) {
                     Button(action: onReset) {
                         HStack(spacing: 4) {
                             Image(systemName: "arrow.counterclockwise")
@@ -2856,11 +2970,10 @@ struct FloatingLayoutToolbar: View {
                     }
                     .buttonStyle(.plain)
                     
-                    // 保存布局
                     Button(action: onSave) {
                         HStack(spacing: 4) {
                             Image(systemName: "checkmark.circle")
-                            Text("保存")
+                            Text("完成")
                         }
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.white)
@@ -2872,45 +2985,14 @@ struct FloatingLayoutToolbar: View {
                     
                     Spacer()
                     
-                    // 手动调整窗体大小
-                    HStack(spacing: 8) {
-                        Text("窗体:")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                        
-                        HStack(spacing: 2) {
-                            Text("宽")
-                                .font(.system(size: 9))
-                                .foregroundStyle(.tertiary)
-                            Button(action: { onChangeSize(-20, 0) }) {
-                                Image(systemName: "minus.square")
-                            }
-                            .buttonStyle(.plain)
-                            Button(action: { onChangeSize(20, 0) }) {
-                                Image(systemName: "plus.square")
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        
-                        HStack(spacing: 2) {
-                            Text("高")
-                                .font(.system(size: 9))
-                                .foregroundStyle(.tertiary)
-                            Button(action: { onChangeSize(0, -20) }) {
-                                Image(systemName: "minus.square")
-                            }
-                            .buttonStyle(.plain)
-                            Button(action: { onChangeSize(0, 20) }) {
-                                Image(systemName: "plus.square")
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
+                    Text("\(Int(windowWidth)) × \(Int(windowHeight))")
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundStyle(.tertiary)
                 }
             }
         }
         .padding(12)
-        .frame(width: 364)
+        .frame(maxWidth: .infinity)
         .background(.ultraThinMaterial)
         .cornerRadius(12)
         .overlay(
@@ -2918,6 +3000,119 @@ struct FloatingLayoutToolbar: View {
                 .stroke(Color.primary.opacity(0.12), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .onAppear {
+            // Initialize from current window size
+            if let window = currentWindow {
+                windowWidth = window.frame.width
+                windowHeight = window.frame.height
+            }
+            // Initialize content scale from first layout
+            contentScale = CGFloat(viewModel.componentLayouts.first?.customFontSizeScale ?? 1.0)
+        }
+    }
+    
+    private func applyWindowSize() {
+        UserDefaults.standard.set(Double(windowWidth), forKey: "customWindowWidth")
+        UserDefaults.standard.set(Double(windowHeight), forKey: "customWindowHeight")
+        onChangeSize(0, 0) // Trigger re-layout notification
+        
+        guard let window = currentWindow else { return }
+        let currentFrame = window.frame
+        let newX = currentFrame.minX
+        let newY = currentFrame.maxY - windowHeight
+        let newFrame = NSRect(x: newX, y: newY, width: windowWidth, height: windowHeight)
+        window.contentMinSize = NSSize(width: 460, height: 450)
+        window.contentMaxSize = NSSize(width: 2000, height: 2000)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.15
+            window.animator().setFrame(newFrame, display: true)
+        }
+    }
+    
+    private func autoLayout() {
+        // Clear custom size, let adjustMainWindowSize recalculate
+        UserDefaults.standard.removeObject(forKey: "customWindowWidth")
+        UserDefaults.standard.removeObject(forKey: "customWindowHeight")
+        
+        let visibleLayouts = ComponentLayout.visible(viewModel.componentLayouts)
+        let maxWidthScale = visibleLayouts.map { $0.customWidthScale ?? 1.0 }.max() ?? 1.0
+        let newWidth = max(520, 364 * CGFloat(maxWidthScale) + 56 + 72)
+        
+        var heights: [CGFloat] = []
+        for layout in visibleLayouts {
+            let defaultH: CGFloat
+            switch layout.type {
+            case .header: defaultH = 60
+            case .daysDisplay: defaultH = 230
+            case .backgroundLearning: defaultH = 180
+            case .modelStatus: defaultH = 150
+            }
+            heights.append(CGFloat(layout.customHeight ?? Double(defaultH)))
+        }
+        let totalSpacing = heights.isEmpty ? CGFloat(0) : CGFloat(heights.count - 1) * 24
+        let newHeight = max(580, heights.reduce(0, +) + totalSpacing + 28 + 100)
+        
+        windowWidth = newWidth
+        windowHeight = newHeight
+        applyWindowSize()
+    }
+    
+    private func applyContentScale(_ scale: CGFloat) {
+        var updatedLayouts = viewModel.componentLayouts
+        for i in updatedLayouts.indices {
+            updatedLayouts[i].customFontSizeScale = Double(scale)
+        }
+        viewModel.componentLayouts = updatedLayouts
+        for layout in updatedLayouts {
+            viewModel.updateComponentLayout(layout)
+        }
+    }
+}
+
+// MARK: - 窗口拖拽缩放手柄
+struct WindowResizeHandle: View {
+    let onDrag: (CGFloat, CGFloat) -> Void
+    @State private var isHovered = false
+    @State private var lastDragLocation: CGPoint? = nil
+    
+    var body: some View {
+        ZStack {
+            Canvas { context, size in
+                let spacing: CGFloat = 4
+                for i in 0..<3 {
+                    let offset = CGFloat(i) * spacing
+                    var path = Path()
+                    path.move(to: CGPoint(x: size.width - offset, y: size.height))
+                    path.addLine(to: CGPoint(x: size.width, y: size.height - offset))
+                    context.stroke(path, with: .color(.primary.opacity(isHovered ? 0.6 : 0.25)), lineWidth: 1)
+                }
+            }
+            .frame(width: 20, height: 20)
+        }
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering {
+                NSCursor.crosshair.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                .onChanged { value in
+                    if let last = lastDragLocation {
+                        let dx = value.location.x - last.x
+                        let dy = -(value.location.y - last.y) // Invert Y for macOS coordinates
+                        onDrag(dx, dy)
+                    }
+                    lastDragLocation = value.location
+                }
+                .onEnded { _ in
+                    lastDragLocation = nil
+                }
+        )
+        .padding(8)
     }
 }
 

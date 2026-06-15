@@ -86,6 +86,7 @@
 		FC6552E12FC373980093B726 /* ModelStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552832FC373980093B726 /* ModelStatusCard.swift */; };
 		FC6552E22FC373980093B726 /* AdvancedFeaturesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */; };
 		FC6552E32FC373980093B726 /* ComponentLayoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552482FC373980093B726 /* ComponentLayoutService.swift */; };
+		FC655A012FC373980093B726 /* ProactiveAgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC655A022FC373980093B726 /* ProactiveAgentService.swift */; };
 		FC6552E42FC373980093B726 /* MessageContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527F2FC373980093B726 /* MessageContextMenu.swift */; };
 		FC6552E52FC373980093B726 /* DataStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524A2FC373980093B726 /* DataStorageService.swift */; };
 		FC6552E62FC373980093B726 /* UserAvatarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525F2FC373980093B726 /* UserAvatarService.swift */; };
@@ -274,6 +275,7 @@
 		FC6552462FC373980093B726 /* AppPromptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPromptService.swift; sourceTree = "<group>"; };
 		FC6552472FC373980093B726 /* BackgroundLearningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundLearningService.swift; sourceTree = "<group>"; };
 		FC6552482FC373980093B726 /* ComponentLayoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayoutService.swift; sourceTree = "<group>"; };
+		FC655A022FC373980093B726 /* ProactiveAgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProactiveAgentService.swift; sourceTree = "<group>"; };
 		FC6552492FC373980093B726 /* DataExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportService.swift; sourceTree = "<group>"; };
 		FC65524A2FC373980093B726 /* DataStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStorageService.swift; sourceTree = "<group>"; };
 		FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedWebSearchService.swift; sourceTree = "<group>"; };
@@ -620,6 +622,7 @@
 				FC6552462FC373980093B726 /* AppPromptService.swift */,
 				FC6552472FC373980093B726 /* BackgroundLearningService.swift */,
 				FC6552482FC373980093B726 /* ComponentLayoutService.swift */,
+				FC655A022FC373980093B726 /* ProactiveAgentService.swift */,
 				FC6552492FC373980093B726 /* DataExportService.swift */,
 				FC65524A2FC373980093B726 /* DataStorageService.swift */,
 				FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */,
@@ -1095,6 +1098,7 @@
 				FC6552E12FC373980093B726 /* ModelStatusCard.swift in Sources */,
 				FC6552E22FC373980093B726 /* AdvancedFeaturesService.swift in Sources */,
 				FC6552E32FC373980093B726 /* ComponentLayoutService.swift in Sources */,
+				FC655A012FC373980093B726 /* ProactiveAgentService.swift in Sources */,
 				FC6552E42FC373980093B726 /* MessageContextMenu.swift in Sources */,
 				FC6552E52FC373980093B726 /* DataStorageService.swift in Sources */,
 				FC6552E62FC373980093B726 /* UserAvatarService.swift in Sources */,
@@ -1437,6 +1441,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_ENTITLEMENTS = YumikoWidget/YumikoWidget.entitlements;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -1496,6 +1501,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_ENTITLEMENTS = YumikoWidget/YumikoWidget.entitlements;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";

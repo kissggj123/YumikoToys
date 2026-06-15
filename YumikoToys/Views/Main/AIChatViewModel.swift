@@ -412,10 +412,19 @@ final class AIChatViewModel: ObservableObject {
         let usePreInjectedSearch: Bool
     }
 
-    func resolveModelAndCapabilities() -> ResolvedCapabilities {
+    func resolveModelAndCapabilities(
+        deepThinking: Bool? = nil,
+        webSearch: Bool? = nil,
+        agentMode: Bool? = nil
+    ) -> ResolvedCapabilities {
+        let isPoke = currentProvider == .poke
+        let inputDeepThinking = deepThinking ?? enableDeepThinking
+        let inputWebSearch = webSearch ?? enableWebSearch
+        let inputAgentMode = agentMode ?? enableAgentMode
+
         var resolvedModel = currentModel
         let providerName = "\(currentProvider)".lowercased()
-        if providerName.contains("deepseek") && enableDeepThinking
+        if providerName.contains("deepseek") && inputDeepThinking
             && resolvedModel == "deepseek-chat"
         {
             resolvedModel = "deepseek-reasoner"
@@ -424,18 +433,22 @@ final class AIChatViewModel: ObservableObject {
         let mLower = resolvedModel.lowercased()
         let isReasoningModel = mLower.contains("thinking") || mLower.contains("think") || mLower.contains("reasoner") || mLower.contains("r1")
         
-        var resolvedAgentMode = enableAgentMode
-        if isReasoningModel || currentProvider == .poke {
+        // Mutual exclusion: reasoning models cannot use agent tools
+        var resolvedAgentMode = inputAgentMode
+        if isReasoningModel || isPoke {
             resolvedAgentMode = false
         }
         
-        let usePreInjectedSearch = enableWebSearch && !resolvedAgentMode && currentProvider != .poke
+        // Mutual exclusion: agent mode disables pre-injected search
+        let resolvedWebSearch = isPoke ? false : inputWebSearch
+        let resolvedDeepThinking = isPoke ? false : inputDeepThinking
+        let usePreInjectedSearch = resolvedWebSearch && !resolvedAgentMode && !isPoke
         
         return ResolvedCapabilities(
             model: resolvedModel,
-            enableThinking: currentProvider == .poke ? false : enableDeepThinking,
+            enableThinking: resolvedDeepThinking,
             enableAgentMode: resolvedAgentMode,
-            enableWebSearch: currentProvider == .poke ? false : enableWebSearch,
+            enableWebSearch: resolvedWebSearch,
             usePreInjectedSearch: usePreInjectedSearch
         )
     }
@@ -509,16 +522,22 @@ final class AIChatViewModel: ObservableObject {
                 let requiresDeepThinking = queryLower.contains("为什么") || queryLower.contains("分析") || queryLower.contains("设计") || queryLower.contains("架构") || queryLower.contains("怎么")
                 
                 let isPoke = activeProvider == .poke
+                // Auto-enable agent mode when conversation is linked to an agent with skills
+                let conversationHasAgent = self.conversationService?.conversations.first(where: { $0.id == currentId })?.agentId != nil
                 let finalWebSearch = !isPoke && (enableWebSearch || requiresSearch)
-                let finalAgentMode = !isPoke && (enableAgentMode || requiresAgent)
+                let finalAgentMode = !isPoke && (enableAgentMode || requiresAgent || conversationHasAgent)
                 let finalDeepThinking = !isPoke && (enableDeepThinking || requiresDeepThinking)
 
-                let resolved = self.resolveModelAndCapabilities()
+                let resolved = self.resolveModelAndCapabilities(
+                    deepThinking: finalDeepThinking,
+                    webSearch: finalWebSearch,
+                    agentMode: finalAgentMode
+                )
                 var activeModel = resolved.model
-                let enableThinking = finalDeepThinking
-                let enableAgentMode = finalAgentMode
-                let enableWebSearch = finalWebSearch
-                let usePreInjectedSearch = enableWebSearch && !enableAgentMode && !isPoke
+                let enableThinking = resolved.enableThinking
+                let enableAgentMode = resolved.enableAgentMode
+                let enableWebSearch = resolved.enableWebSearch
+                let usePreInjectedSearch = resolved.usePreInjectedSearch
 
                 defer {
                     if !shouldAutoPlay {
@@ -733,8 +752,7 @@ final class AIChatViewModel: ObservableObject {
                                         
                                         let allSkills = SkillService.shared.getAllSkills()
                                         for skillName in agent.selectedSkillNames {
-                                            if let skill = allSkills.first(where: { $0.name == skillName }),
-                                               skill.scriptType != "openclaw" {
+                                            if let skill = allSkills.first(where: { $0.name == skillName }) {
                                                 if let data = skill.parametersJSON.data(using: .utf8),
                                                    let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                                                     activeTools.append(AgentToolDefinition(
@@ -1046,27 +1064,23 @@ final class AIChatViewModel: ObservableObject {
     private func importSkillFromURL(url: URL, agentId: String?) async -> SkillImportResult {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-            let skillName = url.deletingPathExtension().lastPathComponent
             let ext = url.pathExtension.lowercased()
 
+            if ext == "zip" {
+                return await importSkillFromZipData(data, originalURL: url, agentId: agentId)
+            }
+
+            let skillName = url.deletingPathExtension().lastPathComponent
+
             if ext == "json" {
-                // Parse as LLMSkill JSON
                 if let skill = try? JSONDecoder().decode(LLMSkill.self, from: data) {
                     SkillService.shared.addOrUpdateSkill(skill)
-                    // Auto-bind to current agent if provided
-                    if let agentId = agentId,
-                       let agentIdx = AgentManagerService.shared.customAgents.firstIndex(where: { $0.id == agentId }) {
-                        if !AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.contains(skill.name) {
-                            AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.append(skill.name)
-                            AgentManagerService.shared.saveAgents()
-                        }
-                    }
+                    bindSkillToAgent(skillName: skill.name, agentId: agentId)
                     return SkillImportResult(success: true, message: "✅ 技能「\(skill.name)」已成功导入并绑定至当前智能体。")
                 } else {
                     return SkillImportResult(success: false, message: "⚠️ 技能 JSON 格式无法解析，请确认文件格式正确。")
                 }
             } else if ext == "md" {
-                // Treat markdown content as a skill script
                 let content = String(data: data, encoding: .utf8) ?? ""
                 let skill = LLMSkill(
                     name: skillName,
@@ -1076,19 +1090,98 @@ final class AIChatViewModel: ObservableObject {
                     scriptContent: content
                 )
                 SkillService.shared.addOrUpdateSkill(skill)
-                if let agentId = agentId,
-                   let agentIdx = AgentManagerService.shared.customAgents.firstIndex(where: { $0.id == agentId }) {
-                    if !AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.contains(skillName) {
-                        AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.append(skillName)
-                        AgentManagerService.shared.saveAgents()
-                    }
-                }
+                bindSkillToAgent(skillName: skillName, agentId: agentId)
                 return SkillImportResult(success: true, message: "✅ 技能「\(skillName)」(Markdown) 已成功导入。")
             } else {
-                return SkillImportResult(success: false, message: "⚠️ 链接格式不支持自动导入（需要 .json / .md）。")
+                return SkillImportResult(success: false, message: "⚠️ 链接格式不支持自动导入（需要 .json / .md / .zip）。")
             }
         } catch {
             return SkillImportResult(success: false, message: "❌ 技能导入失败：\(error.localizedDescription)")
+        }
+    }
+
+    private func importSkillFromZipData(_ data: Data, originalURL: URL, agentId: String?) async -> SkillImportResult {
+        let tmpDir = FileManager.default.temporaryDirectory.appendingPathComponent("skill_zip_\(UUID().uuidString)")
+        do {
+            try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
+            let zipPath = tmpDir.appendingPathComponent("skill.zip")
+            try data.write(to: zipPath)
+
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+            process.arguments = ["-o", zipPath.path, "-d", tmpDir.path]
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            process.standardError = pipe
+            try process.run()
+            process.waitUntilExit()
+
+            guard process.terminationStatus == 0 else {
+                try? FileManager.default.removeItem(at: tmpDir)
+                return SkillImportResult(success: false, message: "⚠️ ZIP 文件解压失败，请确认文件格式正确。")
+            }
+
+            let importedNames = try importSkillsFromDirectory(tmpDir, agentId: agentId)
+            try? FileManager.default.removeItem(at: tmpDir)
+
+            if importedNames.isEmpty {
+                return SkillImportResult(success: false, message: "⚠️ ZIP 中未找到可导入的技能文件（.json / .md）。")
+            }
+            return SkillImportResult(success: true, message: "✅ 从 ZIP 中成功导入 \(importedNames.count) 个技能：\(importedNames.joined(separator: "、"))")
+        } catch {
+            try? FileManager.default.removeItem(at: tmpDir)
+            return SkillImportResult(success: false, message: "❌ ZIP 技能导入失败：\(error.localizedDescription)")
+        }
+    }
+
+    private func importSkillsFromDirectory(_ dir: URL, agentId: String?) throws -> [String] {
+        let fm = FileManager.default
+        var importedNames: [String] = []
+
+        func scanDirectory(_ directory: URL) throws {
+            let contents = try fm.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil
+            )
+            for item in contents {
+                let ext = item.pathExtension.lowercased()
+                if ext == "json" {
+                    if let data = try? Data(contentsOf: item),
+                       let skill = try? JSONDecoder().decode(LLMSkill.self, from: data) {
+                        SkillService.shared.addOrUpdateSkill(skill)
+                        bindSkillToAgent(skillName: skill.name, agentId: agentId)
+                        importedNames.append(skill.name)
+                    }
+                } else if ext == "md" {
+                    if let data = try? Data(contentsOf: item),
+                       let content = String(data: data, encoding: .utf8) {
+                        let skillName = item.deletingPathExtension().lastPathComponent
+                        let skill = LLMSkill(
+                            name: skillName,
+                            description: "从 ZIP 导入的技能: \(item.lastPathComponent)",
+                            parametersJSON: "{}",
+                            scriptType: "yumiscript",
+                            scriptContent: content
+                        )
+                        SkillService.shared.addOrUpdateSkill(skill)
+                        bindSkillToAgent(skillName: skillName, agentId: agentId)
+                        importedNames.append(skillName)
+                    }
+                } else if item.hasDirectoryPath {
+                    try scanDirectory(item)
+                }
+            }
+        }
+        try scanDirectory(dir)
+        return importedNames
+    }
+
+    private func bindSkillToAgent(skillName: String, agentId: String?) {
+        guard let agentId = agentId,
+              let agentIdx = AgentManagerService.shared.customAgents.firstIndex(where: { $0.id == agentId }) else { return }
+        if !AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.contains(skillName) {
+            AgentManagerService.shared.customAgents[agentIdx].selectedSkillNames.append(skillName)
+            AgentManagerService.shared.saveAgents()
         }
     }
 
@@ -1615,6 +1708,52 @@ final class AIChatViewModel: ObservableObject {
             }
         case .aiAssistant:
             prompt = buildAssistantPrompt(resolvedAgentMode: resolvedAgentMode)
+            let settings = container.settingsService.settings
+            if settings.enablePsychologyParams && (embeddingService.isModelLoaded || sentimentService.isModelLoaded) {
+                do {
+                    async let cbtDiagnosis =
+                        embeddingService.isModelLoaded
+                        ? try? embeddingService.diagnoseCognitiveDistortion(
+                            text: userQuery,
+                            threshold: 0.62
+                        ) : nil
+                    async let sentimentResult =
+                        sentimentService.isModelLoaded
+                        ? try? sentimentService.analyze(text: userQuery) : nil
+                    async let trendResult =
+                        sentimentService.isModelLoaded
+                        ? try? sentimentService.analyzeConversationTrend(
+                            messages: Array(messages.suffix(10))
+                        ) : nil
+
+                    let (cbt, sentiment, trend) = await (
+                        cbtDiagnosis, sentimentResult, trendResult
+                    )
+                    var diagnosticReport = ""
+
+                    if let cbt = cbt, let distortion = cbt.distortion {
+                        diagnosticReport +=
+                            "\n- **认知失调特征**：当前提问高度共鸣【\(distortion)】"
+                    }
+                    if let sentiment = sentiment {
+                        diagnosticReport +=
+                            "\n- **瞬时情绪极性**：\(sentiment.sentiment.displayName) \(sentiment.sentiment.emoji) (置信度: \(String(format: "%.1f", sentiment.confidence * 100))%)"
+                    }
+                    if let trend = trend {
+                        diagnosticReport +=
+                            "\n- **近期心境走向**：整体心境呈【\(trend.overallSentiment.emoji) \(trend.trendDirection == .improving ? "好转" : (trend.trendDirection == .declining ? "恶化" : "稳定"))】趋势"
+                        diagnosticReport +=
+                            "\n- **情绪稳定性指数**：\(String(format: "%.2f", trend.affectiveStability)) (起伏状态: \(trend.affectiveStability > 0.7 ? "心境平稳" : "剧烈起伏震荡"))"
+                        diagnosticReport +=
+                            "\n- **多维心理干预建议**：\n\(trend.psychologicalInsight)"
+                    }
+
+                    if !diagnosticReport.isEmpty {
+                        prompt +=
+                            "\n\n# [本地双轨 MLX 心理学诊断报告]\n\(diagnosticReport)\n\n- **自适应响应共情要求**：请结合上述本地端侧心理学诊断报告与各项真实指标，在回复中以符合你当前选定的【\(settings.selectedPsychologyPersona.displayName)】心理专家角色和选定学派（\(settings.selectedPsychologyTheory.displayName)）的方式对用户展开高品质共情与干预引导。不要生硬背诵诊断学术语，而是要将这些认知调整与情感关注无形地融入在你的专业关怀中。"
+                    }
+                } catch {}
+            }
         }
 
         if resolvedWebSearch {
@@ -1690,14 +1829,34 @@ final class AIChatViewModel: ObservableObject {
     private func buildAssistantPrompt(resolvedAgentMode: Bool) -> String {
         let settings = container.settingsService.settings
         let config = settings.assistantConfig
-        var prompt = !config.customSystemPrompt.isEmpty ? config.customSystemPrompt : AppPromptService.shared.defaultAssistantPrompt()
+
+        // Check if the current conversation is linked to an agent with its own system prompt
+        var agentSystemPrompt = ""
+        var agentSkillList: [String] = []
+        if resolvedAgentMode,
+           let currentId = currentConversationId,
+           let conversation = conversationService?.conversations.first(where: { $0.id == currentId }),
+           let agentId = conversation.agentId,
+           let agent = AgentManagerService.shared.customAgents.first(where: { $0.id == agentId }) {
+            agentSystemPrompt = agent.systemPrompt
+            agentSkillList = agent.selectedSkillNames
+        }
+
+        var prompt: String
+        if !agentSystemPrompt.isEmpty {
+            prompt = agentSystemPrompt
+        } else if !config.customSystemPrompt.isEmpty {
+            prompt = config.customSystemPrompt
+        } else {
+            prompt = AppPromptService.shared.defaultAssistantPrompt()
+        }
         
-        // 如果自定义提示词为空，则动态追加用户在 Pro Human 设置中配置的参数
-        if config.customSystemPrompt.isEmpty {
+        // 如果自定义提示词为空且没有 Agent 自定义提示词，则动态追加 Yumiko Claw 参数
+        if config.customSystemPrompt.isEmpty && agentSystemPrompt.isEmpty {
             let focus = settings.proHumanMissionFocus
             let style = settings.proHumanInteractionStyle
             
-            prompt += "\n\n## [Pro Human 运行指令调整]\n"
+            prompt += "\n\n## [Yumiko Claw 运行指令调整]\n"
             prompt += "- **使命重心配置**：\(focus.displayName)\n"
             prompt += "  指导要求：\(focus.promptSnippet)\n"
             prompt += "- **交互风格配置**：\(style.displayName)\n"
@@ -1707,10 +1866,44 @@ final class AIChatViewModel: ObservableObject {
             if !customTriangle.isEmpty {
                 prompt += "- **自定义极简三角准则**：\n\(customTriangle)\n"
             }
+            
+            // 强化 Pro Human 高级心理伴侣身份
+            if settings.enablePsychologyParams {
+                let theory = settings.selectedPsychologyTheory
+                let persona = settings.selectedPsychologyPersona
+                
+                prompt += "\n\n## [Pro Human 高级心理模式激活]\n"
+                prompt += "你当前已激活【Pro Human 高级心理咨询与陪伴模式】。\n"
+                prompt += "- **心理咨询师身份**：【\(persona.displayName)】（\(persona.subtitle)）\n"
+                prompt += "  咨询指导指令：\(persona.promptInstruction)\n"
+                prompt += "- **学派支撑风格**：基于【\(theory.displayName)】学派展开互动与剖析。学派理念：\(theory.description)\n"
+                prompt += "  请遵循该理论的核心机制，将其融入到你对用户的共情、对话、引导和剖析中。\n"
+                prompt += "- **心理陪伴核心准则**：\n"
+                prompt += "  1. **积极共情与情绪接纳 (Empathy & Validation)**: 当用户倾诉消极情绪时，必须在给出建议前，先进行真诚温暖的情绪确认与接纳。\n"
+                prompt += "  2. **无条件积极关注 (Unconditional Positive Regard)**: 营造一个“绝对包容、无道德评价、无逻辑评判”的安全表达空间。\n"
+                prompt += "  3. **情绪温和疏理与觉察引导 (Exploration & Soft Framing)**: 温柔地使用开放式发问，引导用户具象化并命名自己的情绪。\n"
+                prompt += "  4. **心智启发与生命哲学探讨 (Existential & Summarization Guidance)**: 探讨深层生命议题时，引导用户从哲学、建设性角度理解生命并接纳痛苦。\n"
+            }
         }
         
         if resolvedAgentMode {
             prompt += AppPromptService.shared.agentModeInstruction()
+
+            // Inject the list of available skill tools into the system prompt
+            if !agentSkillList.isEmpty {
+                let allSkills = SkillService.shared.getAllSkills()
+                let availableSkills = agentSkillList.compactMap { name -> (name: String, desc: String)? in
+                    guard let skill = allSkills.first(where: { $0.name == name }) else { return nil }
+                    return (name: skill.name, desc: skill.description)
+                }
+                if !availableSkills.isEmpty {
+                    prompt += "\n\n## [已绑定技能工具列表]\n"
+                    prompt += "你当前拥有以下已绑定的技能工具，当用户需要时请直接调用：\n"
+                    for skill in availableSkills {
+                        prompt += "- **\(skill.name)**：\(skill.desc)\n"
+                    }
+                }
+            }
         }
         return prompt
     }

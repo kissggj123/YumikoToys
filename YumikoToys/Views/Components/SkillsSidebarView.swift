@@ -433,7 +433,8 @@ struct OpenClawSkillParser {
         let instructions = bodyLines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
         
         if name.isEmpty {
-            name = "imported_skill_" + UUID().uuidString.prefix(6).lowercased()
+            let contentHash = instructions.sha256Hash().prefix(8)
+            name = "imported_skill_\(contentHash)"
         }
         
         return (name: name, description: description, parametersJSON: parametersJSON, instructions: instructions)
