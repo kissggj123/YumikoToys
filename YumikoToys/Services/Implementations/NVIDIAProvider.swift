@@ -99,7 +99,13 @@ final class UniversalLLMProvider: AIProvider {
         let endpoint: String
         let cleanBaseURL = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        if cleanBaseURL.hasSuffix("chat/completions") {
+        if providerType == .ollama {
+            if cleanBaseURL.hasSuffix("/v1") || cleanBaseURL.hasSuffix("/v1/") {
+                endpoint = cleanBaseURL.hasSuffix("/") ? cleanBaseURL + "models" : cleanBaseURL + "/models"
+            } else {
+                endpoint = cleanBaseURL.hasSuffix("/") ? cleanBaseURL + "v1/models" : cleanBaseURL + "/v1/models"
+            }
+        } else if cleanBaseURL.hasSuffix("chat/completions") {
             endpoint = cleanBaseURL.replacingOccurrences(of: "chat/completions", with: "models")
         } else {
             endpoint = cleanBaseURL.hasSuffix("/") ? cleanBaseURL + "models" : cleanBaseURL + "/models"
@@ -297,6 +303,12 @@ final class UniversalLLMProvider: AIProvider {
                         let endpoint: String
                         if cleanBaseURL.hasSuffix("chat/completions") {
                             endpoint = cleanBaseURL
+                        } else if providerType == .ollama {
+                            if cleanBaseURL.hasSuffix("/v1") || cleanBaseURL.hasSuffix("/v1/") {
+                                endpoint = cleanBaseURL.hasSuffix("/") ? cleanBaseURL + "chat/completions" : cleanBaseURL + "/chat/completions"
+                            } else {
+                                endpoint = cleanBaseURL.hasSuffix("/") ? cleanBaseURL + "v1/chat/completions" : cleanBaseURL + "/v1/chat/completions"
+                            }
                         } else {
                             endpoint = cleanBaseURL.hasSuffix("/") ? cleanBaseURL + "chat/completions" : cleanBaseURL + "/chat/completions"
                         }

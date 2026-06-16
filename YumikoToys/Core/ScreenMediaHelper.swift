@@ -58,30 +58,42 @@ final class ScreenMediaHelper: ObservableObject {
         DependencyContainer.shared.settingsService.settings.screenshotOutputMode
     }
 
+    private func showPreview(image: NSImage) {
+        _ = FloatingScreenshotPreviewWindow(image: image)
+    }
+
     func captureArea() {
         guard ensureScreenRecordingPermission() else { return }
         let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
+        let tempPath = (annotationTempPath() as NSString).expandingTildeInPath
+        
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-
-        var args = ["-i"]
-        if outputMode == .clipboardOnly {
-            args.append("-c")
-        }
-        args.append(resolved)
-
-        process.arguments = args
-
-        if outputMode == .both {
-            process.terminationHandler = { [weak self] _ in
-                Task { @MainActor in
-                    if FileManager.default.fileExists(atPath: resolved) {
-                        self?.copyFileToClipboard(path: resolved)
+        process.arguments = ["-i", tempPath]
+        
+        process.terminationHandler = { [weak self] _ in
+            Task { @MainActor in
+                guard let self = self else { return }
+                if FileManager.default.fileExists(atPath: tempPath) {
+                    if let image = NSImage(contentsOfFile: tempPath) {
+                        self.showPreview(image: image)
+                    }
+                    
+                    if self.outputMode == .clipboardOnly {
+                        self.copyFileToClipboard(path: tempPath)
+                        try? FileManager.default.removeItem(atPath: tempPath)
+                    } else if self.outputMode == .fileOnly {
+                        try? FileManager.default.moveItem(atPath: tempPath, toPath: resolved)
+                        self.notify(title: "截图成功", body: "截图已保存至桌面")
+                    } else if self.outputMode == .both {
+                        try? FileManager.default.copyItem(atPath: tempPath, toPath: resolved)
+                        self.copyFileToClipboard(path: resolved)
+                        try? FileManager.default.removeItem(atPath: tempPath)
                     }
                 }
             }
         }
-
+        
         do { try process.run() } catch {
             LoggerService.shared.error("Failed to run area capture: \(error)")
         }
@@ -90,35 +102,36 @@ final class ScreenMediaHelper: ObservableObject {
     func captureFullscreen() {
         guard ensureScreenRecordingPermission() else { return }
         let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
+        let tempPath = (annotationTempPath() as NSString).expandingTildeInPath
+        
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-
-        var args: [String] = []
-        if outputMode == .clipboardOnly {
-            args.append("-c")
-        }
-        args.append(resolved)
-
-        process.arguments = args
-
-        if outputMode == .both {
-            process.terminationHandler = { [weak self] _ in
-                Task { @MainActor in
-                    if FileManager.default.fileExists(atPath: resolved) {
-                        self?.copyFileToClipboard(path: resolved)
+        process.arguments = [tempPath]
+        
+        process.terminationHandler = { [weak self] _ in
+            Task { @MainActor in
+                guard let self = self else { return }
+                if FileManager.default.fileExists(atPath: tempPath) {
+                    if let image = NSImage(contentsOfFile: tempPath) {
+                        self.showPreview(image: image)
+                    }
+                    
+                    if self.outputMode == .clipboardOnly {
+                        self.copyFileToClipboard(path: tempPath)
+                        try? FileManager.default.removeItem(atPath: tempPath)
+                    } else if self.outputMode == .fileOnly {
+                        try? FileManager.default.moveItem(atPath: tempPath, toPath: resolved)
+                        self.notify(title: "截图成功", body: "截图已保存至桌面")
+                    } else if self.outputMode == .both {
+                        try? FileManager.default.copyItem(atPath: tempPath, toPath: resolved)
+                        self.copyFileToClipboard(path: resolved)
+                        try? FileManager.default.removeItem(atPath: tempPath)
                     }
                 }
             }
         }
-
-        do {
-            try process.run()
-            if outputMode == .clipboardOnly {
-                notify(title: "全屏截图成功", body: "截图已复制到剪贴板")
-            } else {
-                notify(title: "全屏截图成功", body: "截图已保存至桌面")
-            }
-        } catch {
+        
+        do { try process.run() } catch {
             LoggerService.shared.error("Failed to run fullscreen capture: \(error)")
         }
     }
@@ -190,6 +203,9 @@ final class ScreenMediaHelper: ObservableObject {
                 config.width  = Int(Double(scDisplay.width) * Double(backingScale))
                 config.height = Int(Double(scDisplay.height) * Double(backingScale))
                 config.showsCursor = false
+                
+                // Professional Display P3 Color space
+                config.colorSpaceName = CGColorSpace.displayP3
 
                 let cgImage = try await SCScreenshotManager.captureImage(
                     contentFilter: filter,
@@ -208,7 +224,15 @@ final class ScreenMediaHelper: ObservableObject {
             if capturedImages.count == 1 {
                 let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
                 saveImage(capturedImages[0].image, to: resolved)
-                notify(title: "截图成功", body: "屏幕截图已保存至桌面")
+                
+                // Show floating preview
+                self.showPreview(image: capturedImages[0].image)
+                
+                if outputMode == .clipboardOnly || outputMode == .both {
+                    self.copyFileToClipboard(path: resolved)
+                } else {
+                    notify(title: "截图成功", body: "屏幕截图已保存至桌面")
+                }
             } else {
                 openMultiScreenPreview(capturedImages)
             }
@@ -276,8 +300,14 @@ final class ScreenMediaHelper: ObservableObject {
         guard FileManager.default.fileExists(atPath: path) else { return }
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
+        
+        // Copy the raw PNG data directly to prevent any re-encoding and distortion
+        if let data = try? Data(contentsOf: url) {
+            pasteboard.setData(data, forType: .png)
+        }
+        
         pasteboard.writeObjects([url as NSURL])
-        notify(title: "已复制到剪贴板", body: "截图文件已复制到剪贴板")
+        notify(title: "已复制到剪贴板", body: "截图已复制到剪贴板")
     }
 
     // MARK: - Screenshot Annotation
@@ -791,34 +821,55 @@ struct ScreenshotAnnotationView: View {
     //  Y is flipped because NSImage origin is bottom-left.
 
     private func renderAnnotatedImage() -> NSImage {
-        let size  = image.size
+        let size  = image.size // Size in points
         let ratio = scaleRatio
 
-        let imageRep = NSBitmapImageRep(
+        // Get actual pixel dimensions from representations to preserve Retina resolution
+        let pixelsWide: Int
+        let pixelsHigh: Int
+        if let rep = image.representations.first {
+            pixelsWide = rep.pixelsWide
+            pixelsHigh = rep.pixelsHigh
+        } else {
+            pixelsWide = Int(size.width)
+            pixelsHigh = Int(size.height)
+        }
+
+        let pixelSize = CGSize(width: pixelsWide, height: pixelsHigh)
+        let backingScaleX = CGFloat(pixelsWide) / size.width
+        let newRatio = ratio / backingScaleX
+
+        let colorSpaceName = (image.representations.first as? NSBitmapImageRep)?.colorSpaceName ?? .deviceRGB
+
+        guard let imageRep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
-            pixelsWide:   Int(size.width),
-            pixelsHigh:   Int(size.height),
+            pixelsWide:   pixelsWide,
+            pixelsHigh:   pixelsHigh,
             bitsPerSample: 8,
             samplesPerPixel: 4,
             hasAlpha:   true,
             isPlanar:   false,
-            colorSpaceName: .deviceRGB,
+            colorSpaceName: colorSpaceName,
             bytesPerRow: 0,
             bitsPerPixel: 0
-        )!
+        ) else {
+            return image
+        }
 
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: imageRep)
 
-        image.draw(in: NSRect(origin: .zero, size: size))
+        // Draw original image at native pixel size
+        image.draw(in: NSRect(origin: .zero, size: pixelSize))
 
+        // Draw annotations scaled to pixel size
         for path in paths {
-            drawAnnotationPathOnImage(path, ratio: ratio, imageSize: size)
+            drawAnnotationPathOnImage(path, ratio: newRatio, imageSize: pixelSize)
         }
 
         NSGraphicsContext.restoreGraphicsState()
 
-        let result = NSImage(size: size)
+        let result = NSImage(size: pixelSize)
         result.addRepresentation(imageRep)
         return result
     }
@@ -918,5 +969,102 @@ extension NSImage {
         guard let destination = CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil) else { return false }
         CGImageDestinationAddImage(destination, cgImage, nil)
         return CGImageDestinationFinalize(destination)
+    }
+}
+
+// MARK: - Floating Screenshot Preview Window
+final class FloatingScreenshotPreviewWindow: NSWindow {
+    init(image: NSImage, duration: TimeInterval = 3.0) {
+        let screen = NSScreen.main ?? NSScreen.screens.first!
+        let screenFrame = screen.visibleFrame
+        
+        let previewSize = CGSize(width: 180, height: 120)
+        let rect = NSRect(
+            x: screenFrame.minX + 20,
+            y: screenFrame.minY + 20,
+            width: previewSize.width,
+            height: previewSize.height
+        )
+        
+        super.init(
+            contentRect: rect,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        
+        self.isReleasedWhenClosed = false
+        self.level = .floating
+        self.backgroundColor = .clear
+        self.hasShadow = true
+        self.isOpaque = false
+        self.ignoresMouseEvents = false
+        
+        let contentView = FloatingPreviewContentView(image: image) { [weak self] in
+            self?.close()
+        }
+        self.contentView = NSHostingView(rootView: contentView)
+        
+        self.makeKeyAndOrderFront(nil)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
+            guard let self = self else { return }
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.5
+                self.animator().alphaValue = 0
+            } completionHandler: {
+                self.close()
+            }
+        }
+    }
+}
+
+struct FloatingPreviewContentView: View {
+    let image: NSImage
+    let onClose: () -> Void
+    @State private var isHovered = false
+    
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            // Dark glassmorphic card base
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
+            
+            VStack(spacing: 6) {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 85)
+                    .cornerRadius(6)
+                    .padding(.top, 8)
+                
+                Text("截图已生成")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+                    .padding(.bottom, 6)
+            }
+            .padding(.horizontal, 10)
+            
+            if isHovered {
+                Button(action: onClose) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                        .background(Circle().fill(Color.black.opacity(0.6)))
+                }
+                .buttonStyle(.plain)
+                .padding(6)
+            }
+        }
+        .frame(width: 180, height: 120)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
     }
 }

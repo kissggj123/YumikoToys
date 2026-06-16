@@ -8,9 +8,11 @@ struct WidgetSyncData: Codable {
     let totalDays: Double
     let milestones: [WidgetMilestone]
     let proactiveBubbleText: String?
+    let appVersion: String
 }
 
 struct WidgetMilestone: Codable {
+    let icon: String
     let label: String
     let date: String
     let countDisplay: String
@@ -40,12 +42,13 @@ struct Provider: TimelineProvider {
             petName: "兔可可",
             avatar: "🐰",
             startDate: Calendar.current.date(from: DateComponents(year: 2024, month: 3, day: 12))!,
-            totalDays: 826.0,
+            totalDays: 826.936,
             milestones: [
-                WidgetMilestone(label: "下一个100天", date: "2026-08-29", countDisplay: "(第9个)"),
-                WidgetMilestone(label: "下一个180天", date: "2026-08-29", countDisplay: "(第5个)")
+                WidgetMilestone(icon: "🌱", label: "下一个100天", date: "2026-08-29", countDisplay: "(第9个)"),
+                WidgetMilestone(icon: "🌿", label: "下一个180天", date: "2026-08-29", countDisplay: "(第5个)")
             ],
-            proactiveBubbleText: "你好呀！我是你的智能助理。"
+            proactiveBubbleText: "你好呀！我是你的智能助理。",
+            appVersion: "4.5.0"
         )
     }
     
@@ -153,7 +156,7 @@ struct SmallWidgetView: View {
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white)
                         .lineLimit(1)
-                    Text("联结发展阶段")
+                    Text("v\(info.appVersion)")
                         .font(.system(size: 7, weight: .medium))
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -170,10 +173,12 @@ struct SmallWidgetView: View {
             
             Spacer(minLength: 4)
             
-            // Days Counter
+            // Days Counter (3 decimals matching the main screen)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(String(format: "%.0f", info.totalDays))
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                Text(String(format: "%.3f", info.totalDays))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
                     .foregroundColor(.white)
                     .shadow(color: Color.black.opacity(0.25), radius: 2, x: 0, y: 1)
                 
@@ -188,9 +193,13 @@ struct SmallWidgetView: View {
             // Next milestone
             if let first = info.milestones.first {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(first.label)
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.6))
+                    HStack(spacing: 3) {
+                        Text(first.icon)
+                            .font(.system(size: 8))
+                        Text(first.label)
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
                     
                     Text("\(first.date)")
                         .font(.system(size: 9, design: .monospaced))
@@ -239,7 +248,7 @@ struct MediumWidgetView: View {
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                             .lineLimit(1)
-                        Text("联结发展阶段")
+                        Text("v\(info.appVersion)")
                             .font(.system(size: 8, weight: .medium))
                             .foregroundColor(.white.opacity(0.6))
                     }
@@ -247,10 +256,12 @@ struct MediumWidgetView: View {
                 
                 Spacer(minLength: 4)
                 
-                // Companion days
+                // Companion days (3 decimals matching the main screen)
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text(String(format: "%.0f", info.totalDays))
-                        .font(.system(size: 38, weight: .bold, design: .rounded))
+                    Text(String(format: "%.3f", info.totalDays))
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .minimumScaleFactor(0.6)
+                        .lineLimit(1)
                         .foregroundColor(.white)
                     
                     Text("天")
@@ -268,10 +279,14 @@ struct MediumWidgetView: View {
                 // Milestones list
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(info.milestones.prefix(2), id: \.label) { milestone in
-                        HStack {
+                        HStack(spacing: 4) {
+                            Text(milestone.icon)
+                                .font(.system(size: 9))
                             Text(milestone.label)
                                 .font(.system(size: 9, weight: .medium))
                                 .foregroundColor(.white.opacity(0.65))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             Spacer()
                             Text("\(milestone.date) \(milestone.countDisplay)")
                                 .font(.system(size: 9, weight: .semibold, design: .monospaced))
@@ -284,12 +299,14 @@ struct MediumWidgetView: View {
             
             // Right Column (Timer / status)
             VStack(alignment: .trailing, spacing: 0) {
-                // Live countup timer capsule
+                // Live countup timer capsule styled with label
                 HStack(spacing: 4) {
-                    Image(systemName: "clock")
+                    Image(systemName: "clock.fill")
                         .font(.system(size: 8))
+                    Text("已与你共度")
+                        .font(.system(size: 8, weight: .medium))
                     Text(info.startDate, style: .timer)
-                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
                 }
                 .foregroundColor(.white.opacity(0.9))
                 .padding(.horizontal, 8)

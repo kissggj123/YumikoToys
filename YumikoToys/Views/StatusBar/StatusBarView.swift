@@ -727,7 +727,7 @@ struct StatusBarView: View {
                     screenshotTabContent
                 }
             }
-            .frame(height: 280)
+            .frame(height: 330)
             .animation(.easeInOut(duration: 0.2), value: selectedTab)
 
             Divider().padding(.horizontal, 16)
@@ -1025,9 +1025,11 @@ struct StatusBarView: View {
                                             if displayMode != .nameOnly {
                                                 if let iconName = app.iconName {
                                                     AppIconImageView(appName: app.name, iconName: iconName, size: iconSize.sizeValue, bundlePath: app.bundlePath)
+                                                        .help(app.name)
                                                 } else {
                                                     Image(systemName: "arrow.up.right.square")
                                                         .font(.system(size: iconSize.sizeValue * 0.75))
+                                                        .help(app.name)
                                                 }
                                             }
                                             if displayMode != .iconOnly {
@@ -1040,6 +1042,7 @@ struct StatusBarView: View {
                                         .padding(.vertical, iconSize == .large ? 6 : 4)
                                         .background(Capsule().fill(themeColor.buttonBackgroundColor))
                                         .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                        .help(app.name)
                                     }
                                     .buttonStyle(.plain)
                                     .help(app.name)
@@ -2150,9 +2153,11 @@ struct StatusBarView: View {
                                         if displayMode != .nameOnly {
                                             if let iconName = app.iconName {
                                                 AppIconImageView(appName: app.name, iconName: iconName, size: iconSize.sizeValue, bundlePath: app.bundlePath)
+                                                    .help(app.name)
                                             } else {
                                                 Image(systemName: "arrow.up.right.square")
                                                     .font(.system(size: iconSize.sizeValue * 0.75))
+                                                    .help(app.name)
                                             }
                                         }
                                         if displayMode != .iconOnly {
@@ -2165,6 +2170,7 @@ struct StatusBarView: View {
                                     .padding(.vertical, iconSize == .large ? 6 : 4)
                                     .background(Capsule().fill(themeColor.buttonBackgroundColor))
                                     .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                    .help(app.name)
                                 }
                                 .buttonStyle(.plain)
                                 .help(app.name)

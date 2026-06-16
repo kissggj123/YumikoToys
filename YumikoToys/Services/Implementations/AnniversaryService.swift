@@ -282,8 +282,9 @@ final class AnniversaryService: AnniversaryServiceProtocol {
             avatar: anniversary.displayAvatar,
             startDate: anniversary.startDate,
             totalDays: calc.totalDays,
-            milestones: milestones.map { WidgetMilestone(label: $0.label, date: $0.formattedDate, countDisplay: $0.countDisplay) },
-            proactiveBubbleText: bubbleText
+            milestones: milestones.map { WidgetMilestone(icon: $0.icon, label: $0.label, date: $0.formattedDate, countDisplay: $0.countDisplay) },
+            proactiveBubbleText: bubbleText,
+            appVersion: AppConfig.version
         )
         
         let encoder = JSONEncoder()
@@ -384,9 +385,11 @@ struct WidgetSyncData: Codable {
     let totalDays: Double
     let milestones: [WidgetMilestone]
     let proactiveBubbleText: String?
+    let appVersion: String
 }
 
 struct WidgetMilestone: Codable {
+    let icon: String
     let label: String
     let date: String
     let countDisplay: String

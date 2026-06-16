@@ -1012,7 +1012,7 @@ final class ChatSettingsViewModel: ObservableObject {
             nvidiaBaseURL = activeConfig?.apiURL ?? currentProvider.defaultBaseURL
             nvidiaSelectedModel = activeConfig?.model ?? ""
             nvidiaModels = activeConfig?.availableModels ?? []
-            isNvidiaVerified = !nvidiaAPIKey.isEmpty && !nvidiaModels.isEmpty
+            isNvidiaVerified = (currentProvider == .ollama || !nvidiaAPIKey.isEmpty) && !nvidiaModels.isEmpty
         } else {
             // 如果是 GLM，默认把 openai 的配置作为初始备用加载，防止空值
             let backupConfig = settings.providerConfigs[.openai]
@@ -1107,7 +1107,7 @@ final class ChatSettingsViewModel: ObservableObject {
             nvidiaBaseURL = config?.apiURL ?? provider.defaultBaseURL
             nvidiaSelectedModel = config?.model ?? ""
             nvidiaModels = config?.availableModels ?? []
-            isNvidiaVerified = !nvidiaAPIKey.isEmpty && !nvidiaModels.isEmpty
+            isNvidiaVerified = (provider == .ollama || !nvidiaAPIKey.isEmpty) && !nvidiaModels.isEmpty
         }
 
         // 6. 重新将 settings 绑定回 UI，以确保 Token 用量等信息能同步更新
