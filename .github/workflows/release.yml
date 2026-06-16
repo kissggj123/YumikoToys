@@ -1,206 +1,219 @@
-name: ✍️ Sign & Release Pre-compiled macOS DMG
+name: Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
   workflow_dispatch:
     inputs:
-      version:
-        description: '版本号（如 4.3.0）'
+      configuration:
+        description: 'Build configuration'
         required: true
-        default: '4.3.0'
+        default: 'Release'
+        type: choice
+        options:
+          - Debug
+          - Release
+
+permissions:
+  contents: write
+
+env:
+  PROJECT: YumikoToys.xcodeproj
+  SCHEME: YumikoToys
+  APP_NAME: YumikoToys
+  DEVELOPER_DIR: /Applications/Xcode.app
 
 jobs:
-  sign-and-release:
-    name: Sign & Release
-    runs-on: macos-26  # 使用 macOS 26 原生环境运行签名与 DMG 打包任务
-    permissions:
-      contents: write  # 显式授予写权限，以便能够创建 Release 并上传资源包
+  build-and-release:
+    runs-on: macos-15
+    timeout-minutes: 45
 
     steps:
-      # ── 1. 拉取代码 ──────────────────────────────────────────────
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # ── 2. 读取版本号 ─────────────────────────────────────────────
-      - name: 📌 Get version
+      - name: Xcode 版本
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="${GITHUB_REF_NAME#v}"
+          xcodebuild -version
+          swift --version
+
+      - name: 验证本地 Splash 包
+        run: |
+          SPLASH_FILE="ThirdParty/Splash/Sources/SplashImageGen/Extensions/CGImage+WriteToURL.swift"
+          if [ ! -d "ThirdParty/Splash" ]; then
+            echo "ThirdParty/Splash 不存在，自动克隆并打补丁"
+            mkdir -p ThirdParty
+            git clone --depth 1 https://github.com/JohnSundell/Splash.git ThirdParty/Splash
           fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
+          if [ -f "$SPLASH_FILE" ]; then
+            if ! grep -q "import CoreGraphics" "$SPLASH_FILE"; then
+              echo "给 CGImage+WriteToURL.swift 补上 import CoreGraphics"
+              awk 'NR==1{print; print "import CoreGraphics"; next} {print}' "$SPLASH_FILE" > "$SPLASH_FILE.tmp" && mv "$SPLASH_FILE.tmp" "$SPLASH_FILE"
+            fi
+          fi
+          echo "Splash 目录："
+          ls -la ThirdParty/Splash/Sources/SplashImageGen/Extensions/
 
-      # ── 3. 解压本地预编译包 ──────────────────────────────────────────
-      # 使用 ditto -xk 而非 unzip：ditto 会自动剥离 macOS AppleDouble
-      # 元数据文件（._* / __MACOSX），避免 codesign 报 "unsealed contents" 错误
-      - name: 📂 Extract app (ditto)
+      - name: 导入证书（若已配置 secret ）
+        id: codesign
         run: |
-          if [ ! -f "YumikoToys_unsigned.zip" ]; then
-            echo "❌ 未在仓库根目录下找到 YumikoToys_unsigned.zip 文件！"
+          if [ -z "${{ secrets.MACOS_CERTIFICATE_P12_DATA_BASE64 }}" ]; then
+            echo "codesign=false" >> "$GITHUB_OUTPUT"
+            echo "未配置 MACOS_CERTIFICATE_P12_DATA_BASE64，跳过签名与公证"
+            exit 0
+          fi
+          echo "codesign=true" >> "$GITHUB_OUTPUT"
+
+          CERTIFICATE_PATH="$RUNNER_TEMP/cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="gh-signing-$(date +%s)"
+
+          echo -n "${{ secrets.MACOS_CERTIFICATE_P12_DATA_BASE64 }}" | base64 -d > "$CERTIFICATE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "${{ secrets.MACOS_CERTIFICATE_P12_PASSWORD }}" -k "$KEYCHAIN_PATH" -T /usr/bin/codesign || true
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+
+          echo "可用代码签名证书："
+          security find-identity -p codesigning -v "$KEYCHAIN_PATH" | head -10
+
+          rm -f "$CERTIFICATE_PATH"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: 解析 SPM 依赖
+        run: |
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            resolvePackageDependencies | tail -20
+
+      - name: Release 编译
+        run: |
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            CODE_SIGN_STYLE=None \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tail -40
+
+      - name: 收集产物
+        id: collect
+        run: |
+          APP_DIR="$RUNNER_TEMP/DerivedData/Build/Products/Release/$APP_NAME.app"
+          if [ ! -d "$APP_DIR" ]; then
+            echo "找不到 $APP_DIR，尝试其他路径"
+            find "$RUNNER_TEMP/DerivedData" -name "$APP_NAME.app" -type d | head -3
             exit 1
           fi
-          mkdir -p /tmp/sign_workspace
-          ditto -xk "YumikoToys_unsigned.zip" /tmp/sign_workspace
+          echo "APP_DIR=$APP_DIR"
+          echo "APP_DIR=$APP_DIR" >> "$GITHUB_ENV"
+          ls -la "$APP_DIR/Contents/"
 
-          # 彻底清除残留的 AppleDouble 文件（._* 和 __MACOSX）
-          find /tmp/sign_workspace -name '._*' -delete
-          find /tmp/sign_workspace -name '__MACOSX' -type d -exec rm -rf {} + 2>/dev/null || true
+      - name: 签名（若有证书 secret）
+        if: steps.codesign.outputs.codesign == 'true'
+        run: |
+          APP_DIR="${{ env.APP_DIR }}"
+          # 先签所有嵌套 bundle（由内到外）
+          while IFS= read -r bundle; do
+            codesign --force --sign "Developer ID Application" \
+              --entitlements "YumikoWidget/YumikoWidget.entitlements" \
+              --options runtime --timestamp "$bundle" 2>&1
+          done < <(find "$APP_DIR/Contents/PlugIns" -name "*.appex" -type d 2>/dev/null)
 
-          # 定位解压出来的 .app 路径
-          APP_PATH=$(find "/tmp/sign_workspace" -name "YumikoToys.app" -maxdepth 2 -type d | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "❌ 压缩包内未找到有效的 YumikoToys.app"
-            exit 1
+          # 主 App
+          codesign --force --sign "Developer ID Application" \
+            --entitlements "YumikoToys/Assets/YumikoToys.entitlements" \
+            --options runtime --timestamp "$APP_DIR" 2>&1
+
+          # 验证
+          codesign -dv --entitlements :- "$APP_DIR" 2>&1 | head -20
+
+      - name: 打 DMG
+        id: dmg
+        run: |
+          APP_DIR="${{ env.APP_DIR }}"
+          VERSION="${GITHUB_REF_NAME:-$(date +%Y%m%d)}"
+          STAGING="$RUNNER_TEMP/staging"
+          mkdir -p "$STAGING"
+          cp -R "$APP_DIR" "$STAGING/"
+          ln -s /Applications "$STAGING/Applications"
+          DMG="$RUNNER_TEMP/YumikoToys-${VERSION}-arm64.dmg"
+          hdiutil create -volname "YumikoToys" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
+          ls -lh "$DMG"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: 公证与钉章（仅 tag 推送且有证书）
+        if: steps.codesign.outputs.codesign == 'true' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          DMG="${{ env.DMG }}"
+          if [ -z "${{ secrets.NOTARYTOOL_APPLE_ID }}" ]; then
+            echo "缺少 NOTARYTOOL_* secrets，跳过公证"
+            exit 0
           fi
-          echo "✅ 成功解压并定位 App: $APP_PATH"
-          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+          echo "=== 上传 Apple 公证 ==="
+          xcrun notarytool submit "$DMG" \
+            --apple-id "${{ secrets.NOTARYTOOL_APPLE_ID }}" \
+            --password "${{ secrets.NOTARYTOOL_APP_SPECIFIC_PASSWORD }}" \
+            --team-id "${{ secrets.NOTARYTOOL_TEAM_ID }}" \
+            --wait | tail -20
+          echo "=== 钉章 staple ==="
+          xcrun stapler staple "$DMG" | tail -3
 
-      # ── 4. 清除扩展属性 ──────────────────────────────────────────────
-      # 剥离所有干扰签名的 xattr（Finder 标记、隔离属性等）
-      # 同时二次确认没有 ._ 文件残留在 bundle 内
-      - name: 🧹 Clean xattrs & hidden files
+      - name: SHA256
         run: |
-          echo "🧹 清除扩展属性..."
-          xattr -cr "$APP_PATH" || true
-          echo "🧹 二次清理 ._ 残留文件..."
-          find "$APP_PATH" -name '._*' -delete
-          echo "✅ 清理完成"
+          DMG="${{ env.DMG }}"
+          shasum -a 256 "$DMG" | tee "$RUNNER_TEMP/sha256.txt"
 
-      # ── 5. Ad-hoc 自签名 ──────────────────────────────────────────
-      - name: ✍️ Ad-hoc codesign
+      - name: Release Notes
         run: |
-          echo "1. 开始对内嵌的 Frameworks 签名..."
-          if [ -d "$APP_PATH/Contents/Frameworks" ]; then
-            find "$APP_PATH/Contents/Frameworks" -maxdepth 3 -name "*.framework" -type d -print0 2>/dev/null | while IFS= read -r -d '' fw; do
-              echo "   正在签名 Framework: $fw"
-              codesign --force --sign - "$fw" 2>/dev/null || true
-            done
-          fi
+          DMG="${{ env.DMG }}"
+          VERSION="${{ env.VERSION }}"
+          SIG_STATUS="${{ steps.codesign.outputs.codesign }}"
+          NOTES="$RUNNER_TEMP/notes.md"
+          {
+            echo "# YumikoToys $VERSION"
+            echo ""
+            echo "| 项 | 值 |"
+            echo "|---|---|"
+            echo "| 构建方式 | xcodebuild Release + 本地 ThirdParty/Splash |"
+            if [ "$SIG_STATUS" = "true" ]; then
+              echo "| 签名状态 | Developer ID Application + notarized ✅ |"
+              echo "| 使用方式 | 双击下载的 .dmg，拖进 Applications，直接打开 |"
+            else
+              echo "| 签名状态 | 未签名（未在 GitHub Secrets 配置证书/notarytool） |"
+              echo "| 使用方式 | 下载后右键 \`YumikoToys.app\` → 打开 |"
+            fi
+            echo ""
+            echo "提交：\`$(git rev-parse --short HEAD)\`"
+          } > "$NOTES"
+          echo "NOTES=$NOTES" >> "$GITHUB_ENV"
 
-          echo "2. 开始对内嵌的 dylib/so/可执行文件签名..."
-          find "$APP_PATH/Contents" -type f \( -name "*.dylib" -o -name "*.so" -o -perm +111 \) -print0 2>/dev/null | while IFS= read -r -d '' f; do
-            codesign --force --sign - "$f" 2>/dev/null || true
-          done
-
-          echo "3. 开始对标准的 App 整体进行深度签名..."
-          # 启用 hardened runtime 并进行深度重签名
-          if ! codesign --force --deep --sign - --options runtime "$APP_PATH" 2>/tmp/codesign_err.txt; then
-            echo "❌ 签名失败！codesign 报错信息如下："
-            cat /tmp/codesign_err.txt
-            exit 1
-          fi
-
-          echo "4. 验证签名完整性..."
-          codesign --verify --deep --strict "$APP_PATH" \
-            && echo "✅ Ad-hoc 签名成功" \
-            || echo "⚠️  签名验证警告（ad-hoc 预期行为）"
-
-      # ── 6. 打包输出标准的磁盘映像 (.dmg) ──────────────────────────────
-      - name: 💿 Create DMG
-        run: |
-          DMG_NAME="YumikoToys-${{ env.VERSION }}-macOS-arm64.dmg"
-          DMG_PATH="$RUNNER_TEMP/$DMG_NAME"
-          
-          echo "正在准备 DMG 临时打包目录结构..."
-          DMG_STAGE="/tmp/dmg_stage"
-          rm -rf "$DMG_STAGE"
-          mkdir -p "$DMG_STAGE"
-          
-          # 使用 ditto 拷贝 App 保证权限和签名不丢失
-          ditto "$APP_PATH" "$DMG_STAGE/YumikoToys.app"
-          
-          # 在 DMG 根目录下创建指向系统的 /Applications 快捷方式，实现拖拽安装
-          ln -s /Applications "$DMG_STAGE/Applications"
-          
-          echo "正在使用 hdiutil 生成只读压缩 DMG..."
-          hdiutil create \
-            -volname "YumikoToys-${{ env.VERSION }}" \
-            -srcfolder "$DMG_STAGE" \
-            -ov \
-            -format UDZO \
-            "$DMG_PATH"
-          
-          echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
-          echo "DMG_NAME=$DMG_NAME" >> $GITHUB_ENV
-          echo "📦 DMG 大小: $(du -sh "$DMG_PATH" | cut -f1)"
-
-      # ── 7. 生成 Release Notes ────────────────────────────────────
-      - name: 📝 Generate release notes
-        run: |
-          cat > /tmp/release_notes.md << 'EOF'
-          ## ⚡ 比利时野兔·本雅明塔学院 — v${{ env.VERSION }}
-
-          > *Belgian Hare × Institute Benjamenta*
-
-          ### 🧠 本地推理引擎
-          - **MLX 本地推理引擎**：基于 Apple MLX 框架，支持 BGE-M3 嵌入模型（12层 Transformer）与 DistilBERT 情感分析模型（6层），所有计算在 Apple Silicon GPU 上完成，**零网络依赖**。
-          - **代理感知下载器**：自动检测 PAC/HTTP/SOCKS 代理，支持断点续传与安全 Cookie 认证，全面兼容国内极速镜像通道。
-
-          ### 🩺 多会话稳定性（重构）
-          - **多会话删除防复活隔离**：删除会话时自动重置活跃会话 ID，彻底杜绝已删对话在磁盘"复活"的 Bug。
-          - **人设生成时钟对齐**：延迟到用户切换会话时按需执行，消除启动时序卡顿缺陷。
-          - **沙盒物理会话扫描**：后台学习引擎直接检索物理存储目录，修复分析计数器不增长的问题。
-          - **增量分析时序落盘**：时空游标成功向前推进即强力写入磁盘，解决分析统计值被内存丢弃的 Bug。
-
-          ### 🏷️ 交互体验（优化）
-          - **右键菜单重命名 / 删除**：侧边栏挂载 SwiftUI 原生右键菜单，支持重命名 and 直接删除。
-          - **删除二次确认微动画**：点击删除后图标微弹簧变形为垃圾桶，防止误触。
-          - **防休眠嵌套手势阻断**：从物理层阻断多手势穿透，根治 macOS 双击冲突与连击卡顿。
-
-          ---
-
-          ## 📥 安装说明
-
-          1. 下载 `YumikoToys-${{ env.VERSION }}-macOS-arm64.dmg` 并双击打开
-          2. 将 **YumikoToys** 图标拖入右侧的 **Applications (应用程序)** 快捷文件夹中完成安装
-          3. **首次运行**：在「应用程序」中找到 YumikoToys → 右键点击图标 → 选择「打开」→ 在弹窗中点击「打开」
-             > 本版本使用 ad-hoc 自签名，非 Apple 官方证书，仅需首次手动确认一次。
-          4. 之后双击即可正常启动 ✅
-
-          ### 可选：命令行一键解除隔离
-          ```bash
-          xattr -cr /Applications/YumikoToys.app
-          ```
-
-          ---
-
-          ### 📋 系统要求
-          | 项目 | 要求 |
-          |------|------|
-          | macOS | 14.0 (Sonoma) 或更高版本 |
-          | 架构 | Apple Silicon（arm64）|
-          | 本地模型推理 | M1 / M2 / M3 / M4 推荐 |
-          EOF
-
-      # ── 8. 发布 Release ──────────────────────────────────────────
-      - name: 🎉 Publish GitHub Release
+      - name: 发布到 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          name: "${{ env.TAG_NAME }} — 比利时野兔·本雅明塔学院"
-          body_path: /tmp/release_notes.md
-          draft: false
-          prerelease: false
-          files: ${{ env.DMG_PATH }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ${{ env.DMG }}
+            ${{ env.RUNNER_TEMP }}/sha256.txt
+          body_path: ${{ env.NOTES }}
+          fail_on_unmatched_files: true
+          generate_release_notes: true
 
-      # ── 9. 清理仓库内的未签名包 ──────────────────────────────────
-      # Release 发布成功后立即删除 zip，避免大文件长期驻留在 git 历史中
-      - name: 🗑 Remove unsigned zip from repo
-        if: success()
+      - name: 清理 keychain
+        if: always() && steps.codesign.outputs.codesign == 'true'
         run: |
-          if [ -f "YumikoToys_unsigned.zip" ]; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git rm YumikoToys_unsigned.zip
-            git commit -m "chore: remove unsigned zip after release ${{ env.TAG_NAME }} [skip ci]"
-            git push origin HEAD:main
-            echo "✅ 已自动清除 YumikoToys_unsigned.zip"
-          else
-            echo "ℹ️  仓库中不存在 zip 文件，跳过清理"
+          if [ -n "${KEYCHAIN_PATH:-}" ] && [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
           fi
