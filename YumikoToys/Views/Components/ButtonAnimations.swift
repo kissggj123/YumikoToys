@@ -219,3 +219,203 @@ extension View {
         modifier(BounceIn())
     }
 }
+
+// MARK: - 点击粒子特效系统 (Interactive Click Particle System)
+
+struct ClickParticle: Identifiable {
+    let id = UUID()
+    let x: CGFloat
+    let y: CGFloat
+    let vx: CGFloat
+    let vy: CGFloat
+    let color: Color
+    let emoji: String
+    let scale: CGFloat
+    let rotation: Double
+    let rotationSpeed: Double
+    let spawnTime: Date
+    let lifetime: Double
+}
+
+struct ClickEffectModifier: ViewModifier {
+    @State private var particles: [ClickParticle] = []
+    
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onEnded { value in
+                        spawnParticles(at: value.location)
+                    }
+            )
+            .overlay(
+                TimelineView(.animation(minimumInterval: 0.016)) { timelineContext in
+                    Canvas { context, size in
+                        let now = timelineContext.date
+                        for p in particles {
+                            let elapsed = now.timeIntervalSince(p.spawnTime)
+                            guard elapsed >= 0 && elapsed < p.lifetime else { continue }
+                            
+                            let progress = elapsed / p.lifetime
+                            let opacity = 1.0 - progress
+                            
+                            if p.emoji.isEmpty {
+                                // Ripple or shape-based effects
+                                let radius = 80.0 * progress
+                                var path = Path()
+                                path.addEllipse(in: CGRect(x: p.x - radius, y: p.y - radius, width: radius * 2, height: radius * 2))
+                                context.stroke(path, with: .color(p.color.opacity(opacity)), style: StrokeStyle(lineWidth: CGFloat(3.5 - 2.0 * progress)))
+                            } else if p.emoji == "COLOR_DOT" {
+                                let gravity: CGFloat = 280.0
+                                let dx = p.vx * CGFloat(elapsed)
+                                let dy = p.vy * CGFloat(elapsed) + 0.5 * gravity * CGFloat(elapsed * elapsed)
+                                let radius = 6.0 * CGFloat(1.0 - progress)
+                                var path = Path()
+                                path.addEllipse(in: CGRect(x: p.x + dx - radius, y: p.y + dy - radius, width: radius * 2, height: radius * 2))
+                                context.fill(path, with: .color(p.color.opacity(opacity)))
+                            } else {
+                                // Emoji-based effects (sparkle, heart)
+                                let dx: CGFloat
+                                let dy: CGFloat
+                                let effect = DependencyContainer.shared.settingsService.settings.activeClickEffect
+                                if effect == .heart {
+                                    let sway = 15.0 * sin(elapsed * 8.0 + Double(p.id.uuidString.hashValue % 5))
+                                    dx = p.vx * CGFloat(elapsed) + CGFloat(sway)
+                                    dy = p.vy * CGFloat(elapsed)
+                                } else {
+                                    dx = p.vx * CGFloat(elapsed)
+                                    dy = p.vy * CGFloat(elapsed)
+                                }
+                                
+                                let currentRotation = p.rotation + p.rotationSpeed * elapsed
+                                let currentScale = p.scale * CGFloat(1.0 - progress)
+                                
+                                var particleContext = context
+                                particleContext.opacity = opacity
+                                let resolved = context.resolve(
+                                    Text(p.emoji)
+                                        .font(.system(size: 24 * currentScale))
+                                )
+                                particleContext.translateBy(x: p.x + dx, y: p.y + dy)
+                                particleContext.rotate(by: Angle(degrees: currentRotation))
+                                particleContext.draw(resolved, at: .zero)
+                            }
+                        }
+                    }
+                    .allowsHitTesting(false)
+                }
+            )
+    }
+    
+    private func spawnParticles(at location: CGPoint) {
+        let effect = DependencyContainer.shared.settingsService.settings.activeClickEffect
+        guard effect != .none else { return }
+        
+        let count: Int
+        let lifetime: Double
+        switch effect {
+        case .sparkle:
+            count = 12
+            lifetime = 0.55
+        case .ripple:
+            count = 3
+            lifetime = 0.45
+        case .heart:
+            count = 10
+            lifetime = 0.75
+        case .firework:
+            count = 18
+            lifetime = 0.7
+        case .none:
+            return
+        }
+        
+        let now = Date()
+        var newParticles: [ClickParticle] = []
+        
+        for i in 0..<count {
+            let p: ClickParticle
+            switch effect {
+            case .sparkle:
+                let angle = Double.random(in: 0...(2 * .pi))
+                let speed = CGFloat.random(in: 50...140)
+                let scale = CGFloat.random(in: 0.6...1.2)
+                p = ClickParticle(
+                    x: location.x,
+                    y: location.y,
+                    vx: speed * cos(angle),
+                    vy: speed * sin(angle),
+                    color: .yellow,
+                    emoji: ["⭐", "✨", "🌟"].randomElement()!,
+                    scale: scale,
+                    rotation: Double.random(in: 0...360),
+                    rotationSpeed: Double.random(in: -120...120),
+                    spawnTime: now,
+                    lifetime: lifetime
+                )
+            case .ripple:
+                p = ClickParticle(
+                    x: location.x,
+                    y: location.y,
+                    vx: 0,
+                    vy: 0,
+                    color: [Color.pink, Color.purple, Color.cyan][i % 3],
+                    emoji: "",
+                    scale: 1.0,
+                    rotation: 0,
+                    rotationSpeed: 0,
+                    spawnTime: now + Double(i) * 0.08,
+                    lifetime: lifetime
+                )
+            case .heart:
+                let angle = Double.random(in: (1.2 * .pi)...(1.8 * .pi)) // upward cone
+                let speed = CGFloat.random(in: 40...110)
+                let scale = CGFloat.random(in: 0.6...1.2)
+                p = ClickParticle(
+                    x: location.x,
+                    y: location.y,
+                    vx: speed * cos(angle),
+                    vy: speed * sin(angle),
+                    color: .pink,
+                    emoji: ["❤️", "💖", "💝", "💕"].randomElement()!,
+                    scale: scale,
+                    rotation: Double.random(in: -20...20),
+                    rotationSpeed: Double.random(in: -45...45),
+                    spawnTime: now,
+                    lifetime: lifetime
+                )
+            case .firework:
+                let angle = Double.random(in: 0...(2 * .pi))
+                let speed = CGFloat.random(in: 70...190)
+                let scale = CGFloat.random(in: 0.5...1.0)
+                p = ClickParticle(
+                    x: location.x,
+                    y: location.y,
+                    vx: speed * cos(angle),
+                    vy: speed * sin(angle),
+                    color: Color(hue: Double.random(in: 0...1), saturation: 0.85, brightness: 1.0),
+                    emoji: "COLOR_DOT",
+                    scale: scale,
+                    rotation: 0,
+                    rotationSpeed: 0,
+                    spawnTime: now,
+                    lifetime: lifetime
+                )
+            case .none:
+                continue
+            }
+            newParticles.append(p)
+        }
+        
+        particles.append(contentsOf: newParticles)
+        if particles.count > 150 {
+            particles.removeFirst(particles.count - 150)
+        }
+    }
+}
+
+extension View {
+    func interactiveClickEffect() -> some View {
+        self.modifier(ClickEffectModifier())
+    }
+}

@@ -162,6 +162,7 @@ struct MainView: View {
         .onReceive(viewModel.$godModeEnabled) { _ in
             self.adjustMainWindowSize(layouts: viewModel.componentLayouts)
         }
+        .interactiveClickEffect()
     }
     
     private func adjustMainWindowSize(layouts: [ComponentLayout]) {

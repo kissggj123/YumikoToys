@@ -317,6 +317,9 @@ enum SpecialEffectType: String, Codable, CaseIterable, Identifiable, Sendable {
     case snowflake = "snowflake"
     case firework = "firework"
     case bubble = "bubble"
+    case matrix = "matrix"
+    case halo = "halo"
+    case gravityBubble = "gravityBubble"
     
     var id: String { rawValue }
     
@@ -329,6 +332,29 @@ enum SpecialEffectType: String, Codable, CaseIterable, Identifiable, Sendable {
         case .snowflake: return "冰晶雪花 (纯洁)"
         case .firework: return "璀璨烟花 (喜庆)"
         case .bubble: return "梦幻气泡 (绚丽)"
+        case .matrix: return "数字雨 (赛博)"
+        case .halo: return "天使光环 (华丽)"
+        case .gravityBubble: return "重力水滴 (灵动)"
+        }
+    }
+}
+
+enum ClickEffectType: String, Codable, CaseIterable, Identifiable, Sendable {
+    case none = "none"
+    case sparkle = "sparkle"
+    case ripple = "ripple"
+    case heart = "heart"
+    case firework = "firework"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .none: return "无"
+        case .sparkle: return "繁星四射"
+        case .ripple: return "霓虹涟漪"
+        case .heart: return "爱心飘散"
+        case .firework: return "重力烟花"
         }
     }
 }
@@ -564,6 +590,7 @@ struct AppSettings: Codable, Sendable {
     var hideFloatingLayoutToolbar: Bool
     var activeSpecialEffect: SpecialEffectType
     var screenshotHotkeyPreset: ScreenshotHotkeyPreset
+    var activeClickEffect: ClickEffectType
     
     // MARK: - 状态栏文字显示模式
     var statusBarTextMode: StatusBarTextMode
@@ -639,6 +666,7 @@ struct AppSettings: Codable, Sendable {
         hideFloatingLayoutToolbar: Bool = false,
         activeSpecialEffect: SpecialEffectType = .emoji,
         screenshotHotkeyPreset: ScreenshotHotkeyPreset = .none,
+        activeClickEffect: ClickEffectType = .sparkle,
         statusBarTextMode: StatusBarTextMode = .customTitle,
         customStatusBarText: String = "",
         quickLaunchDisplayMode: QuickLaunchDisplayMode = .iconAndName,
@@ -703,6 +731,7 @@ struct AppSettings: Codable, Sendable {
         self.hideFloatingLayoutToolbar = hideFloatingLayoutToolbar
         self.activeSpecialEffect = activeSpecialEffect
         self.screenshotHotkeyPreset = screenshotHotkeyPreset
+        self.activeClickEffect = activeClickEffect
         self.statusBarTextMode = statusBarTextMode
         self.customStatusBarText = customStatusBarText
         self.quickLaunchDisplayMode = quickLaunchDisplayMode
@@ -782,6 +811,7 @@ struct AppSettings: Codable, Sendable {
         hideFloatingLayoutToolbar = try container.decodeIfPresent(Bool.self, forKey: .hideFloatingLayoutToolbar) ?? false
         activeSpecialEffect = try container.decodeIfPresent(SpecialEffectType.self, forKey: .activeSpecialEffect) ?? .emoji
         screenshotHotkeyPreset = try container.decodeIfPresent(ScreenshotHotkeyPreset.self, forKey: .screenshotHotkeyPreset) ?? .none
+        activeClickEffect = try container.decodeIfPresent(ClickEffectType.self, forKey: .activeClickEffect) ?? .sparkle
         statusBarTextMode = try container.decodeIfPresent(StatusBarTextMode.self, forKey: .statusBarTextMode) ?? .customTitle
         customStatusBarText = try container.decodeIfPresent(String.self, forKey: .customStatusBarText) ?? ""
         quickLaunchDisplayMode = try container.decodeIfPresent(QuickLaunchDisplayMode.self, forKey: .quickLaunchDisplayMode) ?? .iconAndName

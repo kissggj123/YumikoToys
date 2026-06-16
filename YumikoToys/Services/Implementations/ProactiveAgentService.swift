@@ -68,6 +68,13 @@ final class ProactiveAgentService: ObservableObject {
         heartbeatTimer?.invalidate()
         heartbeatTimer = nil
         log("智能助理后台监测服务已暂停")
+        
+        // 同时同步禁用设置，保证UI一致
+        var settings = settingsService.settings
+        if settings.enableProactiveAssistant {
+            settings.enableProactiveAssistant = false
+            settingsService.updateSettings(settings)
+        }
     }
     
     func restartTimer() {
@@ -136,6 +143,12 @@ final class ProactiveAgentService: ObservableObject {
         let providerKey = config.apiKey
         let providerURL = config.apiURL
         let model = config.model
+        
+        guard !model.isEmpty else {
+            log("⚠️ 无法启动：找不到激活模型。")
+            stopService()
+            return
+        }
         
         guard !providerKey.isEmpty || activeProvider == .ollama else {
             log("跳过本次心跳：未配置当前 AI 提供商的 API 密钥。")

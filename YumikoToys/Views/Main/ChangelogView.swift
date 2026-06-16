@@ -2,7 +2,7 @@
 //  ChangelogView.swift
 //  YumikoToys
 //
-//  更新日志视图（v4.5.0 - 缎毛兔·一米处的月球 · 智能体博弈 · 桌面Widget版）
+//  更新日志视图（v4.5.1 - 安哥拉兔·月球旅行记 · 特效雨升级 · 点击特效版）
 //
 
 import SwiftUI
@@ -14,76 +14,34 @@ struct ChangelogView: View {
                 // 版本头
                 versionHeader
 
-                // 缎毛兔·一米处的月球 — 版本代号区
+                // 安哥拉兔·月球旅行记 — 版本代号区
                 CodenameSection(
                     emoji: "🐇",
-                    title: "缎毛兔·一米处的月球 (Satin · La Lune à un mètre)",
+                    title: "安哥拉兔·月球旅行记 (Angora · Le Voyage dans la Lune)",
                     titleColor: "E9C46A",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，舞台上的光芒总是短暂的。生命不过是时间的投影，而在我们的程序里，每一段代码都是智能体的微小演出。这一次，我们在 4.5.0『缎毛兔·一米处的月球』中重构了这幕戏剧：为智能体赋予了自我博弈与自动对话的生命力，让桌面 Widget 与截图录屏工具无缝编织进罗德岛的日常。一切准备已就绪，等待您的指挥。",
+                    quote: "博士，命运正如那轮悬挂在夜空中的苍白银盘，而我们只是在银幕上游荡的追梦旅人。每一次编译，都像是把那一千一分的心绪织成安哥拉兔般松软的梦境。在 4.5.1『安哥拉兔·月球旅行记』中，我们修正了那出可能让伶人猝然退场的智能引擎休克剧目，更为那墨黑的状态栏倾注了数字雨、天使光环与重力水滴的三幕华丽新剧，并在您指尖触及之处，绽开霓虹与繁星的交响。飞向月球的轨道已经铺就，请您一同登舱。",
                     entries: [
                         ChangelogEntry(
                             emoji: "🤖",
-                            prefix: "【新增】",
+                            prefix: "【修复】",
                             prefixColor: "E9C46A",
-                            text: "智能体自动博弈对话（Self-Play）：Agent 会根据对话上下文自动进行后续步骤博弈。无需用户干预点按，若检测到回复中有「下一步」「准备下单」等动作倾向，将自动触发下一轮推理直至产生明确的最终结果，实现真正的上下文自关联对话。",
+                            text: "后台助理冷启动异常阻断防护：深度修复了当 AI 激活模型为空或提供商配置不全时，智能助理在后台心跳引擎冷启动期间造成的崩溃及闪退现象。加入了健壮的异常监控防御壁垒，遇到未知异常将优雅回执并暂停服务，保护主进程稳态。",
                             character: "——凯尔希"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🔗",
-                            prefix: "【新增】",
-                            prefixColor: "A8D8A8",
-                            text: "AI 对话文本框技能识别与自动导入：智能检测用户发送的技能 URL 链接，支持 md 格式、json 格式或 zip 压缩包，自动在后台下载、解压、解析技能并一键绑定到当前对话的智能体中，即时生效。",
-                            character: "——阿米娅"
-                        ),
-                        ChangelogEntry(
-                            emoji: "📱",
-                            prefix: "【新增】",
-                            prefixColor: "A8C8D8",
-                            text: "macOS 桌面及通知中心 Widget 支持：原生 WidgetKit 小组件支持！开发了 Small 及 Medium 尺寸小组件，采用 Provisioning-Free 零证书 JSON 本地同步方案，支持桌面实时的秒级倒计时刷新。",
-                            character: "——阿米娅"
-                        ),
-                        ChangelogEntry(
-                            emoji: "📸",
-                            prefix: "【新增】",
-                            prefixColor: "F4A261",
-                            text: "快捷截图与录屏系统：内置全新多功能截图与录屏组件，支持自定义区域截图、全屏截图、TouchBar 截图、多屏幕同时截图及不限时长的屏幕录制（支持 SIGINT 优雅保存）。搭配 Carbon 全局免 TCC 权限快捷键，单键一键唤起。",
-                            character: "——陈"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🎨",
-                            prefix: "【优化】",
-                            prefixColor: "D8A8D8",
-                            text: "上帝模式 UI 细节与菜单栏同步：隐藏底部布局控制栏，改由右侧精简的「笔」SF 符号控制；开启上帝模式后自动显示原始宠物名（支持单行/双行自动折行或隐藏为 i 信息按钮）；修改的纪念日标题即时同步到 macOS 状态栏及弹窗顶部。",
-                            character: "——凯尔希"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🔍",
-                            prefix: "【优化】",
-                            prefixColor: "2A9D8F",
-                            text: "应用快捷启动批量选择与一键配置：重构了「快速启动应用」插件的配置流程。新增了基于 AppScanner 的批量应用扫描面板，分类列出所有已安装的 macOS 应用程序，实现批量勾选添加，告别低效的手动输入输入。",
-                            character: "——杜宾"
                         ),
                         ChangelogEntry(
                             emoji: "🌧️",
                             prefix: "【新增】",
-                            prefixColor: "E76F51",
-                            text: "华丽 Popover 特效选择：设置中新增特效雨类型选择。除了经典的表情雨外，新增「樱花散落（带风向摇曳）」「繁星闪烁（带随机旋转缩放脉动）」「爱心气泡（从底部徐徐上升）」三款动态粒子特效。",
+                            prefixColor: "A8D8A8",
+                            text: "状态栏特效雨物理动效升级：在原有特效雨底座之上，引入并精雕细琢了三款全新的视觉奇观：深绿矩阵坠落的『数字雨（赛博克系Monospace风格）』、金色华光缓缓升腾的『天使光环（灵敏飘移风格）』以及遵从重力加速度抛物下坠的『重力水滴（物理弹跳风格）』。",
                             character: "——W"
                         ),
                         ChangelogEntry(
-                            emoji: "🛠️",
-                            prefix: "【修复】",
-                            prefixColor: "E8C8A0",
-                            text: "智能体与插件编辑锁及生效机制修复：修复了智能体编辑、插件编辑时偶尔出现的缓存锁定或无法保存的严重缺陷。引入 sheet 重新同步流程，保存后立即重载配置，保证智能体属性和绑定技能即时生效。",
-                            character: "——可露希尔"
-                        ),
-                        ChangelogEntry(
-                            emoji: "💻",
-                            prefix: "【重构】",
-                            prefixColor: "A8D8C8",
-                            text: "终端与 Skill 解析安全加固：控制台工具执行日志重构为 Terminal 卡片风格（带 SUCCESS/ERROR 状态标签与 monospaced 字体）。优化了 JSON 解析的崩溃防护，提升了多步推理工具链的整体稳定性。",
-                            character: "——可露希尔"
+                            emoji: "✨",
+                            prefix: "【新增】",
+                            prefixColor: "A8C8D8",
+                            text: "应用内全局交互点击特效：为应用主视窗及状态栏面板加持了全新的物理微粒子点击特效系统。目前提供『繁星四射』、『霓虹涟漪』、『爱心飘散』及『重力烟花』四套华丽的动态物理回馈，点击瞬间在光影画布上绽放指尖跃动的绚丽光华。",
+                            character: "——陈"
                         )
                     ]
                 )
@@ -150,23 +108,23 @@ private struct CodenameSubtitle: View {
                     .fill(Color(hex: "E9C46A").opacity(0.06))
             )
 
-            // 缎毛兔解释
+            // 安哥拉兔解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("🐇  Satin 缎毛兔 (Satin Rabbit)")
+                Text("🐇  Angora 安哥拉兔 (Angora Rabbit)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("Satin（缎毛）兔是一种以其丝绸般极具光泽的毛发而闻名的冷门品种。其毛发纤维髓质层呈独特的中空状态，因而能如三棱镜般反射和折射光线，赋予其皮毛闪亮而深邃的缎面反光质感。这种「微光折射」特质，正如我们在 4.5.0 中精心打磨的 Popover 动态特效雨与上帝模式小字折叠细节，使界面在微小的交互瞬间，折射出富有质感与灵性的光芒。")
+                Text("Angora（安哥拉）兔是世界上最著名的长毛兔品种之一，其兔毛丰盈蓬松，如云朵般细腻轻盈。这种「丰盈稳态」特质，正如我们在 4.5.1 中精心加固的智能助理冷启动安全屏障，为应用筑起了一层轻柔而无比坚韧的防护外壳，杜绝了后台因空模型而引起的进程闪退。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
             }
 
-            // 一米处的月球解释
+            // 月球旅行记解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("🌙  一米处的月球 (La Lune à un mètre, 1898)")
+                Text("🌙  月球旅行记 (Le Voyage dans la Lune, 1902)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("《一米处的月球》是法国电影先驱乔治·梅里爱于 1898 年创作的早期科幻特技默片。梅里爱凭借精湛的舞台魔术和特效技巧（双重曝光、溶解过渡等），在仅一米距离内，将浩瀚神秘的月球拉入了微观的特技舞台。本次版本以此隐喻：我们把看似复杂深奥的「智能体自动博弈对话」与「Carbon 免 TCC 全局热键」等功能，平移拉近到了距离用户仅「一米处」的日常桌面，提供最优雅触手的跃迁体验。")
+                Text("《月球旅行记》是乔治·梅里爱于 1902 年创作 of 影史首部科幻杰作，以炮弹飞船击中月球眼睛的经典画面开创了人类电影特效与科幻幻想的新纪元。本次版本以此隐喻：我们以天马行空的想象力，在方寸屏幕之间编织出『状态栏数字雨』与『指尖霓虹粒子』等魔幻特效，带您在日常的敲击与点击中，展开一场跨越界限的月球奇幻之旅。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
@@ -352,7 +310,7 @@ private struct VersionEpigraph: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "E9C46A"))
 
-                    Text("这段经典的独白出自莎士比亚四大悲剧之一《麦克白》第五幕第五场。麦克白在听到妻子死讯并面临兵临城下的绝境时，发出了对生命虚无而深刻的感叹。在罗德岛与 AI 代理人（Player/Actor）的开发语境中，它代表着对「虚无的演变」与「上帝模式（God Mode）」的终极隐喻：智能体在虚拟舞台上的每一次闪烁、推理与工具调用，都像是一个拙劣伶人，在预设的 Prompt 轨道上倾尽全力地演出。我们为它设计了自动对话的博弈循环，并将其数据投影至系统的各个角落（如 macOS 桌面 Widget 和状态栏），正是为了给这个「行走的影子」赋予最真实可触的生命回响。")
+                    Text("这段经典的叙事融合了乔治·梅里爱早期电影工业的特技魔术与现代软件交互设计的深层映射。在 4.5.1『安哥拉兔·月球旅行记』的宏大叙事中，我们借由《麦克白》中关于『行走影子』的探讨，审视了智能体在后台静默生存的状态。智能助理的心跳（Heartbeat）不再是一个毫无防备、随时可能因为找不到激活模型而折翼退场的拙劣伶人。我们为其织就了如安哥拉兔毛般松软而坚韧的异常防护网，更在人机交互的物理边界——状态栏与鼠标指针 of 触碰点，通过 Canvas 硬件加速渲染出数字雨与繁星微粒子，让那些原本冰冷的计算逻辑，在微光与阴影的交织中，焕发出影史默片般纯粹、惊艳的永恒光彩。")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)

@@ -48,7 +48,7 @@ struct Provider: TimelineProvider {
                 WidgetMilestone(icon: "🌿", label: "下一个180天", date: "2026-08-29", countDisplay: "(第5个)")
             ],
             proactiveBubbleText: "你好呀！我是你的智能助理。",
-            appVersion: "4.5.0"
+            appVersion: "4.5.1"
         )
     }
     

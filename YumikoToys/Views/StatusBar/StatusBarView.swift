@@ -759,6 +759,7 @@ struct StatusBarView: View {
                 }
             }
         }
+        .interactiveClickEffect()
     }
 
     // MARK: - Tab 导航栏

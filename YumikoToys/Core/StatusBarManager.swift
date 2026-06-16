@@ -755,16 +755,54 @@ struct EmojiRainView: View {
                                         opacity = max(0.0, 1.0 - sparkTime / sparkLifetime)
                                     }
                                 }
+                            case .matrix:
+                                currentY = p.startY + p.speed * 1.15 * CGFloat(elapsed)
+                                currentX = p.xRatio * size.width
+                                currentRotation = 0.0
+                                currentScale = p.scale
+                                opacity = 1.0
+                                
+                            case .halo:
+                                currentY = p.startY + p.speed * 0.45 * CGFloat(elapsed)
+                                let sway = sin(elapsed * p.swaySpeed * 0.6 + p.swayPhase) * p.swayAmplitude * 1.2
+                                currentX = p.xRatio * size.width + sway
+                                currentRotation = p.startRotation + p.rotationSpeed * 0.3 * elapsed
+                                let pulse = 1.0 + 0.15 * sin(elapsed * p.pulseSpeed * 0.7)
+                                currentScale = p.scale * CGFloat(pulse)
+                                opacity = 1.0
+                                
+                            case .gravityBubble:
+                                let gravity: CGFloat = 750.0
+                                currentY = p.startY + p.speed * CGFloat(elapsed) + 0.5 * gravity * CGFloat(elapsed * elapsed)
+                                currentX = p.xRatio * size.width
+                                currentRotation = 0.0
+                                currentScale = p.scale
+                                opacity = 1.0
                             }
                             
                             if opacity > 0 {
                                 var particleContext = canvasContext
                                 particleContext.opacity = opacity
                                 
-                                let resolved = canvasContext.resolve(
-                                    Text(currentEmoji)
-                                        .font(.system(size: 32 * currentScale))
-                                )
+                                let resolved: GraphicsContext.ResolvedText
+                                if effectType == .matrix {
+                                    resolved = canvasContext.resolve(
+                                        Text(currentEmoji)
+                                            .font(.system(size: 26 * currentScale, weight: .bold, design: .monospaced))
+                                            .foregroundColor(Color(red: 0.0, green: 0.95, blue: 0.15))
+                                    )
+                                } else if effectType == .halo {
+                                    resolved = canvasContext.resolve(
+                                        Text(currentEmoji)
+                                            .font(.system(size: 30 * currentScale))
+                                            .foregroundColor(Color(red: 1.0, green: 0.88, blue: 0.2))
+                                    )
+                                } else {
+                                    resolved = canvasContext.resolve(
+                                        Text(currentEmoji)
+                                            .font(.system(size: 32 * currentScale))
+                                    )
+                                }
                                 
                                 particleContext.translateBy(x: currentX, y: currentY)
                                 particleContext.rotate(by: Angle(degrees: currentRotation))
@@ -796,6 +834,12 @@ struct EmojiRainView: View {
                 emojiPresets = ["🫧", "🫧", "🔵", "⚪", "🫧"]
             case .firework:
                 emojiPresets = ["🎆", "🎇", "✨", "💥", "🔴", "🔵", "🟡", "🟢", "⭐"]
+            case .matrix:
+                emojiPresets = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "X", "Y"]
+            case .halo:
+                emojiPresets = ["😇", "✨", "👑", "💫", "🌟", "🪽"]
+            case .gravityBubble:
+                emojiPresets = ["💧", "💦", "🌧️", "💧", "🔵", "💦"]
             }
             
             let count = 45
@@ -833,10 +877,11 @@ struct EmojiRainView: View {
                 particles = (0..<count).map { _ in
                     let isHeart = effectType == .heart
                     let isBubble = effectType == .bubble
+                    let isHalo = effectType == .halo
                     
                     let startY: CGFloat
                     let speed: CGFloat
-                    if isHeart || isBubble {
+                    if isHeart || isBubble || isHalo {
                         startY = screenHeight + CGFloat.random(in: 50...150)
                         speed = CGFloat.random(in: -480...(-280))
                     } else {

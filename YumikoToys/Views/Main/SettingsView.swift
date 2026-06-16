@@ -623,6 +623,36 @@ struct SettingsView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
+
+                HStack(spacing: 8) {
+                    Image(systemName: "cursorarrow.click")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(hex: "007AFF"))
+                        .frame(width: 24, height: 24)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("鼠标点击特效")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("点击应用界面时触发的华丽点击特效")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Picker("", selection: Binding(
+                        get: { viewModel.activeClickEffect },
+                        set: { viewModel.selectClickEffect($0) }
+                    )) {
+                        ForEach(ClickEffectType.allCases) { effect in
+                            Text(effect.displayName).tag(effect)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 160)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
                 
                 HStack(spacing: 8) {
                     Image(systemName: "camera")
@@ -3237,6 +3267,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var hideFloatingLayoutToolbar: Bool = false
     @Published var activeSpecialEffect: SpecialEffectType = .emoji
     @Published var screenshotHotkeyPreset: ScreenshotHotkeyPreset = .none
+    @Published var activeClickEffect: ClickEffectType = .sparkle
 
     // 👈【核心新增】：上帝模式 (God Mode) 配色及圆角发布参数
     @Published var godModeEnabled = false
@@ -3378,6 +3409,7 @@ final class SettingsViewModel: ObservableObject {
         hideFloatingLayoutToolbar = settings.hideFloatingLayoutToolbar
         activeSpecialEffect = settings.activeSpecialEffect
         screenshotHotkeyPreset = settings.screenshotHotkeyPreset
+        activeClickEffect = settings.activeClickEffect
         
         // 读取状态栏文字配置
         statusBarTextMode = settings.statusBarTextMode
@@ -3486,6 +3518,7 @@ final class SettingsViewModel: ObservableObject {
                 self.hideFloatingLayoutToolbar = updatedSettings.hideFloatingLayoutToolbar
                 self.activeSpecialEffect = updatedSettings.activeSpecialEffect
                 self.screenshotHotkeyPreset = updatedSettings.screenshotHotkeyPreset
+                self.activeClickEffect = updatedSettings.activeClickEffect
                 self.selectedFont = updatedSettings.selectedFont
                 self.selectedIconStyle = updatedSettings.selectedIconStyle
                 self.statusBarIconStyle = updatedSettings.statusBarIconStyle
@@ -3713,6 +3746,14 @@ final class SettingsViewModel: ObservableObject {
         LoggerService.shared.info("Special effect changed to: \(effect.displayName)")
     }
     
+    func selectClickEffect(_ effect: ClickEffectType) {
+        activeClickEffect = effect
+        var settings = container.settingsService.settings
+        settings.activeClickEffect = effect
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Click effect changed to: \(effect.displayName)")
+    }
+    
     func selectScreenshotHotkeyPreset(_ preset: ScreenshotHotkeyPreset) {
         screenshotHotkeyPreset = preset
         var settings = container.settingsService.settings
@@ -3772,6 +3813,7 @@ final class SettingsViewModel: ObservableObject {
         hideFloatingLayoutToolbar = settings.hideFloatingLayoutToolbar
         activeSpecialEffect = settings.activeSpecialEffect
         screenshotHotkeyPreset = settings.screenshotHotkeyPreset
+        activeClickEffect = settings.activeClickEffect
         savedColorSchemes = settings.savedColorSchemes
         activeColorSchemeName = settings.activeColorSchemeName
         
