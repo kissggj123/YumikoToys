@@ -22,6 +22,7 @@ protocol ServiceLifecycle: AnyObject {
 protocol StorageServiceProtocol: ServiceLifecycle {
     func save<T: Codable & Sendable>(_ value: T, forKey key: String)
     func load<T: Codable & Sendable>(forKey key: String) -> T?
+    func loadWithFallback<T: Codable & Sendable>(forKey key: String, fallback: T) -> T
     func remove(forKey key: String)
     func saveData(_ data: Data, forKey key: String)
     func loadData(forKey key: String) -> Data?

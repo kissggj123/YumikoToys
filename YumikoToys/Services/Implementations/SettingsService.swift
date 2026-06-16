@@ -98,22 +98,20 @@ final class SettingsService: SettingsServiceProtocol {
     }
     
     private func loadSettings() {
-        if let loaded: AppSettings = storageService.load(forKey: settingsKey) {
-            settings = loaded
-            settingsSubject.send(settings)
-            LoggerService.shared.debug("Settings loaded from storage")
-            
-            // 初始化同步至字体管理器与 Poke
-            FontManager.shared.updateActiveFont(
-                type: settings.selectedFont,
-                customPath: settings.customFontPath,
-                systemFamily: settings.selectedSystemFontFamily
-            )
-            
-            PokeService.shared.updatePokeSettings(
-                enablePoke: settings.enablePoke,
-                apiKey: settings.pokeApiKey
-            )
-        }
+        let loaded: AppSettings = storageService.loadWithFallback(forKey: settingsKey, fallback: .default)
+        settings = loaded
+        settingsSubject.send(settings)
+        LoggerService.shared.debug("Settings loaded from storage")
+        
+        FontManager.shared.updateActiveFont(
+            type: settings.selectedFont,
+            customPath: settings.customFontPath,
+            systemFamily: settings.selectedSystemFontFamily
+        )
+        
+        PokeService.shared.updatePokeSettings(
+            enablePoke: settings.enablePoke,
+            apiKey: settings.pokeApiKey
+        )
     }
 }

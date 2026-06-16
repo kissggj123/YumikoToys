@@ -225,13 +225,14 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         let calc = AnniversaryInfo.calculateTime(from: anniversary.startDate, referenceDate: ntpTime)
         let dayCount = Int(calc.totalDays)
         
+        // 始终在每次 tick 时更新写入 JSON 文件，以便 Widget 随时读取到最新的浮点天数和数据
+        let milestones = AnniversaryInfo.calculateMilestones(from: anniversary.startDate, referenceDate: ntpTime)
+        writeWidgetSyncData(anniversary: anniversary, calc: calc, milestones: milestones)
+        
+        // 仅在天数发生整数变化或切换纪念日时，才通知 OS 刷新 Timeline（防止 API 调用频次超限）
         if forceReload || dayCount != lastSyncedDayCount || anniversary.id != lastSyncedAnniversaryId {
             lastSyncedDayCount = dayCount
             lastSyncedAnniversaryId = anniversary.id
-            
-            let milestones = AnniversaryInfo.calculateMilestones(from: anniversary.startDate, referenceDate: ntpTime)
-            writeWidgetSyncData(anniversary: anniversary, calc: calc, milestones: milestones)
-            
             WidgetCenter.shared.reloadAllTimelines()
             LoggerService.shared.info("Widget timeline reloaded for: \(anniversary.title)")
         }
@@ -309,6 +310,11 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         // 3. Home directory Application Support (fallback for self-signed)
         let homeAppSupport = fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/com.Lite.YumikoToys")
         writePaths.append(homeAppSupport.appendingPathComponent("widget.json"))
+        
+        // 4. Widget sandbox container (direct write from non-sandboxed main app to sandboxed widget container)
+        let widgetContainer = fileManager.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Containers/com.Lite.YumikoToys.YumikoWidget/Data/Library/Application Support/com.Lite.YumikoToys")
+        writePaths.append(widgetContainer.appendingPathComponent("widget.json"))
         
         for fileURL in writePaths {
             let folderURL = fileURL.deletingLastPathComponent()

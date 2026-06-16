@@ -23,6 +23,18 @@ struct ChatMessage: Codable, Identifiable, Equatable {
     /// 是否为 Agent 步骤
     var isAgentStep: Bool
 
+    /// 是否为主动工具建议
+    var isProactiveSuggestion: Bool
+
+    /// 主动建议的工具名称
+    var proactiveToolName: String?
+
+    /// 主动建议的工具参数
+    var proactiveToolArgs: String?
+
+    /// 工具执行结果 JSON
+    var toolResultJSON: String?
+
     init(
         id: UUID = UUID(),
         role: String,
@@ -30,7 +42,11 @@ struct ChatMessage: Codable, Identifiable, Equatable {
         timestamp: Date = Date(),
         thinkingContent: String? = nil,
         searchSources: [SearchSource]? = nil,
-        isAgentStep: Bool = false
+        isAgentStep: Bool = false,
+        isProactiveSuggestion: Bool = false,
+        proactiveToolName: String? = nil,
+        proactiveToolArgs: String? = nil,
+        toolResultJSON: String? = nil
     ) {
         self.id = id
         self.role = role
@@ -39,6 +55,10 @@ struct ChatMessage: Codable, Identifiable, Equatable {
         self.thinkingContent = thinkingContent
         self.searchSources = searchSources
         self.isAgentStep = isAgentStep
+        self.isProactiveSuggestion = isProactiveSuggestion
+        self.proactiveToolName = proactiveToolName
+        self.proactiveToolArgs = proactiveToolArgs
+        self.toolResultJSON = toolResultJSON
     }
 
     // MARK: - Codable (向后兼容)
@@ -46,6 +66,7 @@ struct ChatMessage: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, role, content, timestamp
         case thinkingContent, searchSources, isAgentStep
+        case isProactiveSuggestion, proactiveToolName, proactiveToolArgs, toolResultJSON
     }
 
     init(from decoder: Decoder) throws {
@@ -57,6 +78,10 @@ struct ChatMessage: Codable, Identifiable, Equatable {
         thinkingContent = try container.decodeIfPresent(String.self, forKey: .thinkingContent)
         searchSources = try container.decodeIfPresent([SearchSource].self, forKey: .searchSources)
         isAgentStep = try container.decodeIfPresent(Bool.self, forKey: .isAgentStep) ?? false
+        isProactiveSuggestion = try container.decodeIfPresent(Bool.self, forKey: .isProactiveSuggestion) ?? false
+        proactiveToolName = try container.decodeIfPresent(String.self, forKey: .proactiveToolName)
+        proactiveToolArgs = try container.decodeIfPresent(String.self, forKey: .proactiveToolArgs)
+        toolResultJSON = try container.decodeIfPresent(String.self, forKey: .toolResultJSON)
     }
 }
 

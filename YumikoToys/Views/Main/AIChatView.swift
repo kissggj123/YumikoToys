@@ -354,7 +354,10 @@ struct AIChatView: View {
             },
             onRegenerate: message.role == "assistant" ? {
                 viewModel.regenerateResponse(for: message.id)
-            } : nil
+            } : nil,
+            onExecuteProactiveTool: { suggestion in
+                viewModel.executeProactiveTool(suggestion: suggestion)
+            }
         )
         .id(message.id)
         .contextMenu {

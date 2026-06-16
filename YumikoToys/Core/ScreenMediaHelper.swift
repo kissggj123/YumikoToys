@@ -482,7 +482,7 @@ struct ScreenshotAnnotationView: View {
     let imagePath: String
     let onSave: (String) -> Void
 
-    @State private var tool: AnnotationTool = .mosaic
+    @State private var tool: AnnotationTool = .mosaicPixel
     @State private var strokeWidth: CGFloat = 8
     @State private var paths: [AnnotationPath] = []
     @State private var currentPath: AnnotationPath?
@@ -491,6 +491,9 @@ struct ScreenshotAnnotationView: View {
     @State private var textInputPosition: CGPoint = .zero
     @State private var annotationColor: Color = .red
     @State private var canvasSize: CGSize = .zero
+    @State private var selectedPathId: UUID?
+    @State private var dragOffset: CGSize = .zero
+    @State private var controlPointDrag: ControlPointType?
 
     private var scaleRatio: CGFloat {
         guard image.size.width > 0, canvasSize.width > 0 else { return 1 }
@@ -498,27 +501,40 @@ struct ScreenshotAnnotationView: View {
     }
 
     enum AnnotationTool: String, CaseIterable {
-        case mosaic = "mosaic"
-        case frame  = "frame"
-        case line   = "line"
-        case text   = "text"
+        case mosaicPixel = "mosaicPixel"
+        case mosaicBlur  = "mosaicBlur"
+        case frame       = "frame"
+        case circle      = "circle"
+        case line        = "line"
+        case arrow       = "arrow"
+        case text        = "text"
 
         var displayName: String {
             switch self {
-            case .mosaic: return "马赛克"
-            case .frame:  return "画框"
-            case .line:   return "画线"
-            case .text:   return "文字"
+            case .mosaicPixel: return "像素化"
+            case .mosaicBlur:  return "模糊"
+            case .frame:       return "画框"
+            case .circle:      return "圆圈"
+            case .line:        return "画线"
+            case .arrow:       return "箭头"
+            case .text:        return "文字"
             }
         }
 
         var icon: String {
             switch self {
-            case .mosaic: return "square.grid.3x3"
-            case .frame:  return "rectangle"
-            case .line:   return "pencil"
-            case .text:   return "textformat"
+            case .mosaicPixel: return "squareshape.split.3x3"
+            case .mosaicBlur:  return "aqi.medium"
+            case .frame:       return "rectangle"
+            case .circle:      return "circle"
+            case .line:        return "pencil"
+            case .arrow:       return "arrow.up.forward"
+            case .text:        return "textformat"
             }
+        }
+        
+        var isMosaic: Bool {
+            self == .mosaicPixel || self == .mosaicBlur
         }
     }
 
@@ -530,6 +546,20 @@ struct ScreenshotAnnotationView: View {
         let color: Color
         let width: CGFloat
         var text: String?
+        var offset: CGSize = .zero
+        var isSelected: Bool = false
+    }
+    
+    enum ControlPointType {
+        case move
+        case scaleTopLeft
+        case scaleTopRight
+        case scaleBottomLeft
+        case scaleBottomRight
+        case scaleTop
+        case scaleBottom
+        case scaleLeft
+        case scaleRight
     }
 
     var body: some View {
@@ -569,7 +599,22 @@ struct ScreenshotAnnotationView: View {
 
                 Spacer()
 
-                Button("撤销") { if !paths.isEmpty { paths.removeLast() } }
+                if selectedPathId != nil {
+                    Button("删除") {
+                        if let id = selectedPathId {
+                            paths.removeAll { $0.id == id }
+                            selectedPathId = nil
+                        }
+                    }
+                    .font(.system(size: 10))
+                    .buttonStyle(.bordered)
+                    .tint(.red)
+                }
+
+                Button("撤销") {
+                    selectedPathId = nil
+                    if !paths.isEmpty { paths.removeLast() }
+                }
                     .font(.system(size: 10))
                     .buttonStyle(.bordered)
                     .disabled(paths.isEmpty)
@@ -621,12 +666,12 @@ struct ScreenshotAnnotationView: View {
                                         tool: tool,
                                         points: [pt],
                                         rect: nil,
-                                        color: tool == .mosaic ? .gray : annotationColor,
+                                        color: tool.isMosaic ? .gray : annotationColor,
                                         width: strokeWidth
                                     )
                                 } else {
                                     currentPath?.points.append(pt)
-                                    if (tool == .frame || tool == .mosaic),
+                                    if (tool == .frame || tool == .circle || tool.isMosaic),
                                        let start = currentPath?.points.first {
                                         currentPath?.rect = CGRect(
                                             x: min(start.x, pt.x),
@@ -641,7 +686,7 @@ struct ScreenshotAnnotationView: View {
                                 if tool == .text { return }
                                 if let current = currentPath {
                                     var finalPath = current
-                                    if tool == .frame || tool == .mosaic {
+                                    if tool == .frame || tool == .circle || tool.isMosaic {
                                         let s = current.points.first ?? .zero
                                         let e = current.points.last  ?? .zero
                                         finalPath = AnnotationPath(
@@ -651,7 +696,7 @@ struct ScreenshotAnnotationView: View {
                                                 x: min(s.x, e.x), y: min(s.y, e.y),
                                                 width: abs(e.x - s.x), height: abs(e.y - s.y)
                                             ),
-                                            color: tool == .mosaic ? .gray : annotationColor,
+                                            color: tool.isMosaic ? .gray : annotationColor,
                                             width: strokeWidth
                                         )
                                     }
@@ -667,11 +712,55 @@ struct ScreenshotAnnotationView: View {
                                 .contentShape(Rectangle())
                                 .gesture(
                                     DragGesture(minimumDistance: 0)
+                                        .onChanged { value in
+                                            guard tool == .text else { return }
+                                            let pt = value.location
+                                            if selectedPathId != nil {
+                                                if let idx = paths.firstIndex(where: { $0.id == selectedPathId }) {
+                                                    let originalPoint = paths[idx].points.first ?? .zero
+                                                    paths[idx].offset = CGSize(
+                                                        width: pt.x - originalPoint.x,
+                                                        height: pt.y - originalPoint.y
+                                                    )
+                                                }
+                                            }
+                                        }
                                         .onEnded { value in
                                             guard tool == .text else { return }
-                                            textInputPosition = value.location
-                                            textInputContent  = ""
-                                            showTextInput     = true
+                                            let pt = value.location
+                                            if let idx = paths.firstIndex(where: {
+                                                $0.id == selectedPathId && $0.tool == .text
+                                            }) {
+                                                let originalPoint = paths[idx].points.first ?? .zero
+                                                paths[idx].offset = CGSize(
+                                                    width: pt.x - originalPoint.x,
+                                                    height: pt.y - originalPoint.y
+                                                )
+                                                return
+                                            }
+                                            selectedPathId = nil
+                                            var hitText = false
+                                            for (idx, path) in paths.enumerated() where path.tool == .text {
+                                                if let textPoint = path.points.first {
+                                                    let textWidth = CGFloat(path.text?.count ?? 0) * path.width * 3 * 0.6
+                                                    let textRect = CGRect(
+                                                        x: textPoint.x + path.offset.width - 4,
+                                                        y: textPoint.y + path.offset.height - 4,
+                                                        width: textWidth + 8,
+                                                        height: path.width * 3 + 8
+                                                    )
+                                                    if textRect.contains(pt) {
+                                                        selectedPathId = path.id
+                                                        hitText = true
+                                                        break
+                                                    }
+                                                }
+                                            }
+                                            if !hitText {
+                                                textInputPosition = pt
+                                                textInputContent  = ""
+                                                showTextInput     = true
+                                            }
                                         }
                                 )
                         }
@@ -734,7 +823,7 @@ struct ScreenshotAnnotationView: View {
     private func drawPath(_ path: AnnotationPath, in context: inout GraphicsContext, size: CGSize) {
         switch path.tool {
 
-        case .mosaic:
+        case .mosaicPixel, .mosaicBlur:
             if let rect = path.rect, rect.width > 0, rect.height > 0 {
                 let blockSize: CGFloat = max(6, path.width)
                 var x = rect.minX
@@ -766,6 +855,12 @@ struct ScreenshotAnnotationView: View {
                 context.stroke(Path(rect), with: .color(path.color), lineWidth: path.width)
             }
 
+        case .circle:
+            if let rect = path.rect {
+                let ellipse = Path(ellipseIn: rect)
+                context.stroke(ellipse, with: .color(path.color), lineWidth: path.width)
+            }
+
         case .line:
             if path.points.count > 1 {
                 var lp = Path()
@@ -774,15 +869,74 @@ struct ScreenshotAnnotationView: View {
                 context.stroke(lp, with: .color(path.color), lineWidth: path.width)
             }
 
+        case .arrow:
+            if path.points.count >= 2, let start = path.points.first, let end = path.points.last {
+                var lp = Path()
+                lp.move(to: start)
+                lp.addLine(to: end)
+                context.stroke(lp, with: .color(path.color), lineWidth: path.width)
+                
+                let dx = end.x - start.x
+                let dy = end.y - start.y
+                let angle = atan2(dy, dx)
+                let headLength: CGFloat = max(12, path.width * 2)
+                let headAngle: CGFloat = .pi / 6
+                
+                let p1 = CGPoint(
+                    x: end.x - headLength * cos(angle - headAngle),
+                    y: end.y - headLength * sin(angle - headAngle)
+                )
+                let p2 = CGPoint(
+                    x: end.x - headLength * cos(angle + headAngle),
+                    y: end.y - headLength * sin(angle + headAngle)
+                )
+                
+                var arrowHead = Path()
+                arrowHead.move(to: p1)
+                arrowHead.addLine(to: end)
+                arrowHead.addLine(to: p2)
+                context.stroke(arrowHead, with: .color(path.color), lineWidth: path.width)
+            }
+
         case .text:
             if let text = path.text, let point = path.points.first {
                 let fontSize = path.width * 3
+                let drawPoint = CGPoint(x: point.x + path.offset.width, y: point.y + path.offset.height)
                 let resolved = context.resolve(
                     Text(text)
                         .font(.system(size: fontSize, weight: .semibold))
                         .foregroundStyle(path.color)
                 )
-                context.draw(resolved, at: point, anchor: .topLeading)
+                context.draw(resolved, at: drawPoint, anchor: .topLeading)
+                
+                if path.isSelected {
+                    let textWidth = CGFloat(text.count) * fontSize * 0.6
+                    let selectionRect = CGRect(
+                        x: drawPoint.x - 4,
+                        y: drawPoint.y - 4,
+                        width: textWidth + 8,
+                        height: fontSize + 8
+                    )
+                    context.stroke(
+                        Path(selectionRect),
+                        with: .color(.blue),
+                        lineWidth: 1
+                    )
+                    
+                    let controlSize: CGFloat = 8
+                    let controlPoints = [
+                        CGPoint(x: selectionRect.minX - controlSize/2, y: selectionRect.minY - controlSize/2),
+                        CGPoint(x: selectionRect.maxX - controlSize/2, y: selectionRect.minY - controlSize/2),
+                        CGPoint(x: selectionRect.minX - controlSize/2, y: selectionRect.maxY - controlSize/2),
+                        CGPoint(x: selectionRect.maxX - controlSize/2, y: selectionRect.maxY - controlSize/2),
+                    ]
+                    for cp in controlPoints {
+                        context.fill(
+                            Path(CGRect(x: cp.x, y: cp.y, width: controlSize, height: controlSize)),
+                            with: .color(.blue)
+                        )
+                    }
+                }
             }
         }
     }
@@ -886,7 +1040,7 @@ struct ScreenshotAnnotationView: View {
 
         switch path.tool {
 
-        case .mosaic:
+        case .mosaicPixel, .mosaicBlur:
             if let rect = path.rect, rect.width > 0, rect.height > 0 {
                 let imgRect = CGRect(
                     x: rect.minX / ratio,
@@ -935,6 +1089,19 @@ struct ScreenshotAnnotationView: View {
                 bp.stroke()
             }
 
+        case .circle:
+            if let rect = path.rect {
+                let imgRect = CGRect(
+                    x: rect.minX / ratio,
+                    y: h - rect.maxY / ratio,
+                    width:  rect.width  / ratio,
+                    height: rect.height / ratio
+                )
+                let bp = NSBezierPath(ovalIn: imgRect)
+                bp.lineWidth = path.width / ratio
+                bp.stroke()
+            }
+
         case .line:
             if path.points.count > 1 {
                 let bp = NSBezierPath()
@@ -946,16 +1113,52 @@ struct ScreenshotAnnotationView: View {
                 bp.stroke()
             }
 
+        case .arrow:
+            if path.points.count >= 2, let start = path.points.first, let end = path.points.last {
+                let ipStart = canvasToImage(start, ratio: ratio, imageHeight: h)
+                let ipEnd = canvasToImage(end, ratio: ratio, imageHeight: h)
+                
+                let bp = NSBezierPath()
+                bp.move(to: ipStart)
+                bp.line(to: ipEnd)
+                bp.lineWidth = path.width / ratio
+                bp.stroke()
+                
+                let dx = ipEnd.x - ipStart.x
+                let dy = ipEnd.y - ipStart.y
+                let angle = atan2(dy, dx)
+                let headLength: CGFloat = max(12, path.width * 2) / ratio
+                let headAngle: CGFloat = .pi / 6
+                
+                let p1 = NSPoint(
+                    x: ipEnd.x - headLength * cos(angle - headAngle),
+                    y: ipEnd.y - headLength * sin(angle - headAngle)
+                )
+                let p2 = NSPoint(
+                    x: ipEnd.x - headLength * cos(angle + headAngle),
+                    y: ipEnd.y - headLength * sin(angle + headAngle)
+                )
+                
+                let arrowHead = NSBezierPath()
+                arrowHead.move(to: p1)
+                arrowHead.line(to: ipEnd)
+                arrowHead.line(to: p2)
+                arrowHead.lineWidth = path.width / ratio
+                arrowHead.stroke()
+            }
+
         case .text:
             if let text = path.text, let pt = path.points.first {
-                let ip       = canvasToImage(pt, ratio: ratio, imageHeight: h)
+                let ip = canvasToImage(pt, ratio: ratio, imageHeight: h)
+                let offsetX = path.offset.width / ratio
+                let offsetY = -path.offset.height / ratio
                 let fontSize = (path.width * 3) / ratio
                 let attrs: [NSAttributedString.Key: Any] = [
                     .font:            NSFont.systemFont(ofSize: fontSize, weight: .semibold),
                     .foregroundColor: nsColor
                 ]
                 NSAttributedString(string: text, attributes: attrs)
-                    .draw(at: NSPoint(x: ip.x, y: ip.y - fontSize))
+                    .draw(at: NSPoint(x: ip.x + offsetX, y: ip.y + offsetY - fontSize))
             }
         }
     }

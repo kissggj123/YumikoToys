@@ -150,6 +150,7 @@
 		FC6553202FC373980093B726 /* AgentFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552422FC373980093B726 /* AgentFileService.swift */; };
 		FC6553212FC373980093B726 /* AgentStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526C2FC373980093B726 /* AgentStepView.swift */; };
 		FC6553222FC373980093B726 /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552142FC373980093B726 /* FontManager.swift */; };
+		FC6554000000000000000001 /* ProactiveToolCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6554000000000000000002 /* ProactiveToolCardView.swift */; };
 		FC6553B12FD000010093B726 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553B02FD000010093B726 /* Theme.swift */; };
 		FC6553FF0000000000000001 /* FullDiskAccessHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */; };
 		FC6559012FC373980093B726 /* AgentManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559022FC373980093B726 /* AgentManagerService.swift */; };
@@ -215,6 +216,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		FC3FCE1A2CB69C52008D8C7D /* YumikoWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E5B4D6925FBFE4B00092422 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		1E6FB253260A3B890074A382 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		1EE4E20A24F97E240097C32C /* YumikoToys.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoToys.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -307,6 +309,7 @@
 		FC6552672FC373980093B726 /* UserAvatarServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarServiceProtocol.swift; sourceTree = "<group>"; };
 		FC65526C2FC373980093B726 /* AgentStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStepView.swift; sourceTree = "<group>"; };
 		FC65526D2FC373980093B726 /* AnniversaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryCard.swift; sourceTree = "<group>"; };
+		FC6554000000000000000002 /* ProactiveToolCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProactiveToolCardView.swift; sourceTree = "<group>"; };
 		FC65526E2FC373980093B726 /* AppHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHeader.swift; sourceTree = "<group>"; };
 		FC65526F2FC373980093B726 /* AssistantToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantToolbar.swift; sourceTree = "<group>"; };
 		FC6552702FC373980093B726 /* ButtonAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonAnimations.swift; sourceTree = "<group>"; };
@@ -369,6 +372,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		FC3FCE1B2CB69C52008D8C7D /* YumikoWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YumikoWatch;
+			sourceTree = "<group>";
+		};
 		FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = YumikoToysHelper;
@@ -387,6 +395,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		FC3FCE172CB69C52008D8C7D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1EE4E20724F97E240097C32C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
@@ -444,6 +459,7 @@
 		1EE4E20124F97E240097C32C = {
 			isa = PBXGroup;
 			children = (
+				FC3FCE1B2CB69C52008D8C7D /* YumikoWatch */,
 				FC6552A32FC373980093B726 /* YumikoToys */,
 				FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */,
 				FCF267392E114015007230B1 /* YumikoCLI */,
@@ -460,6 +476,7 @@
 				FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */,
 				FCF267382E114015007230B1 /* YumikoCLI */,
 				FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */,
+				FC3FCE1A2CB69C52008D8C7D /* YumikoWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -695,6 +712,7 @@
 				FC65590A2FC373980093B726 /* SkillsSidebarView.swift */,
 				FC65526C2FC373980093B726 /* AgentStepView.swift */,
 				FC65526D2FC373980093B726 /* AnniversaryCard.swift */,
+				FC6554000000000000000002 /* ProactiveToolCardView.swift */,
 				FC65526E2FC373980093B726 /* AppHeader.swift */,
 				FC65526F2FC373980093B726 /* AssistantToolbar.swift */,
 				FC6552702FC373980093B726 /* ButtonAnimations.swift */,
@@ -825,6 +843,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		FC3FCE192CB69C52008D8C7D /* YumikoWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FC3FCE262CB69C53008D8C7D /* Build configuration list for PBXNativeTarget "YumikoWatch" */;
+			buildPhases = (
+				FC3FCE162CB69C52008D8C7D /* Sources */,
+				FC3FCE172CB69C52008D8C7D /* Frameworks */,
+				FC3FCE182CB69C52008D8C7D /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				FC3FCE1B2CB69C52008D8C7D /* YumikoWatch */,
+			);
+			name = YumikoWatch;
+			productName = YumikoWatch;
+			productReference = FC3FCE1A2CB69C52008D8C7D /* YumikoWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 		1EE4E20924F97E240097C32C /* YumikoToys */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1EE4E21A24F97E250097C32C /* Build configuration list for PBXNativeTarget "YumikoToys" */;
@@ -970,6 +1006,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				FC3FCE192CB69C52008D8C7D /* YumikoWatch */,
 				1EE4E20924F97E240097C32C /* YumikoToys */,
 				FC3FCE192CB69C52008D8C7B /* YumikoToysHelper */,
 				FCF267372E114015007230B1 /* YumikoCLI */,
@@ -979,6 +1016,13 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		FC3FCE182CB69C52008D8C7D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1EE4E20824F97E240097C32C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
@@ -1036,6 +1080,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		FC3FCE162CB69C52008D8C7D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1EE4E20624F97E240097C32C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
@@ -1162,6 +1213,7 @@
 				FC65531F2FC373980093B726 /* NTPClient.swift in Sources */,
 				FC6553202FC373980093B726 /* AgentFileService.swift in Sources */,
 				FC6553212FC373980093B726 /* AgentStepView.swift in Sources */,
+				FC6554000000000000000001 /* ProactiveToolCardView.swift in Sources */,
 				FC6553222FC373980093B726 /* FontManager.swift in Sources */,
 			);
 		};
@@ -1183,6 +1235,64 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		FC3FCE272CB69C53008D8C7D /* Debug configuration for PBXNativeTarget "YumikoWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "兔可可";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SDKROOT = watchos;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWatch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				CURRENT_PROJECT_VERSION = 20260616;
+				MARKETING_VERSION = 4.5.1;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FC3FCE282CB69C53008D8C7D /* Release configuration for PBXNativeTarget "YumikoWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "兔可可";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SDKROOT = watchos;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWatch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				CURRENT_PROJECT_VERSION = 20260616;
+				MARKETING_VERSION = 4.5.1;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		1EE4E21824F97E250097C32C /* Debug configuration for PBXProject "YumikoToys" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1571,6 +1681,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		FC3FCE262CB69C53008D8C7D /* Build configuration list for PBXNativeTarget "YumikoWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC3FCE272CB69C53008D8C7D /* Debug configuration for PBXNativeTarget "YumikoWatch" */,
+				FC3FCE282CB69C53008D8C7D /* Release configuration for PBXNativeTarget "YumikoWatch" */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		1EE4E20524F97E240097C32C /* Build configuration list for PBXProject "YumikoToys" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

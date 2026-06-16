@@ -66,6 +66,23 @@ final class StorageService: StorageServiceProtocol {
         }
     }
     
+    func loadWithFallback<T: Codable & Sendable>(forKey key: String, fallback: T) -> T {
+        guard let data = userDefaults.data(forKey: key) else {
+            LoggerService.shared.debug("No data found for key: \(key), using fallback")
+            return fallback
+        }
+        do {
+            let value = try decoder.decode(T.self, from: data)
+            return value
+        } catch {
+            LoggerService.shared.error("Decode failed for \(key): \(error). Using fallback.")
+            let backupKey = "\(key)_backup_\(Int(Date().timeIntervalSince1970))"
+            userDefaults.set(data, forKey: backupKey)
+            LoggerService.shared.info("Backed up corrupted data to: \(backupKey)")
+            return fallback
+        }
+    }
+    
     func remove(forKey key: String) {
         userDefaults.removeObject(forKey: key)
         LoggerService.shared.debug("Removed data for key: \(key)")

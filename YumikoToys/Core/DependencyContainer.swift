@@ -174,11 +174,6 @@ final class DependencyContainer: ObservableObject {
         )
         await proactiveAgent.initialize()
         services["proactiveAgent"] = proactiveAgent
-        
-        // 如果开启了主动助理，启动心跳
-        if settingsService.settings.enableProactiveAssistant {
-            proactiveAgent.startService()
-        }
 
         // 第四阶段：启动时间同步
         await timeSyncService.start()

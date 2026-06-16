@@ -14,7 +14,7 @@ final class SettingsMigrationService {
     // MARK: - Properties
     
     private let storageService: StorageServiceProtocol
-    private let currentVersion = 2  // 当前设置格式版本
+    private let currentVersion = 3  // 当前设置格式版本
     private let versionKey = "yumikotoys.settingsVersion"
     
     // MARK: - Initialization
@@ -27,7 +27,7 @@ final class SettingsMigrationService {
     
     /// 检查并执行迁移
     func migrateIfNeeded() async {
-        let storedVersion = storageService.load(forKey: versionKey) ?? 1
+        let storedVersion: Int = storageService.loadWithFallback(forKey: versionKey, fallback: 1)
         
         guard storedVersion < currentVersion else {
             LoggerService.shared.debug("Settings up to date (version \(storedVersion))")
@@ -54,6 +54,8 @@ final class SettingsMigrationService {
         switch (from, to) {
         case (1, 2):
             await migrateV1ToV2()
+        case (2, 3):
+            await migrateV2ToV3()
         default:
             LoggerService.shared.warning("Unknown migration path: \(from) -> \(to)")
         }
@@ -86,7 +88,6 @@ final class SettingsMigrationService {
                 newSettings.ntpConfiguration = savedNTP
                 LoggerService.shared.info("Preserved existing NTP configuration from separate storage")
             }
-            // 否则使用默认 NTP 配置（阿里云），但用户可以在设置中更改
 
             // 保存新版设置
             storageService.save(newSettings, forKey: "yumikotoys.settings")
@@ -97,6 +98,47 @@ final class SettingsMigrationService {
         let defaultLayouts = ComponentLayout.defaultLayout
         storageService.save(defaultLayouts, forKey: "yumikotoys.componentLayouts")
         LoggerService.shared.info("Initialized default component layouts")
+    }
+    
+    /// 迁移 V2 -> V3
+    /// - 修补原始 JSON 中不兼容的枚举值
+    /// - 确保所有新增字段有正确的默认值
+    private func migrateV2ToV3() async {
+        LoggerService.shared.info("Performing V2 -> V3 migration")
+        
+        guard let rawData = storageService.loadData(forKey: "yumikotoys.settings") else {
+            LoggerService.shared.info("No settings data to migrate")
+            return
+        }
+        
+        guard var json = try? JSONSerialization.jsonObject(with: rawData) as? [String: Any] else {
+            LoggerService.shared.warning("Failed to parse settings JSON for migration")
+            return
+        }
+        
+        // 修补已知的不兼容枚举值（如果有枚举 case 被重命名的情况）
+        // 例如：如果旧版本的 enum raw value 与新版本不同
+        patchIncompatibleEnumValues(&json)
+        
+        // 保存修补后的数据
+        if let patchedData = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys]) {
+            storageService.saveData(patchedData, forKey: "yumikotoys.settings")
+            LoggerService.shared.info("Applied V2 -> V3 JSON patches")
+        }
+    }
+    
+    /// 修补已知的不兼容枚举值
+    private func patchIncompatibleEnumValues(_ json: inout [String: Any]) {
+        // 如果未来有枚举重命名，在这里添加修补逻辑
+        // 例如：
+        // if let oldValue = json["someEnumField"] as? String, oldValue == "oldCaseName" {
+        //     json["someEnumField"] = "newCaseName"
+        // }
+        
+        // 确保新增字段存在（如果缺失则添加默认值）
+        if json["proactiveAutoConfigured"] == nil {
+            json["proactiveAutoConfigured"] = false
+        }
     }
 }
 

@@ -611,6 +611,7 @@ struct AppSettings: Codable, Sendable {
     var proactiveHeartbeatInterval: Double // 心跳间隔时间，单位为分钟
     var proactiveAutoExecuteTasks: Bool    // 是否自动执行自动化任务而不提示用户
     var proactiveEnabledTriggers: [String] // 开启的检测领域，如 ["health", "performance", "emotion", "workspace"]
+    var proactiveAutoConfigured: Bool      // 是否已完成自动配置
 
     init(
         currentMode: AppMode = .normal,
@@ -676,7 +677,8 @@ struct AppSettings: Codable, Sendable {
         enableProactiveAssistant: Bool = false,
         proactiveHeartbeatInterval: Double = 15.0,
         proactiveAutoExecuteTasks: Bool = false,
-        proactiveEnabledTriggers: [String] = ["health", "performance", "emotion", "workspace"]
+        proactiveEnabledTriggers: [String] = ["health", "performance", "emotion", "workspace"],
+        proactiveAutoConfigured: Bool = false
     ) {
         self.currentMode = currentMode
         self.isBackgroundLearningEnabled = isBackgroundLearningEnabled
@@ -742,6 +744,7 @@ struct AppSettings: Codable, Sendable {
         self.proactiveHeartbeatInterval = proactiveHeartbeatInterval
         self.proactiveAutoExecuteTasks = proactiveAutoExecuteTasks
         self.proactiveEnabledTriggers = proactiveEnabledTriggers
+        self.proactiveAutoConfigured = proactiveAutoConfigured
     }
 
     static let `default` = AppSettings()
@@ -750,17 +753,18 @@ struct AppSettings: Codable, Sendable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        currentMode = try container.decodeIfPresent(AppMode.self, forKey: .currentMode) ?? .normal
+        
+        currentMode = container.decodeIsolated(AppMode.self, forKey: .currentMode, fallback: .normal)
         isBackgroundLearningEnabled = try container.decodeIfPresent(Bool.self, forKey: .isBackgroundLearningEnabled) ?? false
         isPreventSleepEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPreventSleepEnabled) ?? false
         isLaunchAtLoginEnabled = try container.decodeIfPresent(Bool.self, forKey: .isLaunchAtLoginEnabled) ?? false
         showStatusBarIcon = try container.decodeIfPresent(Bool.self, forKey: .showStatusBarIcon) ?? true
         activeAnniversaryId = try container.decodeIfPresent(UUID.self, forKey: .activeAnniversaryId)
-        selectedFont = try container.decodeIfPresent(AppFont.self, forKey: .selectedFont) ?? .cute
-        selectedIconStyle = try container.decodeIfPresent(IconStyle.self, forKey: .selectedIconStyle) ?? .pixelAnimal
-        statusBarIconStyle = try container.decodeIfPresent(IconStyle.self, forKey: .statusBarIconStyle) ?? .originalHattie
+        selectedFont = container.decodeIsolated(AppFont.self, forKey: .selectedFont, fallback: .cute)
+        selectedIconStyle = container.decodeIsolated(IconStyle.self, forKey: .selectedIconStyle, fallback: .pixelAnimal)
+        statusBarIconStyle = container.decodeIsolated(IconStyle.self, forKey: .statusBarIconStyle, fallback: .originalHattie)
         
-        let decodedThemeColor = try container.decodeIfPresent(ThemeColor.self, forKey: .selectedThemeColor) ?? .dark
+        let decodedThemeColor = container.decodeIsolated(ThemeColor.self, forKey: .selectedThemeColor, fallback: .dark)
         selectedThemeColor = decodedThemeColor
         let decodedThemeHex = try container.decodeIfPresent(String.self, forKey: .customThemeColorHex) ?? "FF6B9D"
         customThemeColorHex = decodedThemeHex
@@ -769,23 +773,23 @@ struct AppSettings: Codable, Sendable {
         selectedSystemFontFamily = try container.decodeIfPresent(String.self, forKey: .selectedSystemFontFamily)
         enablePoke = try container.decodeIfPresent(Bool.self, forKey: .enablePoke) ?? false
         pokeApiKey = try container.decodeIfPresent(String.self, forKey: .pokeApiKey)
-        ntpConfiguration = try container.decodeIfPresent(NTPConfiguration.self, forKey: .ntpConfiguration) ?? .default
-        defaultChatMode = try container.decodeIfPresent(ChatMode.self, forKey: .defaultChatMode) ?? .petCompanion
-        assistantConfig = try container.decodeIfPresent(AssistantConfig.self, forKey: .assistantConfig) ?? .default
+        ntpConfiguration = container.decodeIsolated(NTPConfiguration.self, forKey: .ntpConfiguration, fallback: .default)
+        defaultChatMode = container.decodeIsolated(ChatMode.self, forKey: .defaultChatMode, fallback: .petCompanion)
+        assistantConfig = container.decodeIsolated(AssistantConfig.self, forKey: .assistantConfig, fallback: .default)
         
         enablePsychologyParams = try container.decodeIfPresent(Bool.self, forKey: .enablePsychologyParams) ?? true
         psychologyTempScale = try container.decodeIfPresent(Double.self, forKey: .psychologyTempScale) ?? 0.7
         psychologyTopP = try container.decodeIfPresent(Double.self, forKey: .psychologyTopP) ?? 0.85
         psychologyPresencePenalty = try container.decodeIfPresent(Double.self, forKey: .psychologyPresencePenalty) ?? 0.0
         psychologyFrequencyPenalty = try container.decodeIfPresent(Double.self, forKey: .psychologyFrequencyPenalty) ?? 0.0
-        selectedPsychologyTheory = try container.decodeIfPresent(PsychologyTheory.self, forKey: .selectedPsychologyTheory) ?? .cbt
-        selectedPsychologyPersona = try container.decodeIfPresent(PsychologyPersona.self, forKey: .selectedPsychologyPersona) ?? .counselor
+        selectedPsychologyTheory = container.decodeIsolated(PsychologyTheory.self, forKey: .selectedPsychologyTheory, fallback: .cbt)
+        selectedPsychologyPersona = container.decodeIsolated(PsychologyPersona.self, forKey: .selectedPsychologyPersona, fallback: .counselor)
         psychologyEmpathyLevel = try container.decodeIfPresent(Double.self, forKey: .psychologyEmpathyLevel) ?? 0.8
         psychologyClinicalDepth = try container.decodeIfPresent(Double.self, forKey: .psychologyClinicalDepth) ?? 0.6
         psychologyReframingIntensity = try container.decodeIfPresent(Double.self, forKey: .psychologyReframingIntensity) ?? 0.5
 
-        proHumanMissionFocus = try container.decodeIfPresent(ProHumanMissionFocus.self, forKey: .proHumanMissionFocus) ?? .balanced
-        proHumanInteractionStyle = try container.decodeIfPresent(ProHumanInteractionStyle.self, forKey: .proHumanInteractionStyle) ?? .warm
+        proHumanMissionFocus = container.decodeIsolated(ProHumanMissionFocus.self, forKey: .proHumanMissionFocus, fallback: .balanced)
+        proHumanInteractionStyle = container.decodeIsolated(ProHumanInteractionStyle.self, forKey: .proHumanInteractionStyle, fallback: .warm)
         proHumanCustomTriangleText = try container.decodeIfPresent(String.self, forKey: .proHumanCustomTriangleText) ?? ""
         proHumanAntiAlgorithmIntensity = try container.decodeIfPresent(Double.self, forKey: .proHumanAntiAlgorithmIntensity) ?? 0.7
         proHumanSelfReflectionInterval = try container.decodeIfPresent(Double.self, forKey: .proHumanSelfReflectionInterval) ?? 0.5
@@ -802,27 +806,41 @@ struct AppSettings: Codable, Sendable {
         customDividerColorHex = try container.decodeIfPresent(String.self, forKey: .customDividerColorHex) ?? "2E2E3E"
         customCornerRadius = try container.decodeIfPresent(Double.self, forKey: .customCornerRadius) ?? 16.0
 
-        mainWindowThemeColor = try container.decodeIfPresent(ThemeColor.self, forKey: .mainWindowThemeColor) ?? decodedThemeColor
+        mainWindowThemeColor = container.decodeIsolated(ThemeColor.self, forKey: .mainWindowThemeColor, fallback: decodedThemeColor)
         customMainWindowThemeColorHex = try container.decodeIfPresent(String.self, forKey: .customMainWindowThemeColorHex) ?? decodedThemeHex
         showMainWindowOnAutoLaunch = try container.decodeIfPresent(Bool.self, forKey: .showMainWindowOnAutoLaunch) ?? false
         showMainWindowOnManualLaunch = try container.decodeIfPresent(Bool.self, forKey: .showMainWindowOnManualLaunch) ?? true
-        savedColorSchemes = try container.decodeIfPresent([ColorScheme].self, forKey: .savedColorSchemes) ?? []
+        savedColorSchemes = container.decodeIsolated([ColorScheme].self, forKey: .savedColorSchemes, fallback: [])
         activeColorSchemeName = try container.decodeIfPresent(String.self, forKey: .activeColorSchemeName)
         hideFloatingLayoutToolbar = try container.decodeIfPresent(Bool.self, forKey: .hideFloatingLayoutToolbar) ?? false
-        activeSpecialEffect = try container.decodeIfPresent(SpecialEffectType.self, forKey: .activeSpecialEffect) ?? .emoji
-        screenshotHotkeyPreset = try container.decodeIfPresent(ScreenshotHotkeyPreset.self, forKey: .screenshotHotkeyPreset) ?? .none
-        activeClickEffect = try container.decodeIfPresent(ClickEffectType.self, forKey: .activeClickEffect) ?? .sparkle
-        statusBarTextMode = try container.decodeIfPresent(StatusBarTextMode.self, forKey: .statusBarTextMode) ?? .customTitle
+        activeSpecialEffect = container.decodeIsolated(SpecialEffectType.self, forKey: .activeSpecialEffect, fallback: .emoji)
+        screenshotHotkeyPreset = container.decodeIsolated(ScreenshotHotkeyPreset.self, forKey: .screenshotHotkeyPreset, fallback: .none)
+        activeClickEffect = container.decodeIsolated(ClickEffectType.self, forKey: .activeClickEffect, fallback: .sparkle)
+        statusBarTextMode = container.decodeIsolated(StatusBarTextMode.self, forKey: .statusBarTextMode, fallback: .customTitle)
         customStatusBarText = try container.decodeIfPresent(String.self, forKey: .customStatusBarText) ?? ""
-        quickLaunchDisplayMode = try container.decodeIfPresent(QuickLaunchDisplayMode.self, forKey: .quickLaunchDisplayMode) ?? .iconAndName
-        quickLaunchIconSize = try container.decodeIfPresent(QuickLaunchIconSize.self, forKey: .quickLaunchIconSize) ?? .small
-        screenshotOutputMode = try container.decodeIfPresent(ScreenshotOutputMode.self, forKey: .screenshotOutputMode) ?? .fileOnly
+        quickLaunchDisplayMode = container.decodeIsolated(QuickLaunchDisplayMode.self, forKey: .quickLaunchDisplayMode, fallback: .iconAndName)
+        quickLaunchIconSize = container.decodeIsolated(QuickLaunchIconSize.self, forKey: .quickLaunchIconSize, fallback: .small)
+        screenshotOutputMode = container.decodeIsolated(ScreenshotOutputMode.self, forKey: .screenshotOutputMode, fallback: .fileOnly)
         allowMultipleInstances = try container.decodeIfPresent(Bool.self, forKey: .allowMultipleInstances) ?? false
         
         enableProactiveAssistant = try container.decodeIfPresent(Bool.self, forKey: .enableProactiveAssistant) ?? false
         proactiveHeartbeatInterval = try container.decodeIfPresent(Double.self, forKey: .proactiveHeartbeatInterval) ?? 15.0
         proactiveAutoExecuteTasks = try container.decodeIfPresent(Bool.self, forKey: .proactiveAutoExecuteTasks) ?? false
         proactiveEnabledTriggers = try container.decodeIfPresent([String].self, forKey: .proactiveEnabledTriggers) ?? ["health", "performance", "emotion", "workspace"]
+        proactiveAutoConfigured = try container.decodeIfPresent(Bool.self, forKey: .proactiveAutoConfigured) ?? false
+    }
+}
+
+// MARK: - 安全解码扩展
+
+extension KeyedDecodingContainer {
+    func decodeIsolated<T: Decodable>(_ type: T.Type, forKey key: Key, fallback: T) -> T {
+        do {
+            return try decodeIfPresent(type, forKey: key) ?? fallback
+        } catch {
+            LoggerService.shared.warning("Decoding \(key.stringValue) failed: \(error). Using fallback.")
+            return fallback
+        }
     }
 }
 

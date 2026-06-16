@@ -23,6 +23,7 @@ struct CopyableMessageBubble: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onRegenerate: (() -> Void)? = nil
+    var onExecuteProactiveTool: ((AIChatViewModel.ProactiveToolSuggestion) -> Void)? = nil
 
     @State private var isHovered = false
     @State private var showCopied = false
@@ -178,9 +179,49 @@ struct CopyableMessageBubble: View {
                     SearchSourcesView(sources: sources, chatMode: chatMode)
                 }
 
-                // 分流渲染普通内容与 Agent 步骤，消灭空白气泡
-                if message.isAgentStep {
-                    BubbleAgentStepView(content: message.content, chatMode: chatMode)
+                // 主动工具建议卡片
+                if message.isProactiveSuggestion,
+                   let toolName = message.proactiveToolName,
+                   let toolArgs = message.proactiveToolArgs {
+                    ProactiveToolCardView(
+                        toolName: toolName,
+                        displayName: extractDisplayName(from: toolName),
+                        reason: message.content.replacingOccurrences(of: "💡 我可以帮你", with: "").replacingOccurrences(of: "：", with: ""),
+                        arguments: toolArgs,
+                        confidence: 0.7,
+                        onExecute: {
+                            let suggestion = AIChatViewModel.ProactiveToolSuggestion(
+                                toolName: toolName,
+                                arguments: toolArgs,
+                                displayName: extractDisplayName(from: toolName),
+                                reason: message.content,
+                                confidence: 0.7
+                            )
+                            onExecuteProactiveTool?(suggestion)
+                        },
+                        onDismiss: {
+                            // Remove the suggestion message
+                        }
+                    )
+                } else if message.isAgentStep {
+                    // Agent 步骤或工具结果
+                    if let toolResult = message.toolResultJSON {
+                        VStack(alignment: .leading, spacing: 4) {
+                            BubbleAgentStepView(content: message.content, chatMode: chatMode)
+                            Button(action: {}) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "doc.text")
+                                        .font(.system(size: 9))
+                                    Text("查看结果")
+                                        .font(.system(size: 10))
+                                }
+                                .foregroundStyle(.tertiary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    } else {
+                        BubbleAgentStepView(content: message.content, chatMode: chatMode)
+                    }
                 } else {
                     if !displayedContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         messageContentView(isStructured: isStructured, formattedContent: formattedContent)
@@ -423,6 +464,21 @@ struct CopyableMessageBubble: View {
             withAnimation(.easeInOut(duration: 0.2)) {
                 showCopied = false
             }
+        }
+    }
+
+    private func extractDisplayName(from toolName: String) -> String {
+        switch toolName {
+        case "web_search": return "联网搜索"
+        case "file_read": return "读取文件"
+        case "file_write": return "写入文件"
+        case "file_list": return "列出文件"
+        case "get_system_info": return "获取系统信息"
+        case "get_clipboard": return "获取剪贴板"
+        case "set_clipboard": return "设置剪贴板"
+        case "send_notification": return "发送通知"
+        case "open_macos_application": return "打开应用"
+        default: return toolName
         }
     }
 }

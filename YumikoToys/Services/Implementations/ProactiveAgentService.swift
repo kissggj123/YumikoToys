@@ -44,8 +44,33 @@ final class ProactiveAgentService: ObservableObject {
         LoggerService.shared.info("ProactiveAgentService: Starting initialization")
         loadLogs()
         
-        // 自动根据设置启动服务
-        if settingsService.settings.enableProactiveAssistant {
+        // 自动配置并启动服务
+        autoConfigureIfNeeded()
+    }
+    
+    /// 自动配置主动助理（首次启动时启用所有功能）
+    private func autoConfigureIfNeeded() {
+        var settings = settingsService.settings
+        
+        if !settings.proactiveAutoConfigured {
+            // 首次启动：自动开启所有功能
+            settings.enableProactiveAssistant = true
+            settings.proactiveAutoExecuteTasks = true
+            settings.proactiveEnabledTriggers = ["health", "performance", "emotion", "workspace"]
+            settings.proactiveHeartbeatInterval = 15.0
+            settings.proactiveAutoConfigured = true
+            
+            // 同时开启深度思考和联网搜索
+            settings.assistantConfig.enableDeepThinking = true
+            settings.assistantConfig.enableWebSearch = true
+            settings.assistantConfig.enableAgentMode = true
+            
+            settingsService.updateSettings(settings)
+            log("自动配置完成：主动助理、深度思考、联网搜索、Agent模式已启用")
+        }
+        
+        // 根据设置启动服务
+        if settings.enableProactiveAssistant {
             startService()
         }
     }
@@ -318,7 +343,7 @@ final class ProactiveAgentService: ObservableObject {
         // 容错搜索首尾大括号
         if let startRange = cleanJson.range(of: "{"),
            let endRange = cleanJson.range(of: "}", options: .backwards) {
-            cleanJson = String(cleanJson[startRange.lowerBound...endRange.upperBound])
+            cleanJson = String(cleanJson[startRange.lowerBound..<endRange.upperBound])
         }
         
         guard let data = cleanJson.data(using: .utf8) else { return nil }

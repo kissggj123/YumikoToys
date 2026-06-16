@@ -114,6 +114,118 @@ final class AIChatViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // MARK: - 主动工具建议
+
+    struct ProactiveToolSuggestion: Sendable {
+        let toolName: String
+        let arguments: String
+        let displayName: String
+        let reason: String
+        let confidence: Double
+    }
+
+    func analyzeForProactiveTool(content: String) -> ProactiveToolSuggestion? {
+        guard enableAgentMode else { return nil }
+        
+        let lowerContent = content.lowercased()
+        
+        if lowerContent.contains("搜索") || lowerContent.contains("查找") || lowerContent.contains("最新") || lowerContent.contains("新闻") {
+            let query = extractSearchQuery(from: content)
+            return ProactiveToolSuggestion(
+                toolName: "web_search",
+                arguments: "{\"query\": \"\(query)\"}",
+                displayName: "联网搜索",
+                reason: "检测到搜索意图",
+                confidence: 0.7
+            )
+        }
+        
+        if let range = content.range(of: #"/[\\w/]+\\.[\\w]+"#, options: .regularExpression) {
+            let filePath = String(content[range])
+            return ProactiveToolSuggestion(
+                toolName: "file_read",
+                arguments: "{\"path\": \"\(filePath)\"}",
+                displayName: "读取文件",
+                reason: "检测到文件路径",
+                confidence: 0.6
+            )
+        }
+        
+        if lowerContent.contains("系统信息") || lowerContent.contains("电脑状态") || lowerContent.contains("内存") || lowerContent.contains("cpu") {
+            return ProactiveToolSuggestion(
+                toolName: "get_system_info",
+                arguments: "{}",
+                displayName: "获取系统信息",
+                reason: "检测到系统信息查询意图",
+                confidence: 0.65
+            )
+        }
+        
+        return nil
+    }
+
+    private func extractSearchQuery(from content: String) -> String {
+        let patterns = ["搜索(.+)", "查找(.+)", "最新(.+)", "(.+)的新闻"]
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern),
+               let match = regex.firstMatch(in: content, range: NSRange(content.startIndex..., in: content)),
+               let range = Range(match.range(at: 1), in: content) {
+                return String(content[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+        return content
+    }
+
+    func showProactiveToolCard(suggestion: ProactiveToolSuggestion) {
+        let cardMessage = ChatMessage(
+            role: "assistant",
+            content: "💡 我可以帮你\(suggestion.displayName)：\(suggestion.reason)",
+            isProactiveSuggestion: true,
+            proactiveToolName: suggestion.toolName,
+            proactiveToolArgs: suggestion.arguments
+        )
+        messages.append(cardMessage)
+    }
+
+    func executeProactiveTool(suggestion: ProactiveToolSuggestion) {
+        let toolMessage = ChatMessage(
+            role: "assistant",
+            content: "🔧 正在执行工具: \(suggestion.displayName)...\n参数: \(suggestion.arguments)",
+            isAgentStep: true
+        )
+        messages.append(toolMessage)
+        
+        Task {
+            let resultString: String
+            if suggestion.toolName == "web_search" {
+                let rawArgs = suggestion.arguments.trimmingCharacters(in: .whitespacesAndNewlines)
+                let argsData = rawArgs.isEmpty ? "{}".data(using: .utf8)! : (rawArgs.data(using: .utf8) ?? Data())
+                let args = (try? JSONSerialization.jsonObject(with: argsData)) as? [String: Any]
+                let q = args?["query"] as? String ?? ""
+                
+                let appSettings = container.settingsService.settings
+                let searchService = UnifiedSearchService(assistantConfig: appSettings.assistantConfig)
+                do {
+                    let result = try await searchService.search(query: q, maxResults: 5)
+                    resultString = result.sources.map { "[\($0.title)] \($0.snippet)" }.joined(separator: "\n")
+                } catch {
+                    resultString = "搜索失败: \(error.localizedDescription)"
+                }
+            } else {
+                let agentService = AgentService(dataStorage: container.dataStorageService)
+                resultString = await agentService.executeTool(name: suggestion.toolName, arguments: suggestion.arguments)
+            }
+            
+            let resultMessage = ChatMessage(
+                role: "assistant",
+                content: "✅ \(suggestion.displayName) 完成：\n\(resultString)",
+                isAgentStep: true,
+                toolResultJSON: resultString
+            )
+            messages.append(resultMessage)
+        }
+    }
+
     func loadAPIConfiguration() {
         let settings = container.apiSettingsService.getSettings()
         currentProvider = settings.currentProvider
@@ -988,6 +1100,12 @@ final class AIChatViewModel: ObservableObject {
                             }
                             self.messages.sort(by: { $0.timestamp < $1.timestamp })
                             self.objectWillChange.send()
+                            
+                            if self.enableAgentMode && !displayContent.isEmpty {
+                                if let suggestion = self.analyzeForProactiveTool(content: displayContent) {
+                                    self.showProactiveToolCard(suggestion: suggestion)
+                                }
+                            }
                         }
 
                         _ = container.apiSettingsService.estimateTokens(
