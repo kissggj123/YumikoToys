@@ -49,6 +49,10 @@ struct WidgetSyncData: Codable {
     let secondsPart: Int
     let themePrimaryHex: String
 
+    // 注意：主 App 侧的 WidgetSyncData 多一个 schemaVersion 字段。
+    // 主 App 写出的 JSON 一定包含 schemaVersion，若 Widget 端
+    // 用 auto-generated decoder 会解码失败。为保持向前兼容，
+    // 我们手动解码并主动忽略 schemaVersion 字段。
     enum CodingKeys: String, CodingKey {
         case petName, avatar, startDate, totalDays, milestones,
              proactiveBubbleText, appVersion, displayStyle,
@@ -79,11 +83,12 @@ struct WidgetSyncData: Codable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.petName = try container.decode(String.self, forKey: .petName)
-        self.avatar = try container.decode(String.self, forKey: .avatar)
-        self.startDate = try container.decode(Date.self, forKey: .startDate)
-        self.totalDays = try container.decode(Double.self, forKey: .totalDays)
-        self.milestones = try container.decode([WidgetMilestone].self, forKey: .milestones)
+        // 全部字段用 decodeIfPresent，即使主 App 版本调整也能容错
+        self.petName = (try container.decodeIfPresent(String.self, forKey: .petName)) ?? "兔可可"
+        self.avatar = (try container.decodeIfPresent(String.self, forKey: .avatar)) ?? "🐰"
+        self.startDate = (try container.decodeIfPresent(Date.self, forKey: .startDate)) ?? Date()
+        self.totalDays = (try container.decodeIfPresent(Double.self, forKey: .totalDays)) ?? 0.0
+        self.milestones = (try container.decodeIfPresent([WidgetMilestone].self, forKey: .milestones)) ?? []
         self.proactiveBubbleText = try container.decodeIfPresent(String.self, forKey: .proactiveBubbleText)
         self.appVersion = (try container.decodeIfPresent(String.self, forKey: .appVersion)) ?? ""
         self.displayStyle = (try container.decodeIfPresent(String.self, forKey: .displayStyle)) ?? "classic"
@@ -119,9 +124,23 @@ struct Provider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
-        let data = loadData() ?? defaultData()
+        var data = loadData() ?? defaultData()
+        // 从共享 UserDefaults 直接读取 displayStyle 覆盖值
+        // 确保样式切换即时生效，不依赖 JSON 文件的读取时序
+        if let shared = UserDefaults(suiteName: "group.com.Lite.YumikoToys"),
+           let styleOverride = shared.string(forKey: "widget_display_style") {
+            // 用 override 后的 data 构造新 entry
+            data = WidgetSyncData(
+                petName: data.petName, avatar: data.avatar,
+                startDate: data.startDate, totalDays: data.totalDays,
+                milestones: data.milestones, proactiveBubbleText: data.proactiveBubbleText,
+                appVersion: data.appVersion, displayStyle: styleOverride,
+                totalHours: data.totalHours, hoursPart: data.hoursPart,
+                minutesPart: data.minutesPart, secondsPart: data.secondsPart,
+                themePrimaryHex: data.themePrimaryHex
+            )
+        }
         let entries = [SimpleEntry(date: Date(), info: data)]
-        // 下次刷新在 1 小时后（主 App 每秒都会更新 JSON）
         let nextRefresh = Calendar.current.date(byAdding: .hour, value: 1, to: Date())!
         let timeline = Timeline(entries: entries, policy: .after(nextRefresh))
         completion(timeline)
@@ -287,16 +306,16 @@ struct GradientBackground: View {
     }
 }
 
-// MARK: - Small Widget View
+// MARK: - Small Widget Views (Classic / Compact / Detailed)
 
-struct SmallWidgetView: View {
+// Classic: 信息均衡 — 头像+宠物名、大号天数、时分秒、1 条里程碑
+struct SmallWidgetView_Classic: View {
     let info: WidgetSyncData
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
-                Text(info.avatar)
-                    .font(.system(size: 14))
+                Text(info.avatar).font(.system(size: 14))
                 Text(info.petName)
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.white)
@@ -308,7 +327,6 @@ struct SmallWidgetView: View {
                 Text(String(format: "%.1f", info.totalDays))
                     .font(.system(size: 26, weight: .heavy, design: .rounded))
                     .minimumScaleFactor(0.6)
-                    .lineLimit(1)
                     .foregroundColor(.white)
                     .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
                 Text("天")
@@ -350,14 +368,102 @@ struct SmallWidgetView: View {
     }
 }
 
-// MARK: - Medium Widget View
+// Compact: 极简居中 — 头像、大天数、宠物名，无其他
+struct SmallWidgetView_Compact: View {
+    let info: WidgetSyncData
 
-struct MediumWidgetView: View {
+    var body: some View {
+        VStack(alignment: .center, spacing: 2) {
+            Spacer(minLength: 0)
+            Text(info.avatar).font(.system(size: 16))
+
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                Text(String(format: "%.0f", info.totalDays))
+                    .font(.system(size: 32, weight: .heavy, design: .rounded))
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+                Text("天")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+
+            Text(info.petName)
+                .font(.system(size: 8, weight: .medium))
+                .foregroundColor(.white.opacity(0.8))
+                .lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(8)
+    }
+}
+
+// Detailed: 全信息 — 宠物+标题、小时/分/秒、多条里程碑
+struct SmallWidgetView_Detailed: View {
+    let info: WidgetSyncData
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 3) {
+                Text(info.avatar).font(.system(size: 10))
+                Text(info.petName)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                Spacer()
+                Text(String(format: "%dh %dm %ds",
+                            info.hoursPart, info.minutesPart, info.secondsPart))
+                    .font(.system(size: 7, weight: .medium))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(String(format: "%.2f", info.totalDays))
+                    .font(.system(size: 22, weight: .heavy, design: .rounded))
+                    .minimumScaleFactor(0.6)
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+                Text("天")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                ForEach(info.milestones.prefix(3), id: \.label) { m in
+                    HStack(spacing: 2) {
+                        Text(m.icon).font(.system(size: 7))
+                        Text(m.label).font(.system(size: 7, weight: .medium))
+                            .foregroundColor(.white.opacity(0.9))
+                            .lineLimit(1)
+                        Spacer(minLength: 2)
+                        Text(m.date).font(.system(size: 6, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.85))
+                        Text(m.countDisplay).font(.system(size: 6, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.85))
+                    }
+                    .padding(.horizontal, 3)
+                    .padding(.vertical, 1.5)
+                    .background(Color.black.opacity(0.25))
+                    .cornerRadius(3)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(8)
+    }
+}
+
+// MARK: - Medium Widget Views (Classic / Compact / Detailed)
+
+// Classic: 两列 — 左侧宠物+天数+hms，右侧 4 条里程碑
+struct MediumWidgetView_Classic: View {
     let info: WidgetSyncData
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            // 左侧：宠物名 + 大号天数 + 已到来时间
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 5) {
                     Text(info.avatar).font(.system(size: 14))
@@ -371,7 +477,6 @@ struct MediumWidgetView: View {
                     Text(String(format: "%.3f", info.totalDays))
                         .font(.system(size: 30, weight: .heavy, design: .rounded))
                         .minimumScaleFactor(0.6)
-                        .lineLimit(1)
                         .foregroundColor(.white)
                         .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
                     Text("天")
@@ -388,7 +493,6 @@ struct MediumWidgetView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // 右侧：4 条里程碑
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(Array(info.milestones.prefix(4).enumerated()), id: \.offset) { _, m in
                     HStack(spacing: 4) {
@@ -417,21 +521,116 @@ struct MediumWidgetView: View {
     }
 }
 
-// MARK: - Entry View Dispatcher
+// Compact: 横向居中极简 — 头像、超大大号天数、宠物名，无里程碑
+struct MediumWidgetView_Compact: View {
+    let info: WidgetSyncData
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Text(info.avatar).font(.system(size: 26))
+
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(String(format: "%.0f", info.totalDays))
+                        .font(.system(size: 44, weight: .heavy, design: .rounded))
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+                    Text("天")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                Text(info.petName)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(10)
+    }
+}
+
+// Detailed: 横向全信息 — 宠物+标题，4 条里程碑+日期，hms
+struct MediumWidgetView_Detailed: View {
+    let info: WidgetSyncData
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                Text(info.avatar).font(.system(size: 12))
+                Text(info.petName)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                Spacer()
+                Text(String(format: "%dh %dm %ds",
+                            info.hoursPart, info.minutesPart, info.secondsPart))
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(String(format: "%.2f", info.totalDays))
+                    .font(.system(size: 28, weight: .heavy, design: .rounded))
+                    .minimumScaleFactor(0.7)
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+                Text("天")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                ForEach(info.milestones.prefix(4), id: \.label) { m in
+                    HStack(spacing: 4) {
+                        Text(m.icon).font(.system(size: 8))
+                        Text(m.label).font(.system(size: 8, weight: .medium))
+                            .foregroundColor(.white.opacity(0.9))
+                            .lineLimit(1)
+                        Spacer(minLength: 4)
+                        Text(m.date).font(.system(size: 7, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.85))
+                        Text(m.countDisplay).font(.system(size: 7, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.85))
+                    }
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1.5)
+                    .background(Color.black.opacity(0.22))
+                    .cornerRadius(3)
+                }
+            }
+        }
+        .padding(10)
+    }
+}
+
+// MARK: - Entry View Dispatcher (按 displayStyle + widgetFamily 切换)
 
 struct YumikoWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
 
-    private var style: String { entry.info.displayStyle }
-
     var body: some View {
+        // 按主 App 里用户选择的 widgetDisplayStyle 切换
+        // 合法值: "classic" / "compact" / "detailed"，其它情况回落到 classic
+        let style = entry.info.displayStyle
+
         Group {
             switch family {
             case .systemMedium:
-                MediumWidgetView(info: entry.info)
+                switch style {
+                case "compact":  MediumWidgetView_Compact(info: entry.info)
+                case "detailed": MediumWidgetView_Detailed(info: entry.info)
+                default:         MediumWidgetView_Classic(info: entry.info)
+                }
             default:
-                SmallWidgetView(info: entry.info)
+                switch style {
+                case "compact":  SmallWidgetView_Compact(info: entry.info)
+                case "detailed": SmallWidgetView_Detailed(info: entry.info)
+                default:         SmallWidgetView_Classic(info: entry.info)
+                }
             }
         }
         .containerBackground(for: .widget) {

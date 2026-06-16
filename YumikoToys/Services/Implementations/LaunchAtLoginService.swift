@@ -352,7 +352,7 @@ final class LaunchAtLoginService: LaunchAtLoginServiceProtocol {
                     content: content,
                     trigger: nil
                 )
-                center.add(center.add(request) as! UNNotificationRequest) // 兼容性调用
+                center.add(request)
             }
         }
     }

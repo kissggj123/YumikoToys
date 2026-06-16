@@ -7,15 +7,10 @@
 
 import Foundation
 import AppKit
-import ScreenCaptureKit
 
 /// YumiScript 核心执行引擎
 @MainActor
 final class YumiScriptEngine {
-    
-    private static var hasScreenRecordingPermission: Bool {
-        CGPreflightScreenCaptureAccess()
-    }
     
     /// 执行一段 YumiScript 脚本并返回包含所有日志信息的输出文本
     static func execute(_ script: String) async -> String {
@@ -59,12 +54,6 @@ final class YumiScriptEngine {
                 }
                 
             case "screenshot":
-                guard hasScreenRecordingPermission else {
-                    CGRequestScreenCaptureAccess()
-                    logs.append(" 截图失败: 需要屏幕录制权限，请在系统设置中授予")
-                    continue
-                }
-                // 截图保存路径，留空则默认保存到桌面
                 let path: String
                 if argsStr.isEmpty {
                     let df = DateFormatter()
@@ -74,25 +63,20 @@ final class YumiScriptEngine {
                 } else {
                     path = argsStr
                 }
-                
+
                 let shellCmd = "screencapture -x \"\(path)\""
                 let result = await SkillService.shared.runShell(shellCmd)
-                if result.contains("error") {
+                if result.contains("error") || result.isEmpty {
                     logs.append(" 截图失败: \(result)")
+                    logs.append(" 提示：若截图失败，请到 系统设置 > 隐私与安全性 > 屏幕录制 中开启权限。")
                 } else {
                     logs.append(" 截图成功，已保存至 \(path)")
                 }
-                
+
             case "record":
-                guard hasScreenRecordingPermission else {
-                    CGRequestScreenCaptureAccess()
-                    logs.append(" 录屏失败: 需要屏幕录制权限，请在系统设置中授予")
-                    continue
-                }
-                // 格式：record <持续秒数> <保存绝对路径>
                 let argsParts = argsStr.components(separatedBy: " ")
                 let duration = argsParts.first.flatMap(Int.init) ?? 5
-                
+
                 let path: String
                 if argsParts.count > 1 {
                     path = argsParts[1]
@@ -102,19 +86,18 @@ final class YumiScriptEngine {
                     let filename = "recording_\(df.string(from: Date())).mov"
                     path = "~/Desktop/\(filename)"
                 }
-                
+
                 logs.append(" 开始录屏 \(duration) 秒，请勿遮挡屏幕...")
                 let shellCmd = "screencapture -V \(duration) \"\(path)\""
                 let result = await SkillService.shared.runShell(shellCmd)
-                if result.contains("error") {
+                if result.contains("error") || result.isEmpty {
                     logs.append(" 录屏失败: \(result)")
+                    logs.append(" 提示：若录屏失败，请到 系统设置 > 隐私与安全性 > 屏幕录制 中开启权限。")
                 } else {
                     logs.append(" 录屏成功，已保存至 \(path)")
                 }
                 
             case "notify":
-                // 格式：notify "标题" "内容"
-                // 提取引号中的两个参数
                 let title: String
                 let message: String
                 

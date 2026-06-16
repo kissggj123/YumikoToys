@@ -703,7 +703,7 @@ struct ScreenshotAnnotationView: View {
         let s = min(maxSize / max(w, h), 1.0)
         let windowW = w * s, windowH = h * s
 
-        let screen = NSScreen.main ?? NSScreen.screens.first!
+        guard let screen = NSScreen.main ?? NSScreen.screens.first else { return }
         let frame = screen.visibleFrame
         let window = NSWindow(
             contentRect: NSRect(x: frame.midX - windowW/2, y: frame.midY - windowH/2,

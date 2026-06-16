@@ -2,7 +2,7 @@
 //  ScreenMediaHelper.swift
 //  YumikoToys
 //
-//  截图与录屏助手 (v6.0.0 - 多屏截图 / 标注修复 / 颜色选择器)
+//  截图与录屏助手 (v7.0.0 - 重构：提取公共逻辑 / 修复窗口持有 / 缓存 Formatter)
 //
 
 import Foundation
@@ -19,217 +19,231 @@ final class ScreenMediaHelper: ObservableObject {
     @Published var isRecording = false
     private var recordProcess: Process?
     private var currentRecordURL: URL?
+    private var lastSettingsOpenTime: Date = .distantPast
+
+    // 缓存 DateFormatter，避免每次创建
+    private static let filenameFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd_HHmmss"
+        return f
+    }()
+
+    private static let tempFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd_HHmmss_SSS"
+        return f
+    }()
+
+    // 持有浮动预览窗口，防止提前释放
+    private var floatingWindows: [ObjectIdentifier: NSWindow] = [:]
 
     private init() {}
 
-    // MARK: - Screen Recording Permission
+    // MARK: - Permission
 
-    static var hasScreenRecordingPermission: Bool {
-        CGPreflightScreenCaptureAccess()
-    }
-
-    static func requestScreenRecordingPermission() {
-        CGRequestScreenCaptureAccess()
-    }
-
-    private func ensureScreenRecordingPermission() -> Bool {
-        if Self.hasScreenRecordingPermission {
-            return true
+    static func openScreenRecordingSettings() {
+        let urlString = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
+        } else if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security") {
+            NSWorkspace.shared.open(url)
         }
-        Self.requestScreenRecordingPermission()
-        notify(title: "需要屏幕录制权限", body: "请在系统设置中授予屏幕录制权限后重试")
-        return false
     }
 
-    // MARK: - Notification Helper
+    // MARK: - Paths
 
-    private func notify(title: String, body: String) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request)
+    private func defaultPath(isMovie: Bool) -> String {
+        let suffix = Self.filenameFormatter.string(from: Date())
+        let filename = isMovie ? "recording_\(suffix).mov" : "screenshot_\(suffix).png"
+        let desktop = NSSearchPathForDirectoriesInDomains(.desktopDirectory, .userDomainMask, true).first
+            ?? NSTemporaryDirectory()
+        return (desktop as NSString).appendingPathComponent(filename)
     }
 
-    // MARK: - Output Mode
-
-    private var outputMode: ScreenshotOutputMode {
-        DependencyContainer.shared.settingsService.settings.screenshotOutputMode
+    private func annotationTempPath() -> String {
+        let suffix = Self.tempFormatter.string(from: Date())
+        return (NSTemporaryDirectory() as NSString).appendingPathComponent("annotation_\(suffix).png")
     }
 
-    private func showPreview(image: NSImage) {
-        _ = FloatingScreenshotPreviewWindow(image: image)
-    }
+    // MARK: - Common screencapture execution
 
-    func captureArea() {
-        guard ensureScreenRecordingPermission() else { return }
-        let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
-        let tempPath = (annotationTempPath() as NSString).expandingTildeInPath
-        
+    /// 执行 screencapture 命令，成功后通过 completion 返回临时文件路径
+    private func runScreencapture(args: [String],
+                                  completion: @escaping (String?) -> Void) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-i", tempPath]
-        
-        process.terminationHandler = { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self else { return }
-                if FileManager.default.fileExists(atPath: tempPath) {
-                    if let image = NSImage(contentsOfFile: tempPath) {
-                        self.showPreview(image: image)
-                    }
-                    
-                    if self.outputMode == .clipboardOnly {
-                        self.copyFileToClipboard(path: tempPath)
-                        try? FileManager.default.removeItem(atPath: tempPath)
-                    } else if self.outputMode == .fileOnly {
-                        try? FileManager.default.moveItem(atPath: tempPath, toPath: resolved)
-                        self.notify(title: "截图成功", body: "截图已保存至桌面")
-                    } else if self.outputMode == .both {
-                        try? FileManager.default.copyItem(atPath: tempPath, toPath: resolved)
-                        self.copyFileToClipboard(path: resolved)
-                        try? FileManager.default.removeItem(atPath: tempPath)
-                    }
-                }
-            }
-        }
-        
-        do { try process.run() } catch {
-            LoggerService.shared.error("Failed to run area capture: \(error)")
-        }
-    }
-
-    func captureFullscreen() {
-        guard ensureScreenRecordingPermission() else { return }
-        let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
-        let tempPath = (annotationTempPath() as NSString).expandingTildeInPath
-        
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = [tempPath]
-        
-        process.terminationHandler = { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self else { return }
-                if FileManager.default.fileExists(atPath: tempPath) {
-                    if let image = NSImage(contentsOfFile: tempPath) {
-                        self.showPreview(image: image)
-                    }
-                    
-                    if self.outputMode == .clipboardOnly {
-                        self.copyFileToClipboard(path: tempPath)
-                        try? FileManager.default.removeItem(atPath: tempPath)
-                    } else if self.outputMode == .fileOnly {
-                        try? FileManager.default.moveItem(atPath: tempPath, toPath: resolved)
-                        self.notify(title: "截图成功", body: "截图已保存至桌面")
-                    } else if self.outputMode == .both {
-                        try? FileManager.default.copyItem(atPath: tempPath, toPath: resolved)
-                        self.copyFileToClipboard(path: resolved)
-                        try? FileManager.default.removeItem(atPath: tempPath)
-                    }
-                }
-            }
-        }
-        
-        do { try process.run() } catch {
-            LoggerService.shared.error("Failed to run fullscreen capture: \(error)")
-        }
-    }
-
-    func captureTouchBar() {
-        guard ensureScreenRecordingPermission() else { return }
-        let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-
-        var args = ["-b"]
-        if outputMode == .clipboardOnly {
-            args.append("-c")
-        }
-        args.append(resolved)
-
         process.arguments = args
 
-        if outputMode == .both {
-            process.terminationHandler = { [weak self] _ in
-                Task { @MainActor in
-                    if FileManager.default.fileExists(atPath: resolved) {
-                        self?.copyFileToClipboard(path: resolved)
-                    }
+        process.terminationHandler = { [weak self] proc in
+            Task { @MainActor in
+                guard let self = self else { return }
+                if proc.terminationStatus != 0 {
+                    // 从 arguments 中提取临时路径（最后一个参数通常是输出路径）
+                    let tempPath = args.last
+                    self.handleScreencaptureFailure(exitCode: proc.terminationStatus, tempPath: tempPath)
+                    completion(nil)
+                    return
                 }
+                completion(args.last)
             }
         }
 
         do {
             try process.run()
-            notify(title: "TouchBar 截图成功", body: "截图已保存至桌面")
         } catch {
-            LoggerService.shared.error("Failed to run touchbar capture: \(error)")
+            LoggerService.shared.error("Failed to run screencapture: \(error)")
+            notify(title: "截图失败", body: "无法运行 screencapture：\(error.localizedDescription)")
+            completion(nil)
         }
     }
 
-    // MARK: - Capture All Screens (SCScreenshotManager – modern ScreenCaptureKit API)
+    // MARK: - Common output handling
+
+    /// 根据 outputMode 处理截图结果
+    private func handleCaptureOutput(tempPath: String,
+                                     resolvedPath: String,
+                                     showPreview image: NSImage? = nil) {
+        let mode = DependencyContainer.shared.settingsService.settings.screenshotOutputMode
+
+        if let image = image {
+            showPreviewWindow(image: image)
+        }
+
+        switch mode {
+        case .clipboardOnly:
+            copyFileToClipboard(path: tempPath)
+            try? FileManager.default.removeItem(atPath: tempPath)
+
+        case .fileOnly:
+            try? FileManager.default.moveItem(atPath: tempPath, toPath: resolvedPath)
+            notify(title: "截图成功", body: "截图已保存至桌面")
+
+        case .both:
+            try? FileManager.default.copyItem(atPath: tempPath, toPath: resolvedPath)
+            copyFileToClipboard(path: resolvedPath)
+            try? FileManager.default.removeItem(atPath: tempPath)
+        }
+    }
+
+    private func handleScreencaptureFailure(exitCode: Int32, tempPath: String?) {
+        if let temp = tempPath, FileManager.default.fileExists(atPath: temp) {
+            return
+        }
+        if exitCode == 1 {
+            return // 用户取消
+        }
+        LoggerService.shared.error("screencapture 非 0 退出 (exit=\(exitCode))")
+        notify(title: "截图/录屏可能需要权限",
+               body: "若重复失败，请检查系统设置 → 隐私与安全性 → 屏幕录制")
+        let now = Date()
+        if now.timeIntervalSince(lastSettingsOpenTime) > 5 {
+            lastSettingsOpenTime = now
+            Self.openScreenRecordingSettings()
+        }
+    }
+
+    // MARK: - Area Capture
+
+    func captureArea() {
+        let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
+        let tempPath = (annotationTempPath() as NSString).expandingTildeInPath
+
+        runScreencapture(args: ["-i", tempPath]) { [weak self] path in
+            guard let self, let path else { return }
+            let image = NSImage(contentsOfFile: path)
+            self.handleCaptureOutput(tempPath: path, resolvedPath: resolved, showPreview: image)
+        }
+    }
+
+    // MARK: - Fullscreen Capture
+
+    func captureFullscreen() {
+        let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
+        let tempPath = (annotationTempPath() as NSString).expandingTildeInPath
+
+        runScreencapture(args: [tempPath]) { [weak self] path in
+            guard let self, let path else { return }
+            let image = NSImage(contentsOfFile: path)
+            self.handleCaptureOutput(tempPath: path, resolvedPath: resolved, showPreview: image)
+        }
+    }
+
+    // MARK: - TouchBar Capture
+
+    func captureTouchBar() {
+        let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
+        var args = ["-b"]
+        if DependencyContainer.shared.settingsService.settings.screenshotOutputMode == .clipboardOnly {
+            args.append("-c")
+        }
+        args.append(resolved)
+
+        runScreencapture(args: args) { [weak self] path in
+            guard let self, let path else { return }
+            if self.outputMode == .both {
+                self.copyFileToClipboard(path: path)
+            } else {
+                self.notify(title: "TouchBar 截图成功", body: "截图已保存至桌面")
+            }
+        }
+    }
+
+    // MARK: - Multi-Screen Capture (ScreenCaptureKit)
 
     func captureAllScreens() {
-        guard ensureScreenRecordingPermission() else { return }
-        Task {
-            await captureAllScreensAsync()
-        }
+        Task { await captureAllScreensAsync() }
     }
 
     private func captureAllScreensAsync() async {
         do {
-            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+            let content = try await SCShareableContent.excludingDesktopWindows(
+                false, onScreenWindowsOnly: false)
             let scDisplays = content.displays
 
             guard !scDisplays.isEmpty else {
-                notify(title: "截图失败", body: "无法枚举屏幕")
+                notify(title: "截图失败", body: "无法枚举屏幕。请检查屏幕录制权限")
+                Self.openScreenRecordingSettings()
                 return
             }
 
             var capturedImages: [(screen: NSScreen, image: NSImage, index: Int)] = []
 
             for (index, scDisplay) in scDisplays.enumerated() {
-                // Find matching NSScreen by displayID to get backing scale factor (Retina support)
-                let matchedScreen = NSScreen.screens.first { screen in
+                guard let matchedScreen = NSScreen.screens.first(where: { screen in
                     let did = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
                     return did == scDisplay.displayID
-                } ?? NSScreen.main ?? NSScreen.screens.first!
+                }) ?? NSScreen.main ?? NSScreen.screens.first else { continue }
 
                 let backingScale = matchedScreen.backingScaleFactor
                 let filter = SCContentFilter(display: scDisplay, excludingWindows: [])
                 let config = SCStreamConfiguration()
-                // Capture at native Retina resolution for high quality
                 config.width  = Int(Double(scDisplay.width) * Double(backingScale))
                 config.height = Int(Double(scDisplay.height) * Double(backingScale))
                 config.showsCursor = false
-                
-                // Professional Display P3 Color space
                 config.colorSpaceName = CGColorSpace.displayP3
 
                 let cgImage = try await SCScreenshotManager.captureImage(
                     contentFilter: filter,
-                    configuration: config
-                )
+                    configuration: config)
 
                 let nsImage = NSImage(cgImage: cgImage, size: matchedScreen.frame.size)
                 capturedImages.append((screen: matchedScreen, image: nsImage, index: index + 1))
             }
 
             guard !capturedImages.isEmpty else {
-                notify(title: "截图失败", body: "无法获取屏幕图像")
+                notify(title: "截图失败", body: "无法获取屏幕图像。请检查屏幕录制权限")
+                Self.openScreenRecordingSettings()
                 return
             }
 
             if capturedImages.count == 1 {
                 let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
-                saveImage(capturedImages[0].image, to: resolved)
-                
-                // Show floating preview
-                self.showPreview(image: capturedImages[0].image)
-                
+                let img = capturedImages[0].image
+                _ = img.savePNG(to: resolved)
+                showPreviewWindow(image: img)
+
                 if outputMode == .clipboardOnly || outputMode == .both {
-                    self.copyFileToClipboard(path: resolved)
+                    copyFileToClipboard(path: resolved)
                 } else {
                     notify(title: "截图成功", body: "屏幕截图已保存至桌面")
                 }
@@ -239,8 +253,94 @@ final class ScreenMediaHelper: ObservableObject {
 
         } catch {
             LoggerService.shared.error("captureAllScreens failed: \(error)")
-            notify(title: "截图失败", body: "屏幕截图出错：\(error.localizedDescription)")
+            let ns = error as NSError
+            let msg = ns.localizedDescription
+            let isPermission = msg.lowercased().contains("permission")
+                || msg.lowercased().contains("权限")
+                || String(ns.domain).lowercased().contains("scstream")
+            if isPermission {
+                notify(title: "需要屏幕录制权限",
+                       body: "请在系统设置 → 隐私与安全性 → 屏幕录制中授予权限后重试")
+                Self.openScreenRecordingSettings()
+            } else {
+                notify(title: "截图失败", body: "错误：\(msg)")
+            }
         }
+    }
+
+    // MARK: - Recording
+
+    func startRecording() {
+        guard !isRecording else { return }
+        let resolved = (defaultPath(isMovie: true) as NSString).expandingTildeInPath
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        process.arguments = ["-V", "999999", resolved]
+        process.terminationHandler = { [weak self] proc in
+            Task { @MainActor in
+                guard let self = self else { return }
+                if proc.terminationStatus != 0 {
+                    self.handleScreencaptureFailure(exitCode: proc.terminationStatus, tempPath: nil)
+                }
+            }
+        }
+        do {
+            try process.run()
+            self.recordProcess = process
+            self.isRecording = true
+            self.currentRecordURL = URL(fileURLWithPath: resolved)
+            notify(title: "录屏已开始", body: "正在录制，点击状态栏按钮可停止")
+        } catch {
+            LoggerService.shared.error("Failed to start screen recording: \(error)")
+            notify(title: "录屏失败", body: "无法运行 screencapture：\(error.localizedDescription)")
+        }
+    }
+
+    func stopRecording() {
+        guard isRecording, let process = recordProcess else { return }
+        process.interrupt()
+        self.recordProcess = nil
+        self.isRecording = false
+        if let url = currentRecordURL {
+            notify(title: "录屏保存成功", body: "录制视频已保存至桌面：\(url.lastPathComponent)")
+        }
+    }
+
+    // MARK: - Annotation
+
+    func openScreenshotAnnotation() {
+        let tempPath = (annotationTempPath() as NSString).expandingTildeInPath
+
+        runScreencapture(args: ["-i", "-o", tempPath]) { [weak self] path in
+            guard let self, let path else { return }
+            self.openAnnotationEditor(imagePath: path)
+        }
+    }
+
+    // MARK: - Clipboard
+
+    private func copyFileToClipboard(path: String) {
+        guard FileManager.default.fileExists(atPath: path) else { return }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: path)) {
+            pasteboard.setData(data, forType: .png)
+        }
+
+        let url = URL(fileURLWithPath: path)
+        pasteboard.writeObjects([url as NSURL])
+        notify(title: "已复制到剪贴板", body: "截图已复制到剪贴板")
+    }
+
+    // MARK: - Preview Windows
+
+    private func showPreviewWindow(image: NSImage) {
+        let id = ObjectIdentifier(UUID())
+        let window = FloatingScreenshotPreviewWindow(image: image) { [weak self] in
+            self?.floatingWindows.removeValue(forKey: id)
+        }
+        floatingWindows[id] = window
     }
 
     private func openMultiScreenPreview(_ screens: [(screen: NSScreen, image: NSImage, index: Int)]) {
@@ -257,79 +357,6 @@ final class ScreenMediaHelper: ObservableObject {
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-    }
-
-    private func saveImage(_ image: NSImage, to path: String) {
-        _ = image.savePNG(to: path)
-    }
-
-    // MARK: - Recording
-
-    func startRecording() {
-        guard !isRecording else { return }
-        guard ensureScreenRecordingPermission() else { return }
-        let resolved = (defaultPath(isMovie: true) as NSString).expandingTildeInPath
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-V", "999999", resolved]
-        do {
-            try process.run()
-            self.recordProcess = process
-            self.isRecording = true
-            self.currentRecordURL = URL(fileURLWithPath: resolved)
-            notify(title: "录屏已开始", body: "正在录制，点击状态栏按钮可停止")
-        } catch {
-            LoggerService.shared.error("Failed to start screen recording: \(error)")
-        }
-    }
-
-    func stopRecording() {
-        guard isRecording, let process = recordProcess else { return }
-        process.interrupt()
-        self.recordProcess = nil
-        self.isRecording = false
-        if let url = currentRecordURL {
-            notify(title: "录屏保存成功", body: "录制视频已保存至桌面：\(url.lastPathComponent)")
-        }
-    }
-
-    // MARK: - Clipboard Helper
-
-    private func copyFileToClipboard(path: String) {
-        let url = URL(fileURLWithPath: path)
-        guard FileManager.default.fileExists(atPath: path) else { return }
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        
-        // Copy the raw PNG data directly to prevent any re-encoding and distortion
-        if let data = try? Data(contentsOf: url) {
-            pasteboard.setData(data, forType: .png)
-        }
-        
-        pasteboard.writeObjects([url as NSURL])
-        notify(title: "已复制到剪贴板", body: "截图已复制到剪贴板")
-    }
-
-    // MARK: - Screenshot Annotation
-
-    func openScreenshotAnnotation() {
-        guard ensureScreenRecordingPermission() else { return }
-        let tempPath = (annotationTempPath() as NSString).expandingTildeInPath
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-i", "-o", tempPath]
-
-        process.terminationHandler = { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self, FileManager.default.fileExists(atPath: tempPath) else { return }
-                self.openAnnotationEditor(imagePath: tempPath)
-            }
-        }
-
-        do { try process.run() } catch {
-            LoggerService.shared.error("Failed to run annotation capture: \(error)")
-        }
     }
 
     private func openAnnotationEditor(imagePath: String) {
@@ -355,22 +382,127 @@ final class ScreenMediaHelper: ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    private func defaultPath(isMovie: Bool) -> String {
-        let df = DateFormatter()
-        df.dateFormat = "yyyyMMdd_HHmmss"
-        let filename = isMovie
-            ? "recording_\(df.string(from: Date())).mov"
-            : "screenshot_\(df.string(from: Date())).png"
-        let desktop = NSSearchPathForDirectoriesInDomains(.desktopDirectory, .userDomainMask, true).first
-            ?? NSTemporaryDirectory()
-        return (desktop as NSString).appendingPathComponent(filename)
+    // MARK: - Notification
+
+    private func notify(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
     }
 
-    private func annotationTempPath() -> String {
-        let df = DateFormatter()
-        df.dateFormat = "yyyyMMdd_HHmmss_SSS"
-        let filename = "annotation_\(df.string(from: Date())).png"
-        return (NSTemporaryDirectory() as NSString).appendingPathComponent(filename)
+    // MARK: - Output Mode
+
+    private var outputMode: ScreenshotOutputMode {
+        DependencyContainer.shared.settingsService.settings.screenshotOutputMode
+    }
+}
+
+// MARK: - Floating Screenshot Preview Window
+
+final class FloatingScreenshotPreviewWindow: NSWindow {
+    private let onClose: () -> Void
+
+    init(image: NSImage, duration: TimeInterval = 3.0, onClose: @escaping () -> Void) {
+        self.onClose = onClose
+
+        let screenFrame = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame
+            ?? NSRect(x: 0, y: 0, width: 800, height: 600)
+
+        let previewSize = CGSize(width: 180, height: 120)
+        let rect = NSRect(
+            x: screenFrame.minX + 20,
+            y: screenFrame.minY + 20,
+            width: previewSize.width,
+            height: previewSize.height
+        )
+
+        super.init(
+            contentRect: rect,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+
+        self.isReleasedWhenClosed = false
+        self.level = .floating
+        self.backgroundColor = .clear
+        self.hasShadow = true
+        self.isOpaque = false
+        self.ignoresMouseEvents = false
+
+        let contentView = FloatingPreviewContentView(image: image) { [weak self] in
+            self?.close()
+        }
+        self.contentView = NSHostingView(rootView: contentView)
+
+        self.makeKeyAndOrderFront(nil)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
+            guard let self else { return }
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.5
+                self.animator().alphaValue = 0
+            } completionHandler: { [weak self] in
+                self?.close()
+            }
+        }
+    }
+
+    override func close() {
+        super.close()
+        onClose()
+    }
+}
+
+struct FloatingPreviewContentView: View {
+    let image: NSImage
+    let onClose: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
+
+            VStack(spacing: 6) {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 85)
+                    .cornerRadius(6)
+                    .padding(.top, 8)
+
+                Text("截图已生成")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+                    .padding(.bottom, 6)
+            }
+            .padding(.horizontal, 10)
+
+            if isHovered {
+                Button(action: onClose) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                        .background(Circle().fill(Color.black.opacity(0.6)))
+                }
+                .buttonStyle(.plain)
+                .padding(6)
+            }
+        }
+        .frame(width: 180, height: 120)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
     }
 }
 
@@ -442,7 +574,7 @@ struct MultiScreenPreviewView: View {
                         saveScreen(item.image, suffix: "screen\(item.index)")
                         savedIndices.insert(item.index)
                     }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { closeWindow() }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { NSApp.keyWindow?.close() }
                 }
                 .buttonStyle(.bordered)
 
@@ -452,7 +584,7 @@ struct MultiScreenPreviewView: View {
                         let pb = NSPasteboard.general
                         pb.clearContents()
                         pb.writeObjects([item.image])
-                        closeWindow()
+                        NSApp.keyWindow?.close()
                     }
                 }
                 .buttonStyle(.bordered)
@@ -471,20 +603,10 @@ struct MultiScreenPreviewView: View {
         let path = (desktop as NSString).appendingPathComponent("screenshot_\(suffix)_\(df.string(from: Date())).png")
         _ = image.savePNG(to: path)
     }
-
-    private func closeWindow() { NSApp.keyWindow?.close() }
 }
 
-// 截图标注工具视图（新实现）
-//
-// 详细代码见 ScreenshotAnnotationModule.swift：
-//  - 使用 MosaicRenderer 真像素化/高斯模糊（CIImage + CIFilter）
-//  - 文字/编号：点击定位 → sheet 编辑 → 拖动重定位
-//  - 撤销 / 重做 栈
-//
-// 这里保留 `PinnedAnnotationView`（在本文件内联实现）以保持二进制兼容。
-
 // MARK: - Pinned Annotation View
+
 struct PinnedAnnotationView: View {
     let image: NSImage
     let onClose: () -> Void
@@ -521,102 +643,5 @@ struct PinnedAnnotationView: View {
         .onTapGesture { /* consume click */ }
         .onKeyPress(.delete) { onClose(); return .handled }
         .onKeyPress(.escape) { onClose(); return .handled }
-    }
-}
-
-// MARK: - Floating Screenshot Preview Window
-final class FloatingScreenshotPreviewWindow: NSWindow {
-    init(image: NSImage, duration: TimeInterval = 3.0) {
-        let screen = NSScreen.main ?? NSScreen.screens.first!
-        let screenFrame = screen.visibleFrame
-        
-        let previewSize = CGSize(width: 180, height: 120)
-        let rect = NSRect(
-            x: screenFrame.minX + 20,
-            y: screenFrame.minY + 20,
-            width: previewSize.width,
-            height: previewSize.height
-        )
-        
-        super.init(
-            contentRect: rect,
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-        
-        self.isReleasedWhenClosed = false
-        self.level = .floating
-        self.backgroundColor = .clear
-        self.hasShadow = true
-        self.isOpaque = false
-        self.ignoresMouseEvents = false
-        
-        let contentView = FloatingPreviewContentView(image: image) { [weak self] in
-            self?.close()
-        }
-        self.contentView = NSHostingView(rootView: contentView)
-        
-        self.makeKeyAndOrderFront(nil)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
-            guard let self = self else { return }
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.5
-                self.animator().alphaValue = 0
-            } completionHandler: {
-                self.close()
-            }
-        }
-    }
-}
-
-struct FloatingPreviewContentView: View {
-    let image: NSImage
-    let onClose: () -> Void
-    @State private var isHovered = false
-    
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // Dark glassmorphic card base
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                )
-            
-            VStack(spacing: 6) {
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 85)
-                    .cornerRadius(6)
-                    .padding(.top, 8)
-                
-                Text("截图已生成")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                    .padding(.bottom, 6)
-            }
-            .padding(.horizontal, 10)
-            
-            if isHovered {
-                Button(action: onClose) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.7))
-                        .background(Circle().fill(Color.black.opacity(0.6)))
-                }
-                .buttonStyle(.plain)
-                .padding(6)
-            }
-        }
-        .frame(width: 180, height: 120)
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
-                isHovered = hovering
-            }
-        }
     }
 }

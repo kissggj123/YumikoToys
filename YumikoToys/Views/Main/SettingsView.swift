@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import WidgetKit
 
 enum SettingsTab: String, CaseIterable, Identifiable {
     case appearance = "appearance"
@@ -4227,6 +4228,13 @@ final class SettingsViewModel: ObservableObject {
         var settings = container.settingsService.settings
         settings.widgetDisplayStyle = style
         container.settingsService.updateSettings(settings)
+        // 同步写入共享 UserDefaults 供 Widget 直接读取
+        let groupID = "group.com.Lite.YumikoToys"
+        if let shared = UserDefaults(suiteName: groupID) {
+            shared.set(style.rawValue, forKey: "widget_display_style")
+            shared.synchronize()
+        }
+        DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
         LoggerService.shared.info("Widget display style changed to: \(style.displayName)")
     }
 
@@ -4668,6 +4676,7 @@ final class SettingsViewModel: ObservableObject {
         var settings = container.settingsService.settings
         settings.selectedThemeColor = theme
         container.settingsService.updateSettings(settings)
+        DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
         LoggerService.shared.info("Theme color changed to: \(theme.rawValue)")
     }
     
@@ -4678,6 +4687,7 @@ final class SettingsViewModel: ObservableObject {
         settings.customThemeColorHex = hex
         settings.selectedThemeColor = .custom
         container.settingsService.updateSettings(settings)
+        DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
         LoggerService.shared.info("Custom theme color hex changed to: \(hex)")
     }
 

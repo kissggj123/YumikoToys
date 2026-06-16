@@ -218,6 +218,11 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         LoggerService.shared.debug("AnniversaryService timer stopped")
     }
     
+    /// 外部强制同步 Widget 数据并刷新 Timeline（如样式切换后立即生效）
+    func forceSyncAndReloadWidget() {
+        syncWidgetData(forceReload: true)
+    }
+
     /// 智能同步 Widget 并刷新
     private func syncWidgetData(forceReload: Bool = false) {
         guard let anniversary = activeAnniversary else { return }
@@ -229,10 +234,15 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         let milestones = AnniversaryInfo.calculateMilestones(from: anniversary.startDate, referenceDate: ntpTime)
         writeWidgetSyncData(anniversary: anniversary, calc: calc, milestones: milestones)
         
-        // 仅在天数发生整数变化或切换纪念日时，才通知 OS 刷新 Timeline（防止 API 调用频次超限）
-        if forceReload || dayCount != lastSyncedDayCount || anniversary.id != lastSyncedAnniversaryId {
+        // 通知 Widget 刷新
+        let shouldReload = forceReload || dayCount != lastSyncedDayCount || anniversary.id != lastSyncedAnniversaryId
+        if shouldReload {
             lastSyncedDayCount = dayCount
             lastSyncedAnniversaryId = anniversary.id
+            // 确保 UserDefaults 写入完成后再通知 Widget 刷新
+            if let sharedDefaults = UserDefaults(suiteName: "group.com.Lite.YumikoToys") {
+                sharedDefaults.synchronize()
+            }
             WidgetCenter.shared.reloadAllTimelines()
             LoggerService.shared.info("Widget timeline reloaded for: \(anniversary.title)")
         }
@@ -315,8 +325,11 @@ final class AnniversaryService: AnniversaryServiceProtocol {
 
         // ── 机制 1：UserDefaults(suiteName:)（最可靠，自签名环境下依然可用） ──
         // 这是当前自签名环境下 Widget 能读到数据的首选机制。
+        // 主 App 写入 widget_payload，Widget 从这里读取。
         if let sharedDefaults = UserDefaults(suiteName: groupID) {
             sharedDefaults.set(data, forKey: "widget_payload")
+            // 同步写入独立 key，供 Widget 直接读取 displayStyle
+            sharedDefaults.set(syncData.displayStyle, forKey: "widget_display_style")
             sharedDefaults.synchronize()
             anySuccess = true
             LoggerService.shared.debug("Widget data written to UserDefaults suite: \(groupID)")

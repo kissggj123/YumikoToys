@@ -1400,6 +1400,7 @@ struct StatusBarView: View {
         var settings = DependencyContainer.shared.settingsService.settings
         settings.selectedThemeColor = theme
         DependencyContainer.shared.settingsService.updateSettings(settings)
+        DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
     }
     
     /// 保存自定义主题色 Hex
@@ -1408,6 +1409,7 @@ struct StatusBarView: View {
         settings.customThemeColorHex = hex
         settings.selectedThemeColor = .custom
         DependencyContainer.shared.settingsService.updateSettings(settings)
+        DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
     }
     
     // MARK: - 头部
