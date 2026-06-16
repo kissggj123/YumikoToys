@@ -68,3 +68,16 @@ macOS_Swift开发专家_规则.txt
 macos-swift-development-rules.md
 solo-macos-swift-rules.md
 YumikoToys-IconStyles-Design.jpg
+
+# 本地 vendor 的 Swift Package：完整提交，不忽略里面的任何文件
+!ThirdParty/
+ThirdParty/**/.git
+ThirdParty/**/.gitignore
+ThirdParty/**/.github
+ThirdParty/**/.swiftpm
+ThirdParty/**/.build
+ThirdParty/**/*.xcodeproj
+ThirdParty/**/*.xcworkspace
+ThirdParty/**/xcuserdata
+ThirdParty/**/DerivedData
+ThirdParty/**/build

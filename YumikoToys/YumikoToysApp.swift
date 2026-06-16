@@ -195,6 +195,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func initializeApp() async {
         LoggerService.shared.info("Application starting...")
+
+        // 签名环境诊断（不影响主流程）
+        SigningDiagnostics.logCurrentSigningStatus()
         
         // 注册可爱字体
         FontManager.shared.registerFonts()

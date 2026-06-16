@@ -1,6 +1,37 @@
 import WidgetKit
 import SwiftUI
 
+// MARK: - Shared Data Model (mirrors the main app's WidgetSyncData)
+
+struct WidgetMilestone: Codable, Identifiable {
+    let id: String
+    let icon: String
+    let label: String
+    let date: String
+    let countDisplay: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, icon, label, date, countDisplay
+    }
+
+    init(id: String, icon: String, label: String, date: String, countDisplay: String) {
+        self.id = id
+        self.icon = icon
+        self.label = label
+        self.date = date
+        self.countDisplay = countDisplay
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = (try? container.decodeIfPresent(String.self, forKey: .id)) ?? UUID().uuidString
+        self.icon = try container.decode(String.self, forKey: .icon)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.date = try container.decode(String.self, forKey: .date)
+        self.countDisplay = try container.decode(String.self, forKey: .countDisplay)
+    }
+}
+
 struct WidgetSyncData: Codable {
     let petName: String
     let avatar: String
@@ -9,69 +40,188 @@ struct WidgetSyncData: Codable {
     let milestones: [WidgetMilestone]
     let proactiveBubbleText: String?
     let appVersion: String
-    let displayStyle: String?
+    let displayStyle: String
+
+    // v2
+    let totalHours: Double
+    let hoursPart: Int
+    let minutesPart: Int
+    let secondsPart: Int
+    let themePrimaryHex: String
+
+    enum CodingKeys: String, CodingKey {
+        case petName, avatar, startDate, totalDays, milestones,
+             proactiveBubbleText, appVersion, displayStyle,
+             totalHours, hoursPart, minutesPart, secondsPart,
+             themePrimaryHex
+    }
+
+    // 成员初始化器（供 defaultData 最后回退使用）
+    init(petName: String, avatar: String, startDate: Date, totalDays: Double,
+         milestones: [WidgetMilestone], proactiveBubbleText: String?,
+         appVersion: String, displayStyle: String,
+         totalHours: Double, hoursPart: Int, minutesPart: Int, secondsPart: Int,
+         themePrimaryHex: String) {
+        self.petName = petName
+        self.avatar = avatar
+        self.startDate = startDate
+        self.totalDays = totalDays
+        self.milestones = milestones
+        self.proactiveBubbleText = proactiveBubbleText
+        self.appVersion = appVersion
+        self.displayStyle = displayStyle
+        self.totalHours = totalHours
+        self.hoursPart = hoursPart
+        self.minutesPart = minutesPart
+        self.secondsPart = secondsPart
+        self.themePrimaryHex = themePrimaryHex
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.petName = try container.decode(String.self, forKey: .petName)
+        self.avatar = try container.decode(String.self, forKey: .avatar)
+        self.startDate = try container.decode(Date.self, forKey: .startDate)
+        self.totalDays = try container.decode(Double.self, forKey: .totalDays)
+        self.milestones = try container.decode([WidgetMilestone].self, forKey: .milestones)
+        self.proactiveBubbleText = try container.decodeIfPresent(String.self, forKey: .proactiveBubbleText)
+        self.appVersion = (try container.decodeIfPresent(String.self, forKey: .appVersion)) ?? ""
+        self.displayStyle = (try container.decodeIfPresent(String.self, forKey: .displayStyle)) ?? "classic"
+
+        // v2 字段，缺省则按 totalDays 推断
+        if let hours = try container.decodeIfPresent(Double.self, forKey: .totalHours) {
+            self.totalHours = hours
+            self.hoursPart = try container.decodeIfPresent(Int.self, forKey: .hoursPart) ?? Int(hours)
+            self.minutesPart = try container.decodeIfPresent(Int.self, forKey: .minutesPart) ?? 0
+            self.secondsPart = try container.decodeIfPresent(Int.self, forKey: .secondsPart) ?? 0
+        } else {
+            let t = totalDays * 86_400
+            self.totalHours = t / 3_600
+            self.hoursPart = Int(self.totalHours)
+            let remain = t - Double(self.hoursPart) * 3_600
+            self.minutesPart = Int(remain / 60)
+            self.secondsPart = Int(remain - Double(self.minutesPart) * 60)
+        }
+        self.themePrimaryHex = (try container.decodeIfPresent(String.self, forKey: .themePrimaryHex)) ?? "FF6B9D"
+    }
 }
 
-struct WidgetMilestone: Codable {
-    let icon: String
-    let label: String
-    let date: String
-    let countDisplay: String
-}
+// MARK: - Provider
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), info: defaultData)
+        SimpleEntry(date: Date(), info: defaultData())
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), info: loadData() ?? defaultData)
+    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
+        let entry = SimpleEntry(date: Date(), info: loadData() ?? defaultData())
         completion(entry)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        let data = loadData() ?? defaultData
-        let entries = [
-            SimpleEntry(date: Date(), info: data)
-        ]
-        let timeline = Timeline(entries: entries, policy: .after(Date().addingTimeInterval(10)))
+    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
+        let data = loadData() ?? defaultData()
+        let entries = [SimpleEntry(date: Date(), info: data)]
+        // 下次刷新在 1 小时后（主 App 每秒都会更新 JSON）
+        let nextRefresh = Calendar.current.date(byAdding: .hour, value: 1, to: Date())!
+        let timeline = Timeline(entries: entries, policy: .after(nextRefresh))
         completion(timeline)
     }
-    
-    private var defaultData: WidgetSyncData {
-        WidgetSyncData(
-            petName: "兔可可",
-            avatar: "🐰",
-            startDate: Calendar.current.date(from: DateComponents(year: 2024, month: 3, day: 12))!,
-            totalDays: 826.936,
-            milestones: [
-                WidgetMilestone(icon: "🌱", label: "下一个100天", date: "2026-08-29", countDisplay: "(第9个)"),
-                WidgetMilestone(icon: "🌿", label: "下一个180天", date: "2026-08-29", countDisplay: "(第5个)")
-            ],
-            proactiveBubbleText: "你好呀！我是你的智能助理。",
-            appVersion: "4.5.1",
-            displayStyle: "classic"
+
+    private func defaultData() -> WidgetSyncData {
+        // 纯占位数据（Widget 首次安装 / 数据尚未写入时的兜底显示）
+        // 注意：绝对不使用 fatalError，避免 Widget 崩溃。
+        let totalDays: Double = 827.085
+        let totalSeconds = totalDays * 86_400
+        let totalHours = totalSeconds / 3_600
+        let hoursPart = Int(totalHours)
+        let remain = totalSeconds - Double(hoursPart) * 3_600
+        let minutesPart = Int(remain / 60)
+        let secondsPart = Int(remain - Double(minutesPart) * 60)
+
+        let json = """
+        {
+          "petName":"兔可可","avatar":"🐰",
+          "startDate":"2024-03-12T00:00:00Z",
+          "totalDays":\(totalDays),
+          "milestones":[
+            {"icon":"🌱","label":"下一个100天","date":"2026-08-29","countDisplay":"(第9个)"},
+            {"icon":"🌿","label":"下一个180天","date":"2026-08-29","countDisplay":"(第5个)"},
+            {"icon":"☘️","label":"下一个300天","date":"2026-08-29","countDisplay":"(第3个)"},
+            {"icon":"🎉","label":"下一周年","date":"2027-03-12","countDisplay":"(第3周年)"}
+          ],
+          "proactiveBubbleText":null,
+          "appVersion":"4.5.1","displayStyle":"classic",
+          "totalHours":\(totalHours),"hoursPart":\(hoursPart),
+          "minutesPart":\(minutesPart),"secondsPart":\(secondsPart),
+          "themePrimaryHex":"FF6B9D"
+        }
+        """
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        if let data = json.data(using: .utf8),
+           let v = try? decoder.decode(WidgetSyncData.self, from: data) {
+            return v
+        }
+        // 最严重的回退：手动构造 WidgetSyncData 需要 JSON 解码，所以这里再试一次空的里程碑
+        // （理论上上面的硬编码 JSON 不可能失败）
+        let fallback = #"{"petName":"兔可可","avatar":"🐰","startDate":"2024-03-12T00:00:00Z","totalDays":\#(totalDays),"milestones":[],"proactiveBubbleText":null,"appVersion":"4.5.1","displayStyle":"classic","totalHours":\#(totalHours),"hoursPart":\#(hoursPart),"minutesPart":\#(minutesPart),"secondsPart":\#(secondsPart),"themePrimaryHex":"FF6B9D"}"#
+        if let data = fallback.data(using: .utf8),
+           let v = try? decoder.decode(WidgetSyncData.self, from: data) {
+            return v
+        }
+        // 极难到达的路径——用最小字段解码。若仍失败则重走 defaultData，避免无限递归
+        assertionFailure("Widget defaultData 构造失败，请检查 JSON 格式")
+        return WidgetSyncData(
+            petName: "兔可可", avatar: "🐰",
+            startDate: Date(timeIntervalSinceReferenceDate: 0),
+            totalDays: totalDays,
+            milestones: [], proactiveBubbleText: nil,
+            appVersion: "4.5.1", displayStyle: "classic",
+            totalHours: totalHours, hoursPart: hoursPart,
+            minutesPart: minutesPart, secondsPart: secondsPart,
+            themePrimaryHex: "FF6B9D"
         )
     }
-    
+
     private func loadData() -> WidgetSyncData? {
         let fileManager = FileManager.default
-        
-        let searchPaths: [URL] = [
-            fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.Lite.YumikoToys")?.appendingPathComponent("widget.json"),
-            fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("com.Lite.YumikoToys/widget.json"),
-            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/com.Lite.YumikoToys/widget.json")
-        ].compactMap { $0 }
-        
-        for fileURL in searchPaths {
-            guard fileManager.fileExists(atPath: fileURL.path) else { continue }
-            
+        let groupID = "group.com.Lite.YumikoToys"
+
+        // ── 机制 1：UserDefaults(suiteName:) ─────────────────────────
+        // 在自签名 / sandbox 环境下，这是最可靠的跨进程共享通道。
+        // 主 App 写入 widget_payload，Widget 从这里读取。
+        if let sharedDefaults = UserDefaults(suiteName: groupID),
+           let data = sharedDefaults.data(forKey: "widget_payload") {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            if let v = try? decoder.decode(WidgetSyncData.self, from: data) {
+                return v
+            }
+        }
+
+        // ── 机制 2：App Group 容器中的 JSON 文件 ─────────────────────
+        // 需要正确的 entitlements 签名才能读到；自签名时请用 --entitlements 参数。
+        var fileCandidates: [URL] = []
+        if let container = fileManager.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
+            fileCandidates.append(container.appendingPathComponent("widget.json"))
+        }
+        if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            fileCandidates.append(appSupport.appendingPathComponent("com.Lite.YumikoToys/widget.json"))
+        }
+        fileCandidates.append(
+            fileManager.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support/com.Lite.YumikoToys/widget.json")
+        )
+
+        for url in fileCandidates {
+            guard fileManager.fileExists(atPath: url.path) else { continue }
             do {
-                let data = try Data(contentsOf: fileURL)
+                let data = try Data(contentsOf: url)
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
                 return try decoder.decode(WidgetSyncData.self, from: data)
             } catch {
+                // 解析失败就继续尝试下一路径
                 continue
             }
         }
@@ -84,503 +234,213 @@ struct SimpleEntry: TimelineEntry {
     let info: WidgetSyncData
 }
 
-// MARK: - Gradient Background
+// MARK: - Color Helpers
+
+extension Color {
+    /// 将 #RRGGBB / RRGGBB 解析为 Color
+    static func hex(_ string: String) -> Color {
+        var clean = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        if clean.hasPrefix("#") { clean.removeFirst() }
+        guard clean.count == 6 else { return Color(red: 1.0, green: 0.42, blue: 0.62) }
+
+        var rgb: UInt64 = 0
+        Scanner(string: clean).scanHexInt64(&rgb)
+        let r = Double((rgb & 0xFF0000) >> 16) / 255.0
+        let g = Double((rgb & 0x00FF00) >> 8) / 255.0
+        let b = Double(rgb & 0x0000FF) / 255.0
+        return Color(red: r, green: g, blue: b)
+    }
+}
+
+// MARK: - Gradient Background (themed)
+
 struct GradientBackground: View {
+    let primaryHex: String
+
     var body: some View {
+        let primary = Color.hex(primaryHex)
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 12/255, green: 15/255, blue: 45/255),
-                    Color(red: 18/255, green: 12/255, blue: 35/255)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            
+            LinearGradient(colors: [
+                primary.opacity(0.85),
+                primary.opacity(0.45)
+            ], startPoint: .topLeading, endPoint: .bottomTrailing)
+
             GeometryReader { geo in
                 ZStack {
                     Circle()
-                        .fill(Color(red: 0/255, green: 180/255, blue: 255/255).opacity(0.3))
-                        .frame(width: geo.size.width * 0.8, height: geo.size.width * 0.8)
-                        .blur(radius: geo.size.width * 0.25)
-                        .position(x: geo.size.width * 0.9, y: geo.size.height * 0.15)
-                    
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: geo.size.width * 0.75,
+                               height: geo.size.width * 0.75)
+                        .position(x: geo.size.width * 0.85,
+                                  y: geo.size.height * 0.12)
+                        .blur(radius: geo.size.width * 0.12)
                     Circle()
-                        .fill(Color(red: 255/255, green: 50/255, blue: 140/255).opacity(0.25))
-                        .frame(width: geo.size.width * 0.7, height: geo.size.width * 0.7)
-                        .blur(radius: geo.size.width * 0.25)
-                        .position(x: geo.size.width * 0.1, y: geo.size.height * 0.85)
+                        .fill(Color.white.opacity(0.14))
+                        .frame(width: geo.size.width * 0.6,
+                               height: geo.size.width * 0.6)
+                        .position(x: geo.size.width * 0.15,
+                                  y: geo.size.height * 0.85)
+                        .blur(radius: geo.size.width * 0.1)
                 }
             }
-            
-            LinearGradient(
-                colors: [
-                    Color.white.opacity(0.06),
-                    Color.clear,
-                    Color.black.opacity(0.1)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
         }
     }
 }
 
-// MARK: - Small Widget
+// MARK: - Small Widget View
+
 struct SmallWidgetView: View {
     let info: WidgetSyncData
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
                 Text(info.avatar)
                     .font(.system(size: 14))
-                    .frame(width: 20, height: 20)
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(5)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 5)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 0.5)
-                    )
-                
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(info.petName)
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                    Text("v\(info.appVersion)")
-                        .font(.system(size: 6, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                }
+                Text(info.petName)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
                 Spacer()
             }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 4)
-            .background(Color.white.opacity(0.03))
-            .cornerRadius(7)
-            .overlay(
-                RoundedRectangle(cornerRadius: 7)
-                    .stroke(Color.white.opacity(0.05), lineWidth: 0.5)
-            )
-            
-            Spacer(minLength: 6)
-            
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(String(format: "%.3f", info.totalDays))
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                    .foregroundColor(.white)
-                    .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
-                
-                Text("天")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.7))
-            }
-            .padding(.leading, 2)
-            
-            Spacer(minLength: 6)
-            
-            if let first = info.milestones.first {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 3) {
-                        Text(first.icon)
-                            .font(.system(size: 7))
-                        Text(first.label)
-                            .font(.system(size: 7, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.55))
-                    }
-                    Text(first.date)
-                        .font(.system(size: 8, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.9))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                .padding(.horizontal, 5)
-                .padding(.vertical, 3)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.black.opacity(0.2))
-                .cornerRadius(5)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.white.opacity(0.04), lineWidth: 0.5)
-                )
-            }
-        }
-        .padding(7)
-    }
-}
 
-// MARK: - Medium Widget
-struct MediumWidgetView: View {
-    let info: WidgetSyncData
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 6) {
-                    Text(info.avatar)
-                        .font(.system(size: 16))
-                        .frame(width: 26, height: 26)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(7)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 7)
-                                .stroke(Color.white.opacity(0.12), lineWidth: 0.5)
-                        )
-                    
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(info.petName)
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                        Text("v\(info.appVersion)")
-                            .font(.system(size: 7, weight: .medium))
-                            .foregroundColor(.white.opacity(0.5))
-                    }
-                }
-                
-                Spacer(minLength: 6)
-                
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(String(format: "%.3f", info.totalDays))
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .minimumScaleFactor(0.6)
-                        .lineLimit(1)
-                        .foregroundColor(.white)
-                    
-                    Text("天")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .padding(.leading, 2)
-                
-                Spacer(minLength: 4)
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: 7))
-                    Text(info.startDate, style: .timer)
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                }
-                .foregroundColor(.white.opacity(0.85))
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(Color.black.opacity(0.3))
-                .cornerRadius(16)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-                )
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            VStack(alignment: .trailing, spacing: 0) {
-                if let bubble = info.proactiveBubbleText, !bubble.isEmpty {
-                    Text(bubble)
-                        .font(.system(size: 8, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(Color.purple.opacity(0.3))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 5)
-                                .stroke(Color.purple.opacity(0.45), lineWidth: 0.5)
-                        )
-                        .multilineTextAlignment(.trailing)
-                        .lineLimit(4)
-                        .minimumScaleFactor(0.8)
-                }
-                
-                Spacer(minLength: 4)
-                
-                VStack(alignment: .trailing, spacing: 3) {
-                    ForEach(info.milestones.prefix(2), id: \.label) { milestone in
-                        HStack(spacing: 3) {
-                            Text(milestone.icon)
-                                .font(.system(size: 8))
-                            Text(milestone.label)
-                                .font(.system(size: 8, weight: .medium))
-                                .foregroundColor(.white.opacity(0.6))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                            Spacer()
-                            Text(milestone.countDisplay)
-                                .font(.system(size: 7, weight: .semibold, design: .monospaced))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    }
-                }
-            }
-            .frame(width: 100, alignment: .trailing)
-        }
-        .padding(10)
-    }
-}
-
-// MARK: - Compact Small Widget
-struct CompactSmallWidgetView: View {
-    let info: WidgetSyncData
-
-    var body: some View {
-        VStack(alignment: .center, spacing: 4) {
-            Text(info.avatar)
-                .font(.system(size: 28))
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.1f", info.totalDays))
-                    .font(.system(size: 28, weight: .heavy, design: .rounded))
-                    .minimumScaleFactor(0.5)
+                    .font(.system(size: 26, weight: .heavy, design: .rounded))
+                    .minimumScaleFactor(0.6)
                     .lineLimit(1)
                     .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
                 Text("天")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(.white.opacity(0.85))
             }
-            Text(info.petName)
-                .font(.system(size: 9, weight: .medium))
-                .foregroundColor(.white.opacity(0.5))
+
+            Text(String(format: "%d小时 %d分 %d秒",
+                        info.hoursPart, info.minutesPart, info.secondsPart))
+                .font(.system(size: 8, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
+                .lineLimit(1)
+
+            if let first = info.milestones.first {
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 2) {
+                        Text(first.icon).font(.system(size: 8))
+                        Text(first.label)
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.9))
+                        Spacer()
+                        Text(first.countDisplay)
+                            .font(.system(size: 7, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    Text(first.date)
+                        .font(.system(size: 7, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(Color.black.opacity(0.28))
+                .cornerRadius(5)
+            }
+
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(8)
     }
 }
 
-// MARK: - Compact Medium Widget
-struct CompactMediumWidgetView: View {
+// MARK: - Medium Widget View
+
+struct MediumWidgetView: View {
     let info: WidgetSyncData
 
     var body: some View {
-        HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(info.avatar)
-                    .font(.system(size: 24))
-                Text(info.petName)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-
-            VStack(alignment: .center, spacing: 2) {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(String(format: "%.3f", info.totalDays))
-                        .font(.system(size: 36, weight: .heavy, design: .rounded))
-                        .minimumScaleFactor(0.5)
-                        .lineLimit(1)
-                        .foregroundColor(.white)
-                    Text("天")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                HStack(spacing: 4) {
-                    Image(systemName: "clock.fill").font(.system(size: 7))
-                    Text(info.startDate, style: .timer)
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
-                }
-                .foregroundColor(.white.opacity(0.85))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(Color.black.opacity(0.3))
-                .cornerRadius(12)
-            }
-            .frame(maxWidth: .infinity)
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("v\(info.appVersion)")
-                    .font(.system(size: 8, weight: .medium))
-                    .foregroundColor(.white.opacity(0.4))
-                if let first = info.milestones.first {
-                    Text("\(first.icon) \(first.label)")
-                        .font(.system(size: 8, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                        .lineLimit(1)
-                }
-            }
-        }
-        .padding(12)
-    }
-}
-
-// MARK: - Detailed Small Widget
-struct DetailedSmallWidgetView: View {
-    let info: WidgetSyncData
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 4) {
-                Text(info.avatar).font(.system(size: 12))
-                Text(info.petName)
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.white)
-                Spacer()
-                Text("v\(info.appVersion)")
-                    .font(.system(size: 6, weight: .medium))
-                    .foregroundColor(.white.opacity(0.4))
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(Color.white.opacity(0.03))
-            .cornerRadius(6)
-
-            Spacer(minLength: 4)
-
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(String(format: "%.3f", info.totalDays))
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                    .foregroundColor(.white)
-                Text("天")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.7))
-            }
-
-            Spacer(minLength: 3)
-
-            ForEach(info.milestones.prefix(2), id: \.label) { milestone in
-                HStack(spacing: 3) {
-                    Text(milestone.icon).font(.system(size: 6))
-                    Text(milestone.label)
-                        .font(.system(size: 6, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                        .lineLimit(1)
-                    Spacer()
-                    Text(milestone.countDisplay)
-                        .font(.system(size: 6, weight: .semibold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.6))
-                }
-            }
-
-            if let bubble = info.proactiveBubbleText, !bubble.isEmpty {
-                Spacer(minLength: 3)
-                Text(bubble)
-                    .font(.system(size: 6, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-            }
-        }
-        .padding(7)
-    }
-}
-
-// MARK: - Detailed Medium Widget
-struct DetailedMediumWidgetView: View {
-    let info: WidgetSyncData
-
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 0) {
+        HStack(alignment: .top, spacing: 10) {
+            // 左侧：宠物名 + 大号天数 + 已到来时间
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 5) {
                     Text(info.avatar).font(.system(size: 14))
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(info.petName)
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("v\(info.appVersion)")
-                            .font(.system(size: 6, weight: .medium))
-                            .foregroundColor(.white.opacity(0.4))
-                    }
+                    Text(info.petName)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
                 }
-                .padding(.horizontal, 5)
-                .padding(.vertical, 3)
-                .background(Color.white.opacity(0.03))
-                .cornerRadius(6)
-
-                Spacer(minLength: 4)
 
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(String(format: "%.3f", info.totalDays))
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.system(size: 30, weight: .heavy, design: .rounded))
                         .minimumScaleFactor(0.6)
                         .lineLimit(1)
                         .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
                     Text("天")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
                 }
 
-                Spacer(minLength: 3)
-
-                HStack(spacing: 4) {
-                    Image(systemName: "clock.fill").font(.system(size: 6))
-                    Text(info.startDate, style: .timer)
-                        .font(.system(size: 8, weight: .bold, design: .monospaced))
-                }
-                .foregroundColor(.white.opacity(0.85))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(Color.black.opacity(0.3))
-                .cornerRadius(10)
+                Text(String(format: "已到来 %d 小时 %d 分 %d 秒",
+                            info.hoursPart, info.minutesPart, info.secondsPart))
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.white.opacity(0.85))
+                    .lineLimit(1)
+                    .padding(.top, 2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(alignment: .trailing, spacing: 3) {
-                if let bubble = info.proactiveBubbleText, !bubble.isEmpty {
-                    Text(bubble)
-                        .font(.system(size: 7, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 3)
-                        .background(
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.purple.opacity(0.3))
-                        )
-                        .multilineTextAlignment(.trailing)
-                        .lineLimit(3)
-                        .minimumScaleFactor(0.8)
-                }
-
-                Spacer(minLength: 3)
-
-                ForEach(info.milestones.prefix(3), id: \.label) { milestone in
-                    HStack(spacing: 3) {
-                        Text(milestone.icon).font(.system(size: 7))
-                        Text(milestone.label)
-                            .font(.system(size: 7, weight: .medium))
-                            .foregroundColor(.white.opacity(0.55))
+            // 右侧：4 条里程碑
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(Array(info.milestones.prefix(4).enumerated()), id: \.offset) { _, m in
+                    HStack(spacing: 4) {
+                        Text(m.icon).font(.system(size: 8))
+                        Text(m.label)
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundColor(.white.opacity(0.9))
                             .lineLimit(1)
-                        Spacer()
-                        Text(milestone.countDisplay)
-                            .font(.system(size: 6, weight: .semibold, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.6))
+                        Spacer(minLength: 4)
+                        Text(m.date)
+                            .font(.system(size: 7, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.85))
+                        Text(m.countDisplay)
+                            .font(.system(size: 7, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.8))
                     }
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(Color.black.opacity(0.22))
+                    .cornerRadius(4)
                 }
             }
-            .frame(width: 100, alignment: .trailing)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(10)
     }
 }
+
+// MARK: - Entry View Dispatcher
 
 struct YumikoWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
 
-    private var style: String { entry.info.displayStyle ?? "classic" }
+    private var style: String { entry.info.displayStyle }
 
     var body: some View {
         Group {
-            if family == .systemMedium {
-                switch style {
-                case "compact":  CompactMediumWidgetView(info: entry.info)
-                case "detailed": DetailedMediumWidgetView(info: entry.info)
-                default:         MediumWidgetView(info: entry.info)
-                }
-            } else {
-                switch style {
-                case "compact":  CompactSmallWidgetView(info: entry.info)
-                case "detailed": DetailedSmallWidgetView(info: entry.info)
-                default:         SmallWidgetView(info: entry.info)
-                }
+            switch family {
+            case .systemMedium:
+                MediumWidgetView(info: entry.info)
+            default:
+                SmallWidgetView(info: entry.info)
             }
         }
         .containerBackground(for: .widget) {
-            GradientBackground()
+            GradientBackground(primaryHex: entry.info.themePrimaryHex)
         }
     }
 }
+
+// MARK: - Widget Definition
 
 @main
 struct YumikoWidget: Widget {

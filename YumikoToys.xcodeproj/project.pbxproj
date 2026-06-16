@@ -51,6 +51,10 @@
 		FC6552BE2FC373980093B726 /* PromptTemplatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552882FC373980093B726 /* PromptTemplatePicker.swift */; };
 		FC6552BF2FC373980093B726 /* MLXModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552162FC373980093B726 /* MLXModelLoader.swift */; };
 		FC6552C02FC373980093B726 /* UserAvatarSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65523C2FC373980093B726 /* UserAvatarSettings.swift */; };
+		FC6553F02FDA00000093B726 /* WidgetSyncData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553F12FDA00000093B726 /* WidgetSyncData.swift */; };
+		FC6553F22FDA00000093B726 /* MosaicRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553F32FDA00000093B726 /* MosaicRenderer.swift */; };
+		FC6553F42FDA00000093B726 /* SigningDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553F52FDA00000093B726 /* SigningDiagnostics.swift */; };
+		FC6553F62FDA00000093B726 /* ScreenshotAnnotationModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553F72FDA00000093B726 /* ScreenshotAnnotationModule.swift */; };
 		FC6552C12FC373980093B726 /* LearningResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552342FC373980093B726 /* LearningResult.swift */; };
 		FC6552C22FC373980093B726 /* APISettingsServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552632FC373980093B726 /* APISettingsServiceProtocol.swift */; };
 		FC6552C32FC373980093B726 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552332FC373980093B726 /* Conversation.swift */; };
@@ -268,6 +272,10 @@
 		FC65523A2FC373980093B726 /* SearchChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchChannel.swift; sourceTree = "<group>"; };
 		FC65523B2FC373980093B726 /* UploadedFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadedFile.swift; sourceTree = "<group>"; };
 		FC65523C2FC373980093B726 /* UserAvatarSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarSettings.swift; sourceTree = "<group>"; };
+		FC6553F12FDA00000093B726 /* WidgetSyncData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSyncData.swift; sourceTree = "<group>"; };
+		FC6553F32FDA00000093B726 /* MosaicRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicRenderer.swift; sourceTree = "<group>"; };
+		FC6553F52FDA00000093B726 /* SigningDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SigningDiagnostics.swift; sourceTree = "<group>"; };
+		FC6553F72FDA00000093B726 /* ScreenshotAnnotationModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotAnnotationModule.swift; sourceTree = "<group>"; };
 		FC65523F2FC373980093B726 /* PromptTemplates.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = PromptTemplates.json; sourceTree = "<group>"; };
 		FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedFeaturesService.swift; sourceTree = "<group>"; };
 		FC6552422FC373980093B726 /* AgentFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFileService.swift; sourceTree = "<group>"; };
@@ -510,7 +518,10 @@
 		FC65521C2FC373980093B726 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				FC6553F72FDA00000093B726 /* ScreenshotAnnotationModule.swift */,
 				FC65590C2FC373980093B726 /* ScreenMediaHelper.swift */,
+				FC6553F32FDA00000093B726 /* MosaicRenderer.swift */,
+				FC6553F52FDA00000093B726 /* SigningDiagnostics.swift */,
 				FC65590E2FC373980093B726 /* GlobalHotkeyManager.swift */,
 				FC6559102FC373980093B726 /* AppScanner.swift */,
 				FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */,
@@ -604,6 +615,7 @@
 				FC65523A2FC373980093B726 /* SearchChannel.swift */,
 				FC65523B2FC373980093B726 /* UploadedFile.swift */,
 				FC65523C2FC373980093B726 /* UserAvatarSettings.swift */,
+				FC6553F12FDA00000093B726 /* WidgetSyncData.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1103,6 +1115,10 @@
 				FC6552BE2FC373980093B726 /* PromptTemplatePicker.swift in Sources */,
 				FC6552BF2FC373980093B726 /* MLXModelLoader.swift in Sources */,
 				FC6552C02FC373980093B726 /* UserAvatarSettings.swift in Sources */,
+				FC6553F02FDA00000093B726 /* WidgetSyncData.swift in Sources */,
+				FC6553F22FDA00000093B726 /* MosaicRenderer.swift in Sources */,
+				FC6553F42FDA00000093B726 /* SigningDiagnostics.swift in Sources */,
+				FC6553F62FDA00000093B726 /* ScreenshotAnnotationModule.swift in Sources */,
 				FC6552C12FC373980093B726 /* LearningResult.swift in Sources */,
 				FC6552C22FC373980093B726 /* APISettingsServiceProtocol.swift in Sources */,
 				FC6552C32FC373980093B726 /* Conversation.swift in Sources */,
@@ -1736,10 +1752,10 @@
 		};
 		FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/JohnSundell/Splash";
+			repositoryURL = "file:///Users/yumikotoys/Documents/Xcodetools/YumikoToys Lite/ThirdParty/Splash";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.16.0;
+				kind = branch;
+				branch = master;
 			};
 		};
 		FC06647C2FC0916C00CABB99 /* XCRemoteSwiftPackageReference "Highlightr" */ = {

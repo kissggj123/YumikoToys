@@ -1,5 +1,5 @@
 {
-  "originHash" : "1115f346ee3b6b39200ae6d4028d5ff4a1c4e7c5ff5a2b8a9848557846bebeee",
+  "originHash" : "50085d0c17afe65bb3818fa86cb54d2970e9ea3aa92f45c9d9123d383da7ebbe",
   "pins" : [
     {
       "identity" : "corexlsx",
@@ -66,11 +66,11 @@
     },
     {
       "identity" : "splash",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/JohnSundell/Splash",
+      "kind" : "localSourceControl",
+      "location" : "/Users/yumikotoys/Documents/Xcodetools/YumikoToys Lite/ThirdParty/Splash",
       "state" : {
-        "revision" : "7f4df436eb78fe64fe2c32c58006e9949fa28ad8",
-        "version" : "0.16.0"
+        "branch" : "master",
+        "revision" : "2e3f17c2d09689c8bf175c4a84ff7f2ad3353301"
       }
     },
     {

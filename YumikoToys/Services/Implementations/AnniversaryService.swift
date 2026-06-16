@@ -278,55 +278,91 @@ final class AnniversaryService: AnniversaryServiceProtocol {
     private func writeWidgetSyncData(anniversary: Anniversary, calc: AnniversaryCalculation, milestones: [AnniversaryMilestone]) {
         let bubbleText = UserDefaults.standard.string(forKey: "YumikoToys_ProactiveBubbleText")
         let name = DependencyContainer.shared.componentLayoutService.currentLayouts.first(where: { $0.type == .daysDisplay })?.customTitle ?? anniversary.displayPetName
+
+        let timeParts = WidgetSyncData.deriveTimeParts(from: calc.totalDays)
+        let themeHex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
+
         let syncData = WidgetSyncData(
             petName: name,
             avatar: anniversary.displayAvatar,
             startDate: anniversary.startDate,
             totalDays: calc.totalDays,
-            milestones: milestones.map { WidgetMilestone(icon: $0.icon, label: $0.label, date: $0.formattedDate, countDisplay: $0.countDisplay) },
+            milestones: milestones.map {
+                WidgetMilestone(
+                    id: $0.id,
+                    icon: $0.icon,
+                    label: $0.label,
+                    date: $0.formattedDate,
+                    countDisplay: $0.countDisplay
+                )
+            },
             proactiveBubbleText: bubbleText,
             appVersion: AppConfig.version,
-            displayStyle: DependencyContainer.shared.settingsService.settings.widgetDisplayStyle.rawValue
+            displayStyle: DependencyContainer.shared.settingsService.settings.widgetDisplayStyle.rawValue,
+            totalHours: timeParts.totalHours,
+            hoursPart: timeParts.hoursPart,
+            minutesPart: timeParts.minutesPart,
+            secondsPart: timeParts.secondsPart,
+            themePrimaryHex: themeHex
         )
-        
+
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         guard let data = try? encoder.encode(syncData) else { return }
-        
-        // Write to multiple locations for self-signed compatibility
+
+        let groupID = "group.com.Lite.YumikoToys"
+        var anySuccess = false
+
+        // ── 机制 1：UserDefaults(suiteName:)（最可靠，自签名环境下依然可用） ──
+        // 这是当前自签名环境下 Widget 能读到数据的首选机制。
+        if let sharedDefaults = UserDefaults(suiteName: groupID) {
+            sharedDefaults.set(data, forKey: "widget_payload")
+            sharedDefaults.synchronize()
+            anySuccess = true
+            LoggerService.shared.debug("Widget data written to UserDefaults suite: \(groupID)")
+        } else {
+            LoggerService.shared.warning("UserDefaults(suiteName:) returned nil for \(groupID) — entitlement may be missing or signature invalid")
+        }
+
+        // ── 机制 2：App Group / App Support / Home 目录文件（额外冗余） ──
         let fileManager = FileManager.default
         var writePaths: [URL] = []
-        
-        // 1. Application Support (primary path)
+
+        if let sharedContainer = fileManager.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
+            writePaths.append(sharedContainer.appendingPathComponent("widget.json"))
+        } else {
+            LoggerService.shared.warning("App Group container unavailable for \(groupID) — signature/entitlements issue")
+        }
+
         if let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
             let folderURL = appSupportURL.appendingPathComponent("com.Lite.YumikoToys")
             writePaths.append(folderURL.appendingPathComponent("widget.json"))
         }
-        
-        // 2. App Groups shared container (if available)
-        if let sharedContainer = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.com.Lite.YumikoToys") {
-            writePaths.append(sharedContainer.appendingPathComponent("widget.json"))
-        }
-        
-        // 3. Home directory Application Support (fallback for self-signed)
-        let homeAppSupport = fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/com.Lite.YumikoToys")
+
+        let homeAppSupport = fileManager.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/com.Lite.YumikoToys")
         writePaths.append(homeAppSupport.appendingPathComponent("widget.json"))
-        
-        // 4. Widget sandbox container (direct write from non-sandboxed main app to sandboxed widget container)
-        let widgetContainer = fileManager.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Containers/com.Lite.YumikoToys.YumikoWidget/Data/Library/Application Support/com.Lite.YumikoToys")
-        writePaths.append(widgetContainer.appendingPathComponent("widget.json"))
-        
+
         for fileURL in writePaths {
             let folderURL = fileURL.deletingLastPathComponent()
             do {
                 if !fileManager.fileExists(atPath: folderURL.path) {
-                    try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
+                    try fileManager.createDirectory(at: folderURL,
+                                                    withIntermediateDirectories: true,
+                                                    attributes: nil)
                 }
-                try data.write(to: fileURL)
+                try data.write(to: fileURL, options: .atomic)
+                if !anySuccess {
+                    anySuccess = true
+                    LoggerService.shared.debug("Widget data written to: \(fileURL.path)")
+                }
             } catch {
-                // Continue to next path
+                LoggerService.shared.debug("Widget data write failed for \(fileURL.path): \(error.localizedDescription)")
             }
+        }
+
+        if !anySuccess {
+            LoggerService.shared.warning("Unable to write widget data to any of the candidate paths")
         }
     }
     
@@ -383,22 +419,4 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         saveAnniversariesSync()
         LoggerService.shared.info("Created default anniversary")
     }
-}
-
-struct WidgetSyncData: Codable {
-    let petName: String
-    let avatar: String
-    let startDate: Date
-    let totalDays: Double
-    let milestones: [WidgetMilestone]
-    let proactiveBubbleText: String?
-    let appVersion: String
-    let displayStyle: String?
-}
-
-struct WidgetMilestone: Codable {
-    let icon: String
-    let label: String
-    let date: String
-    let countDisplay: String
 }

@@ -4,6 +4,10 @@
 <dict>
 	<key>com.apple.security.usernotifications</key>
 	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.Lite.YumikoToys</string>
+	</array>
 	<key>keychain-access-groups</key>
 	<array/>
 </dict>

@@ -935,46 +935,61 @@ struct SettingsView: View {
 
     private var widgetStyleSection: some View {
         SettingsSection(title: "Widget 样式", icon: "widget.small", iconColor: "007AFF") {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("选择通知中心小组件的显示样式")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
 
-                ForEach(WidgetDisplayStyle.allCases) { style in
-                    Button(action: { viewModel.selectWidgetDisplayStyle(style) }) {
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 2) {
+                // 三列卡片并排预览
+                HStack(alignment: .top, spacing: 10) {
+                    ForEach(WidgetDisplayStyle.allCases) { style in
+                        Button(action: { viewModel.selectWidgetDisplayStyle(style) }) {
+                            VStack(alignment: .center, spacing: 6) {
+                                WidgetMediumPreviewCard(style: style,
+                                                        themeHex: viewModel.customThemeColorHex)
+                                    .frame(maxWidth: .infinity)
                                 Text(style.displayName)
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(.system(size: 11, weight: .medium))
                                     .foregroundStyle(.primary)
                                 Text(style.description)
-                                    .font(.system(size: 11))
+                                    .font(.system(size: 9))
                                     .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .lineLimit(2)
+                                    .frame(height: 22)
+                                if viewModel.widgetDisplayStyle == style {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundStyle(Color(hex: "007AFF"))
+                                } else {
+                                    Image(systemName: "circle")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundStyle(Color.secondary.opacity(0.4))
+                                }
                             }
-                            Spacer()
-                            if viewModel.widgetDisplayStyle == style {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundStyle(Color(hex: "007AFF"))
-                            }
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(viewModel.widgetDisplayStyle == style
+                                          ? Color(hex: "007AFF").opacity(0.08)
+                                          : Color.primary.opacity(0.04))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(viewModel.widgetDisplayStyle == style
+                                            ? Color(hex: "007AFF").opacity(0.55)
+                                            : Color.primary.opacity(0.1),
+                                            lineWidth: 1)
+                            )
                         }
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 5)
-                        .contentShape(Rectangle())
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(viewModel.widgetDisplayStyle == style
-                                      ? Color(hex: "007AFF").opacity(0.08)
-                                      : Color.clear)
-                        )
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
 
                 Text("修改后请等待几秒或重新打开通知中心查看效果")
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
-                    .padding(.top, 4)
+                    .padding(.top, 2)
             }
         }
     }
@@ -3442,6 +3457,204 @@ private struct SettingsInfoRow: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
+    }
+}
+
+// MARK: - Widget 预览卡片（模拟 Medium widget）
+
+/// 按 WidgetDisplayStyle 的语义渲染一个小型预览卡片，使用当前主题色
+struct WidgetMediumPreviewCard: View {
+    let style: WidgetDisplayStyle
+    let themeHex: String
+
+    private var themeColor: Color { Color(hex: themeHex) }
+
+    // 生成用于预览的静态数据
+    private struct PreviewInfo {
+        let petName: String
+        let avatar: String
+        let totalDays: Double
+        let hours: Int
+        let minutes: Int
+        let seconds: Int
+        let milestones: [(icon: String, label: String, date: String, count: String)]
+    }
+
+    private var info: PreviewInfo {
+        PreviewInfo(
+            petName: "兔可可",
+            avatar: "🐰",
+            totalDays: 827.085,
+            hours: 19850,
+            minutes: 2,
+            seconds: 29,
+            milestones: [
+                (icon: "🌱", label: "下一个100天", date: "2026-08-29", count: "(第9个)"),
+                (icon: "🌿", label: "下一个180天", date: "2026-08-29", count: "(第5个)"),
+                (icon: "☘️", label: "下一个300天", date: "2026-08-29", count: "(第3个)"),
+                (icon: "🎉", label: "下一周年",   date: "2027-03-12", count: "(第3周年)")
+            ]
+        )
+    }
+
+    var body: some View {
+        switch style {
+        case .classic: classicCard
+        case .compact: compactCard
+        case .detailed: detailedCard
+        }
+    }
+
+    // MARK: - Classic: 信息均衡的两列布局
+    private var classicCard: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(
+                    LinearGradient(colors: [themeColor.opacity(0.85),
+                                             themeColor.opacity(0.45)],
+                                   startPoint: .topLeading,
+                                   endPoint: .bottomTrailing)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+
+            HStack(alignment: .top, spacing: 6) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 2) {
+                        Text(info.avatar).font(.system(size: 8))
+                        Text(info.petName)
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    HStack(alignment: .firstTextBaseline, spacing: 1) {
+                        Text(String(format: "%.1f", info.totalDays))
+                            .font(.system(size: 16, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white)
+                        Text("天")
+                            .font(.system(size: 6, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.85))
+                    }
+                    Text(String(format: "%dh %dm %ds", info.hours, info.minutes, info.seconds))
+                        .font(.system(size: 5, weight: .medium))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(info.milestones.prefix(2), id: \.label) { m in
+                        HStack(spacing: 2) {
+                            Text(m.icon).font(.system(size: 5))
+                            Text(m.label).font(.system(size: 5, weight: .medium))
+                                .foregroundColor(.white.opacity(0.9))
+                            Spacer(minLength: 2)
+                            Text(m.date).font(.system(size: 4, design: .monospaced))
+                                .foregroundColor(.white.opacity(0.85))
+                        }
+                        .padding(.horizontal, 3)
+                        .padding(.vertical, 1.5)
+                        .background(Color.black.opacity(0.25))
+                        .cornerRadius(3)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(8)
+        }
+        .frame(height: 72)
+    }
+
+    // MARK: - Compact: 极简，突出天数
+    private var compactCard: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(
+                    LinearGradient(colors: [themeColor.opacity(0.95),
+                                             themeColor.opacity(0.6)],
+                                   startPoint: .top,
+                                   endPoint: .bottom)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                )
+
+            VStack(alignment: .center, spacing: 2) {
+                Text(info.avatar).font(.system(size: 12))
+                HStack(alignment: .firstTextBaseline, spacing: 1) {
+                    Text(String(format: "%.0f", info.totalDays))
+                        .font(.system(size: 20, weight: .heavy, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+                    Text("天")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                Text(info.petName)
+                    .font(.system(size: 6, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+        }
+        .frame(height: 72)
+    }
+
+    // MARK: - Detailed: 多里程碑信息丰富
+    private var detailedCard: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(
+                    LinearGradient(colors: [themeColor.opacity(0.9),
+                                             themeColor.opacity(0.4)],
+                                   startPoint: .topLeading,
+                                   endPoint: .bottomTrailing)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 3) {
+                    Text(info.avatar).font(.system(size: 7))
+                    Text(info.petName)
+                        .font(.system(size: 6, weight: .bold))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Text(String(format: "%dh %dm %ds", info.hours, info.minutes, info.seconds))
+                        .font(.system(size: 4.5, weight: .medium))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                HStack(alignment: .firstTextBaseline, spacing: 1) {
+                    Text(String(format: "%.2f", info.totalDays))
+                        .font(.system(size: 14, weight: .heavy, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("天")
+                        .font(.system(size: 6, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(info.milestones, id: \.label) { m in
+                        HStack(spacing: 2) {
+                            Text(m.icon).font(.system(size: 4.5))
+                            Text(m.label).font(.system(size: 4.5, weight: .medium))
+                                .foregroundColor(.white.opacity(0.9))
+                            Spacer(minLength: 2)
+                            Text(m.date).font(.system(size: 4, design: .monospaced))
+                                .foregroundColor(.white.opacity(0.85))
+                            Text(m.count).font(.system(size: 4, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.85))
+                        }
+                        .padding(.horizontal, 3)
+                        .padding(.vertical, 1)
+                        .background(Color.black.opacity(0.22))
+                        .cornerRadius(2)
+                    }
+                }
+            }
+            .padding(6)
+        }
+        .frame(height: 120)
     }
 }
 
