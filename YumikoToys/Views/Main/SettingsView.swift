@@ -122,6 +122,7 @@ struct SettingsView: View {
                         fontSection
                         statusBarThemeColorSection
                         mainWindowThemeColorSection
+                        widgetStyleSection
                     case .godMode:
                         godModeSection
                         layoutSection
@@ -932,6 +933,52 @@ struct SettingsView: View {
         }
     }
 
+    private var widgetStyleSection: some View {
+        SettingsSection(title: "Widget 样式", icon: "widget.small", iconColor: "007AFF") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("选择通知中心小组件的显示样式")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+
+                ForEach(WidgetDisplayStyle.allCases) { style in
+                    Button(action: { viewModel.selectWidgetDisplayStyle(style) }) {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(style.displayName)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.primary)
+                                Text(style.description)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if viewModel.widgetDisplayStyle == style {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(Color(hex: "007AFF"))
+                            }
+                        }
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 5)
+                        .contentShape(Rectangle())
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(viewModel.widgetDisplayStyle == style
+                                      ? Color(hex: "007AFF").opacity(0.08)
+                                      : Color.clear)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Text("修改后请等待几秒或重新打开通知中心查看效果")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                    .padding(.top, 4)
+            }
+        }
+    }
+
     private func stepTitle(for step: Int) -> String {
         switch step {
         case 1: return "基础信息"
@@ -1685,7 +1732,137 @@ struct SettingsView: View {
             }
             
             if viewModel.enableProactiveAssistant {
-                // 主动助理运行日志卡片
+                // 当前运行状态面板
+                SettingsSection(title: "运行状态面板", icon: "gauge.with.dots.needle.67percent", iconColor: "00BCD4") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        // 运行状态指示器
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(viewModel.proactiveIsRunning ? Color.green : Color.gray)
+                                .frame(width: 8, height: 8)
+                            Text(viewModel.proactiveIsRunning ? "监测运行中" : "已暂停")
+                                .font(.system(size: 12, weight: .semibold))
+                            Spacer()
+                            if viewModel.proactiveIsRunning {
+                                Text("心跳间隔: \(Int(viewModel.proactiveHeartbeatInterval))分钟")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        
+                        Divider().background(Color.primary.opacity(0.08))
+                        
+                        // 当前模型信息
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("当前调用模型")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.secondary)
+                            
+                            if let modelInfo = viewModel.proactiveCurrentModel {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "cpu")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(.purple)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(modelInfo.modelName)
+                                            .font(.system(size: 11, weight: .medium))
+                                        Text("\(modelInfo.provider) · \(modelInfo.status)")
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Text(viewModel.formatProactiveDuration(modelInfo.startedAt))
+                                        .font(.system(size: 9, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(8)
+                                .background(RoundedRectangle(cornerRadius: 6).fill(Color.purple.opacity(0.08)))
+                            } else {
+                                HStack {
+                                    Image(systemName: "moon.zzz")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(.secondary)
+                                    Text("空闲中，等待下一次心跳触发")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(8)
+                                .background(RoundedRectangle(cornerRadius: 6).fill(Color.black.opacity(0.06)))
+                            }
+                        }
+                        
+                        Divider().background(Color.primary.opacity(0.08))
+                        
+                        // 系统资源快照
+                        if let snapshot = viewModel.proactiveSystemSnapshot {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("系统资源快照")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(.secondary)
+                                
+                                let memMB = snapshot.memoryUsed / (1024 * 1024)
+                                let totalMB = snapshot.memoryTotal / (1024 * 1024)
+                                let availMB = snapshot.memoryAvailable / (1024 * 1024)
+                                let compressedMB = snapshot.memoryCompressed / (1024 * 1024)
+                                
+                                VStack(spacing: 4) {
+                                    ProactiveInfoRow(label: "已用内存", value: "\(memMB) MB / \(totalMB) MB", icon: "memorychip")
+                                    ProactiveInfoRow(label: "可用内存", value: "\(availMB) MB", icon: "checkmark.circle")
+                                    ProactiveInfoRow(label: "压缩内存", value: "\(compressedMB) MB", icon: "archivebox")
+                                    ProactiveInfoRow(label: "桌面文件", value: "\(snapshot.desktopFilesCount) 个", icon: "folder")
+                                    ProactiveInfoRow(label: "情绪状态", value: snapshot.dominantEmotion, icon: "heart")
+                                    ProactiveInfoRow(label: "压力指数", value: String(format: "%.2f", snapshot.stressLevel), icon: "brain.head.profile")
+                                }
+                            }
+                        }
+                        
+                        Divider().background(Color.primary.opacity(0.08))
+                        
+                        // 最近 API 调用记录
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("最近 API 调用")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.secondary)
+                            
+                            if viewModel.proactiveRecentCalls.isEmpty {
+                                Text("暂无调用记录")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.tertiary)
+                                    .padding(8)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 6) {
+                                        ForEach(viewModel.proactiveRecentCalls.prefix(5)) { call in
+                                            VStack(alignment: .leading, spacing: 3) {
+                                                HStack(spacing: 4) {
+                                                    Circle()
+                                                        .fill(call.success ? Color.green : Color.red)
+                                                        .frame(width: 5, height: 5)
+                                                    Text(call.model)
+                                                        .font(.system(size: 9, weight: .medium))
+                                                        .lineLimit(1)
+                                                }
+                                                Text(call.provider)
+                                                    .font(.system(size: 8))
+                                                    .foregroundStyle(.secondary)
+                                                if let duration = call.duration {
+                                                    Text(String(format: "%.1fs", duration))
+                                                        .font(.system(size: 8, design: .monospaced))
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                            }
+                                            .padding(6)
+                                            .frame(minWidth: 80)
+                                            .background(RoundedRectangle(cornerRadius: 4).fill(Color.black.opacity(0.06)))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+    // 主动助理运行日志卡片
                 SettingsSection(title: "助理心跳活动日志", icon: "doc.text.fill", iconColor: "607D8B") {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
@@ -2919,9 +3096,14 @@ private struct SettingsSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             // 分组标题
             HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color(hex: iconColor))
+                if icon.unicodeScalars.first?.value ?? 0 > 0x2000 {
+                    Text(icon)
+                        .font(.system(size: 13))
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color(hex: iconColor))
+                }
 
                 Text(title)
                     .font(.system(size: 13, weight: .semibold))
@@ -3010,6 +3192,30 @@ private struct SettingsToggleRow: View {
                 .fill(isHovered ? Color.primary.opacity(0.04) : Color.clear)
         )
         .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - 主动助理信息行
+
+private struct ProactiveInfoRow: View {
+    let label: String
+    let value: String
+    let icon: String
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 9))
+                .foregroundStyle(.secondary)
+                .frame(width: 14)
+            Text(label)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(.primary)
+        }
     }
 }
 
@@ -3268,6 +3474,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var activeSpecialEffect: SpecialEffectType = .emoji
     @Published var screenshotHotkeyPreset: ScreenshotHotkeyPreset = .none
     @Published var activeClickEffect: ClickEffectType = .sparkle
+    @Published var widgetDisplayStyle: WidgetDisplayStyle = .classic
 
     // 👈【核心新增】：上帝模式 (God Mode) 配色及圆角发布参数
     @Published var godModeEnabled = false
@@ -3342,6 +3549,12 @@ final class SettingsViewModel: ObservableObject {
     @Published var proactiveHeartbeatInterval: Double = 15.0
     @Published var proactiveAutoExecuteTasks = false
     @Published var proactiveEnabledTriggers: [String] = ["health", "performance", "emotion", "workspace"]
+    
+    // 主动助理运行状态
+    @Published var proactiveIsRunning = false
+    @Published var proactiveCurrentModel: ProactiveAgentService.ModelCallInfo?
+    @Published var proactiveRecentCalls: [ProactiveAgentService.APICallRecord] = []
+    @Published var proactiveSystemSnapshot: ProactiveAgentService.SystemSnapshot?
     @Published var proactiveLogs: [String] = []
 
     // 技能编辑器状态属性
@@ -3467,6 +3680,24 @@ final class SettingsViewModel: ObservableObject {
         proactiveEnabledTriggers = settings.proactiveEnabledTriggers
         if let proactiveAgent = container.proactiveAgentService {
             proactiveLogs = proactiveAgent.activityLogs
+            proactiveIsRunning = proactiveAgent.isHeartbeatRunning
+            proactiveCurrentModel = proactiveAgent.currentModelInfo
+            proactiveRecentCalls = proactiveAgent.recentAPICalls
+            proactiveSystemSnapshot = proactiveAgent.lastSystemSnapshot
+            
+            // 订阅主动助理状态更新
+            proactiveAgent.$isHeartbeatRunning
+                .receive(on: DispatchQueue.main)
+                .assign(to: &$proactiveIsRunning)
+            proactiveAgent.$currentModelInfo
+                .receive(on: DispatchQueue.main)
+                .assign(to: &$proactiveCurrentModel)
+            proactiveAgent.$recentAPICalls
+                .receive(on: DispatchQueue.main)
+                .assign(to: &$proactiveRecentCalls)
+            proactiveAgent.$lastSystemSnapshot
+                .receive(on: DispatchQueue.main)
+                .assign(to: &$proactiveSystemSnapshot)
         }
 
         // 初始化技能列表
@@ -3658,12 +3889,27 @@ final class SettingsViewModel: ObservableObject {
     func refreshProactiveLogs() {
         if let proactiveAgent = container.proactiveAgentService {
             proactiveLogs = proactiveAgent.activityLogs
+            proactiveIsRunning = proactiveAgent.isHeartbeatRunning
+            proactiveCurrentModel = proactiveAgent.currentModelInfo
+            proactiveRecentCalls = proactiveAgent.recentAPICalls
+            proactiveSystemSnapshot = proactiveAgent.lastSystemSnapshot
         }
     }
     
     func clearProactiveLogs() {
         container.proactiveAgentService?.clearLogs()
         proactiveLogs = []
+    }
+    
+    func formatProactiveDuration(_ startDate: Date) -> String {
+        let elapsed = Date().timeIntervalSince(startDate)
+        if elapsed < 1 {
+            return "<1s"
+        } else if elapsed < 60 {
+            return String(format: "%.0fs", elapsed)
+        } else {
+            return String(format: "%.0fm%.0fs", elapsed / 60, elapsed.truncatingRemainder(dividingBy: 60))
+        }
     }
     
     func toggleEnablePoke() {
@@ -3763,6 +4009,14 @@ final class SettingsViewModel: ObservableObject {
         LoggerService.shared.info("Screenshot hotkey preset changed to: \(preset.displayName)")
     }
 
+    func selectWidgetDisplayStyle(_ style: WidgetDisplayStyle) {
+        widgetDisplayStyle = style
+        var settings = container.settingsService.settings
+        settings.widgetDisplayStyle = style
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("Widget display style changed to: \(style.displayName)")
+    }
+
     /// 重新加载设置（在视图出现时调用，确保获取已持久化的设置）
     func reloadSettings() {
         let settings = container.settingsService.settings
@@ -3814,6 +4068,7 @@ final class SettingsViewModel: ObservableObject {
         activeSpecialEffect = settings.activeSpecialEffect
         screenshotHotkeyPreset = settings.screenshotHotkeyPreset
         activeClickEffect = settings.activeClickEffect
+        widgetDisplayStyle = settings.widgetDisplayStyle
         savedColorSchemes = settings.savedColorSchemes
         activeColorSchemeName = settings.activeColorSchemeName
         

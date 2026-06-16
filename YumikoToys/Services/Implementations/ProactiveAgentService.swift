@@ -23,8 +23,60 @@ final class ProactiveAgentService: ObservableObject {
     
     @Published private(set) var activityLogs: [String] = []
     
+    /// 当前运行状态
+    @Published private(set) var isHeartbeatRunning = false
+    
+    /// 当前调用的模型信息
+    @Published private(set) var currentModelInfo: ModelCallInfo?
+    
+    /// 最近的 API 调用记录
+    @Published private(set) var recentAPICalls: [APICallRecord] = []
+    
+    /// 系统资源快照
+    @Published private(set) var lastSystemSnapshot: SystemSnapshot?
+    
     private var heartbeatTimer: Timer?
     private var isRunning = false
+    
+    // MARK: - Model Call Info
+    
+    struct ModelCallInfo: Identifiable {
+        let id = UUID()
+        let provider: String
+        let modelName: String
+        let startedAt: Date
+        var status: CallStatus
+        
+        enum CallStatus: String {
+            case connecting = "连接中"
+            case streaming = "流式输出中"
+            case completed = "已完成"
+            case failed = "失败"
+        }
+    }
+    
+    struct APICallRecord: Identifiable {
+        let id = UUID()
+        let provider: String
+        let model: String
+        let trigger: String
+        let startedAt: Date
+        var duration: TimeInterval?
+        var success: Bool
+        var tokenCount: Int?
+    }
+    
+    struct SystemSnapshot {
+        let timestamp: Date
+        let cpuUsage: Double
+        let memoryTotal: UInt64
+        let memoryUsed: UInt64
+        let memoryAvailable: UInt64
+        let memoryCompressed: UInt64
+        let desktopFilesCount: Int
+        let dominantEmotion: String
+        let stressLevel: Double
+    }
     
     // MARK: - Initializer
     
@@ -78,6 +130,7 @@ final class ProactiveAgentService: ObservableObject {
     func startService() {
         guard !isRunning else { return }
         isRunning = true
+        isHeartbeatRunning = true
         restartTimer()
         log("智能助理后台监测服务已开启")
         
@@ -90,8 +143,10 @@ final class ProactiveAgentService: ObservableObject {
     func stopService() {
         guard isRunning else { return }
         isRunning = false
+        isHeartbeatRunning = false
         heartbeatTimer?.invalidate()
         heartbeatTimer = nil
+        currentModelInfo = nil
         log("智能助理后台监测服务已暂停")
         
         // 同时同步禁用设置，保证UI一致
@@ -138,6 +193,9 @@ final class ProactiveAgentService: ObservableObject {
         // 2. 收集系统 CPU 与内存负载
         let cpuMemoryStats = await SkillService.shared.runShell("top -l 1 | head -n 10")
         
+        // 2.1 获取详细系统内存统计
+        let memStats = ModelMemoryManager.getSystemMemoryStats()
+        
         // 3. 统计桌面文件堆积数
         let desktopPath = (NSSearchPathForDirectoriesInDomains(.desktopDirectory, .userDomainMask, true).first ?? "~/Desktop")
         let fileManager = FileManager.default
@@ -146,9 +204,26 @@ final class ProactiveAgentService: ObservableObject {
         
         // 4. 获取情绪画像数据
         var psychoContext = "暂无情感画像数据"
+        var dominantEmotion = "未知"
+        var stressLevel: Double = 0
         if let profile = backgroundLearningService.getPsychologicalProfile() {
+            dominantEmotion = profile.dominantEmotion
+            stressLevel = profile.stressLevel
             psychoContext = "主导情绪: \(profile.dominantEmotion), 压力水平: \(String(format: "%.2f", profile.stressLevel)), 幸福感指数: \(String(format: "%.2f", profile.wellBeingScore)), 情绪波动率: \(String(format: "%.2f", profile.emotionalVolatility))"
         }
+        
+        // 4.1 保存系统快照
+        lastSystemSnapshot = SystemSnapshot(
+            timestamp: Date(),
+            cpuUsage: 0,
+            memoryTotal: memStats.total,
+            memoryUsed: memStats.used,
+            memoryAvailable: memStats.available,
+            memoryCompressed: memStats.compressed,
+            desktopFilesCount: desktopFilesCount,
+            dominantEmotion: dominantEmotion,
+            stressLevel: stressLevel
+        )
         
         // 5. 纪念日数据
         var upcomingAnniversaryContext = "当前没有即将到来的纪念日或日程。"
@@ -236,8 +311,25 @@ final class ProactiveAgentService: ObservableObject {
         
         let messages = [ChatMessage(role: "user", content: userContext)]
         
+        // 记录模型调用开始
+        let callInfo = ModelCallInfo(
+            provider: activeProvider.displayName,
+            modelName: model,
+            startedAt: Date(),
+            status: .connecting
+        )
+        currentModelInfo = callInfo
+        
         var responseText = ""
+        let callStartTime = Date()
         do {
+            currentModelInfo = ModelCallInfo(
+                provider: activeProvider.displayName,
+                modelName: model,
+                startedAt: callStartTime,
+                status: .streaming
+            )
+            
             let stream = provider.streamChat(
                 messages: messages,
                 systemPrompt: systemPrompt,
@@ -246,7 +338,51 @@ final class ProactiveAgentService: ObservableObject {
             for try await chunk in stream {
                 responseText += chunk
             }
+            
+            // 记录成功的 API 调用
+            let record = APICallRecord(
+                provider: activeProvider.displayName,
+                model: model,
+                trigger: triggers.joined(separator: ","),
+                startedAt: callStartTime,
+                duration: Date().timeIntervalSince(callStartTime),
+                success: true,
+                tokenCount: responseText.count / 4
+            )
+            recentAPICalls.insert(record, at: 0)
+            if recentAPICalls.count > 20 {
+                recentAPICalls.removeLast()
+            }
+            
+            currentModelInfo = ModelCallInfo(
+                provider: activeProvider.displayName,
+                modelName: model,
+                startedAt: callStartTime,
+                status: .completed
+            )
         } catch {
+            // 记录失败的 API 调用
+            let record = APICallRecord(
+                provider: activeProvider.displayName,
+                model: model,
+                trigger: triggers.joined(separator: ","),
+                startedAt: callStartTime,
+                duration: Date().timeIntervalSince(callStartTime),
+                success: false,
+                tokenCount: nil
+            )
+            recentAPICalls.insert(record, at: 0)
+            if recentAPICalls.count > 20 {
+                recentAPICalls.removeLast()
+            }
+            
+            currentModelInfo = ModelCallInfo(
+                provider: activeProvider.displayName,
+                modelName: model,
+                startedAt: callStartTime,
+                status: .failed
+            )
+            
             log("🔍 心跳周期监测异常：模型查询失败。")
             LoggerService.shared.error("ProactiveAgentService: Stream chat failed: \(error)")
             return

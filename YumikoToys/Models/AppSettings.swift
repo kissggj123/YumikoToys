@@ -463,6 +463,30 @@ enum QuickLaunchIconSize: String, Codable, CaseIterable, Identifiable, Sendable 
     }
 }
 
+enum WidgetDisplayStyle: String, Codable, CaseIterable, Identifiable, Sendable {
+    case classic = "classic"
+    case compact = "compact"
+    case detailed = "detailed"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .classic:  return "经典"
+        case .compact:  return "紧凑"
+        case .detailed: return "详细"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .classic:  return "当前设计，信息均衡"
+        case .compact:  return "极简风格，突出天数"
+        case .detailed: return "丰富信息，多里程碑"
+        }
+    }
+}
+
 enum ScreenshotOutputMode: String, Codable, CaseIterable, Identifiable, Sendable {
     case clipboardOnly = "clipboardOnly"
     case fileOnly = "fileOnly"
@@ -472,9 +496,9 @@ enum ScreenshotOutputMode: String, Codable, CaseIterable, Identifiable, Sendable
     
     var displayName: String {
         switch self {
-        case .clipboardOnly: return "仅复制到剪贴板"
-        case .fileOnly: return "仅保存到文件"
-        case .both: return "同时复制和保存"
+        case .clipboardOnly: return "剪贴板"
+        case .fileOnly: return "保存文件"
+        case .both: return "两者都要"
         }
     }
     
@@ -603,6 +627,9 @@ struct AppSettings: Codable, Sendable {
     // MARK: - 截图输出模式
     var screenshotOutputMode: ScreenshotOutputMode
     
+    // MARK: - Widget 显示样式
+    var widgetDisplayStyle: WidgetDisplayStyle
+    
     // MARK: - 允许多开
     var allowMultipleInstances: Bool
     
@@ -673,6 +700,7 @@ struct AppSettings: Codable, Sendable {
         quickLaunchDisplayMode: QuickLaunchDisplayMode = .iconAndName,
         quickLaunchIconSize: QuickLaunchIconSize = .small,
         screenshotOutputMode: ScreenshotOutputMode = .fileOnly,
+        widgetDisplayStyle: WidgetDisplayStyle = .classic,
         allowMultipleInstances: Bool = false,
         enableProactiveAssistant: Bool = false,
         proactiveHeartbeatInterval: Double = 15.0,
@@ -739,6 +767,7 @@ struct AppSettings: Codable, Sendable {
         self.quickLaunchDisplayMode = quickLaunchDisplayMode
         self.quickLaunchIconSize = quickLaunchIconSize
         self.screenshotOutputMode = screenshotOutputMode
+        self.widgetDisplayStyle = widgetDisplayStyle
         self.allowMultipleInstances = allowMultipleInstances
         self.enableProactiveAssistant = enableProactiveAssistant
         self.proactiveHeartbeatInterval = proactiveHeartbeatInterval
@@ -821,6 +850,7 @@ struct AppSettings: Codable, Sendable {
         quickLaunchDisplayMode = container.decodeIsolated(QuickLaunchDisplayMode.self, forKey: .quickLaunchDisplayMode, fallback: .iconAndName)
         quickLaunchIconSize = container.decodeIsolated(QuickLaunchIconSize.self, forKey: .quickLaunchIconSize, fallback: .small)
         screenshotOutputMode = container.decodeIsolated(ScreenshotOutputMode.self, forKey: .screenshotOutputMode, fallback: .fileOnly)
+        widgetDisplayStyle = container.decodeIsolated(WidgetDisplayStyle.self, forKey: .widgetDisplayStyle, fallback: .classic)
         allowMultipleInstances = try container.decodeIfPresent(Bool.self, forKey: .allowMultipleInstances) ?? false
         
         enableProactiveAssistant = try container.decodeIfPresent(Bool.self, forKey: .enableProactiveAssistant) ?? false

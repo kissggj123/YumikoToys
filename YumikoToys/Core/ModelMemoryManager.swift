@@ -7,6 +7,7 @@
 
 import Foundation
 import MLX
+import MachO
 
 // MARK: - Notification
 
@@ -319,7 +320,7 @@ final class ModelMemoryManager: ObservableObject {
         }
     }
 
-    /// 获取进程的 physicalFootprint
+    /// 获取进程的物理内存使用量（使用 task_info）
     private func getPhysicalFootprint() -> UInt64 {
         var info = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
@@ -333,9 +334,54 @@ final class ModelMemoryManager: ObservableObject {
             return info.resident_size
         }
 
-        // 回退：使用 physicalMemory 的估算值
         LoggerService.shared.warning("[ModelMemoryManager] 无法获取 physicalFootprint，使用估算值")
         return ProcessInfo.processInfo.physicalMemory / 4
+    }
+
+    /// 获取系统级可用内存（使用 host_statistics64，更准确）
+    static func getSystemAvailableMemory() -> UInt64 {
+        var hostPort = mach_host_self()
+        var hostSize = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size)
+        var vmStats = vm_statistics64()
+
+        let result = withUnsafeMutablePointer(to: &vmStats) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(hostSize)) {
+                host_statistics64(hostPort, HOST_VM_INFO64, $0, &hostSize)
+            }
+        }
+
+        guard result == KERN_SUCCESS else {
+            return ProcessInfo.processInfo.physicalMemory / 4
+        }
+
+        let pageSize = UInt64(vm_page_size)
+        let freePages = UInt64(vmStats.free_count)
+        let inactivePages = UInt64(vmStats.inactive_count)
+        let speculativePages = UInt64(vmStats.speculative_count)
+        let purgeablePages = UInt64(vmStats.purgeable_count)
+
+        return (freePages + inactivePages + speculativePages + purgeablePages) * pageSize
+    }
+
+    /// 获取系统级内存统计信息
+    static func getSystemMemoryStats() -> (total: UInt64, available: UInt64, used: UInt64, compressed: UInt64) {
+        let total = ProcessInfo.processInfo.physicalMemory
+        let available = getSystemAvailableMemory()
+        let used = total > available ? total - available : 0
+
+        var hostPort = mach_host_self()
+        var hostSize = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size)
+        var vmStats = vm_statistics64()
+
+        let result = withUnsafeMutablePointer(to: &vmStats) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(hostSize)) {
+                host_statistics64(hostPort, HOST_VM_INFO64, $0, &hostSize)
+            }
+        }
+
+        let compressed = result == KERN_SUCCESS ? UInt64(vmStats.compressor_page_count) * UInt64(vm_page_size) : 0
+
+        return (total: total, available: available, used: used, compressed: compressed)
     }
 
     /// 格式化字节数为可读字符串

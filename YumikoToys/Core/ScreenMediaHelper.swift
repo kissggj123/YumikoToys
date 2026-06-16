@@ -494,6 +494,9 @@ struct ScreenshotAnnotationView: View {
     @State private var selectedPathId: UUID?
     @State private var dragOffset: CGSize = .zero
     @State private var controlPointDrag: ControlPointType?
+    @State private var lastDragLocation: CGPoint = .zero
+    @State private var numberCounter: Int = 1
+    @State private var editingTextId: UUID?
 
     private var scaleRatio: CGFloat {
         guard image.size.width > 0, canvasSize.width > 0 else { return 1 }
@@ -508,6 +511,7 @@ struct ScreenshotAnnotationView: View {
         case line        = "line"
         case arrow       = "arrow"
         case text        = "text"
+        case number      = "number"
 
         var displayName: String {
             switch self {
@@ -518,6 +522,7 @@ struct ScreenshotAnnotationView: View {
             case .line:        return "画线"
             case .arrow:       return "箭头"
             case .text:        return "文字"
+            case .number:      return "编号"
             }
         }
 
@@ -530,6 +535,7 @@ struct ScreenshotAnnotationView: View {
             case .line:        return "pencil"
             case .arrow:       return "arrow.up.forward"
             case .text:        return "textformat"
+            case .number:      return "number"
             }
         }
         
@@ -548,6 +554,7 @@ struct ScreenshotAnnotationView: View {
         var text: String?
         var offset: CGSize = .zero
         var isSelected: Bool = false
+        var numberIndex: Int = 0
     }
     
     enum ControlPointType {
@@ -626,6 +633,14 @@ struct ScreenshotAnnotationView: View {
                 Button("复制") { copyToClipboard() }
                     .font(.system(size: 10))
                     .buttonStyle(.bordered)
+
+                Button(action: pinToScreen) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "pin.fill").font(.system(size: 9))
+                        Text("置顶").font(.system(size: 10))
+                    }
+                }
+                .buttonStyle(.bordered)
             }
             .padding(8)
             .background(Color(nsColor: .windowBackgroundColor))
@@ -659,7 +674,7 @@ struct ScreenshotAnnotationView: View {
                     .gesture(
                         DragGesture(minimumDistance: 1)
                             .onChanged { value in
-                                if tool == .text { return }
+                                if tool == .text || tool == .number { return }
                                 let pt = value.location
                                 if currentPath == nil {
                                     currentPath = AnnotationPath(
@@ -683,7 +698,7 @@ struct ScreenshotAnnotationView: View {
                                 }
                             }
                             .onEnded { value in
-                                if tool == .text { return }
+                                if tool == .text || tool == .number { return }
                                 if let current = currentPath {
                                     var finalPath = current
                                     if tool == .frame || tool == .circle || tool.isMosaic {
@@ -713,58 +728,85 @@ struct ScreenshotAnnotationView: View {
                                 .gesture(
                                     DragGesture(minimumDistance: 0)
                                         .onChanged { value in
-                                            guard tool == .text else { return }
+                                            guard tool == .text || tool == .number else { return }
                                             let pt = value.location
                                             if selectedPathId != nil {
                                                 if let idx = paths.firstIndex(where: { $0.id == selectedPathId }) {
-                                                    let originalPoint = paths[idx].points.first ?? .zero
-                                                    paths[idx].offset = CGSize(
-                                                        width: pt.x - originalPoint.x,
-                                                        height: pt.y - originalPoint.y
+                                                    let delta = CGSize(
+                                                        width: pt.x - lastDragLocation.x,
+                                                        height: pt.y - lastDragLocation.y
                                                     )
+                                                    paths[idx].offset.width += delta.width
+                                                    paths[idx].offset.height += delta.height
+                                                    lastDragLocation = pt
                                                 }
                                             }
                                         }
                                         .onEnded { value in
-                                            guard tool == .text else { return }
+                                            guard tool == .text || tool == .number else { return }
                                             let pt = value.location
-                                            if let idx = paths.firstIndex(where: {
-                                                $0.id == selectedPathId && $0.tool == .text
-                                            }) {
-                                                let originalPoint = paths[idx].points.first ?? .zero
-                                                paths[idx].offset = CGSize(
-                                                    width: pt.x - originalPoint.x,
-                                                    height: pt.y - originalPoint.y
-                                                )
-                                                return
+                                            if let selId = selectedPathId {
+                                                if let idx = paths.firstIndex(where: { $0.id == selId && $0.tool == .text }) {
+                                                    let path = paths[idx]
+                                                    if let textPoint = path.points.first {
+                                                        let textWidth = CGFloat(path.text?.count ?? 0) * path.width * 3 * 0.6
+                                                        let textRect = CGRect(
+                                                            x: textPoint.x + path.offset.width - 4,
+                                                            y: textPoint.y + path.offset.height - 4,
+                                                            width: textWidth + 8,
+                                                            height: max(path.width * 3, 20) + 8
+                                                        )
+                                                        if textRect.contains(pt) {
+                                                            editingTextId = path.id
+                                                            textInputContent = path.text ?? ""
+                                                            showTextInput = true
+                                                            return
+                                                        }
+                                                    }
+                                                }
+                                                selectedPathId = nil
                                             }
-                                            selectedPathId = nil
-                                            var hitText = false
-                                            for (idx, path) in paths.enumerated() where path.tool == .text {
+                                            var hitAnnotation = false
+                                            for (idx, path) in paths.enumerated() where path.tool == .text || path.tool == .number {
                                                 if let textPoint = path.points.first {
                                                     let textWidth = CGFloat(path.text?.count ?? 0) * path.width * 3 * 0.6
+                                                    let hitSize: CGFloat = path.tool == .number ? 24 : max(path.width * 3, 20)
                                                     let textRect = CGRect(
                                                         x: textPoint.x + path.offset.width - 4,
                                                         y: textPoint.y + path.offset.height - 4,
                                                         width: textWidth + 8,
-                                                        height: path.width * 3 + 8
+                                                        height: hitSize + 8
                                                     )
                                                     if textRect.contains(pt) {
                                                         selectedPathId = path.id
-                                                        hitText = true
+                                                        lastDragLocation = pt
+                                                        hitAnnotation = true
                                                         break
                                                     }
                                                 }
                                             }
-                                            if !hitText {
-                                                textInputPosition = pt
-                                                textInputContent  = ""
-                                                showTextInput     = true
+                                            if !hitAnnotation {
+                                                if tool == .number {
+                                                    paths.append(AnnotationPath(
+                                                        tool: .number,
+                                                        points: [pt],
+                                                        color: .red,
+                                                        width: strokeWidth,
+                                                        text: "\(numberCounter)",
+                                                        numberIndex: numberCounter
+                                                    ))
+                                                    numberCounter += 1
+                                                } else {
+                                                    textInputPosition = pt
+                                                    textInputContent  = ""
+                                                    editingTextId = nil
+                                                    showTextInput     = true
+                                                }
                                             }
                                         }
                                 )
                         }
-                        .opacity(tool == .text ? 1 : 0)
+                        .opacity(tool == .text || tool == .number ? 1 : 0)
                     )
                 }
                 .onChange(of: geo.size) { _, newSize in
@@ -778,7 +820,7 @@ struct ScreenshotAnnotationView: View {
         .frame(minWidth: 600, minHeight: 400)
         .sheet(isPresented: $showTextInput) {
             VStack(spacing: 16) {
-                Text("输入标注文字").font(.headline)
+                Text(editingTextId != nil ? "编辑标注文字" : "输入标注文字").font(.headline)
                 TextField("文字内容", text: $textInputContent)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 300)
@@ -786,13 +828,17 @@ struct ScreenshotAnnotationView: View {
                     Button("取消") { showTextInput = false }
                     Button("确定") {
                         if !textInputContent.isEmpty {
-                            paths.append(AnnotationPath(
-                                tool: .text,
-                                points: [textInputPosition],
-                                color: annotationColor,
-                                width: strokeWidth,
-                                text: textInputContent
-                            ))
+                            if let editId = editingTextId, let idx = paths.firstIndex(where: { $0.id == editId }) {
+                                paths[idx].text = textInputContent
+                            } else {
+                                paths.append(AnnotationPath(
+                                    tool: .text,
+                                    points: [textInputPosition],
+                                    color: annotationColor,
+                                    width: strokeWidth,
+                                    text: textInputContent
+                                ))
+                            }
                         }
                         showTextInput = false
                     }
@@ -902,6 +948,17 @@ struct ScreenshotAnnotationView: View {
             if let text = path.text, let point = path.points.first {
                 let fontSize = path.width * 3
                 let drawPoint = CGPoint(x: point.x + path.offset.width, y: point.y + path.offset.height)
+                let textWidth = CGFloat(text.count) * fontSize * 0.6
+                let bgRect = CGRect(
+                    x: drawPoint.x - 4,
+                    y: drawPoint.y - 2,
+                    width: textWidth + 8,
+                    height: fontSize + 6
+                )
+                let bgPath = Path { p in
+                    p.addRoundedRect(in: bgRect, cornerSize: CGSize(width: 4, height: 4))
+                }
+                context.fill(bgPath, with: .color(.black.opacity(0.6)))
                 let resolved = context.resolve(
                     Text(text)
                         .font(.system(size: fontSize, weight: .semibold))
@@ -909,33 +966,45 @@ struct ScreenshotAnnotationView: View {
                 )
                 context.draw(resolved, at: drawPoint, anchor: .topLeading)
                 
-                if path.isSelected {
-                    let textWidth = CGFloat(text.count) * fontSize * 0.6
-                    let selectionRect = CGRect(
-                        x: drawPoint.x - 4,
-                        y: drawPoint.y - 4,
-                        width: textWidth + 8,
-                        height: fontSize + 8
-                    )
+                if path.id == selectedPathId {
+                    let selectionRect = bgRect.insetBy(dx: -3, dy: -3)
                     context.stroke(
                         Path(selectionRect),
                         with: .color(.blue),
-                        lineWidth: 1
+                        lineWidth: 1.5
                     )
-                    
-                    let controlSize: CGFloat = 8
-                    let controlPoints = [
-                        CGPoint(x: selectionRect.minX - controlSize/2, y: selectionRect.minY - controlSize/2),
-                        CGPoint(x: selectionRect.maxX - controlSize/2, y: selectionRect.minY - controlSize/2),
-                        CGPoint(x: selectionRect.minX - controlSize/2, y: selectionRect.maxY - controlSize/2),
-                        CGPoint(x: selectionRect.maxX - controlSize/2, y: selectionRect.maxY - controlSize/2),
+                    let controlSize: CGFloat = 7
+                    let corners = [
+                        CGPoint(x: selectionRect.minX, y: selectionRect.minY),
+                        CGPoint(x: selectionRect.maxX, y: selectionRect.minY),
+                        CGPoint(x: selectionRect.minX, y: selectionRect.maxY),
+                        CGPoint(x: selectionRect.maxX, y: selectionRect.maxY),
                     ]
-                    for cp in controlPoints {
+                    for cp in corners {
                         context.fill(
-                            Path(CGRect(x: cp.x, y: cp.y, width: controlSize, height: controlSize)),
+                            Path(CGRect(x: cp.x - controlSize/2, y: cp.y - controlSize/2, width: controlSize, height: controlSize)),
                             with: .color(.blue)
                         )
                     }
+                }
+            }
+
+        case .number:
+            if let point = path.points.first {
+                let drawPoint = CGPoint(x: point.x + path.offset.width, y: point.y + path.offset.height)
+                let radius: CGFloat = 12
+                let circleRect = CGRect(x: drawPoint.x - radius, y: drawPoint.y - radius, width: radius * 2, height: radius * 2)
+                context.fill(Path(ellipseIn: circleRect), with: .color(path.color))
+                let resolved = context.resolve(
+                    Text(path.text ?? "\(path.numberIndex)")
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                )
+                context.draw(resolved, at: drawPoint, anchor: .center)
+                
+                if path.id == selectedPathId {
+                    let selRect = circleRect.insetBy(dx: -3, dy: -3)
+                    context.stroke(Path(ellipseIn: selRect), with: .color(.blue), lineWidth: 1.5)
                 }
             }
         }
@@ -964,6 +1033,37 @@ struct ScreenshotAnnotationView: View {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.writeObjects([nsImage])
+        onSave(imagePath)
+    }
+
+    private func pinToScreen() {
+        let nsImage = renderAnnotatedImage()
+        let imgWidth = nsImage.size.width
+        let imgHeight = nsImage.size.height
+        let maxSize: CGFloat = 500
+        let scale = min(maxSize / imgWidth, maxSize / imgHeight, 1.0)
+        let windowWidth = imgWidth * scale
+        let windowHeight = imgHeight * scale
+
+        let screen = NSScreen.main ?? NSScreen.screens.first!
+        let screenFrame = screen.visibleFrame
+        let window = NSWindow(
+            contentRect: NSRect(x: screenFrame.midX - windowWidth/2, y: screenFrame.midY - windowHeight/2, width: windowWidth, height: windowHeight),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        window.level = .floating
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = true
+        window.isMovableByWindowBackground = true
+        window.title = "置顶标注"
+
+        let hosting = NSHostingView(rootView: PinnedAnnotationView(image: nsImage, onClose: { window.close() }))
+        window.contentView = hosting
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
         onSave(imagePath)
     }
 
@@ -1157,8 +1257,32 @@ struct ScreenshotAnnotationView: View {
                     .font:            NSFont.systemFont(ofSize: fontSize, weight: .semibold),
                     .foregroundColor: nsColor
                 ]
+                let textSize = (text as NSString).size(withAttributes: attrs)
+                let textOrigin = NSPoint(x: ip.x + offsetX, y: ip.y + offsetY - fontSize)
+                let bgRect = NSRect(x: textOrigin.x - 3, y: textOrigin.y - 2, width: textSize.width + 6, height: fontSize + 4)
+                NSColor(white: 0, alpha: 0.6).setFill()
+                NSBezierPath(roundedRect: bgRect, xRadius: 3, yRadius: 3).fill()
                 NSAttributedString(string: text, attributes: attrs)
-                    .draw(at: NSPoint(x: ip.x + offsetX, y: ip.y + offsetY - fontSize))
+                    .draw(at: textOrigin)
+            }
+
+        case .number:
+            if let pt = path.points.first {
+                let ip = canvasToImage(pt, ratio: ratio, imageHeight: h)
+                let radius: CGFloat = 12 / ratio
+                let circleRect = NSRect(x: ip.x - radius, y: ip.y - radius, width: radius * 2, height: radius * 2)
+                nsColor.setFill()
+                NSBezierPath(ovalIn: circleRect).fill()
+                let numStr = path.text ?? "\(path.numberIndex)"
+                let numAttrs: [NSAttributedString.Key: Any] = [
+                    .font: NSFont.systemFont(ofSize: 13 / ratio, weight: .bold),
+                    .foregroundColor: NSColor.white
+                ]
+                let numSize = (numStr as NSString).size(withAttributes: numAttrs)
+                (numStr as NSString).draw(
+                    at: NSPoint(x: ip.x - numSize.width / 2, y: ip.y - numSize.height / 2),
+                    withAttributes: numAttrs
+                )
             }
         }
     }
@@ -1172,6 +1296,46 @@ extension NSImage {
         guard let destination = CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil) else { return false }
         CGImageDestinationAddImage(destination, cgImage, nil)
         return CGImageDestinationFinalize(destination)
+    }
+}
+
+// MARK: - Pinned Annotation View
+struct PinnedAnnotationView: View {
+    let image: NSImage
+    let onClose: () -> Void
+    @State private var isHovered = false
+    @State private var opacity: Double = 1.0
+
+    var body: some View {
+        ZStack {
+            Image(nsImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .opacity(opacity)
+
+            if isHovered {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: onClose) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.5), radius: 2)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(6)
+                    }
+                    Spacer()
+                }
+            }
+        }
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) { isHovered = hovering }
+        }
+        .onTapGesture { /* consume click */ }
+        .onKeyPress(.delete) { onClose(); return .handled }
+        .onKeyPress(.escape) { onClose(); return .handled }
     }
 }
 

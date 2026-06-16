@@ -1026,11 +1026,9 @@ struct StatusBarView: View {
                                             if displayMode != .nameOnly {
                                                 if let iconName = app.iconName {
                                                     AppIconImageView(appName: app.name, iconName: iconName, size: iconSize.sizeValue, bundlePath: app.bundlePath)
-                                                        .help(app.name)
                                                 } else {
                                                     Image(systemName: "arrow.up.right.square")
                                                         .font(.system(size: iconSize.sizeValue * 0.75))
-                                                        .help(app.name)
                                                 }
                                             }
                                             if displayMode != .iconOnly {
@@ -1043,10 +1041,9 @@ struct StatusBarView: View {
                                         .padding(.vertical, iconSize == .large ? 6 : 4)
                                         .background(Capsule().fill(themeColor.buttonBackgroundColor))
                                         .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
-                                        .help(app.name)
                                     }
                                     .buttonStyle(.plain)
-                                    .help(app.name)
+                                    .modifier(TooltipModifier(text: app.name))
                                 }
                             }
                         }
@@ -1087,6 +1084,7 @@ struct StatusBarView: View {
                                             .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
                                         }
                                         .buttonStyle(.plain)
+                                        .modifier(TooltipModifier(text: plugin.description.isEmpty ? plugin.name : plugin.description))
                                     }
                                 }
                             }
@@ -1218,9 +1216,8 @@ struct StatusBarView: View {
                                 Text(mode.displayName).tag(mode)
                             }
                         }
-                        .pickerStyle(.menu)
-                        .font(.system(size: 11))
-                        .frame(width: 130)
+                        .pickerStyle(.segmented)
+                        .font(.system(size: 9))
                     }
                 }
             }
@@ -1825,8 +1822,8 @@ struct StatusBarView: View {
                                 Text(mode.displayName).tag(mode)
                             }
                         }
-                        .pickerStyle(.menu)
-                        .font(.system(size: 10))
+                        .pickerStyle(.segmented)
+                        .font(.system(size: 9))
                         
                         // 允许多开
                         Toggle(isOn: Binding(
@@ -2154,11 +2151,9 @@ struct StatusBarView: View {
                                         if displayMode != .nameOnly {
                                             if let iconName = app.iconName {
                                                 AppIconImageView(appName: app.name, iconName: iconName, size: iconSize.sizeValue, bundlePath: app.bundlePath)
-                                                    .help(app.name)
                                             } else {
                                                 Image(systemName: "arrow.up.right.square")
                                                     .font(.system(size: iconSize.sizeValue * 0.75))
-                                                    .help(app.name)
                                             }
                                         }
                                         if displayMode != .iconOnly {
@@ -2171,10 +2166,9 @@ struct StatusBarView: View {
                                     .padding(.vertical, iconSize == .large ? 6 : 4)
                                     .background(Capsule().fill(themeColor.buttonBackgroundColor))
                                     .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
-                                    .help(app.name)
                                 }
                                 .buttonStyle(.plain)
-                                .help(app.name)
+                                .modifier(TooltipModifier(text: app.name))
                             }
                         }
                     }
@@ -2215,6 +2209,7 @@ struct StatusBarView: View {
                                         .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
                                     }
                                     .buttonStyle(.plain)
+                                    .modifier(TooltipModifier(text: plugin.description.isEmpty ? plugin.name : plugin.description))
                                 }
                             }
                         }
@@ -2355,6 +2350,39 @@ struct ThemeColorButton: View {
         .scaleEffect(isHovered ? 1.1 : 1.0)
         .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isHovered)
         .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Tooltip Modifier (macOS native NSToolTip)
+
+struct TooltipModifier: ViewModifier {
+    let text: String
+    
+    func body(content: Content) -> some View {
+        content
+            .background(
+                TooltipHostingView(text: text)
+            )
+    }
+}
+
+struct TooltipHostingView: NSViewRepresentable {
+    let text: String
+    
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        viewToolTip(view)
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) {
+        viewToolTip(nsView)
+    }
+    
+    private func viewToolTip(_ view: NSView) {
+        if view.toolTip != text {
+            view.toolTip = text
+        }
     }
 }
 
