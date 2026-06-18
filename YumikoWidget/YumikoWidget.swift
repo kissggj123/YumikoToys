@@ -43,6 +43,7 @@ struct WidgetSyncData: Codable {
     let displayStyle: String
 
     // v2
+    let title: String
     let totalHours: Double
     let hoursPart: Int
     let minutesPart: Int
@@ -56,7 +57,7 @@ struct WidgetSyncData: Codable {
     enum CodingKeys: String, CodingKey {
         case petName, avatar, startDate, totalDays, milestones,
              proactiveBubbleText, appVersion, displayStyle,
-             totalHours, hoursPart, minutesPart, secondsPart,
+             title, totalHours, hoursPart, minutesPart, secondsPart,
              themePrimaryHex
     }
 
@@ -64,7 +65,7 @@ struct WidgetSyncData: Codable {
     init(petName: String, avatar: String, startDate: Date, totalDays: Double,
          milestones: [WidgetMilestone], proactiveBubbleText: String?,
          appVersion: String, displayStyle: String,
-         totalHours: Double, hoursPart: Int, minutesPart: Int, secondsPart: Int,
+         title: String, totalHours: Double, hoursPart: Int, minutesPart: Int, secondsPart: Int,
          themePrimaryHex: String) {
         self.petName = petName
         self.avatar = avatar
@@ -74,6 +75,7 @@ struct WidgetSyncData: Codable {
         self.proactiveBubbleText = proactiveBubbleText
         self.appVersion = appVersion
         self.displayStyle = displayStyle
+        self.title = title
         self.totalHours = totalHours
         self.hoursPart = hoursPart
         self.minutesPart = minutesPart
@@ -94,6 +96,7 @@ struct WidgetSyncData: Codable {
         self.displayStyle = (try container.decodeIfPresent(String.self, forKey: .displayStyle)) ?? "classic"
 
         // v2 字段，缺省则按 totalDays 推断
+        self.title = (try container.decodeIfPresent(String.self, forKey: .title)) ?? "在一起已经"
         if let hours = try container.decodeIfPresent(Double.self, forKey: .totalHours) {
             self.totalHours = hours
             self.hoursPart = try container.decodeIfPresent(Int.self, forKey: .hoursPart) ?? Int(hours)
@@ -125,23 +128,20 @@ struct Provider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
         var data = loadData() ?? defaultData()
-        // 从共享 UserDefaults 直接读取 displayStyle 覆盖值
-        // 确保样式切换即时生效，不依赖 JSON 文件的读取时序
         if let shared = UserDefaults(suiteName: "group.com.Lite.YumikoToys"),
            let styleOverride = shared.string(forKey: "widget_display_style") {
-            // 用 override 后的 data 构造新 entry
             data = WidgetSyncData(
                 petName: data.petName, avatar: data.avatar,
                 startDate: data.startDate, totalDays: data.totalDays,
                 milestones: data.milestones, proactiveBubbleText: data.proactiveBubbleText,
                 appVersion: data.appVersion, displayStyle: styleOverride,
-                totalHours: data.totalHours, hoursPart: data.hoursPart,
+                title: data.title, totalHours: data.totalHours, hoursPart: data.hoursPart,
                 minutesPart: data.minutesPart, secondsPart: data.secondsPart,
                 themePrimaryHex: data.themePrimaryHex
             )
         }
         let entries = [SimpleEntry(date: Date(), info: data)]
-        let nextRefresh = Calendar.current.date(byAdding: .hour, value: 1, to: Date())!
+        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 5, to: Date())!
         let timeline = Timeline(entries: entries, policy: .after(nextRefresh))
         completion(timeline)
     }
@@ -170,7 +170,7 @@ struct Provider: TimelineProvider {
           ],
           "proactiveBubbleText":null,
           "appVersion":"4.5.1","displayStyle":"classic",
-          "totalHours":\(totalHours),"hoursPart":\(hoursPart),
+          "title":"在一起已经","totalHours":\(totalHours),"hoursPart":\(hoursPart),
           "minutesPart":\(minutesPart),"secondsPart":\(secondsPart),
           "themePrimaryHex":"FF6B9D"
         }
@@ -183,7 +183,7 @@ struct Provider: TimelineProvider {
         }
         // 最严重的回退：手动构造 WidgetSyncData 需要 JSON 解码，所以这里再试一次空的里程碑
         // （理论上上面的硬编码 JSON 不可能失败）
-        let fallback = #"{"petName":"兔可可","avatar":"🐰","startDate":"2024-03-12T00:00:00Z","totalDays":\#(totalDays),"milestones":[],"proactiveBubbleText":null,"appVersion":"4.5.1","displayStyle":"classic","totalHours":\#(totalHours),"hoursPart":\#(hoursPart),"minutesPart":\#(minutesPart),"secondsPart":\#(secondsPart),"themePrimaryHex":"FF6B9D"}"#
+        let fallback = #"{"petName":"兔可可","avatar":"🐰","startDate":"2024-03-12T00:00:00Z","totalDays":\#(totalDays),"milestones":[],"proactiveBubbleText":null,"appVersion":"4.5.1","displayStyle":"classic","title":"在一起已经","totalHours":\#(totalHours),"hoursPart":\#(hoursPart),"minutesPart":\#(minutesPart),"secondsPart":\#(secondsPart),"themePrimaryHex":"FF6B9D"}"#
         if let data = fallback.data(using: .utf8),
            let v = try? decoder.decode(WidgetSyncData.self, from: data) {
             return v
@@ -196,7 +196,7 @@ struct Provider: TimelineProvider {
             totalDays: totalDays,
             milestones: [], proactiveBubbleText: nil,
             appVersion: "4.5.1", displayStyle: "classic",
-            totalHours: totalHours, hoursPart: hoursPart,
+            title: "在一起已经", totalHours: totalHours, hoursPart: hoursPart,
             minutesPart: minutesPart, secondsPart: secondsPart,
             themePrimaryHex: "FF6B9D"
         )
@@ -206,11 +206,10 @@ struct Provider: TimelineProvider {
         let fileManager = FileManager.default
         let groupID = "group.com.Lite.YumikoToys"
 
-        // ── 机制 1：UserDefaults(suiteName:) ─────────────────────────
-        // 在自签名 / sandbox 环境下，这是最可靠的跨进程共享通道。
-        // 主 App 写入 widget_payload，Widget 从这里读取。
+        // 机制 1：UserDefaults
         if let sharedDefaults = UserDefaults(suiteName: groupID),
-           let data = sharedDefaults.data(forKey: "widget_payload") {
+           let data = sharedDefaults.data(forKey: "widget_payload"),
+           data.count > 0 {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             if let v = try? decoder.decode(WidgetSyncData.self, from: data) {
@@ -218,8 +217,7 @@ struct Provider: TimelineProvider {
             }
         }
 
-        // ── 机制 2：App Group 容器中的 JSON 文件 ─────────────────────
-        // 需要正确的 entitlements 签名才能读到；自签名时请用 --entitlements 参数。
+        // 机制 2：App Group 容器中的 JSON 文件
         var fileCandidates: [URL] = []
         if let container = fileManager.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
             fileCandidates.append(container.appendingPathComponent("widget.json"))
@@ -240,7 +238,6 @@ struct Provider: TimelineProvider {
                 decoder.dateDecodingStrategy = .iso8601
                 return try decoder.decode(WidgetSyncData.self, from: data)
             } catch {
-                // 解析失败就继续尝试下一路径
                 continue
             }
         }
@@ -316,7 +313,7 @@ struct SmallWidgetView_Classic: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
                 Text(info.avatar).font(.system(size: 14))
-                Text(info.petName)
+                Text(info.title + " " + info.petName)
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -408,7 +405,7 @@ struct SmallWidgetView_Detailed: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 3) {
                 Text(info.avatar).font(.system(size: 10))
-                Text(info.petName)
+                Text(info.title + " " + info.petName)
                     .font(.system(size: 9, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -613,8 +610,6 @@ struct YumikoWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        // 按主 App 里用户选择的 widgetDisplayStyle 切换
-        // 合法值: "classic" / "compact" / "detailed"，其它情况回落到 classic
         let style = entry.info.displayStyle
 
         Group {
