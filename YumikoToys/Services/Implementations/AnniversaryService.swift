@@ -229,31 +229,24 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         let ntpTime = timeSyncService.currentTime()
         let calc = AnniversaryInfo.calculateTime(from: anniversary.startDate, referenceDate: ntpTime)
         let dayCount = Int(calc.totalDays)
-        
-        // 始终在每次 tick 时更新写入 JSON 文件，以便 Widget 随时读取到最新的浮点天数和数据
         let milestones = AnniversaryInfo.calculateMilestones(from: anniversary.startDate, referenceDate: ntpTime)
-        writeWidgetSyncData(anniversary: anniversary, calc: calc, milestones: milestones)
-        
-        // 通知 Widget 刷新
+
         let shouldReload = forceReload || dayCount != lastSyncedDayCount || anniversary.id != lastSyncedAnniversaryId
         if shouldReload {
             lastSyncedDayCount = dayCount
             lastSyncedAnniversaryId = anniversary.id
-            // 确保 UserDefaults 写入完成后再通知 Widget 刷新
+            writeWidgetSyncData(anniversary: anniversary, calc: calc, milestones: milestones)
             if let sharedDefaults = UserDefaults(suiteName: "group.com.Lite.YumikoToys") {
                 sharedDefaults.synchronize()
             }
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetCenter.shared.reloadTimelines(ofKind: "YumikoWidget")
             LoggerService.shared.info("Widget timeline reloaded for: \(anniversary.title)")
         }
     }
     
     /// 每秒触发：计算并推送最新数据
     private func tick() {
-        guard let anniversary = activeAnniversary else { 
-            LoggerService.shared.debug("tick: no active anniversary")
-            return 
-        }
+        guard let anniversary = activeAnniversary else { return }
         
         let ntpTime = timeSyncService.currentTime()
         let calc = AnniversaryInfo.calculateTime(from: anniversary.startDate, referenceDate: ntpTime)
@@ -323,18 +316,13 @@ final class AnniversaryService: AnniversaryServiceProtocol {
         let groupID = "group.com.Lite.YumikoToys"
         var anySuccess = false
 
-        // ── 机制 1：UserDefaults(suiteName:)（最可靠，自签名环境下依然可用） ──
-        // 这是当前自签名环境下 Widget 能读到数据的首选机制。
-        // 主 App 写入 widget_payload，Widget 从这里读取。
         if let sharedDefaults = UserDefaults(suiteName: groupID) {
             sharedDefaults.set(data, forKey: "widget_payload")
-            // 同步写入独立 key，供 Widget 直接读取 displayStyle
             sharedDefaults.set(syncData.displayStyle, forKey: "widget_display_style")
             sharedDefaults.synchronize()
             anySuccess = true
-            LoggerService.shared.debug("Widget data written to UserDefaults suite: \(groupID)")
         } else {
-            LoggerService.shared.warning("UserDefaults(suiteName:) returned nil for \(groupID) — entitlement may be missing or signature invalid")
+            LoggerService.shared.warning("UserDefaults(suiteName:) returned nil for \(groupID)")
         }
 
         // ── 机制 2：App Group / App Support / Home 目录文件（额外冗余） ──
@@ -367,7 +355,6 @@ final class AnniversaryService: AnniversaryServiceProtocol {
                 try data.write(to: fileURL, options: .atomic)
                 if !anySuccess {
                     anySuccess = true
-                    LoggerService.shared.debug("Widget data written to: \(fileURL.path)")
                 }
             } catch {
                 LoggerService.shared.debug("Widget data write failed for \(fileURL.path): \(error.localizedDescription)")

@@ -35,7 +35,7 @@ actor AgentFileService {
     /// 读取文件内容
     func readFile(_ relativePath: String) async throws -> String {
         let safePath = try validatePath(relativePath)
-        let content: String? = await dataStorage.loadSync(String.self, from: safePath)
+        let content: String? = dataStorage.loadSync(String.self, from: safePath)
         guard let content = content else {
             throw AgentFileError.fileNotFound(relativePath)
         }
@@ -46,7 +46,7 @@ actor AgentFileService {
     func writeFile(_ relativePath: String, content: String) async throws {
         let safePath = try validatePath(relativePath)
         try validateFileSize(content)
-        await dataStorage.saveSync(content, to: safePath)
+        dataStorage.saveSync(content, to: safePath)
     }
 
     /// 列出目录

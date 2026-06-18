@@ -23,12 +23,11 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>13.0</string>
+	<string>26.0</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026 YumikoToys. All rights reserved.</string>
-	<!-- URL Scheme Handler -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -40,7 +39,6 @@
 			</array>
 		</dict>
 	</array>
-	<!-- Skill 权限描述字段 -->
 	<key>NSCalendarsUsageDescription</key>
 	<string>可可皇后需要访问日历，以支持查询和管理您的日程事件。</string>
 	<key>NSRemindersUsageDescription</key>
@@ -49,5 +47,7 @@
 	<string>可可皇后需要使用 AppleScript 自动化来控制其他应用、发送通知、更改壁纸等。</string>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>可可皇后需要屏幕录制权限，以支持截图和录屏功能。</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>可可皇后需要将截屏和录屏文件保存到您的桌面。</string>
 </dict>
 </plist>

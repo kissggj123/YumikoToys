@@ -201,7 +201,7 @@ final class ModelDownloadManager: ObservableObject {
         
         for (modelId, state) in downloadStates {
             if case .downloaded(let path) = state,
-               let model = models.first(where: { $0.id == modelId }) {
+               models.first(where: { $0.id == modelId }) != nil {
                 let weightsPath = path.appendingPathComponent("model.safetensors")
                 if let attributes = try? fileManager.attributesOfItem(atPath: weightsPath.path),
                    let size = attributes[.size] as? Int64 {
@@ -552,59 +552,48 @@ final class OllamaSetupService: NSObject, ObservableObject, URLSessionDownloadDe
     }
     
     // MARK: - URLSessionDownloadDelegate 实现
-    
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+
+    nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         let progress = totalBytesExpectedToWrite > 0 ? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) : 0.0
-        status = .installingOllama(progress: progress)
+        Task { @MainActor in
+            self.status = .installingOllama(progress: progress)
+        }
     }
-    
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        status = .installingOllama(progress: 1.0)
-        
+
+    nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         let tempZipURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("Ollama-darwin.zip")
-        
+
         do {
-            // 清理已存在的临时文件
             if fileManager.fileExists(atPath: tempZipURL.path) {
                 try fileManager.removeItem(at: tempZipURL)
             }
-            
-            // 移动到确定的临时 Zip 路径
             try fileManager.moveItem(at: location, to: tempZipURL)
-            
-            // 异步解压并安装
+
             Task.detached(priority: .background) { [weak self] in
                 guard let self = self else { return }
-                
-                // 检查 Applications 写入权限
+
                 let targetDir = "/Applications"
                 let isWritable = FileManager.default.isWritableFile(atPath: targetDir)
                 let finalDest = isWritable ? targetDir : "\(NSHomeDirectory())/Applications"
-                
-                // 创建文件夹（以防用户 ~/Applications 不存在）
                 try? FileManager.default.createDirectory(atPath: finalDest, withIntermediateDirectories: true)
-                
+
                 let zipPath = tempZipURL.path
-                
-                // 执行解压脚本，解压完成后运行 open 启动服务
+
                 let unzipScript = """
                 unzip -o "\(zipPath)" -d "\(finalDest)/"
                 open -a "\(finalDest)/Ollama.app"
                 rm -f "\(zipPath)"
                 """
-                
+
                 let task = Process()
                 task.launchPath = "/bin/zsh"
                 task.arguments = ["-c", unzipScript]
-                
+
                 do {
                     try task.run()
                     task.waitUntilExit()
-                    
-                    // 切换回主线程轮询服务状态
                     await MainActor.run {
                         self.status = .startingOllama
-                        // 开启轮询
                         self.startPollingOllamaPort()
                     }
                 } catch {
@@ -614,15 +603,18 @@ final class OllamaSetupService: NSObject, ObservableObject, URLSessionDownloadDe
                 }
             }
         } catch {
-            status = .failed("保存安装包出错: \(error.localizedDescription)")
+            Task { @MainActor in
+                self.status = .failed("保存安装包出错: \(error.localizedDescription)")
+            }
         }
     }
-    
-    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+
+    nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         if let error = error {
-            // 过滤主动取消
             if (error as NSError).code != NSURLErrorCancelled {
-                status = .failed("下载失败: \(error.localizedDescription)")
+                Task { @MainActor in
+                    self.status = .failed("下载失败: \(error.localizedDescription)")
+                }
             }
         }
     }

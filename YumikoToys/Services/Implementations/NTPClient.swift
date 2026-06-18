@@ -153,99 +153,107 @@ actor NTPClient {
     private func syncWithServer(_ server: String) async throws -> TimeInterval {
         let host = NWEndpoint.Host(server)
         let endpoint = NWEndpoint.hostPort(host: host, port: .init(integerLiteral: port))
-        
-        // 创建 UDP 连接
+
         let connection = NWConnection(to: endpoint, using: .udp)
-        
+
+        // 状态原子旗：确保 continuation 只 resume 一次
+        let stateLock = NSLock()
+        var hasResumed = false
+
         return try await withCheckedThrowingContinuation { continuation in
-            var hasResumed = false
-            let lock = NSLock()
-            
-            func safeResume<T>(throwing error: T) where T: Error {
-                lock.lock()
-                defer { lock.unlock() }
-                guard !hasResumed else { return }
+
+            @Sendable
+            func safeResume(throwing error: Error) {
+                stateLock.lock()
+                guard !hasResumed else { stateLock.unlock(); return }
                 hasResumed = true
+                stateLock.unlock()
                 continuation.resume(throwing: error)
             }
-            
+
+            @Sendable
             func safeResume(returning value: TimeInterval) {
-                lock.lock()
-                defer { lock.unlock() }
-                guard !hasResumed else { return }
+                stateLock.lock()
+                guard !hasResumed else { stateLock.unlock(); return }
                 hasResumed = true
+                stateLock.unlock()
                 continuation.resume(returning: value)
             }
-            
-            // 超时处理
+
+            // 超时处理：超时后 cancel 连接并抛 timeout 错误
             let timeoutTask = Task {
                 try? await Task.sleep(nanoseconds: UInt64(self.timeout * 1_000_000_000))
                 connection.cancel()
                 safeResume(throwing: NTPError.timeout)
             }
-            
+
             connection.stateUpdateHandler = { [weak self] state in
                 guard let self = self else { return }
-                
+
                 switch state {
                 case .ready:
                     Task { await self.sendRequest(connection: connection) }
-                    
+
                 case .failed(let error):
                     timeoutTask.cancel()
                     safeResume(throwing: NTPError.networkError(error))
-                    
+
                 case .cancelled:
                     timeoutTask.cancel()
-                    
+                    // cancelled 也必须 resume，否则 continuation 泄漏
+                    safeResume(throwing: NTPError.timeout)
+
                 default:
                     break
                 }
             }
-            
+
             connection.receiveMessage { data, context, isComplete, error in
                 timeoutTask.cancel()
-                
+
                 if let error = error {
                     safeResume(throwing: NTPError.networkError(error))
                     return
                 }
-                
+
                 guard let data = data,
                       let packet = NTPPacket(data: data) else {
+                    // 包无效可能是 connection 被取消/空响应，不直接当 fatal
                     safeResume(throwing: NTPError.invalidResponse)
                     return
                 }
-                
+
                 // 计算时间偏移
                 // offset = ((T1 - T0) + (T2 - T3)) / 2
                 // T0: 客户端发送时间
                 // T1: 服务器接收时间
                 // T2: 服务器发送时间
                 // T3: 客户端接收时间
-                
-                let t0 = Date().timeIntervalSince1970 + 2208988800  // 转换为 NTP 时间（从1900年）
+
+                let t0 = Date().timeIntervalSince1970 + 2208988800
                 let t1 = packet.receiveTime
                 let t2 = packet.transmitTime
                 let t3 = Date().timeIntervalSince1970 + 2208988800
-                
+
                 let offset = ((t1 - t0) + (t2 - t3)) / 2
-                
-                // 转换回 Unix 时间偏移（减去 NTP 到 Unix 的偏移）
-                let unixOffset = offset
-                
-                safeResume(returning: unixOffset)
+
+                safeResume(returning: offset)
             }
-            
+
             connection.start(queue: .global())
         }
     }
-    
+
     private func sendRequest(connection: NWConnection) async {
         let packet = NTPPacket()
         let data = packet.toData()
-        
-        return await withCheckedContinuation { continuation in
+
+        await withCheckedContinuation { continuation in
+            // 在 send 之前先监听连接状态：如果连接已经取消就立即 resume
+            if connection.state == .cancelled {
+                continuation.resume()
+                return
+            }
             connection.send(content: data, completion: .contentProcessed { error in
                 if let error = error {
                     LoggerService.shared.error("NTP send failed: \(error)")

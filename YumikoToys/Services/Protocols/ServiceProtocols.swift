@@ -30,6 +30,7 @@ protocol StorageServiceProtocol: ServiceLifecycle {
 
 // MARK: - 纪念日服务协议（拆分秒级和数据级 Publisher）
 
+@MainActor
 protocol AnniversaryServiceProtocol: ServiceLifecycle {
     var anniversaries: [Anniversary] { get }
     var activeAnniversary: Anniversary? { get }

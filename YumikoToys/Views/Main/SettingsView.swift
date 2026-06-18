@@ -991,7 +991,126 @@ struct SettingsView: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
                     .padding(.top, 2)
+
+                // --- 控制中心 widget 使用说明（macOS 26+）---
+                Divider().padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "switch.2")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color(hex: "AF52DE"))
+                        Text("控制中心 widget")
+                            .font(.system(size: 12, weight: .semibold))
+                        Spacer()
+                        Text("macOS 26+")
+                            .font(.system(size: 9, weight: .medium))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule().fill(Color(hex: "AF52DE").opacity(0.15))
+                            )
+                            .foregroundStyle(Color(hex: "AF52DE"))
+                    }
+
+                    Text("YumikoToys 提供了控制中心小组件，可以在菜单栏下拉的控制中心里一键点按启动主 App。")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    // 三步走
+                    VStack(alignment: .leading, spacing: 4) {
+                        stepRow(num: "1", text: "打开控制中心（点按菜单栏右上角  或三指右滑）")
+                        stepRow(num: "2", text: "点底部的「编辑控制中心」")
+                        stepRow(num: "3", text: "在「快捷指令 / App 控制」里把「YumikoToys」加进去")
+                    }
+                    .padding(.leading, 4)
+
+                    // 一键直达控制中心设置
+                    HStack(spacing: 8) {
+                        Button(action: {
+                            openSystemControlCenter()
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "gear")
+                                    .font(.system(size: 10))
+                                Text("打开系统控制中心设置")
+                                    .font(.system(size: 11, weight: .medium))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color(hex: "AF52DE").opacity(0.15))
+                            )
+                            .foregroundStyle(Color(hex: "AF52DE"))
+                        }
+                        .buttonStyle(.plain)
+
+                        Button(action: {
+                            WidgetKitGuide.openNotificationCenter()
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "bell.badge")
+                                    .font(.system(size: 10))
+                                Text("通知中心 / 桌面组件")
+                                    .font(.system(size: 11, weight: .medium))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color.primary.opacity(0.08))
+                            )
+                            .foregroundStyle(.primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.top, 2)
+
+                    Text("小提示：桌面 / 通知中心组件的样式由上面「Widget 样式」决定；控制中心 widget 启动主 App。")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.tertiary)
+                        .padding(.top, 2)
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(hex: "AF52DE").opacity(0.06))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(hex: "AF52DE").opacity(0.25), lineWidth: 1)
+                )
             }
+        }
+    }
+
+    @ViewBuilder
+    private func stepRow(num: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Text(num)
+                .font(.system(size: 9, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(width: 14, height: 14)
+                .background(Circle().fill(Color(hex: "AF52DE")))
+            Text(text)
+                .font(.system(size: 10))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// 打开 macOS 系统控制中心 / 控制中心配置
+    private func openSystemControlCenter() {
+        // 控制中心没有专门的 URL scheme；用 System Settings 的"控制中心"面板
+        // macOS 14+ 的通用面板 deep link：
+        //   x-apple.systempreferences:com.apple.preference?ControlCenter
+        // 兼容写法：x-apple.systempreferences:com.apple.systempreferences?ControlCenter
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference?ControlCenter") {
+            NSWorkspace.shared.open(url)
+        } else if let url = URL(string: "x-apple.systempreferences:") {
+            NSWorkspace.shared.open(url)
         }
     }
 

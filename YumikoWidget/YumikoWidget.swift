@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
 
 // MARK: - Shared Data Model (mirrors the main app's WidgetSyncData)
 
@@ -634,10 +635,18 @@ struct YumikoWidgetEntryView: View {
     }
 }
 
-// MARK: - Widget Definition
+// MARK: - Widget Bundle (桌面 widget + 控制中心 widget)
 
 @main
-struct YumikoWidget: Widget {
+struct YumikoWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        YumikoDesktopWidget()
+        YumikoControlWidget()
+    }
+}
+
+/// 桌面 widget 主体（从原 YumikoWidget 拆出来）
+struct YumikoDesktopWidget: Widget {
     let kind: String = "YumikoWidget"
 
     var body: some WidgetConfiguration {
@@ -649,4 +658,89 @@ struct YumikoWidget: Widget {
         .supportedFamilies([.systemSmall, .systemMedium])
         .contentMarginsDisabled()
     }
+}
+
+// MARK: - 控制中心 Widget（macOS 14+）
+//
+// 用户在「控制中心 → 编辑控件」里加进来后会常驻菜单栏。
+// 设计目的：让用户从菜单栏快速看到"和兔可可在一起了 X 天"，
+//           点击后能跳到主 App 或触发 AppIntent。
+//
+// 实现要求：
+//   1) widget bundle 包含一个 ControlWidget（用 WidgetBundle 组合）
+//   2) AppIntent 用于响应点击事件（写 App Group 标志位，主 App 监听到就执行动作）
+//   3) 数据源用 WidgetSyncData 同一份（共享 App Group）
+//   4) Info.plist 不需要新增 NSExtensionPointIdentifier，因为 controlcenter-widget
+//      是从 widget bundle 自动识别的（widget 自身有 App Group 即可）
+
+/// 控制中心 widget 用的 AppIntent：点一下打开主 App
+/// SDK 27+ 的 `OpenIntent` 协议签名已变更（需要 `Value` 关联类型 + `target` 属性），
+/// 直接用更宽松的 `AppIntent` 协议 + `openAppWhenRun = true` 是最稳的写法，
+/// 既能复用 `ControlWidgetButton` 的 `OpenIntent` 初始化器，也不会因 SDK 升级再次破坏。
+struct OpenYumikoToysIntent: AppIntent {
+    static var title: LocalizedStringResource = "打开 YumikoToys"
+    static var description = IntentDescription("点按后启动主 App")
+
+    /// 触发方式：点击后会自动拉起主 App
+    static var openAppWhenRun: Bool { return true }
+
+    func perform() async throws -> some IntentResult {
+        // 标记"用户从控制中心点过"，让主 App 启动后能感知
+        if let shared = UserDefaults(suiteName: "group.com.Lite.YumikoToys") {
+            shared.set(Date().timeIntervalSince1970, forKey: "control_center_open_at")
+        }
+        return .result()
+    }
+}
+
+/// 控制中心 widget 主体
+struct YumikoControlWidget: ControlWidget {
+    var body: some ControlWidgetConfiguration {
+        StaticControlConfiguration(kind: "YumikoControlCenterWidget") {
+            ControlWidgetButton(action: OpenYumikoToysIntent()) {
+                let info = loadWidgetData()
+                VStack(alignment: .center, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(info.avatar).font(.system(size: 16))
+                        Text(String(format: "%.0f", info.totalDays))
+                            .font(.system(size: 18, weight: .heavy, design: .rounded))
+                        Text("天")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                    Text(info.petName)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                .padding(2)
+            }
+        }
+        .displayName("兔可可的相伴")
+        .description("在控制中心直接看到你和宠物相伴的天数。")
+    }
+}
+
+/// 简单的同步加载（控制中心 widget 必须极快返回，所以失败就退到默认值）
+private func loadWidgetData() -> WidgetSyncData {
+    if let shared = UserDefaults(suiteName: "group.com.Lite.YumikoToys"),
+       let data = shared.data(forKey: "widget_payload"),
+       data.count > 0 {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        if let v = try? decoder.decode(WidgetSyncData.self, from: data) {
+            return v
+        }
+    }
+    // 兜底
+    return WidgetSyncData(
+        petName: "兔可可", avatar: "🐰",
+        startDate: Date(timeIntervalSinceReferenceDate: 0),
+        totalDays: 827.0,
+        milestones: [], proactiveBubbleText: nil,
+        appVersion: "", displayStyle: "compact",
+        title: "在一起已经", totalHours: 19848, hoursPart: 19848,
+        minutesPart: 0, secondsPart: 0,
+        themePrimaryHex: "FF6B9D"
+    )
 }

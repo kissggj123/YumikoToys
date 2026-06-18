@@ -84,9 +84,12 @@ final class PluginService: ObservableObject {
                 description: "执行屏幕截图或指定时长的快速屏幕录制，自动化保存至桌面",
                 isEnabled: true,
                 scriptContent: """
-                # 截图保存到桌面
-                screenshot ~/Desktop/screenshot.png
-                notify "截图成功" "桌面已生成最新截图文件"
+                # 一键截全屏，自动保存到桌面（按当前时间戳命名）
+                # 不带参数 = 使用默认桌面路径 + screencapture 退出码 0 才算成功
+                screenshot
+                wait 0.3
+                # 弹一条通知告诉用户结果
+                notify "截图插件" "桌面已生成最新截图（如未生成，请到 系统设置 → 隐私与安全性 → 屏幕录制 授予权限）。"
                 """
             ),
             YumiPlugin(

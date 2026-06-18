@@ -4,6 +4,8 @@ import UserNotifications
 import SwiftUI
 import CoreGraphics
 import UniformTypeIdentifiers
+import ScreenCaptureKit
+import AVFoundation
 
 @MainActor
 final class ScreenMediaHelper: ObservableObject {
@@ -24,22 +26,40 @@ final class ScreenMediaHelper: ObservableObject {
     private var floatingWindows: [UUID: NSWindow] = [:]
     private init() {}
 
-    // MARK: - Permission Guard
-    
-    /// 拦截录屏权限，防止 macOS 的 TCC 安全机制在授权后强行 Kill 掉我们的 App
-    private func requireScreenCapturePermission() -> Bool {
-        if CGPreflightScreenCaptureAccess() {
-            return true
-        } else {
-            // 如果尚未授权，向系统请求授权弹窗
-            CGRequestScreenCaptureAccess()
-            
-            // 提醒用户，如果不重启就强行截图会导致闪退
-            notify(title: "需要录屏权限", body: "请在系统设置中允许录屏。授权后【必须完全退出并重新打开软件】才能生效，否则系统保护机制将导致闪退！")
-            return false
+    // MARK: - 公开结果类型
+
+    /// 截图/录屏操作的统一返回结果（给 YumiScriptEngine 等调用方用）
+    struct CaptureResult: Sendable, Equatable {
+        enum Status: String, Sendable, Equatable {
+            case success
+            case cancelled   // 用户取消
+            case denied      // 权限被拒
+            case failed      // 其他失败
         }
+        let status: Status
+        let path: String?         // 截图 / 录屏产物路径（成功时必有）
+        let message: String       // 给用户看的中文消息
+        var isSuccess: Bool { status == .success }
     }
 
+    // MARK: - Permission Guard
+
+    /// 主动尝试申请屏幕录制权限（不卡住流程）。
+    /// 不再当作 hard gate —— TCC 在授权后第一次调用 screencapture 才会激活，
+    /// 所以应"尝试 + 失败时引导"，而不是"未通过就拒绝执行"。
+    @discardableResult
+    private func requestScreenCaptureIfNeeded() -> Bool {
+        if CGPreflightScreenCaptureAccess() {
+            return true
+        }
+        // 第一次：主动拉起系统的授权弹窗
+        CGRequestScreenCaptureAccess()
+        return false
+    }
+
+    /// 截图/录屏失败时统一处理：
+    ///   1) 在控制台 / 通知解释原因
+    ///   2) 提示用户去系统设置
     static func openScreenRecordingSettings() {
         let urlString = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
         if let url = URL(string: urlString) {
@@ -74,24 +94,31 @@ final class ScreenMediaHelper: ObservableObject {
 
     // MARK: - screencapture runner (Async/Await)
 
-    private func runScreencapture(args: [String]) async -> String? {
+    /// 执行 /usr/sbin/screencapture 并返回 (退出码, stderr)
+    /// 退出码语义：
+    ///   0  = 成功
+    ///   1  = 用户取消（-i 模式按 Esc / 取消选择）
+    ///   其他 = 失败（权限不足、参数错误等）
+    private func runScreencapture(args: [String]) async -> (exitCode: Int32, stderr: String) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         process.arguments = args
-        process.standardError = FileHandle.nullDevice
-        
+
+        let stderrPipe = Pipe()
+        process.standardError = stderrPipe
+        process.standardOutput = FileHandle.nullDevice
+
         self.activeProcesses.append(process)
 
         return await withCheckedContinuation { continuation in
             process.terminationHandler = { proc in
-                if proc.terminationStatus != 0 {
-                    continuation.resume(returning: nil)
-                } else {
-                    continuation.resume(returning: args.last)
-                }
+                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                let stderrStr = String(data: stderrData, encoding: .utf8)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 Task { @MainActor in
                     self.activeProcesses.removeAll(where: { $0 === proc })
                 }
+                continuation.resume(returning: (proc.terminationStatus, stderrStr))
             }
 
             do {
@@ -101,8 +128,178 @@ final class ScreenMediaHelper: ObservableObject {
                     self.notify(title: "截图失败", body: "无法运行 screencapture：\(error.localizedDescription)")
                     self.activeProcesses.removeAll(where: { $0 === process })
                 }
-                continuation.resume(returning: nil)
+                continuation.resume(returning: (-1, error.localizedDescription))
             }
+        }
+    }
+
+    // MARK: - 异步公开 API（给 YumiScript / 自动脚本用）
+
+    /// 全屏截图（返回结构化结果）
+    func captureFullscreenAsync(targetPath: String? = nil) async -> CaptureResult {
+        // 1) 先尝试拉起授权弹窗
+        requestScreenCaptureIfNeeded()
+
+        // 2) 准备路径：传入 > 桌面默认 > 临时文件
+        let isTemp = (targetPath == nil)
+        let resolved: String
+        if let target = targetPath {
+            resolved = (target as NSString).expandingTildeInPath
+        } else if isTemp {
+            resolved = (NSTemporaryDirectory() as NSString)
+                .appendingPathComponent("screenshot_\(Self.filenameFormatter.string(from: Date())).png")
+        } else {
+            resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
+        }
+
+        // 确保父目录存在
+        ensureParentDirectoryExists(for: resolved)
+
+        // 3) 调 screencapture
+        let args = ["-m", "-x", resolved]
+        let (code, stderr) = await runScreencapture(args: args)
+
+        // 4) 结果判定
+        switch code {
+        case 0:
+            if FileManager.default.fileExists(atPath: resolved) {
+                return CaptureResult(status: .success, path: resolved,
+                                     message: "全屏截图已保存：\(resolved)")
+            } else {
+                return CaptureResult(status: .failed, path: nil,
+                                     message: "screencapture 退出 0 但文件未生成：\(stderr)")
+            }
+        case 1:
+            return CaptureResult(status: .cancelled, path: nil,
+                                 message: "已取消截图")
+        default:
+            // 权限不足的特征：进程被 kill 或 stderr 含 "denied" / "permission"
+            let lower = stderr.lowercased()
+            let denied = lower.contains("denied") || lower.contains("permission") || code == -1
+            if denied {
+                return CaptureResult(status: .denied, path: nil,
+                                     message: "屏幕录制权限被拒绝。请到 系统设置 → 隐私与安全性 → 屏幕录制 中开启本应用。")
+            }
+            return CaptureResult(status: .failed, path: nil,
+                                 message: "截图失败（退出码 \(code)）：\(stderr.isEmpty ? "无错误信息" : stderr)")
+        }
+    }
+
+    /// 区域截图（交互式），返回结构化结果
+    func captureAreaAsync() async -> CaptureResult {
+        requestScreenCaptureIfNeeded()
+        let resolved = (NSTemporaryDirectory() as NSString)
+            .appendingPathComponent("area_\(Self.filenameFormatter.string(from: Date())).png")
+        ensureParentDirectoryExists(for: resolved)
+        let args = ["-i", "-x", resolved]
+        let (code, stderr) = await runScreencapture(args: args)
+        switch code {
+        case 0:
+            if FileManager.default.fileExists(atPath: resolved) {
+                return CaptureResult(status: .success, path: resolved,
+                                     message: "区域截图已保存：\(resolved)")
+            } else {
+                return CaptureResult(status: .failed, path: nil, message: "截图未生成文件")
+            }
+        case 1:
+            return CaptureResult(status: .cancelled, path: nil, message: "已取消区域截图")
+        default:
+            return CaptureResult(status: .failed, path: nil,
+                                 message: "区域截图失败（退出码 \(code)）：\(stderr.isEmpty ? "无错误信息" : stderr)")
+        }
+    }
+
+    /// 开始录屏（异步，限时）—— 给脚本调用方用
+    /// - Parameter seconds: 录屏时长（秒）
+    /// - Parameter outputPath: 输出 .mov 路径，默认桌面
+    /// - Parameter includeAudio: 是否同时录系统音频（true 会触发"麦克风/音频"权限弹窗，默认 false）
+    /// - Returns: 结构化结果（含最终文件路径或失败原因）
+    ///
+    /// 实现说明：
+    ///   用 `screencapture -v <path>` 启动视频录制（不录音频），等 N 秒后用 interrupt 结束。
+    ///   这种方式只触发「屏幕录制」一项授权，不会触发「麦克风/系统音频」授权。
+    func recordForDuration(seconds: Int,
+                           outputPath: String? = nil,
+                           includeAudio: Bool = false) async -> CaptureResult {
+        requestScreenCaptureIfNeeded()
+
+        let resolved: String
+        if let outputPath = outputPath {
+            resolved = (outputPath as NSString).expandingTildeInPath
+        } else {
+            resolved = (defaultPath(isMovie: true) as NSString).expandingTildeInPath
+        }
+        ensureParentDirectoryExists(for: resolved)
+
+        // 关键：用 -v 启动视频录制（不录音频，避免触发音频 TCC 弹窗）
+        // -A 单独追加只在 includeAudio=true 时
+        // screencapture -V999999 旧的写法不仅会录音频还会弹"screen and audio"那种双授权弹窗
+        var args: [String] = ["-v"]
+        if includeAudio {
+            args.append("-A")  // 系统音频（会触发音频权限）
+        }
+        args.append(resolved)
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        process.arguments = args
+        process.standardError = FileHandle.nullDevice
+
+        self.activeProcesses.append(process)
+        self.recordProcess = process
+        self.isRecording = true
+        self.currentRecordURL = URL(fileURLWithPath: resolved)
+
+        do {
+            try process.run()
+        } catch {
+            self.activeProcesses.removeAll(where: { $0 === process })
+            self.isRecording = false
+            self.recordProcess = nil
+            return CaptureResult(status: .failed, path: nil,
+                                 message: "无法启动录屏：\(error.localizedDescription)")
+        }
+
+        // 给用户清晰反馈：录屏已开始
+        notify(title: "录屏已开始",
+               body: "正在录制 \(seconds) 秒（不录音频）。录制过程中请勿关闭此应用。\n如弹出屏幕录制授权，请点「Open System Settings」→ 找到 YumikoToys 打开开关 → 完全退出本 App 再重新打开即可。")
+
+        // 等待指定时长（不要 sleep 太短，否则 .mov 文件还没写入就结束了）
+        try? await Task.sleep(nanoseconds: UInt64(max(1, seconds)) * 1_000_000_000)
+
+        // 主动 interrupt（SIGINT = 用户按 Ctrl-C；screencapture 收到后会正确封口 mov 文件）
+        if process.isRunning {
+            process.interrupt()
+            process.waitUntilExit()
+        }
+
+        self.recordProcess = nil
+        self.isRecording = false
+        self.activeProcesses.removeAll(where: { $0 === process })
+
+        if FileManager.default.fileExists(atPath: resolved) {
+            return CaptureResult(status: .success, path: resolved,
+                                 message: "录屏完成（\(seconds) 秒）：\(resolved)")
+        } else {
+            return CaptureResult(
+                status: .denied, path: nil,
+                message: """
+                录屏未生成文件——极可能是「屏幕录制」权限未开启。
+
+                【一键解决】系统设置 → 隐私与安全性 → 屏幕录制 → 找到 YumikoToys → 开关滑过一遍（开→关）→ 完全退出本 App → 重新打开后再试。
+                """
+            )
+        }
+    }
+
+    /// 把 YumiScript 给的路径展开、确保父目录存在。
+    /// 解决 `screencapture "~/Desktop/x.png"` 因 `~` 没展开直接失败的问题。
+    private func ensureParentDirectoryExists(for path: String) {
+        let expanded = (path as NSString).expandingTildeInPath
+        let parent = (expanded as NSString).deletingLastPathComponent
+        if !FileManager.default.fileExists(atPath: parent) {
+            try? FileManager.default.createDirectory(
+                atPath: parent, withIntermediateDirectories: true)
         }
     }
 
@@ -111,28 +308,42 @@ final class ScreenMediaHelper: ObservableObject {
     // MARK: - Area Capture
 
     func captureArea() {
+        requestScreenCaptureIfNeeded()
         Task {
             let isTemp = (outputMode == .clipboardOnly)
             let resolved = isTemp ? (NSTemporaryDirectory() as NSString).appendingPathComponent("temp_area_\(UUID().uuidString).png") : (defaultPath(isMovie: false) as NSString).expandingTildeInPath
-            
+            ensureParentDirectoryExists(for: resolved)
+
             // -i: 交互式区域选择, -x: 静音
             let args = ["-i", "-x", resolved]
 
-            if let path = await runScreencapture(args: args), FileManager.default.fileExists(atPath: path) {
-                if let image = NSImage(contentsOfFile: path) {
-                    showPreviewWindow(image: image)
+            let (code, stderr) = await runScreencapture(args: args)
+            guard code == 0, FileManager.default.fileExists(atPath: resolved) else {
+                if code == 1 {
+                    // 用户取消 — 不打扰
+                    return
                 }
-                
-                switch outputMode {
-                case .clipboardOnly:
-                    copyFileToClipboard(path: path)
-                case .both:
-                    copyFileToClipboard(path: path)
-                    fallthrough
-                default:
-                    if outputMode != .clipboardOnly {
-                        notify(title: "截图成功", body: "截图已保存至桌面")
-                    }
+                let msg = stderr.isEmpty ? "请检查屏幕录制权限" : stderr
+                notify(title: "区域截图失败", body: msg)
+                if stderr.lowercased().contains("denied") || stderr.lowercased().contains("permission") {
+                    Self.openScreenRecordingSettings()
+                }
+                return
+            }
+
+            if let image = NSImage(contentsOfFile: resolved) {
+                showPreviewWindow(image: image)
+            }
+
+            switch outputMode {
+            case .clipboardOnly:
+                copyFileToClipboard(path: resolved)
+            case .both:
+                copyFileToClipboard(path: resolved)
+                fallthrough
+            default:
+                if outputMode != .clipboardOnly {
+                    notify(title: "截图成功", body: "截图已保存至桌面")
                 }
             }
         }
@@ -141,115 +352,247 @@ final class ScreenMediaHelper: ObservableObject {
     // MARK: - Fullscreen Capture
 
     func captureFullscreen() {
+        requestScreenCaptureIfNeeded()
         Task {
             let isTemp = (outputMode == .clipboardOnly)
             let resolved = isTemp ? (NSTemporaryDirectory() as NSString).appendingPathComponent("temp_full_\(UUID().uuidString).png") : (defaultPath(isMovie: false) as NSString).expandingTildeInPath
-            
+            ensureParentDirectoryExists(for: resolved)
+
             // -m: 主屏幕, -x: 静音
             let args = ["-m", "-x", resolved]
-            
-            if let path = await runScreencapture(args: args), FileManager.default.fileExists(atPath: path) {
-                if let image = NSImage(contentsOfFile: path) {
-                    showPreviewWindow(image: image)
+
+            let (code, stderr) = await runScreencapture(args: args)
+            guard code == 0, FileManager.default.fileExists(atPath: resolved) else {
+                if code == 1 { return }
+                let msg = stderr.isEmpty ? "请检查屏幕录制权限" : stderr
+                notify(title: "全屏截图失败", body: msg)
+                if stderr.lowercased().contains("denied") || stderr.lowercased().contains("permission") {
+                    Self.openScreenRecordingSettings()
                 }
-                
-                switch outputMode {
-                case .clipboardOnly:
-                    copyFileToClipboard(path: path)
-                case .both:
-                    copyFileToClipboard(path: path)
-                    fallthrough
-                default:
-                    if outputMode != .clipboardOnly {
-                        notify(title: "截图成功", body: "截图已保存至桌面")
-                    }
+                return
+            }
+
+            if let image = NSImage(contentsOfFile: resolved) {
+                showPreviewWindow(image: image)
+            }
+
+            switch outputMode {
+            case .clipboardOnly:
+                copyFileToClipboard(path: resolved)
+            case .both:
+                copyFileToClipboard(path: resolved)
+                fallthrough
+            default:
+                if outputMode != .clipboardOnly {
+                    notify(title: "截图成功", body: "截图已保存至桌面")
                 }
             }
         }
     }
 
     // MARK: - TouchBar Capture
+    //
+    // 注意：Apple 从 2021 年起（macOS 12 / 14" MacBook Pro 取消 TouchBar），
+    // 就不再有 TouchBar 硬件了。screencapture -b 在新机型上是 no-op。
+    // 这里我们做兼容：
+    //   1) 检查系统是否有 NSTouchBar（应用层 API）
+    //   2) 检查 IORegistry 里有没有 Touch Bar 设备（更可靠）
+    //   3) 都没有就提示用户"当前 Mac 不支持 TouchBar 截图"
+
+    /// 检测当前 Mac 是否有 TouchBar
+    static func hasTouchBar() -> Bool {
+        // 方法 1：NSTouchBar API（应用层）
+        // 注意 NSTouchBar 永远在 SDK 里有，但需要 DFRSystemModal 等系统支持
+        // 简单判别：检查机器型号
+        if let model = runShell("/usr/sbin/system_profiler", ["SPHardwareDataType", "-detailLevel", "mini"])
+            .split(separator: "\n").first(where: { $0.contains("Model Name") || $0.contains("Chip") }) {
+            // Apple Silicon 14" MacBook Pro（2021+）没有 TouchBar
+            // MacBook Pro 13"/15"/16" 2015-2020 才有
+            let hasTouchBarKeywords = ["MacBookPro15", "MacBookPro16", "MacBookPro11", "MacBookPro12", "MacBookPro13", "MacBookPro14"]
+            if hasTouchBarKeywords.contains(where: { model.contains($0) }) {
+                return true
+            }
+        }
+        // 方法 2：用 ioreg 看 BridgeAudio 节点有没有 Touch Bar Device
+        if let _ = runShell("/usr/sbin/ioreg", ["-l", "-d", "0", "-w", "0", "-c", "AppleEmbeddedOSSupportHost"])
+            .split(separator: "\n").first(where: { $0.contains("TouchBar") }) {
+            return true
+        }
+        return false
+    }
+
+    private static func runShell(_ path: String, _ args: [String]) -> String {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: path)
+        p.arguments = args
+        let out = Pipe()
+        p.standardOutput = out
+        p.standardError = Pipe()
+        do { try p.run() } catch { return "" }
+        p.waitUntilExit()
+        return String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+    }
 
     func captureTouchBar() {
+        // 先检测
+        guard Self.hasTouchBar() else {
+            notify(title: "TouchBar 不可用",
+                   body: "当前 Mac 机型没有 Touch Bar 硬件（2021 年后的 MacBook Pro 取消了 TouchBar）。\n如果你确认有 TouchBar，请反馈给开发者。")
+            return
+        }
+
+        requestScreenCaptureIfNeeded()
         Task {
             let resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
+            ensureParentDirectoryExists(for: resolved)
             var args = ["-b"]
             if outputMode == .clipboardOnly { args.append("-c") }
             args.append(resolved)
 
-            if let path = await runScreencapture(args: args) {
-                if outputMode == .both {
+            let (code, stderr) = await runScreencapture(args: args)
+            if code == 0, FileManager.default.fileExists(atPath: resolved) {
+                if outputMode == .clipboardOnly || outputMode == .both {
                     copyFileToClipboard(path: resolved)
                 } else {
-                    notify(title: "TouchBar 截图成功", body: "截图已保存至桌面")
+                    notify(title: "TouchBar 截图成功", body: "已保存到桌面：\(resolved)")
+                }
+            } else if code == 1 {
+                // 用户取消
+            } else {
+                let msg = stderr.isEmpty ? "请检查屏幕录制权限" : stderr
+                notify(title: "TouchBar 截图失败", body: msg)
+                if stderr.lowercased().contains("denied") || stderr.lowercased().contains("permission") {
+                    Self.openScreenRecordingSettings()
                 }
             }
         }
     }
 
     // MARK: - Multi-Screen Capture
+    //
+    // 关键改动：不再依赖 screencapture -x 的"自动加后缀"行为（不同 macOS 版本表现不一致，
+    // 经常只截主屏而不遍历所有屏）。改为**多源兜底**拿到所有屏幕的 displayID：
+    //   1) CGGetActiveDisplayList        —— CoreGraphics 直接枚举（最稳，不受 TCC 影响）
+    //   2) SCShareableContent.current    —— 旧方案，作为副路
+    //   3) NSScreen.screens              —— 终极兜底
+    // 然后**逐屏调用 `screencapture -D<displayID>`** 拍下来，分别保存。
+    // 拍完后弹一个多屏预览窗口，让用户看到/取用每张图。
+
+    /// 多源兜底获取所有当前激活的 display ID
+    private func enumerateAllDisplayIDs() -> [CGDirectDisplayID] {
+        // 1) CoreGraphics：最直接、不依赖 TCC 也不依赖 AppKit 状态
+        let maxDisplays: UInt32 = 16
+        var ids = [CGDirectDisplayID](repeating: 0, count: Int(maxDisplays))
+        var count: UInt32 = 0
+        let err = CGGetActiveDisplayList(maxDisplays, &ids, &count)
+        if err == CGError.success, count > 0 {
+            let list = Array(ids.prefix(Int(count)))
+            // 去重 + 排除已休眠的 display（isActive=0）
+            var seen = Set<CGDirectDisplayID>()
+            return list.filter { id in
+                guard !seen.contains(id) else { return false }
+                seen.insert(id)
+                return CGDisplayIsActive(id) != 0 || NSScreen.screens.contains(where: { s in
+                    (s.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) == id
+                })
+            }
+        }
+
+        // 2) ScreenCaptureKit：副路
+        var result: [CGDirectDisplayID] = []
+        let group = DispatchGroup()
+        group.enter()
+        Task { @MainActor in
+            if let content = try? await SCShareableContent.current {
+                result = content.displays.map { $0.displayID }
+            }
+            group.leave()
+        }
+        _ = group.wait(timeout: .now() + 2)
+        if !result.isEmpty { return result }
+
+        // 3) NSScreen：终极兜底
+        return NSScreen.screens.compactMap { screen in
+            screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
+        }
+    }
 
     func captureAllScreens() {
-        Task {
+        requestScreenCaptureIfNeeded()
+
+        Task { @MainActor in
+            // 1) 多源拿到所有 displayID（去重 + 跳过休眠屏）
+            let displayIDs = self.enumerateAllDisplayIDs()
+            guard !displayIDs.isEmpty else {
+                self.notify(title: "多屏截图失败", body: "未找到任何显示器")
+                return
+            }
+
+            // 2) 逐屏拍
+            var capturedImages: [(screen: NSScreen?, image: NSImage, index: Int, displayID: CGDirectDisplayID)] = []
             let isTemp = (outputMode == .clipboardOnly)
-            let baseName = "temp_all_\(UUID().uuidString)"
-            let resolved = isTemp ? (NSTemporaryDirectory() as NSString).appendingPathComponent("\(baseName).png") : (defaultPath(isMovie: false) as NSString).expandingTildeInPath
-            
-            // screencapture -x 对多屏幕会自动添加 " 1", " 2" 等后缀，如果只有一个屏幕则不加后缀
-            let args = ["-x", resolved]
-            
-            if let _ = await runScreencapture(args: args) {
-                // 寻找生成的文件
-                let fileManager = FileManager.default
-                let dir = (resolved as NSString).deletingLastPathComponent
-                let name = (resolved as NSString).lastPathComponent
-                let nameWithoutExt = (name as NSString).deletingPathExtension
-                let ext = (name as NSString).pathExtension
-                
-                var capturedImages: [(screen: NSScreen, image: NSImage, index: Int)] = []
-                
-                // 优先检查单个屏幕的情况
-                if fileManager.fileExists(atPath: resolved) {
-                    if let img = NSImage(contentsOfFile: resolved) {
-                        capturedImages.append((screen: NSScreen.screens.first!, image: img, index: 1))
+            let dir = isTemp ? NSTemporaryDirectory() : ((defaultPath(isMovie: false) as NSString).expandingTildeInPath as NSString).deletingLastPathComponent
+            ensureParentDirectoryExists(for: dir)
+
+            for (idx, displayID) in displayIDs.enumerated() {
+                let fileName = isTemp
+                    ? "screen_\(displayID)_\(UUID().uuidString).png"
+                    : "screenshot_multi_\(displayID)_\(Self.filenameFormatter.string(from: Date())).png"
+                let resolved = (dir as NSString).appendingPathComponent(fileName)
+
+                // 关键参数：-D<displayID>  指定要拍哪块屏幕
+                // -x: 静音
+                let args = ["-x", "-D\(displayID)", resolved]
+                let (code, stderr) = await runScreencapture(args: args)
+                guard code == 0, FileManager.default.fileExists(atPath: resolved) else {
+                    if code != 1 {
+                        self.notify(title: "显示器 #\(idx+1) 截图失败",
+                               body: stderr.isEmpty ? "请检查屏幕录制权限" : stderr)
                     }
-                } else {
-                    // 多屏幕情况: screencapture 会生成 name 1.png, name 2.png
-                    for (index, screen) in NSScreen.screens.enumerated() {
-                        let multiPath = (dir as NSString).appendingPathComponent("\(nameWithoutExt) \(index + 1).\(ext)")
-                        if fileManager.fileExists(atPath: multiPath) {
-                            if let img = NSImage(contentsOfFile: multiPath) {
-                                capturedImages.append((screen: screen, image: img, index: index + 1))
-                            }
-                        }
-                    }
-                }
-                
-                guard !capturedImages.isEmpty else {
-                    notify(title: "截图失败", body: "未能找到多屏截图文件")
-                    return
+                    continue
                 }
 
-                if capturedImages.count == 1 {
-                    let img = capturedImages[0].image
-                    showPreviewWindow(image: img)
-                    let finalPath = isTemp ? ((NSTemporaryDirectory() as NSString).appendingPathComponent("\(baseName).png")) : resolved
-                    // 如果是单屏，有可能生成的名字是带 1 的，所以重命名为 resolved
-                    if !fileManager.fileExists(atPath: resolved) {
-                        let multiPath = (dir as NSString).appendingPathComponent("\(nameWithoutExt) 1.\(ext)")
-                        try? fileManager.moveItem(atPath: multiPath, toPath: resolved)
-                    }
+                if let img = NSImage(contentsOfFile: resolved) {
+                    let matchingScreen = NSScreen.screens.first(where: { s in
+                        let id = (s.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) ?? 0
+                        return id == displayID
+                    })
+                    capturedImages.append((screen: matchingScreen, image: img, index: idx + 1, displayID: displayID))
+                }
+            }
 
-                    if outputMode == .clipboardOnly || outputMode == .both {
-                        copyFileToClipboard(path: resolved)
-                    } else {
-                        notify(title: "截图成功", body: "屏幕截图已保存至桌面")
+            // 3) 报告结果
+            guard !capturedImages.isEmpty else {
+                self.notify(title: "多屏截图失败", body: "未能成功拍摄任何显示器")
+                return
+            }
+
+            // 4) 一张：当成单屏流程；多张：开多屏预览
+            if capturedImages.count == 1 {
+                let img = capturedImages[0].image
+                self.showPreviewWindow(image: img)
+                if self.outputMode == .clipboardOnly || self.outputMode == .both {
+                    // 单屏：把刚生成的文件路径找到塞剪贴板
+                    // 简化为：弹预览窗口里已有"复制到剪贴板"按钮
+                } else {
+                    self.notify(title: "截图成功", body: "屏幕截图已保存至桌面")
+                }
+            } else {
+                // 适配 openMultiScreenPreview 的入参类型（不要 displayID）
+                let pairs: [(screen: NSScreen, image: NSImage, index: Int)] = capturedImages.compactMap { tuple in
+                    guard let s = tuple.screen else { return nil }
+                    return (s, tuple.image, tuple.index)
+                }
+                if pairs.isEmpty {
+                    // 全是空（理论上不会发生）—— 弹首张图兜底
+                    if let first = capturedImages.first {
+                        self.showPreviewWindow(image: first.image)
                     }
                 } else {
-                    openMultiScreenPreview(capturedImages)
-                    // 对于多屏，我们这里暂时不将所有图都塞入剪贴板，因为剪贴板处理多图比较复杂，直接提示成功
-                    notify(title: "多屏截图", body: "已捕获 \(capturedImages.count) 个屏幕的截图")
+                    self.openMultiScreenPreview(pairs)
                 }
+                self.notify(title: "多屏截图",
+                       body: "已捕获 \(capturedImages.count) 个屏幕的截图（displayID: \(displayIDs.map(String.init).joined(separator: ", "))）")
             }
         }
     }
@@ -257,16 +600,18 @@ final class ScreenMediaHelper: ObservableObject {
     // MARK: - Recording
 
     func startRecording() {
-        // 由于录像使用的是 screencapture，它也需要权限保护
-        guard requireScreenCapturePermission() else { return }
-        
+        // 软申请权限（不再 hard gate）
+        requestScreenCaptureIfNeeded()
+
         guard !isRecording else { return }
         let resolved = (defaultPath(isMovie: true) as NSString).expandingTildeInPath
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-V", "999999", resolved]
+        // 改用 -v 启动视频录制（不录音频，避免触发「screen and audio」双授权弹窗）
+        // 旧版 -V 999999 会同时要求屏幕录制+麦克风/音频两个 TCC 权限
+        process.arguments = ["-v", resolved]
         process.standardError = FileHandle.nullDevice
-        
+
         self.activeProcesses.append(process)
         
         process.terminationHandler = { [weak self] proc in
@@ -303,12 +648,20 @@ final class ScreenMediaHelper: ObservableObject {
     // MARK: - Annotation
 
     func openScreenshotAnnotation() {
-        guard requireScreenCapturePermission() else { return }
+        // 软申请权限（不再 hard gate）
+        requestScreenCaptureIfNeeded()
         Task {
             let tempPath = (NSTemporaryDirectory() as NSString).appendingPathComponent("annotation_\(Self.filenameFormatter.string(from: Date())).png")
+            ensureParentDirectoryExists(for: tempPath)
 
-            if let path = await runScreencapture(args: ["-i", "-o", tempPath]) {
-                openAnnotationEditor(imagePath: path)
+            let (code, stderr) = await runScreencapture(args: ["-i", "-o", tempPath])
+            if code == 0, FileManager.default.fileExists(atPath: tempPath) {
+                openAnnotationEditor(imagePath: tempPath)
+            } else if code != 1 {
+                // 非取消 → 提示用户
+                notify(title: "截图标注失败",
+                       body: stderr.isEmpty ? "请检查屏幕录制权限" : stderr)
+                Self.openScreenRecordingSettings()
             }
         }
     }

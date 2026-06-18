@@ -23,119 +23,113 @@ extension String {
 
 public struct FullDiskAccessHelper {
     
-    /// 检查当前应用是否拥有完全磁盘访问权限（FDA）
+    /// 检查当前应用是否拥有完全磁盘访问权限（FDA）。
+    ///
+    /// ⚠️ 重要改进：
+    ///   - 不再依赖写入测试（因为 `~/Library/Application Support/com.apple.TCC`
+    ///     受 System Integrity Protection (SIP) 保护，就算有 FDA 也写不进去）。
+    ///   - 改为仅做「读取受 TCC 保护路径」这一行为作为判据。
+    ///   - 对每一条探测路径：先检查上层目录是否存在（避免把"用户没用过这个应用"
+    ///     误判为"没权限"）；能 fopen 成功 = 有 FDA；ENOENT 且能列目录 = 有 FDA；
+    ///     EACCES/EPERM = 没 FDA。
+    ///   - 多条路径只要有一条成功就返回 true
     public static var hasFullDiskAccess: Bool {
-        // 获取真实的用户 Home 目录与 Sandbox Home 目录
-        var homeDirs = [NSHomeDirectory()]
+
+        // 1) 获取用户主目录（非沙箱应用下 NSHomeDirectory() 就是真实 ~）
+        var homeDirs: [String] = []
         if let pw = getpwuid(getuid()), let home = pw.pointee.pw_dir {
-            let realHome = String(cString: home)
-            if !homeDirs.contains(realHome) {
-                homeDirs.append(realHome)
-            }
+            homeDirs.append(String(cString: home))
         }
-        
-        // 0. 模拟写入空临时文件进行写测试（针对自签名应用优化，增加备选目录，不依赖 NSTemporaryDirectory()）
+        homeDirs.append(NSHomeDirectory())
+
+        // 2) 构建探测路径：（上层目录，目录内受保护文件）
+        struct Probe { let dir: String; let file: String }
+        var probes: [Probe] = []
         for home in homeDirs {
-            let writePaths = [
-                home + "/Library/Application Support/com.apple.TCC/YumikoToys_test_fda.txt",
-                home + "/Library/Safari/YumikoToys_test_fda.txt",
-                home + "/Library/Calendars/YumikoToys_test_fda.txt",
-                home + "/Library/Reminders/YumikoToys_test_fda.txt",
-                home + "/Library/Preferences/com.apple.TCC_test_fda.txt",
-                "/Library/Preferences/com.apple.TCC_test_fda.txt"
-            ]
-            for path in writePaths {
-                if let file = fopen(path, "w") {
-                    fclose(file)
-                    remove(path)
-                    return true
-                }
-            }
+            probes.append(Probe(dir: home + "/Library/Application Support/com.apple.TCC",
+                                file: home + "/Library/Application Support/com.apple.TCC/TCC.db"))
+            probes.append(Probe(dir: home + "/Library/Messages",
+                                file: home + "/Library/Messages/chat.db"))
+            probes.append(Probe(dir: home + "/Library/Safari",
+                                file: home + "/Library/Safari/History.db"))
+            probes.append(Probe(dir: home + "/Library/Calendars",
+                                file: home + "/Library/Calendars/Calendar.sqlitedb"))
+            probes.append(Probe(dir: home + "/Library/Reminders",
+                                file: home + "/Library/Reminders/Reminders.sqlitedb"))
+            probes.append(Probe(dir: home + "/Library/Application Support/AddressBook",
+                                file: home + "/Library/Application Support/AddressBook/AddressBook.sqlitedb"))
         }
-        
-        // 收集待测试的受 TCC 保护的文件路径
-        var testPaths: [String] = []
-        for home in homeDirs {
-            testPaths.append(home + "/Library/Application Support/com.apple.TCC/TCC.db")
-            testPaths.append(home + "/Library/Safari/History.db")
-            testPaths.append(home + "/Library/Safari/Bookmarks.plist")
-            testPaths.append(home + "/Library/Messages/chat.db")
-            testPaths.append(home + "/Library/Calendars/Calendar Cache")
-        }
-        testPaths.append("/Library/Preferences/com.apple.TimeMachine.plist")
-        
-        // 1. 尝试使用 fopen 打开受保护的文件
-        for path in testPaths {
-            if let file = fopen(path, "r") {
+        // 系统级受保护文件（所有用户都应该存在）
+        probes.append(Probe(dir: "/Library/Preferences",
+                           file: "/Library/Preferences/com.apple.TimeMachine.plist"))
+
+        // 3) 依次探测。任意一条能访问即判定为有 FDA
+        for probe in probes {
+            // 上层目录不存在 → 跳过（避免"用户没用过这个应用"误判）
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: probe.dir, isDirectory: &isDir),
+                  isDir.boolValue else { continue }
+
+            // 3a) 尝试 fopen 读取受保护文件
+            if let file = fopen(probe.file, "r") {
                 fclose(file)
                 return true
-            } else {
-                // 如果 fopen 返回 NULL，且错误码是 ENOENT (文件不存在)，
-                // 说明我们有权限访问该目录（否则会被拒绝并返回 EACCES 或 EPERM）。
-                // 对于确定的系统受保护路径（如 com.apple.TCC/TCC.db 或 Safari/History.db），
-                // 能够确定文件不存在本身就意味着我们拥有目录遍历/读取权限，即拥有 FDA。
-                if errno == ENOENT {
-                    return true
-                }
             }
-        }
-        
-        // 收集待测试的受 TCC 保护的目录路径
-        var testDirs: [String] = []
-        for home in homeDirs {
-            testDirs.append(home + "/Library/Application Support/com.apple.TCC")
-            testDirs.append(home + "/Library/Safari")
-            testDirs.append(home + "/Library/Messages")
-            testDirs.append(home + "/Library/Mail")
-            testDirs.append(home + "/Library/Calendars")
-            testDirs.append(home + "/Library/Reminders")
-        }
-        
-        // 2. 尝试列出受限文件夹的内容
-        for dir in testDirs {
-            var isDir: ObjCBool = false
-            if FileManager.default.fileExists(atPath: dir, isDirectory: &isDir), isDir.boolValue {
+
+            let err = errno
+            if err == ENOENT {
+                // 3b) 文件不存在但能访问所在目录 → 有 FDA
                 do {
-                    _ = try FileManager.default.contentsOfDirectory(atPath: dir)
+                    _ = try FileManager.default.contentsOfDirectory(atPath: probe.dir)
                     return true
                 } catch {
-                    // 如果错误不是权限拒绝（比如目录为空等其他原因），也有可能意味着 FDA 已赋予
-                    let nsError = error as NSError
-                    if nsError.domain == NSCocoaErrorDomain {
-                        // Cocoa error 257 = NSFileReadNoPermissionError
-                        // Cocoa error 513 = NSFileWriteNoPermissionError
-                        if nsError.code != 257 && nsError.code != 513 {
-                            return true
-                        }
+                    let ns = error as NSError
+                    // Cocoa error 257 = 文件读取权限被拒绝（明确没 FDA）
+                    if ns.domain == NSCocoaErrorDomain && ns.code == 257 {
+                        continue
                     }
+                    // 其他错误保守跳过
+                }
+            }
+
+            // 3c) 明确权限拒绝（EACCES/EPERM） → 看下一个
+            // 3d) 其他错误保守跳过
+        }
+
+        // 4) 兜底：对 ~/Library 和 ~/Library/Application Support 做列目录检查
+        for home in homeDirs {
+            let appSupport = home + "/Library/Application Support"
+            do {
+                _ = try FileManager.default.contentsOfDirectory(atPath: appSupport)
+                // 能列 Application Support 已说明基础权限 OK
+            } catch {
+                let ns = error as NSError
+                if ns.domain == NSCocoaErrorDomain && (ns.code == 257 || ns.code == 513) {
+                    continue
                 }
             }
         }
-        
-        // 3. 对 TCC 签名身份变化后的额外容错兜底探针（非 NSTemporaryDirectory()，比如尝试读取用户的某些偏好设置文件）
-        // 探测是否可以读取某些通常无法在严格沙盒或被限制环境下读取的系统配置文件
-        let fallbackFiles = [
-            "/private/var/db/SystemPolicy-control/default.plist",
-            "/Library/Security/Trust Settings/Admin.plist"
-        ]
-        for path in fallbackFiles {
-            if FileManager.default.isReadableFile(atPath: path) {
-                return true
-            }
-        }
-        
+
         return false
     }
-    
-    /// 跳转到系统设置的完全磁盘访问权限面板
+
+    /// 跳转到系统设置 -> 隐私与安全性 -> 完全磁盘访问
     public static func openSystemPrivacySettings() {
         let urlString = "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
         if let url = URL(string: urlString) {
             NSWorkspace.shared.open(url)
-        } else {
-            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security") {
-                NSWorkspace.shared.open(url)
-            }
+        } else if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// 跳转到系统设置 -> 隐私与安全性 -> 屏幕录制
+    public static func openScreenRecordingSettings() {
+        let urlString = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
+        } else if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security") {
+            NSWorkspace.shared.open(url)
         }
     }
 }
@@ -1062,60 +1056,94 @@ public final class SkillService: ObservableObject {
         let task = Process()
         task.launchPath = "/bin/zsh"
         task.arguments = ["-c", script]
-        
+
         let pipe = Pipe()
         task.standardOutput = pipe
         task.standardError = pipe
-        
-        do {
-            try task.run()
-            task.waitUntilExit()
-            
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            if let output = String(data: data, encoding: .utf8) {
-                let cleanOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
-                let response: [String: String] = ["output": cleanOutput]
-                if let jsonData = try? JSONSerialization.data(withJSONObject: response, options: []),
-                   let jsonStr = String(data: jsonData, encoding: .utf8) {
-                    return jsonStr
+
+        // 用 Task Group 加超时，避免 shell 命令（如 `cat` 一个 FIFO、`ping` 不带 -c）
+        // 把调用方所在线程（很可能是主线程）卡死
+        return await withTaskGroup(of: String.self) { group -> String in
+            group.addTask {
+                do {
+                    try task.run()
+                    task.waitUntilExit()
+
+                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                    if let output = String(data: data, encoding: .utf8) {
+                        let cleanOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let response: [String: String] = ["output": cleanOutput]
+                        if let jsonData = try? JSONSerialization.data(withJSONObject: response, options: []),
+                           let jsonStr = String(data: jsonData, encoding: .utf8) {
+                            return jsonStr
+                        }
+                        return output
+                    }
+                    return "{\"status\": \"executed\"}"
+                } catch {
+                    return "{\"error\": \"\(error.localizedDescription)\"}"
                 }
-                return output
             }
-            return "{\"status\": \"executed\"}"
-        } catch {
-            return "{\"error\": \"\(error.localizedDescription)\"}"
+            // 15s 硬超时：到点直接 SIGKILL 子进程
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 15_000_000_000)
+                if task.isRunning {
+                    kill(task.processIdentifier, SIGKILL)
+                }
+                return "{\"error\": \"shell 命令执行超时（15s）已强制终止\"}"
+            }
+            let result = await group.next() ?? "{\"error\": \"shell 执行未产生输出\"}"
+            group.cancelAll()
+            return result
         }
     }
-    
+
     public func runAppleScript(_ script: String) async -> String {
-        guard let appleScript = NSAppleScript(source: script) else {
-            return "{\"error\": \"无法创建 AppleScript 实例\"}"
-        }
-        
-        var errorInfo: NSDictionary?
-        let result = appleScript.executeAndReturnError(&errorInfo)
-        if let error = errorInfo {
-            // Extract a clean error message from the error dict
-            let errorMsg: String
-            if let msg = (error[NSAppleScript.errorMessage] as? String) ??
-                         (error[NSAppleScript.errorBriefMessage] as? String) {
-                errorMsg = msg
-            } else {
-                errorMsg = error.description
+        // 关键改动：NSAppleScript.executeAndReturnError 同步、阻塞。
+        // 一旦脚本里包含 `tell application "不存在的App"`，系统会弹"定位 App"对话框把主线程卡死。
+        // 解决：丢到非主线程的 Task 里跑，加 5s 超时（普通 activate 1s 内必返回）。
+        return await withTaskGroup(of: String.self) { group -> String in
+            group.addTask {
+                await Task.detached(priority: .userInitiated) {
+                    guard let appleScript = NSAppleScript(source: script) else {
+                        return "{\"error\": \"无法创建 AppleScript 实例\"}"
+                    }
+
+                    var errorInfo: NSDictionary?
+                    let result = appleScript.executeAndReturnError(&errorInfo)
+                    if let error = errorInfo {
+                        // Extract a clean error message from the error dict
+                        let errorMsg: String
+                        if let msg = (error[NSAppleScript.errorMessage] as? String) ??
+                                     (error[NSAppleScript.errorBriefMessage] as? String) {
+                            errorMsg = msg
+                        } else {
+                            errorMsg = error.description
+                        }
+                        if let data = try? JSONSerialization.data(withJSONObject: ["error": errorMsg], options: []),
+                           let str = String(data: data, encoding: .utf8) {
+                            return str
+                        }
+                        return "{\"error\": \"\(errorMsg)\"}"
+                    }
+                    let output = result.stringValue ?? ""
+                    let response: [String: String] = ["output": output]
+                    if let jsonData = try? JSONSerialization.data(withJSONObject: response, options: []),
+                       let jsonStr = String(data: jsonData, encoding: .utf8) {
+                        return jsonStr
+                    }
+                    return "{\"output\": \"\(output)\"}"
+                }.value
             }
-            if let data = try? JSONSerialization.data(withJSONObject: ["error": errorMsg], options: []),
-               let str = String(data: data, encoding: .utf8) {
-                return str
+            // 5s 超时（activate / tell 之类基本 100ms 内返回；找不到 App 弹"定位"对话框是同步的）
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+                return "{\"error\": \"AppleScript 执行超时（5s）已中止——多半是 App 名称错误导致系统弹了'定位 App'对话框；这种对话框会同步阻塞主线程，所以这里直接掐断。建议改用 launch 指令配合合法 app 名称。\"}"
             }
-            return "{\"error\": \"\(errorMsg)\"}"
+            let result = await group.next() ?? "{\"error\": \"AppleScript 执行未产生输出\"}"
+            group.cancelAll()
+            return result
         }
-        let output = result.stringValue ?? ""
-        let response: [String: String] = ["output": output]
-        if let jsonData = try? JSONSerialization.data(withJSONObject: response, options: []),
-           let jsonStr = String(data: jsonData, encoding: .utf8) {
-            return jsonStr
-        }
-        return output
     }
 }
 

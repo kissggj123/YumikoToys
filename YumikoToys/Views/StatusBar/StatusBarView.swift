@@ -1069,6 +1069,24 @@ struct StatusBarView: View {
                                             Task {
                                                 let logs = await YumiScriptEngine.execute(plugin.scriptContent)
                                                 pluginRunningLogs = logs
+                                                // 从日志中提取"成功/失败"关键字，给用户弹一条简短通知
+                                                let succeeded = logs.contains("成功")
+                                                    || logs.contains("完成")
+                                                    || logs.contains("已启动")
+                                                let failed = logs.contains("失败")
+                                                    || logs.contains("错误")
+                                                    || logs.contains("拒绝")
+                                                if succeeded && !failed {
+                                                    Self.showQuickNotify(
+                                                        title: "✅ \(plugin.name)",
+                                                        body: "已执行完成"
+                                                    )
+                                                } else if failed {
+                                                    Self.showQuickNotify(
+                                                        title: "⚠️ \(plugin.name)",
+                                                        body: "执行失败，点击查看日志"
+                                                    )
+                                                }
                                             }
                                         }) {
                                             HStack(spacing: 3) {
@@ -1126,7 +1144,26 @@ struct StatusBarView: View {
                             onScreenshotTriggered?()
                             ScreenMediaHelper.shared.openScreenshotAnnotation()
                         })
+                        // 第 5 颗按钮独占第二行（用空 View 占位另一半）
+                        screenshotButton(title: "TouchBar 截图", icon: "rectangle.bottomthird.inset.filled", action: {
+                            onScreenshotTriggered?()
+                            ScreenMediaHelper.shared.captureTouchBar()
+                        })
+                        Color.clear
+                            .frame(height: 1)
                     }
+
+                    // TouchBar 截图机型提示（2019 以后机型自带 TouchBar 的不多，给个一键确认按钮）
+                    HStack(spacing: 4) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 9))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                        Text("TouchBar 仅 2016–2019 款带 Touch Bar 的 MacBook 支持；其他机型会直接提示无 TouchBar。")
+                            .font(.system(size: 9))
+                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .lineLimit(2)
+                    }
+                    .padding(.horizontal, 4)
                 }
 
                 Divider().padding(.horizontal, 4)
@@ -1165,6 +1202,33 @@ struct StatusBarView: View {
                         }
                         .buttonStyle(.plain)
                     }
+
+                    // 授权诊断（解决"明明开了开关但提示未授权"）
+                    Button(action: { TCCDiagnostic.showScreenCaptureDiagnostic() }) {
+                        HStack {
+                            Image(systemName: "stethoscope.circle")
+                            Text("诊断授权状态").font(.system(size: 11, weight: .medium))
+                            Spacer()
+                        }
+                        .foregroundStyle(themeColor.textColor)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.buttonBackgroundColor))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: { TCCDiagnostic.openScreenCaptureSettings() }) {
+                        HStack {
+                            Image(systemName: "gear")
+                            Text("打开屏幕录制设置").font(.system(size: 11, weight: .medium))
+                            Spacer()
+                        }
+                        .foregroundStyle(themeColor.textColor)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.buttonBackgroundColor))
+                    }
+                    .buttonStyle(.plain)
                 }
 
                 Divider().padding(.horizontal, 4)
@@ -2196,6 +2260,18 @@ struct StatusBarView: View {
                                         Task {
                                             let logs = await YumiScriptEngine.execute(plugin.scriptContent)
                                             pluginRunningLogs = logs
+                                            // 通知反馈
+                                            let succeeded = logs.contains("成功")
+                                                || logs.contains("完成")
+                                                || logs.contains("已启动")
+                                            let failed = logs.contains("失败")
+                                                || logs.contains("错误")
+                                                || logs.contains("拒绝")
+                                            if succeeded && !failed {
+                                                Self.showQuickNotify(title: "✅ \(plugin.name)", body: "已执行完成")
+                                            } else if failed {
+                                                Self.showQuickNotify(title: "⚠️ \(plugin.name)", body: "执行失败，点击查看日志")
+                                            }
                                         }
                                     }) {
                                         HStack(spacing: 3) {
@@ -2456,5 +2532,27 @@ struct AppIconImageView: View {
             return nil
         }.value
         self.appIcon = icon
+    }
+}
+
+// MARK: - 快速通知工具（给插件回调 / 状态栏事件用）
+
+import UserNotifications
+extension StatusBarView {
+    /// 弹一条 macOS 系统通知（UNUserNotificationCenter）。
+    /// 给插件执行结果等"需要立刻告知用户"的事件用。
+    static func showQuickNotify(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil
+        )
+        UNUserNotificationCenter.current().add(request) { _ in
+            // 通知中心可能未注册；忽略错误
+        }
     }
 }
