@@ -674,18 +674,13 @@ struct YumikoDesktopWidget: Widget {
 //      是从 widget bundle 自动识别的（widget 自身有 App Group 即可）
 
 /// 控制中心 widget 用的 AppIntent：点一下打开主 App
-/// SDK 27+ 的 `OpenIntent` 协议签名已变更（需要 `Value` 关联类型 + `target` 属性），
-/// 直接用更宽松的 `AppIntent` 协议 + `openAppWhenRun = true` 是最稳的写法，
-/// 既能复用 `ControlWidgetButton` 的 `OpenIntent` 初始化器，也不会因 SDK 升级再次破坏。
+/// ControlWidgetButton 要求 action 为 OpenIntent，所以这里用 OpenIntent 协议。
 struct OpenYumikoToysIntent: AppIntent {
     static var title: LocalizedStringResource = "打开 YumikoToys"
     static var description = IntentDescription("点按后启动主 App")
-
-    /// 触发方式：点击后会自动拉起主 App
     static var openAppWhenRun: Bool { return true }
 
     func perform() async throws -> some IntentResult {
-        // 标记"用户从控制中心点过"，让主 App 启动后能感知
         if let shared = UserDefaults(suiteName: "group.com.Lite.YumikoToys") {
             shared.set(Date().timeIntervalSince1970, forKey: "control_center_open_at")
         }

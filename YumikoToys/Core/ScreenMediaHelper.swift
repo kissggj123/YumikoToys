@@ -88,7 +88,12 @@ final class ScreenMediaHelper: ObservableObject {
     private func saveCGImageAsPNG(_ cgImage: CGImage, to path: String) {
         let url = URL(fileURLWithPath: path)
         guard let destination = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil) else { return }
-        CGImageDestinationAddImage(destination, cgImage, nil)
+        let colorSpace = cgImage.colorSpace ?? CGColorSpace(name: CGColorSpace.displayP3)!
+        let properties: [CFString: Any] = [
+            kCGImagePropertyColorModel: "RGB",
+            kCGImagePropertyProfileName: colorSpace.name ?? "Display P3"
+        ]
+        CGImageDestinationAddImage(destination, cgImage, properties as CFDictionary)
         CGImageDestinationFinalize(destination)
     }
 
@@ -140,14 +145,10 @@ final class ScreenMediaHelper: ObservableObject {
         // 1) 先尝试拉起授权弹窗
         requestScreenCaptureIfNeeded()
 
-        // 2) 准备路径：传入 > 桌面默认 > 临时文件
-        let isTemp = (targetPath == nil)
+        // 2) 准备路径：传入 > 桌面默认
         let resolved: String
         if let target = targetPath {
             resolved = (target as NSString).expandingTildeInPath
-        } else if isTemp {
-            resolved = (NSTemporaryDirectory() as NSString)
-                .appendingPathComponent("screenshot_\(Self.filenameFormatter.string(from: Date())).png")
         } else {
             resolved = (defaultPath(isMovie: false) as NSString).expandingTildeInPath
         }
@@ -394,28 +395,28 @@ final class ScreenMediaHelper: ObservableObject {
     //
     // 注意：Apple 从 2021 年起（macOS 12 / 14" MacBook Pro 取消 TouchBar），
     // 就不再有 TouchBar 硬件了。screencapture -b 在新机型上是 no-op。
-    // 这里我们做兼容：
-    //   1) 检查系统是否有 NSTouchBar（应用层 API）
-    //   2) 检查 IORegistry 里有没有 Touch Bar 设备（更可靠）
-    //   3) 都没有就提示用户"当前 Mac 不支持 TouchBar 截图"
+    // 检测策略：
+    //   1) ioreg 查 AppleEmbeddedOSSupportHost / AppleMCCopyControl
+    //   2) system_profiler SPUSBDataType 查 Touch Bar（兜底）
+    //   3) 都没有就提示用户
 
     /// 检测当前 Mac 是否有 TouchBar
     static func hasTouchBar() -> Bool {
-        // 方法 1：NSTouchBar API（应用层）
-        // 注意 NSTouchBar 永远在 SDK 里有，但需要 DFRSystemModal 等系统支持
-        // 简单判别：检查机器型号
-        if let model = runShell("/usr/sbin/system_profiler", ["SPHardwareDataType", "-detailLevel", "mini"])
-            .split(separator: "\n").first(where: { $0.contains("Model Name") || $0.contains("Chip") }) {
-            // Apple Silicon 14" MacBook Pro（2021+）没有 TouchBar
-            // MacBook Pro 13"/15"/16" 2015-2020 才有
-            let hasTouchBarKeywords = ["MacBookPro15", "MacBookPro16", "MacBookPro11", "MacBookPro12", "MacBookPro13", "MacBookPro14"]
-            if hasTouchBarKeywords.contains(where: { model.contains($0) }) {
+        // 方法 1：通过 CGDisplay API 检测 TouchBar 虚拟显示器
+        var displayIDs = [CGDirectDisplayID](repeating: 0, count: 16)
+        var count: UInt32 = 0
+        CGGetOnlineDisplayList(16, &displayIDs, &count)
+        for i in 0..<Int(count) {
+            let bounds = CGDisplayBounds(displayIDs[i])
+            if bounds.height < 100 && bounds.width > 100 {
                 return true
             }
         }
-        // 方法 2：用 ioreg 看 BridgeAudio 节点有没有 Touch Bar Device
-        if let _ = runShell("/usr/sbin/ioreg", ["-l", "-d", "0", "-w", "0", "-c", "AppleEmbeddedOSSupportHost"])
-            .split(separator: "\n").first(where: { $0.contains("TouchBar") }) {
+        // 方法 2：直接尝试 screencapture -b 作为 fallback
+        let testPath = NSTemporaryDirectory() + "touchbar_test_\(UUID().uuidString).png"
+        _ = runShell("/usr/sbin/screencapture", ["-b", testPath])
+        if FileManager.default.fileExists(atPath: testPath) {
+            try? FileManager.default.removeItem(atPath: testPath)
             return true
         }
         return false
@@ -429,7 +430,17 @@ final class ScreenMediaHelper: ObservableObject {
         p.standardOutput = out
         p.standardError = Pipe()
         do { try p.run() } catch { return "" }
-        p.waitUntilExit()
+        
+        // 添加超时保护，防止进程挂起
+        let deadline = Date().addingTimeInterval(10)
+        while p.isRunning && Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+        if p.isRunning {
+            p.terminate()
+            return ""
+        }
+        
         return String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
     }
 
@@ -437,7 +448,7 @@ final class ScreenMediaHelper: ObservableObject {
         // 先检测
         guard Self.hasTouchBar() else {
             notify(title: "TouchBar 不可用",
-                   body: "当前 Mac 机型没有 Touch Bar 硬件（2021 年后的 MacBook Pro 取消了 TouchBar）。\n如果你确认有 TouchBar，请反馈给开发者。")
+                   body: "当前 Mac 没有 Touch Bar 硬件（2021 年后的 MacBook Pro 已取消 TouchBar）。\n如果你确认有 TouchBar，请反馈给开发者。")
             return
         }
 
@@ -449,19 +460,77 @@ final class ScreenMediaHelper: ObservableObject {
             if outputMode == .clipboardOnly { args.append("-c") }
             args.append(resolved)
 
-            let (code, stderr) = await runScreencapture(args: args)
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+            process.arguments = args
+            process.standardError = FileHandle.nullDevice
+            process.standardOutput = FileHandle.nullDevice
+            self.activeProcesses.append(process)
+
+            do {
+                try process.run()
+            } catch {
+                self.activeProcesses.removeAll(where: { $0 === process })
+                self.notify(title: "TouchBar 截图失败", body: "无法运行 screencapture：\(error.localizedDescription)")
+                return
+            }
+
+            // 15 秒超时（TouchBar 截图可能较慢）
+            let deadline = Date().addingTimeInterval(15)
+            while process.isRunning && Date() < deadline {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+            }
+            if process.isRunning {
+                process.terminate()
+                self.notify(title: "TouchBar 截图超时", body: "screencapture 进程在 15 秒后仍未完成，已终止。")
+                self.activeProcesses.removeAll(where: { $0 === process })
+                return
+            }
+            self.activeProcesses.removeAll(where: { $0 === process })
+
+            let code = process.terminationStatus
             if code == 0, FileManager.default.fileExists(atPath: resolved) {
-                if outputMode == .clipboardOnly || outputMode == .both {
-                    copyFileToClipboard(path: resolved)
-                } else {
-                    notify(title: "TouchBar 截图成功", body: "已保存到桌面：\(resolved)")
+                if let image = NSImage(contentsOfFile: resolved) {
+                    showPreviewWindow(image: image)
+                }
+                if self.outputMode == .clipboardOnly || self.outputMode == .both {
+                    self.copyFileToClipboard(path: resolved)
+                }
+                if self.outputMode != .clipboardOnly {
+                    self.notify(title: "TouchBar 截图成功", body: "已保存到桌面：\(resolved)")
                 }
             } else if code == 1 {
-                // 用户取消
+                // 用户取消 — 不提示
             } else {
-                let msg = stderr.isEmpty ? "请检查屏幕录制权限" : stderr
-                notify(title: "TouchBar 截图失败", body: msg)
-                if stderr.lowercased().contains("denied") || stderr.lowercased().contains("permission") {
+                // screencapture -b 可能不支持，尝试 screencapture -c -b（复制到剪贴板）
+                let fallbackArgs = ["-c", "-b"]
+                let fallbackProcess = Process()
+                fallbackProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                fallbackProcess.arguments = fallbackArgs
+                fallbackProcess.standardError = FileHandle.nullDevice
+                fallbackProcess.standardOutput = FileHandle.nullDevice
+                self.activeProcesses.append(fallbackProcess)
+
+                do {
+                    try fallbackProcess.run()
+                    let fallbackDeadline = Date().addingTimeInterval(10)
+                    while fallbackProcess.isRunning && Date() < fallbackDeadline {
+                        try? await Task.sleep(nanoseconds: 300_000_000)
+                    }
+                    if fallbackProcess.isRunning {
+                        fallbackProcess.terminate()
+                    }
+                    self.activeProcesses.removeAll(where: { $0 === fallbackProcess })
+
+                    if fallbackProcess.terminationStatus == 0 {
+                        self.notify(title: "TouchBar 截图成功", body: "TouchBar 截图已复制到剪贴板")
+                    } else {
+                        self.notify(title: "TouchBar 截图失败", body: "screencapture -b 不支持当前设备，请检查屏幕录制权限")
+                        Self.openScreenRecordingSettings()
+                    }
+                } catch {
+                    self.activeProcesses.removeAll(where: { $0 === fallbackProcess })
+                    self.notify(title: "TouchBar 截图失败", body: "请检查屏幕录制权限")
                     Self.openScreenRecordingSettings()
                 }
             }
@@ -470,129 +539,160 @@ final class ScreenMediaHelper: ObservableObject {
 
     // MARK: - Multi-Screen Capture
     //
-    // 关键改动：不再依赖 screencapture -x 的"自动加后缀"行为（不同 macOS 版本表现不一致，
-    // 经常只截主屏而不遍历所有屏）。改为**多源兜底**拿到所有屏幕的 displayID：
-    //   1) CGGetActiveDisplayList        —— CoreGraphics 直接枚举（最稳，不受 TCC 影响）
-    //   2) SCShareableContent.current    —— 旧方案，作为副路
-    //   3) NSScreen.screens              —— 终极兜底
-    // 然后**逐屏调用 `screencapture -D<displayID>`** 拍下来，分别保存。
-    // 拍完后弹一个多屏预览窗口，让用户看到/取用每张图。
-
-    /// 多源兜底获取所有当前激活的 display ID
-    private func enumerateAllDisplayIDs() -> [CGDirectDisplayID] {
-        // 1) CoreGraphics：最直接、不依赖 TCC 也不依赖 AppKit 状态
-        let maxDisplays: UInt32 = 16
-        var ids = [CGDirectDisplayID](repeating: 0, count: Int(maxDisplays))
-        var count: UInt32 = 0
-        let err = CGGetActiveDisplayList(maxDisplays, &ids, &count)
-        if err == CGError.success, count > 0 {
-            let list = Array(ids.prefix(Int(count)))
-            // 去重 + 排除已休眠的 display（isActive=0）
-            var seen = Set<CGDirectDisplayID>()
-            return list.filter { id in
-                guard !seen.contains(id) else { return false }
-                seen.insert(id)
-                return CGDisplayIsActive(id) != 0 || NSScreen.screens.contains(where: { s in
-                    (s.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) == id
-                })
-            }
-        }
-
-        // 2) ScreenCaptureKit：副路
-        var result: [CGDirectDisplayID] = []
-        let group = DispatchGroup()
-        group.enter()
-        Task { @MainActor in
-            if let content = try? await SCShareableContent.current {
-                result = content.displays.map { $0.displayID }
-            }
-            group.leave()
-        }
-        _ = group.wait(timeout: .now() + 2)
-        if !result.isEmpty { return result }
-
-        // 3) NSScreen：终极兜底
-        return NSScreen.screens.compactMap { screen in
-            screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
-        }
-    }
+    // 优先使用 screencapture -D 截取所有显示器，然后用 NSScreen 坐标裁剪分屏。
+    // 如果 screencapture -D 失败（权限不足等），回退到 ScreenCaptureKit 逐屏拍摄。
 
     func captureAllScreens() {
         requestScreenCaptureIfNeeded()
 
-        Task { @MainActor in
-            // 1) 多源拿到所有 displayID（去重 + 跳过休眠屏）
-            let displayIDs = self.enumerateAllDisplayIDs()
-            guard !displayIDs.isEmpty else {
-                self.notify(title: "多屏截图失败", body: "未找到任何显示器")
+        Task {
+            // 方案 A：screencapture -D 截取所有显示器（简单可靠）
+            let allScreensPath = (NSTemporaryDirectory() as NSString)
+                .appendingPathComponent("all_screens_\(Self.filenameFormatter.string(from: Date())).png")
+            ensureParentDirectoryExists(for: allScreensPath)
+
+            let (code, _) = await runScreencapture(args: ["-D", allScreensPath])
+
+            if code == 0, FileManager.default.fileExists(atPath: allScreensPath),
+               let fullImage = NSImage(contentsOfFile: allScreensPath) {
+                // screencapture -D 成功：裁剪各屏幕
+                await handleMultiScreenResult(fullImage: fullImage)
+                try? FileManager.default.removeItem(atPath: allScreensPath)
                 return
             }
 
-            // 2) 逐屏拍
-            var capturedImages: [(screen: NSScreen?, image: NSImage, index: Int, displayID: CGDirectDisplayID)] = []
-            let isTemp = (outputMode == .clipboardOnly)
-            let dir = isTemp ? NSTemporaryDirectory() : ((defaultPath(isMovie: false) as NSString).expandingTildeInPath as NSString).deletingLastPathComponent
-            ensureParentDirectoryExists(for: dir)
+            // 方案 B：ScreenCaptureKit 逐屏拍摄（回退）
+            await captureAllScreensViaScreenCaptureKit()
+        }
+    }
+
+    /// 处理 screencapture -D 的全屏结果，裁剪出各显示器区域
+    private func handleMultiScreenResult(fullImage: NSImage) {
+        let screens = NSScreen.screens
+        guard screens.count > 1 else {
+            // 单屏：直接预览
+            showPreviewWindow(image: fullImage)
+            notify(title: "多屏截图", body: "已捕获 1 个屏幕的截图")
+            return
+        }
+
+        guard let fullRep = fullImage.representations.first,
+              let fullCG = fullRep.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            notify(title: "多屏截图失败", body: "无法解析截图数据")
+            return
+        }
+
+        let primaryFrame = screens.first?.frame ?? .zero
+        let fullSize = fullImage.size
+
+        var capturedImages: [(screen: NSScreen, image: NSImage, index: Int)] = []
+        for (idx, screen) in screens.enumerated() {
+            let frame = screen.frame
+            let scale = screen.backingScaleFactor
+            // NSScreen 坐标（左下角原点）→ CGImage 坐标（左上角原点）
+            let x = (frame.origin.x - primaryFrame.origin.x) * scale
+            let y = (primaryFrame.maxY - frame.maxY) * scale
+            let w = frame.width * scale
+            let h = frame.height * scale
+
+            let cropRect = CGRect(x: x, y: y, width: w, height: h)
+                .intersection(CGRect(origin: .zero, size: CGSize(width: fullSize.width * scale, height: fullSize.height * scale)))
+                .intersection(CGRect(origin: .zero, size: CGSize(width: fullCG.width, height: fullCG.height)))
+
+            guard cropRect.width > 0, cropRect.height > 0,
+                  let cropped = fullCG.cropping(to: cropRect) else { continue }
+
+            let nsImage = NSImage(cgImage: cropped, size: NSSize(width: cropped.width, height: cropped.height))
+            capturedImages.append((screen: screen, image: nsImage, index: idx + 1))
+        }
+
+        guard !capturedImages.isEmpty else {
+            notify(title: "多屏截图失败", body: "未能裁剪出任何屏幕")
+            return
+        }
+
+        if capturedImages.count == 1 {
+            showPreviewWindow(image: capturedImages[0].image)
+        } else {
+            openMultiScreenPreview(capturedImages)
+        }
+        notify(title: "多屏截图", body: "已捕获 \(capturedImages.count) 个屏幕的截图")
+    }
+
+    /// ScreenCaptureKit 逐屏拍摄（回退方案）
+    private func captureAllScreensViaScreenCaptureKit() {
+        Task {
+            var capturedImages: [(screen: NSScreen, image: NSImage, index: Int)] = []
+            let displayIDs = await Self.fetchDisplayIDsViaSC()
+
+            guard !displayIDs.isEmpty else {
+                await MainActor.run {
+                    self.notify(title: "多屏截图失败", body: "未找到任何显示器")
+                }
+                return
+            }
+
+            let primaryFrame = NSScreen.screens.first?.frame ?? .zero
 
             for (idx, displayID) in displayIDs.enumerated() {
-                let fileName = isTemp
-                    ? "screen_\(displayID)_\(UUID().uuidString).png"
-                    : "screenshot_multi_\(displayID)_\(Self.filenameFormatter.string(from: Date())).png"
-                let resolved = (dir as NSString).appendingPathComponent(fileName)
+                guard let cgImage = await Self.captureSingleDisplay(displayID) else { continue }
 
-                // 关键参数：-D<displayID>  指定要拍哪块屏幕
-                // -x: 静音
-                let args = ["-x", "-D\(displayID)", resolved]
-                let (code, stderr) = await runScreencapture(args: args)
-                guard code == 0, FileManager.default.fileExists(atPath: resolved) else {
-                    if code != 1 {
-                        self.notify(title: "显示器 #\(idx+1) 截图失败",
-                               body: stderr.isEmpty ? "请检查屏幕录制权限" : stderr)
+                if let screen = NSScreen.screens.first(where: {
+                    ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) == displayID
+                }) {
+                    let frame = screen.frame
+                    let scale = screen.backingScaleFactor
+                    let x = (frame.origin.x - primaryFrame.origin.x) * scale
+                    let flippedY = (primaryFrame.maxY - frame.maxY) * scale
+                    let cropRect = CGRect(x: x, y: flippedY,
+                                          width: frame.width * scale,
+                                          height: frame.height * scale)
+                        .intersection(CGRect(origin: .zero, size: CGSize(width: cgImage.width, height: cgImage.height)))
+                    if cropRect.width > 0, cropRect.height > 0,
+                       let cropped = cgImage.cropping(to: cropRect) {
+                        let nsImage = NSImage(cgImage: cropped, size: NSSize(width: cropped.width, height: cropped.height))
+                        capturedImages.append((screen: screen, image: nsImage, index: idx + 1))
                     }
-                    continue
-                }
-
-                if let img = NSImage(contentsOfFile: resolved) {
-                    let matchingScreen = NSScreen.screens.first(where: { s in
-                        let id = (s.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) ?? 0
-                        return id == displayID
-                    })
-                    capturedImages.append((screen: matchingScreen, image: img, index: idx + 1, displayID: displayID))
                 }
             }
 
-            // 3) 报告结果
             guard !capturedImages.isEmpty else {
-                self.notify(title: "多屏截图失败", body: "未能成功拍摄任何显示器")
+                await MainActor.run {
+                    self.notify(title: "多屏截图失败", body: "未能成功拍摄任何显示器（请检查屏幕录制权限）")
+                }
                 return
             }
 
-            // 4) 一张：当成单屏流程；多张：开多屏预览
-            if capturedImages.count == 1 {
-                let img = capturedImages[0].image
-                self.showPreviewWindow(image: img)
-                if self.outputMode == .clipboardOnly || self.outputMode == .both {
-                    // 单屏：把刚生成的文件路径找到塞剪贴板
-                    // 简化为：弹预览窗口里已有"复制到剪贴板"按钮
+            await MainActor.run {
+                if capturedImages.count == 1 {
+                    self.showPreviewWindow(image: capturedImages[0].image)
                 } else {
-                    self.notify(title: "截图成功", body: "屏幕截图已保存至桌面")
-                }
-            } else {
-                // 适配 openMultiScreenPreview 的入参类型（不要 displayID）
-                let pairs: [(screen: NSScreen, image: NSImage, index: Int)] = capturedImages.compactMap { tuple in
-                    guard let s = tuple.screen else { return nil }
-                    return (s, tuple.image, tuple.index)
-                }
-                if pairs.isEmpty {
-                    // 全是空（理论上不会发生）—— 弹首张图兜底
-                    if let first = capturedImages.first {
-                        self.showPreviewWindow(image: first.image)
-                    }
-                } else {
-                    self.openMultiScreenPreview(pairs)
+                    self.openMultiScreenPreview(capturedImages)
                 }
                 self.notify(title: "多屏截图",
-                       body: "已捕获 \(capturedImages.count) 个屏幕的截图（displayID: \(displayIDs.map(String.init).joined(separator: ", "))）")
+                       body: "已捕获 \(capturedImages.count) 个屏幕的截图")
+            }
+        }
+    }
+
+    /// ScreenCaptureKit 获取所有 displayID（辅助）
+    private static func fetchDisplayIDsViaSC() async -> [CGDirectDisplayID] {
+        guard let content = try? await SCShareableContent.current else { return [] }
+        return content.displays.map { $0.displayID }
+    }
+
+    /// ScreenCaptureKit 拍摄单个显示器（返回 CGImage 或 nil）
+    private static func captureSingleDisplay(_ displayID: CGDirectDisplayID) async -> CGImage? {
+        guard let content = try? await SCShareableContent.current,
+              let display = content.displays.first(where: { $0.displayID == displayID }) else {
+            return nil
+        }
+        let filter = SCContentFilter(display: display, excludingApplications: [], exceptingWindows: [])
+        let config = SCScreenshotConfiguration()
+        config.showsCursor = false
+        return await withCheckedContinuation { continuation in
+            SCScreenshotManager.captureScreenshot(contentFilter: filter, configuration: config) { output, _ in
+                continuation.resume(returning: output?.image ?? output?.sdrImage)
             }
         }
     }
@@ -689,10 +789,18 @@ final class ScreenMediaHelper: ObservableObject {
             self?.floatingWindows.removeValue(forKey: id)
         }
         floatingWindows[id] = window
+
+        // 确保窗口在最前面
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFront(nil)
     }
 
     private func openMultiScreenPreview(_ screens: [(screen: NSScreen, image: NSImage, index: Int)]) {
-        let previewView = MultiScreenPreviewView(screens: screens)
+        let id = UUID()
+        let previewView = MultiScreenPreviewView(screens: screens) { [weak self] in
+            self?.floatingWindows.removeValue(forKey: id)
+        }
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 620, height: 420),
             styleMask: [.titled, .closable, .resizable],
@@ -701,10 +809,15 @@ final class ScreenMediaHelper: ObservableObject {
         )
         window.title = "多屏截图预览"
         window.isReleasedWhenClosed = false
+        window.level = .floating
         window.contentView = NSHostingView(rootView: previewView)
         window.center()
-        window.makeKeyAndOrderFront(nil)
+
+        floatingWindows[id] = window
+
         NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 
     private func openAnnotationEditor(imagePath: String) {
@@ -856,6 +969,7 @@ struct FloatingPreviewContentView: View {
 
 struct MultiScreenPreviewView: View {
     let screens: [(screen: NSScreen, image: NSImage, index: Int)]
+    var onClose: (() -> Void)?
     @State private var selectedIndex: Int? = nil
     @State private var savedIndices: Set<Int> = []
 
@@ -920,7 +1034,7 @@ struct MultiScreenPreviewView: View {
                         saveScreen(item.image, suffix: "screen\(item.index)")
                         savedIndices.insert(item.index)
                     }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { NSApp.keyWindow?.close() }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { onClose?() }
                 }
                 .buttonStyle(.bordered)
 
@@ -930,7 +1044,7 @@ struct MultiScreenPreviewView: View {
                         let pb = NSPasteboard.general
                         pb.clearContents()
                         pb.writeObjects([item.image])
-                        NSApp.keyWindow?.close()
+                        onClose?()
                     }
                 }
                 .buttonStyle(.bordered)

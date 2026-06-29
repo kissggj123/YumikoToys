@@ -1231,10 +1231,19 @@ final class AIChatViewModel: ObservableObject {
             let pipe = Pipe()
             process.standardOutput = pipe
             process.standardError = pipe
-            try process.run()
-            process.waitUntilExit()
+            
+            let exitCode: Int32 = await withCheckedContinuation { continuation in
+                process.terminationHandler = { proc in
+                    continuation.resume(returning: proc.terminationStatus)
+                }
+                do {
+                    try process.run()
+                } catch {
+                    continuation.resume(returning: -1)
+                }
+            }
 
-            guard process.terminationStatus == 0 else {
+            guard exitCode == 0 else {
                 try? FileManager.default.removeItem(at: tmpDir)
                 return SkillImportResult(success: false, message: "⚠️ ZIP 文件解压失败，请确认文件格式正确。")
             }

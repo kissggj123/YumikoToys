@@ -100,9 +100,18 @@ final class ScreenshotAnnotationViewModel: ObservableObject {
     // MARK: - 文字编辑
 
     func beginCreateText(at point: CGPoint) {
-        editingTextId = nil
+        // 直接创建一个可编辑的文字框
+        let newPath = AnnotationPath(
+            tool: .text,
+            points: [point],
+            color: annotationColor,
+            width: strokeWidth,
+            text: ""
+        )
+        addPath(newPath)
+        selectedPathId = newPath.id
+        editingTextId = newPath.id
         textInputContent = ""
-        textInputPosition = point
         showTextInput = true
     }
 
@@ -114,19 +123,15 @@ final class ScreenshotAnnotationViewModel: ObservableObject {
 
     func commitText() {
         defer { showTextInput = false }
-        guard !textInputContent.isEmpty else { return }
+        guard !textInputContent.isEmpty else {
+            // 如果内容为空，删除该文字框
+            if let editId = editingTextId {
+                removePath(with: editId)
+            }
+            return
+        }
         if let editId = editingTextId {
             updatePath(with: editId) { $0.text = self.textInputContent }
-        } else {
-            addPath(
-                AnnotationPath(
-                    tool: .text,
-                    points: [textInputPosition],
-                    color: annotationColor,
-                    width: strokeWidth,
-                    text: textInputContent
-                )
-            )
         }
     }
 
@@ -157,6 +162,19 @@ final class ScreenshotAnnotationViewModel: ObservableObject {
 
         for path in paths {
             switch path.tool {
+            case .mosaicBrush:
+                // 画笔式马赛克：沿路径点逐个应用圆形马赛克效果
+                let brushRadius = max(8, path.width) * displayToPixelScale
+                for point in path.points {
+                    let imgRect = NSRect(
+                        x: (point.x - brushRadius / displayToPixelScale) * displayToPixelScale,
+                        y: (canvasH - point.y - brushRadius / displayToPixelScale) * displayToPixelScale,
+                        width: brushRadius * 2,
+                        height: brushRadius * 2
+                    )
+                    let tool: MosaicTool = .pixelate(blockSize: max(4, brushRadius * 0.6))
+                    current = mosaicRenderer.apply(tool, rect: imgRect, to: current)
+                }
             case .mosaicPixel, .mosaicBlur:
                 guard let r = path.rect, r.width > 0, r.height > 0 else { continue }
                 let imgRect = NSRect(
@@ -319,6 +337,9 @@ final class ScreenshotAnnotationViewModel: ObservableObject {
                 withAttributes: attrs
             )
 
+        case .mosaicBrush:
+            // 画笔式马赛克已在像素层完成，此处不重复处理
+            break
         case .mosaicPixel, .mosaicBlur:
             // 已在像素层完成，此处不重复处理
             break
@@ -389,6 +410,7 @@ final class MosaicPreview {
 // MARK: - 数据结构
 
 enum AnnotationTool: String, CaseIterable, Sendable {
+    case mosaicBrush = "mosaicBrush"
     case mosaicPixel = "mosaicPixel"
     case mosaicBlur  = "mosaicBlur"
     case frame       = "frame"
@@ -400,6 +422,7 @@ enum AnnotationTool: String, CaseIterable, Sendable {
 
     var displayName: String {
         switch self {
+        case .mosaicBrush: return "马赛克"
         case .mosaicPixel: return "像素化"
         case .mosaicBlur:  return "模糊"
         case .frame:       return "画框"
@@ -413,6 +436,7 @@ enum AnnotationTool: String, CaseIterable, Sendable {
 
     var icon: String {
         switch self {
+        case .mosaicBrush: return "paintbrush"
         case .mosaicPixel: return "squareshape.split.3x3"
         case .mosaicBlur:  return "aqi.medium"
         case .frame:       return "rectangle"
@@ -425,11 +449,11 @@ enum AnnotationTool: String, CaseIterable, Sendable {
     }
 
     var isMosaic: Bool {
-        self == .mosaicPixel || self == .mosaicBlur
+        self == .mosaicPixel || self == .mosaicBlur || self == .mosaicBrush
     }
 
-    var isFreehand: Bool {  // 跟随鼠标轨迹
-        self == .line
+    var isFreehand: Bool {
+        self == .line || self == .mosaicBrush
     }
 }
 
@@ -566,6 +590,33 @@ struct ScreenshotAnnotationView: View {
                 .frame(width: canvas.width, height: canvas.height)
                 .position(x: offset.x + canvas.width  / 2,
                           y: offset.y + canvas.height / 2)
+
+                // 可拖拽文字框覆盖层
+                ForEach(vm.paths.filter { $0.tool == .text }, id: \.id) { path in
+                    DraggableTextView(
+                        path: path,
+                        isSelected: vm.selectedPathId == path.id,
+                        onTap: {
+                            vm.selectedPathId = path.id
+                        },
+                        onDoubleTap: {
+                            vm.beginEditText(path)
+                        },
+                        onDragChanged: { delta in
+                            vm.updatePath(with: path.id) { p in
+                                p.offset = CGSize(
+                                    width: p.offset.width + delta.width,
+                                    height: p.offset.height + delta.height
+                                )
+                            }
+                        }
+                    )
+                    .fixedSize()
+                    .position(
+                        x: offset.x + (path.points.first?.x ?? 0) + path.offset.width + 50,
+                        y: offset.y + (path.points.first?.y ?? 0) + path.offset.height + 15
+                    )
+                }
             }
             .onAppear { vm.canvasSize = canvas; vm.mosaicPreview.setDisplaySize(canvas) }
             .onChange(of: canvas) { _, newSize in
@@ -599,6 +650,14 @@ struct ScreenshotAnnotationView: View {
         switch vm.tool {
         case .text, .number:
             return  // 由 tap 处理
+        case .mosaicBrush:
+            // 画笔式马赛克：创建路径，收集点
+            vm.currentPath = AnnotationPath(
+                tool: .mosaicBrush,
+                points: [pt],
+                color: .gray,
+                width: vm.strokeWidth
+            )
         default:
             vm.currentPath = AnnotationPath(
                 tool: vm.tool,
@@ -612,23 +671,33 @@ struct ScreenshotAnnotationView: View {
 
     private func dragMoved(to pt: CGPoint) {
         guard var current = vm.currentPath else { return }
-        current.points.append(pt)
-        if vm.tool != .line, let start = current.points.first {
-            current.rect = CGRect(
-                x: min(start.x, pt.x), y: min(start.y, pt.y),
-                width: abs(pt.x - start.x), height: abs(pt.y - start.y)
-            )
+        if vm.tool == .mosaicBrush {
+            // 画笔式马赛克：持续收集点
+            current.points.append(pt)
+        } else {
+            current.points.append(pt)
+            if vm.tool != .line, let start = current.points.first {
+                current.rect = CGRect(
+                    x: min(start.x, pt.x), y: min(start.y, pt.y),
+                    width: abs(pt.x - start.x), height: abs(pt.y - start.y)
+                )
+            }
         }
         vm.currentPath = current
     }
 
     private func dragEnded(at pt: CGPoint) {
         guard var current = vm.currentPath else { return }
-        if let start = current.points.first, vm.tool != .line {
-            current.rect = CGRect(
-                x: min(start.x, pt.x), y: min(start.y, pt.y),
-                width: abs(pt.x - start.x), height: abs(pt.y - start.y)
-            )
+        if vm.tool == .mosaicBrush {
+            // 画笔式马赛克：结束时添加路径
+            current.points.append(pt)
+        } else {
+            if let start = current.points.first, vm.tool != .line {
+                current.rect = CGRect(
+                    x: min(start.x, pt.x), y: min(start.y, pt.y),
+                    width: abs(pt.x - start.x), height: abs(pt.y - start.y)
+                )
+            }
         }
         vm.addPath(current)
         vm.currentPath = nil
@@ -649,7 +718,7 @@ struct ScreenshotAnnotationView: View {
             )
             vm.numberCounter += 1
         case .text:
-            // 先看是否命中已有文字
+            // 先看是否命中已有文字框
             for path in vm.paths where path.tool == .text {
                 guard let origin = path.points.first else { continue }
                 let fontSize = max(10, path.width * 3)
@@ -662,10 +731,12 @@ struct ScreenshotAnnotationView: View {
                     height: fontSize + 8
                 )
                 if r.contains(pt) {
+                    vm.selectedPathId = path.id
                     vm.beginEditText(path)
                     return
                 }
             }
+            // 创建新的可编辑文字框
             vm.beginCreateText(at: pt)
         default:
             break
@@ -797,6 +868,22 @@ struct AnnotationCanvas: View {
     private func draw(_ path: AnnotationPath, in context: inout GraphicsContext) {
         switch path.tool {
 
+        case .mosaicBrush:
+            // 画笔式马赛克：沿路径点逐个应用圆形马赛克效果
+            let brushRadius = max(8, path.width)
+            for point in path.points {
+                let rect = CGRect(
+                    x: point.x - brushRadius,
+                    y: point.y - brushRadius,
+                    width: brushRadius * 2,
+                    height: brushRadius * 2
+                )
+                let tool: MosaicTool = .pixelate(blockSize: max(4, brushRadius * 0.6))
+                if let tile = vm.mosaicPreview.renderTile(tool: tool, rect: rect) {
+                    context.draw(Image(nsImage: tile), in: rect)
+                }
+            }
+
         case .mosaicPixel, .mosaicBlur:
             guard let rect = path.rect, rect.width > 0, rect.height > 0 else { return }
             let tool: MosaicTool = path.tool == .mosaicPixel
@@ -856,6 +943,7 @@ struct AnnotationCanvas: View {
             }
 
         case .text:
+            // 文字现在由 DraggableTextView 覆盖层处理，Canvas 中只绘制选中框
             if let text = path.text, let point = path.points.first {
                 let fontSize = path.width * 3
                 let drawPoint = CGPoint(x: point.x + path.offset.width, y: point.y + path.offset.height)
@@ -864,15 +952,6 @@ struct AnnotationCanvas: View {
                     x: drawPoint.x - 4, y: drawPoint.y - 2,
                     width: approxW + 8, height: fontSize + 6
                 )
-                context.fill(Path(roundedRect: bgRect, cornerSize: CGSize(width: 4, height: 4)),
-                             with: .color(.black.opacity(0.6)))
-                let resolved = context.resolve(
-                    Text(text)
-                        .font(.system(size: fontSize, weight: .semibold))
-                        .foregroundStyle(path.color)
-                )
-                context.draw(resolved, at: drawPoint, anchor: .topLeading)
-
                 if path.id == vm.selectedPathId {
                     context.stroke(Path(bgRect.insetBy(dx: -3, dy: -3)),
                                    with: .color(.blue), lineWidth: 1.5)
@@ -901,6 +980,65 @@ struct AnnotationCanvas: View {
     }
 }
 
+// MARK: - 可拖拽文字框
+
+struct DraggableTextView: View {
+    let path: AnnotationPath
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onDoubleTap: () -> Void
+    let onDragChanged: (CGSize) -> Void
+
+    @State private var isDragging = false
+    @State private var lastTranslation: CGSize = .zero
+
+    var body: some View {
+        let fontSize = max(10, path.width * 3)
+        let text = path.text ?? ""
+
+        Text(text.isEmpty ? "点击输入文字" : text)
+            .font(.system(size: fontSize, weight: .semibold))
+            .foregroundStyle(text.isEmpty ? .gray : path.color)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .frame(minWidth: 60, maxWidth: 300, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.black.opacity(0.5))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 1.5)
+            )
+            .opacity(isDragging ? 0.7 : 1.0)
+            .onTapGesture(count: 2) {
+                onDoubleTap()
+            }
+            .onTapGesture(count: 1) {
+                onTap()
+            }
+            .gesture(
+                DragGesture(minimumDistance: 2)
+                    .onChanged { value in
+                        if !isDragging {
+                            isDragging = true
+                            lastTranslation = .zero
+                        }
+                        let delta = CGSize(
+                            width: value.translation.width - lastTranslation.width,
+                            height: value.translation.height - lastTranslation.height
+                        )
+                        lastTranslation = value.translation
+                        onDragChanged(delta)
+                    }
+                    .onEnded { _ in
+                        isDragging = false
+                        lastTranslation = .zero
+                    }
+            )
+    }
+}
+
 // MARK: - 共享扩展（PNG 保存）
 
 extension NSImage {
@@ -908,7 +1046,12 @@ extension NSImage {
         guard let cgImage = self.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return false }
         let url = URL(fileURLWithPath: path)
         guard let dst = CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil) else { return false }
-        CGImageDestinationAddImage(dst, cgImage, nil)
+        let colorSpace = cgImage.colorSpace ?? CGColorSpace(name: CGColorSpace.displayP3)!
+        let properties: [CFString: Any] = [
+            kCGImagePropertyColorModel: "RGB",
+            kCGImagePropertyProfileName: colorSpace.name ?? "Display P3"
+        ]
+        CGImageDestinationAddImage(dst, cgImage, properties as CFDictionary)
         return CGImageDestinationFinalize(dst)
     }
 }

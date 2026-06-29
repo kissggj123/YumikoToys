@@ -221,6 +221,8 @@ final class AnniversaryService: AnniversaryServiceProtocol {
     /// 外部强制同步 Widget 数据并刷新 Timeline（如样式切换后立即生效）
     func forceSyncAndReloadWidget() {
         syncWidgetData(forceReload: true)
+        // 额外调用 reloadAllTimelines 确保所有 Widget 都刷新
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// 智能同步 Widget 并刷新
@@ -239,7 +241,10 @@ final class AnniversaryService: AnniversaryServiceProtocol {
             if let sharedDefaults = UserDefaults(suiteName: "group.com.Lite.YumikoToys") {
                 sharedDefaults.synchronize()
             }
+            // 刷新桌面 Widget
             WidgetCenter.shared.reloadTimelines(ofKind: "YumikoWidget")
+            // 同时刷新所有 Widget（包括控制中心 Widget）
+            WidgetCenter.shared.reloadAllTimelines()
             LoggerService.shared.info("Widget timeline reloaded for: \(anniversary.title)")
         }
     }

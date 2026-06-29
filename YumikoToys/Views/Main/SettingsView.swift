@@ -992,86 +992,96 @@ struct SettingsView: View {
                     .foregroundStyle(.tertiary)
                     .padding(.top, 2)
 
-                // --- 控制中心 widget 使用说明（macOS 26+）---
+                // --- Widget 使用说明（合并通知中心 + 控制中心）---
                 Divider().padding(.vertical, 4)
 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
-                        Image(systemName: "switch.2")
+                        Image(systemName: "widget.small")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color(hex: "AF52DE"))
-                        Text("控制中心 widget")
+                            .foregroundStyle(Color(hex: "007AFF"))
+                        Text("添加 Widget 到系统")
                             .font(.system(size: 12, weight: .semibold))
                         Spacer()
-                        Text("macOS 26+")
-                            .font(.system(size: 9, weight: .medium))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                Capsule().fill(Color(hex: "AF52DE").opacity(0.15))
-                            )
-                            .foregroundStyle(Color(hex: "AF52DE"))
                     }
 
-                    Text("YumikoToys 提供了控制中心小组件，可以在菜单栏下拉的控制中心里一键点按启动主 App。")
+                    Text("YumikoToys 提供两种 Widget：通知中心/桌面组件（显示天数详情）和控制中心组件（一键启动 App）。")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    // 三步走
+                    // 通知中心步骤
                     VStack(alignment: .leading, spacing: 4) {
-                        stepRow(num: "1", text: "打开控制中心（点按菜单栏右上角  或三指右滑）")
+                        Text("通知中心 / 桌面组件")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        stepRow(num: "1", text: "点击菜单栏右上角时间区域打开通知中心")
+                        stepRow(num: "2", text: "点击底部「编辑小组件」按钮")
+                        stepRow(num: "3", text: "搜索「YumikoToys」并添加")
+                    }
+                    .padding(.leading, 4)
+
+                    // 控制中心步骤
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 4) {
+                            Text("控制中心组件")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(.primary)
+                            Text("macOS 26+")
+                                .font(.system(size: 8, weight: .medium))
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(Capsule().fill(Color(hex: "AF52DE").opacity(0.15)))
+                                .foregroundStyle(Color(hex: "AF52DE"))
+                        }
+                        stepRow(num: "1", text: "打开控制中心（点按菜单栏右上角或三指右滑）")
                         stepRow(num: "2", text: "点底部的「编辑控制中心」")
                         stepRow(num: "3", text: "在「快捷指令 / App 控制」里把「YumikoToys」加进去")
                     }
                     .padding(.leading, 4)
 
-                    // 一键直达控制中心设置
+                    // 按钮组
                     HStack(spacing: 8) {
-                        Button(action: {
-                            openSystemControlCenter()
-                        }) {
+                        Button(action: { WidgetKitGuide.openNotificationCenter() }) {
                             HStack(spacing: 4) {
-                                Image(systemName: "gear")
-                                    .font(.system(size: 10))
-                                Text("打开系统控制中心设置")
-                                    .font(.system(size: 11, weight: .medium))
+                                Image(systemName: "bell.badge").font(.system(size: 10))
+                                Text("通知中心设置").font(.system(size: 11, weight: .medium))
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color(hex: "AF52DE").opacity(0.15))
-                            )
-                            .foregroundStyle(Color(hex: "AF52DE"))
+                            .background(RoundedRectangle(cornerRadius: 6).fill(Color(hex: "007AFF").opacity(0.15)))
+                            .foregroundStyle(Color(hex: "007AFF"))
                         }
                         .buttonStyle(.plain)
 
-                        Button(action: {
-                            WidgetKitGuide.openNotificationCenter()
-                        }) {
+                        Button(action: { openSystemControlCenter() }) {
                             HStack(spacing: 4) {
-                                Image(systemName: "bell.badge")
-                                    .font(.system(size: 10))
-                                Text("通知中心 / 桌面组件")
-                                    .font(.system(size: 11, weight: .medium))
+                                Image(systemName: "gear").font(.system(size: 10))
+                                Text("控制中心设置").font(.system(size: 11, weight: .medium))
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.primary.opacity(0.08))
-                            )
-                            .foregroundStyle(.primary)
+                            .background(RoundedRectangle(cornerRadius: 6).fill(Color(hex: "AF52DE").opacity(0.15)))
+                            .foregroundStyle(Color(hex: "AF52DE"))
                         }
                         .buttonStyle(.plain)
                     }
                     .padding(.top, 2)
 
-                    Text("小提示：桌面 / 通知中心组件的样式由上面「Widget 样式」决定；控制中心 widget 启动主 App。")
+                    Text("小提示：组件样式由上面「Widget 样式」决定；修改后可能需要等待几秒才会刷新。")
                         .font(.system(size: 9))
                         .foregroundStyle(.tertiary)
                         .padding(.top, 2)
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(hex: "007AFF").opacity(0.06))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(hex: "007AFF").opacity(0.25), lineWidth: 1)
+                )
                 }
                 .padding(10)
                 .background(

@@ -1204,7 +1204,7 @@ struct StatusBarView: View {
                     }
 
                     // 授权诊断（解决"明明开了开关但提示未授权"）
-                    Button(action: { TCCDiagnostic.showScreenCaptureDiagnostic() }) {
+                    Button(action: { Task { await TCCDiagnostic.showScreenCaptureDiagnostic() } }) {
                         HStack {
                             Image(systemName: "stethoscope.circle")
                             Text("诊断授权状态").font(.system(size: 11, weight: .medium))

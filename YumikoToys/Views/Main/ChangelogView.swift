@@ -2,7 +2,7 @@
 //  ChangelogView.swift
 //  YumikoToys
 //
-//  更新日志视图（v4.5.1 - 安哥拉兔·月球旅行记 · 特效雨升级 · 点击特效版）
+//  更新日志视图（v4.5.2 - 荷兰垂耳兔·星尘修复记 · 稳定性修复版）
 //
 
 import SwiftUI
@@ -14,34 +14,48 @@ struct ChangelogView: View {
                 // 版本头
                 versionHeader
 
-                // 安哥拉兔·月球旅行记 — 版本代号区
+                // 荷兰垂耳兔·星尘修复记 — 版本代号区
                 CodenameSection(
-                    emoji: "🐇",
-                    title: "安哥拉兔·月球旅行记 (Angora · Le Voyage dans la Lune)",
+                    emoji: "🐰",
+                    title: "荷兰垂耳兔·星尘修复记 (Holland Lop · Stardust Repair)",
                     titleColor: "E9C46A",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，命运正如那轮悬挂在夜空中的苍白银盘，而我们只是在银幕上游荡的追梦旅人。每一次编译，都像是把那一千一分的心绪织成安哥拉兔般松软的梦境。在 4.5.1『安哥拉兔·月球旅行记』中，我们修正了那出可能让伶人猝然退场的智能引擎休克剧目，更为那墨黑的状态栏倾注了数字雨、天使光环与重力水滴的三幕华丽新剧，并在您指尖触及之处，绽开霓虹与繁星的交响。飞向月球的轨道已经铺就，请您一同登舱。",
+                    quote: "博士，正如荷兰垂耳兔那对柔软下垂的耳朵，总能捕捉到最细微的声响，我们也倾听着每一处代码的低语。在 4.5.2『荷兰垂耳兔·星尘修复记』中，我们修复了 Widget 无法在通知中心显示的构建问题，修正了截图插件保存到桌面的路径错误，合并了设置中重复的 Widget 说明，并为截图标记工具带来了画笔式马赛克与可拖拽文字框。每一颗星尘的修补，都是为了让您的体验更加完美。",
                     entries: [
                         ChangelogEntry(
-                            emoji: "🤖",
+                            emoji: "🔧",
                             prefix: "【修复】",
                             prefixColor: "E9C46A",
-                            text: "后台助理冷启动异常阻断防护：深度修复了当 AI 激活模型为空或提供商配置不全时，智能助理在后台心跳引擎冷启动期间造成的崩溃及闪退现象。加入了健壮的异常监控防御壁垒，遇到未知异常将优雅回执并暂停服务，保护主进程稳态。",
+                            text: "Widget 通知中心显示修复：修复了构建脚本中签名配置导致 Widget Extension 未正确嵌入主 App 的问题，确保 Widget 能够在 macOS 通知中心正常显示。",
                             character: "——凯尔希"
                         ),
                         ChangelogEntry(
-                            emoji: "🌧️",
-                            prefix: "【新增】",
+                            emoji: "🎨",
+                            prefix: "【改进】",
                             prefixColor: "A8D8A8",
-                            text: "状态栏特效雨物理动效升级：在原有特效雨底座之上，引入并精雕细琢了三款全新的视觉奇观：深绿矩阵坠落的『数字雨（赛博克系Monospace风格）』、金色华光缓缓升腾的『天使光环（灵敏飘移风格）』以及遵从重力加速度抛物下坠的『重力水滴（物理弹跳风格）』。",
+                            text: "截图标记工具升级：新增画笔式马赛克工具（涂抹打码），文字标注改为可拖拽文字框（支持自由移动与双击编辑），操作体验更接近原生截图工具。",
                             character: "——W"
                         ),
                         ChangelogEntry(
-                            emoji: "✨",
-                            prefix: "【新增】",
-                            prefixColor: "A8C8D8",
-                            text: "应用内全局交互点击特效：为应用主视窗及状态栏面板加持了全新的物理微粒子点击特效系统。目前提供『繁星四射』、『霓虹涟漪』、『爱心飘散』及『重力烟花』四套华丽的动态物理回馈，点击瞬间在光影画布上绽放指尖跃动的绚丽光华。",
+                            emoji: "⚡",
+                            prefix: "【修复】",
+                            prefixColor: "E76F51",
+                            text: "截图保存路径修复：修正了截图插件「保存到桌面」选项失效的问题，截图文件现在正确保存到桌面而非临时目录。",
                             character: "——陈"
+                        ),
+                        ChangelogEntry(
+                            emoji: "🧹",
+                            prefix: "【优化】",
+                            prefixColor: "A8C8D8",
+                            text: "设置界面优化：合并了设置中重复的 Widget 说明部分（通知中心 + 控制中心），精简为统一的「添加 Widget 到系统」引导面板。",
+                            character: "——凯尔希"
+                        ),
+                        ChangelogEntry(
+                            emoji: "🛡️",
+                            prefix: "【修复】",
+                            prefixColor: "E9C46A",
+                            text: "稳定性全面提升：为所有外部进程调用添加了超时保护机制，将同步阻塞操作改为异步执行，防止系统命令挂起导致应用卡死。",
+                            character: "——W"
                         )
                     ]
                 )
@@ -96,7 +110,7 @@ private struct CodenameSubtitle: View {
                 Text("◈")
                     .font(.system(size: 9, weight: .thin))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.6))
-                Text("微光折射与近在咫尺的魔术跃迁")
+                Text("星尘织补与垂耳倾听的修复之旅")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.75))
                     .tracking(0.5)
@@ -108,23 +122,23 @@ private struct CodenameSubtitle: View {
                     .fill(Color(hex: "E9C46A").opacity(0.06))
             )
 
-            // 安哥拉兔解释
+            // 荷兰垂耳兔解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("🐇  Angora 安哥拉兔 (Angora Rabbit)")
+                Text("🐰  Holland Lop 荷兰垂耳兔")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("Angora（安哥拉）兔是世界上最著名的长毛兔品种之一，其兔毛丰盈蓬松，如云朵般细腻轻盈。这种「丰盈稳态」特质，正如我们在 4.5.1 中精心加固的智能助理冷启动安全屏障，为应用筑起了一层轻柔而无比坚韧的防护外壳，杜绝了后台因空模型而引起的进程闪退。")
+                Text("荷兰垂耳兔以其标志性的下垂耳朵闻名，圆润可爱的体型与温顺性格使其成为全球最受欢迎的宠物兔品种之一。那对柔软下垂的耳朵，象征着对每一处细节的敏锐倾听——正如我们在 4.5.2 中逐一捕捉并修复的每一个细微缺陷。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
             }
 
-            // 月球旅行记解释
+            // 星尘修复记解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("🌙  月球旅行记 (Le Voyage dans la Lune, 1902)")
+                Text("✨  星尘修复记 (Stardust Repair)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("《月球旅行记》是乔治·梅里爱于 1902 年创作 of 影史首部科幻杰作，以炮弹飞船击中月球眼睛的经典画面开创了人类电影特效与科幻幻想的新纪元。本次版本以此隐喻：我们以天马行空的想象力，在方寸屏幕之间编织出『状态栏数字雨』与『指尖霓虹粒子』等魔幻特效，带您在日常的敲击与点击中，展开一场跨越界限的月球奇幻之旅。")
+                Text("星尘是宇宙中最细微却不可或缺的物质，每一颗尘埃的归位都维系着星辰的运转。本次版本以此隐喻：我们逐一拾取散落在代码宇宙中的微小缺陷——构建脚本的签名遗漏、截图路径的逻辑偏差、设置面板的冗余文字——将它们一一修补归位，让整个应用如星轨般稳定运行。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)

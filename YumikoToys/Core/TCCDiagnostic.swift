@@ -69,9 +69,9 @@ enum TCCDiagnostic {
 
     /// 探测当前 App 的"屏幕录制"授权状态
     /// - Returns: 结构化的诊断结果
-    static func screenCaptureStatus() -> ScreenCaptureDiagnostic {
+    static func screenCaptureStatus() async -> ScreenCaptureDiagnostic {
         let bundleId = Bundle.main.bundleIdentifier ?? "unknown"
-        let identity = currentCodeSignIdentity()
+        let identity = await currentCodeSignIdentity()
         let preflight = CGPreflightScreenCaptureAccess()
 
         // 用"试运行"启发式判断：
@@ -133,7 +133,7 @@ enum TCCDiagnostic {
     }
 
     /// 探测当前 App 的代码签名身份
-    private static func currentCodeSignIdentity() -> String {
+    private static func currentCodeSignIdentity() async -> String {
         let path = Bundle.main.bundlePath
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
@@ -141,12 +141,22 @@ enum TCCDiagnostic {
         let pipe = Pipe()
         task.standardOutput = pipe
         task.standardError = pipe
-        do {
-            try task.run()
-            task.waitUntilExit()
-        } catch {
+        
+        let exitCode: Int32 = await withCheckedContinuation { continuation in
+            task.terminationHandler = { proc in
+                continuation.resume(returning: proc.terminationStatus)
+            }
+            do {
+                try task.run()
+            } catch {
+                continuation.resume(returning: -1)
+            }
+        }
+        
+        guard exitCode == 0 else {
             return "unknown"
         }
+        
         let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(),
                          encoding: .utf8) ?? ""
         // 取 "Authority=..." 后面第一行的值
@@ -180,8 +190,8 @@ enum TCCDiagnostic {
     }
 
     /// 显示一个简短的诊断报告（用 macOS 通知中心）
-    static func showScreenCaptureDiagnostic() {
-        let diag = screenCaptureStatus()
+    static func showScreenCaptureDiagnostic() async {
+        let diag = await screenCaptureStatus()
         let title = "屏幕录制授权：\(diag.status.displayText)"
         let body: String
         switch diag.status {

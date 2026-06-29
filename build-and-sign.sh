@@ -491,7 +491,7 @@ if [[ "$DO_CLEAN" -eq 1 ]]; then
         -scheme  "${SCHEME}" \
         -configuration "${CONFIGURATION}" \
         -derivedDataPath "${DERIVED_DATA_DIR}" \
-        CODE_SIGN_STYLE=None CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES \
         clean >"${DERIVED_DATA_DIR}/clean.log" 2>&1 || true
     # 额外把整个 DERIVED_DATA_DIR 清一遍，避免 Swift 模块缓存干扰
     rm -rf "${DERIVED_DATA_DIR}/Build"
@@ -512,7 +512,7 @@ xcodebuild \
     -scheme  "${SCHEME}" \
     -configuration "${CONFIGURATION}" \
     -derivedDataPath "${DERIVED_DATA_DIR}" \
-    CODE_SIGN_STYLE=None CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES \
     resolvePackageDependencies >"${DERIVED_DATA_DIR}/resolve.log" 2>&1 || true
 END_T=$(date +%s)
 spinner_stop "解析完成（$((END_T-START_T))s）"
@@ -546,10 +546,10 @@ xcodebuild \
     -scheme  "${SCHEME}" \
     -configuration "${CONFIGURATION}" \
     -derivedDataPath "${DERIVED_DATA_DIR}" \
-    CODE_SIGN_STYLE=None \
-    CODE_SIGN_IDENTITY="" \
-    CODE_SIGNING_REQUIRED=NO \
-    CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGN_STYLE=Manual \
+    CODE_SIGN_IDENTITY="-" \
+    CODE_SIGNING_REQUIRED=YES \
+    CODE_SIGNING_ALLOWED=YES \
     CODE_SIGNING_AUTOMATICALLY=NO \
     DEVELOPMENT_TEAM="" \
     PROVISIONING_PROFILE_SPECIFIER="" \

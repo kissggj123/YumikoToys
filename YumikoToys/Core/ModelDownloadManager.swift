@@ -590,8 +590,24 @@ final class OllamaSetupService: NSObject, ObservableObject, URLSessionDownloadDe
                 task.arguments = ["-c", unzipScript]
 
                 do {
-                    try task.run()
-                    task.waitUntilExit()
+                    let exitCode: Int32 = await withCheckedContinuation { continuation in
+                        task.terminationHandler = { proc in
+                            continuation.resume(returning: proc.terminationStatus)
+                        }
+                        do {
+                            try task.run()
+                        } catch {
+                            continuation.resume(returning: -1)
+                        }
+                    }
+                    
+                    guard exitCode == 0 else {
+                        await MainActor.run {
+                            self.status = .failed("解压安装失败，退出码: \(exitCode)")
+                        }
+                        return
+                    }
+                    
                     await MainActor.run {
                         self.status = .startingOllama
                         self.startPollingOllamaPort()

@@ -214,7 +214,7 @@ final class OfficeDocumentParser: Sendable {
             throw OfficeParseError.fileTooLarge(maxFileSize)
         }
 
-        let fileType = detectFileType(url: url)
+        let fileType = await detectFileType(url: url)
         logger.info("检测到文件类型: \(fileType.displayName)")
 
         guard fileType.isSupported else {
@@ -258,7 +258,7 @@ final class OfficeDocumentParser: Sendable {
 
     // MARK: - 文件类型检测
 
-    func detectFileType(url: URL) -> OfficeDocumentType {
+    func detectFileType(url: URL) async -> OfficeDocumentType {
         let ext = url.pathExtension.lowercased()
 
         switch ext {
@@ -276,11 +276,11 @@ final class OfficeDocumentParser: Sendable {
         case "key":     return .key
         default:
             logger.warning("未知文件扩展名: \(ext)，尝试通过 MIME 类型检测")
-            return detectFileTypeByMIME(url: url)
+            return await detectFileTypeByMIME(url: url)
         }
     }
 
-    private func detectFileTypeByMIME(url: URL) -> OfficeDocumentType {
+    private func detectFileTypeByMIME(url: URL) async -> OfficeDocumentType {
         guard let data = try? Data(contentsOf: url, options: .alwaysMapped),
               data.count >= 4 else {
             return .docx
@@ -290,7 +290,7 @@ final class OfficeDocumentParser: Sendable {
 
         if bytes.count >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4B
             && bytes[2] == 0x03 && bytes[3] == 0x04 {
-            if let type = detectZipBasedType(url: url) {
+            if let type = await detectZipBasedType(url: url) {
                 return type
             }
             return .docx
@@ -319,9 +319,9 @@ final class OfficeDocumentParser: Sendable {
         return .docx
     }
 
-    private func detectZipBasedType(url: URL) -> OfficeDocumentType? {
+    private func detectZipBasedType(url: URL) async -> OfficeDocumentType? {
         guard let tempDir = try? createTempDirectory(),
-              let _ = try? unzipFile(at: url, to: tempDir) else {
+              let _ = try? await unzipFile(at: url, to: tempDir) else {
             return nil
         }
 
@@ -355,7 +355,7 @@ final class OfficeDocumentParser: Sendable {
         try? FileManager.default.removeItem(at: url)
     }
 
-    private func unzipFile(at sourceURL: URL, to destinationURL: URL) throws -> URL {
+    private func unzipFile(at sourceURL: URL, to destinationURL: URL) async throws -> URL {
         logger.debug("解压文件: \(sourceURL.lastPathComponent) -> \(destinationURL.lastPathComponent)")
 
         let process = Process()
@@ -364,33 +364,46 @@ final class OfficeDocumentParser: Sendable {
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
 
-        do {
-            try process.run()
-            process.waitUntilExit()
-
-            guard process.terminationStatus == 0 else {
-                throw OfficeParseError.unzipFailed("ditto 命令退出码: \(process.terminationStatus)")
+        let exitCode: Int32 = await withCheckedContinuation { continuation in
+            process.terminationHandler = { proc in
+                continuation.resume(returning: proc.terminationStatus)
             }
-        } catch {
-            logger.warning("ditto 解压失败，尝试 unzip 命令: \(error.localizedDescription)")
-            try unzipWithUnzipCommand(at: sourceURL, to: destinationURL)
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(returning: -1)
+            }
+        }
+
+        guard exitCode == 0 else {
+            logger.warning("ditto 解压失败，尝试 unzip 命令")
+            try await unzipWithUnzipCommand(at: sourceURL, to: destinationURL)
+            return destinationURL
         }
 
         return destinationURL
     }
 
-    private func unzipWithUnzipCommand(at sourceURL: URL, to destinationURL: URL) throws {
+    private func unzipWithUnzipCommand(at sourceURL: URL, to destinationURL: URL) async throws {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
         process.arguments = ["-o", "-q", sourceURL.path, "-d", destinationURL.path]
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
 
-        try process.run()
-        process.waitUntilExit()
+        let exitCode: Int32 = await withCheckedContinuation { continuation in
+            process.terminationHandler = { proc in
+                continuation.resume(returning: proc.terminationStatus)
+            }
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(returning: -1)
+            }
+        }
 
-        guard process.terminationStatus == 0 else {
-            throw OfficeParseError.unzipFailed("unzip 命令退出码: \(process.terminationStatus)")
+        guard exitCode == 0 else {
+            throw OfficeParseError.unzipFailed("unzip 命令退出码: \(exitCode)")
         }
     }
 
@@ -402,7 +415,7 @@ final class OfficeDocumentParser: Sendable {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
-        try unzipFile(at: url, to: tempDir)
+        try await unzipFile(at: url, to: tempDir)
 
         let fm = FileManager.default
         let wordDir = tempDir.appendingPathComponent("word")
@@ -590,7 +603,7 @@ final class OfficeDocumentParser: Sendable {
         // 提取元数据
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
-        try unzipFile(at: url, to: tempDir)
+        try await unzipFile(at: url, to: tempDir)
         if let coreProps = try? extractCoreProperties(from: tempDir) {
             metadata.merge(coreProps) { _, new in new }
         }
@@ -612,7 +625,7 @@ final class OfficeDocumentParser: Sendable {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
-        try unzipFile(at: url, to: tempDir)
+        try await unzipFile(at: url, to: tempDir)
 
         let fm = FileManager.default
         let xlDir = tempDir.appendingPathComponent("xl")
@@ -706,7 +719,7 @@ final class OfficeDocumentParser: Sendable {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
-        try unzipFile(at: url, to: tempDir)
+        try await unzipFile(at: url, to: tempDir)
 
         let fm = FileManager.default
         let pptDir = tempDir.appendingPathComponent("ppt")
@@ -1049,7 +1062,7 @@ final class OfficeDocumentParser: Sendable {
             }
         }
 
-        if let qlText = try? extractTextViaQuickLook(url: url) {
+        if let qlText = try? await extractTextViaQuickLook(url: url) {
             if !qlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 let truncatedText = truncateText(qlText)
                 let wordCount = countWords(in: truncatedText)
@@ -1086,7 +1099,7 @@ final class OfficeDocumentParser: Sendable {
         throw OfficeParseError.unsupportedFormat("\(type.displayName) 格式暂不支持完整解析")
     }
 
-    private func extractTextViaQuickLook(url: URL) throws -> String {
+    private func extractTextViaQuickLook(url: URL) async throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/mdls")
         process.arguments = ["-name", "kMDItemTextContent", url.path]
@@ -1095,8 +1108,20 @@ final class OfficeDocumentParser: Sendable {
         process.standardOutput = pipe
         process.standardError = FileHandle.nullDevice
 
-        try process.run()
-        process.waitUntilExit()
+        let exitCode: Int32 = await withCheckedContinuation { continuation in
+            process.terminationHandler = { proc in
+                continuation.resume(returning: proc.terminationStatus)
+            }
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(returning: -1)
+            }
+        }
+
+        guard exitCode == 0 else {
+            return ""
+        }
 
         let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
         guard let output = String(data: outputData, encoding: .utf8) else {
@@ -1117,7 +1142,7 @@ final class OfficeDocumentParser: Sendable {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
-        _ = try unzipFile(at: url, to: tempDir)
+        _ = try await unzipFile(at: url, to: tempDir)
 
         let fm = FileManager.default
 
@@ -1268,7 +1293,7 @@ final class OfficeDocumentParser: Sendable {
             }
         }
 
-        if let text = try? convertViaTextUtil(url: url) {
+        if let text = try? await convertViaTextUtil(url: url) {
             if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 let truncatedText = truncateText(text)
                 return OfficeParseResult(
@@ -1286,10 +1311,10 @@ final class OfficeDocumentParser: Sendable {
     }
 
     @MainActor
-    private func parseLegacyExcel(url: URL) throws -> OfficeParseResult {
+    private func parseLegacyExcel(url: URL) async throws -> OfficeParseResult {
         logger.info("尝试在 MainActor 解析旧版 XLS")
 
-        if let text = try? convertViaTextUtil(url: url) {
+        if let text = try? await convertViaTextUtil(url: url) {
             if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 let truncatedText = truncateText(text)
                 return OfficeParseResult(
@@ -1307,10 +1332,10 @@ final class OfficeDocumentParser: Sendable {
     }
 
     @MainActor
-    private func parseLegacyPPT(url: URL) throws -> OfficeParseResult {
+    private func parseLegacyPPT(url: URL) async throws -> OfficeParseResult {
         logger.info("尝试在 MainActor 解析旧版 PPT")
 
-        if let text = try? convertViaTextUtil(url: url) {
+        if let text = try? await convertViaTextUtil(url: url) {
             if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 let truncatedText = truncateText(text)
                 return OfficeParseResult(
@@ -1327,7 +1352,7 @@ final class OfficeDocumentParser: Sendable {
         throw OfficeParseError.unsupportedFormat("旧版 .ppt 格式解析失败，建议转换为 .pptx 格式")
     }
 
-    private func convertViaTextUtil(url: URL) throws -> String {
+    private func convertViaTextUtil(url: URL) async throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/textutil")
         process.arguments = ["-convert", "txt", "-stdout", url.path]
@@ -1336,8 +1361,20 @@ final class OfficeDocumentParser: Sendable {
         process.standardOutput = pipe
         process.standardError = FileHandle.nullDevice
 
-        try process.run()
-        process.waitUntilExit()
+        let exitCode: Int32 = await withCheckedContinuation { continuation in
+            process.terminationHandler = { proc in
+                continuation.resume(returning: proc.terminationStatus)
+            }
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(returning: -1)
+            }
+        }
+
+        guard exitCode == 0 else {
+            return ""
+        }
 
         let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
         return String(data: outputData, encoding: .utf8) ?? ""

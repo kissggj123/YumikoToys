@@ -159,7 +159,7 @@ final class FileAnalysisService: Sendable {
         case .unknown:
             // 尝试 Office 解析器自动检测
             let officeParser = OfficeDocumentParser()
-            let docType = officeParser.detectFileType(url: url)
+            let docType = await officeParser.detectFileType(url: url)
             if docType.isSupported {
                 logger.info("自动检测为 Office 文档: \(docType.displayName)")
                 let officeResult = try await officeParser.parse(url: url)
