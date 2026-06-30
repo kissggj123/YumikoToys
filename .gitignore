@@ -81,3 +81,4 @@ ThirdParty/**/*.xcworkspace
 ThirdParty/**/xcuserdata
 ThirdParty/**/DerivedData
 ThirdParty/**/build
+*.orig
