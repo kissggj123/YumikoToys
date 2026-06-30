@@ -1096,6 +1096,10 @@ struct SettingsView: View {
         }
     }
 
+// MARK: - SettingsView 辅助方法
+
+extension SettingsView {
+
     @ViewBuilder
     private func stepRow(num: String, text: String) -> some View {
         HStack(alignment: .top, spacing: 6) {

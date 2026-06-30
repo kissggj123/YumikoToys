@@ -692,7 +692,7 @@ final class ScreenMediaHelper: ObservableObject {
         config.showsCursor = false
         return await withCheckedContinuation { continuation in
             SCScreenshotManager.captureScreenshot(contentFilter: filter, configuration: config) { output, _ in
-                continuation.resume(returning: output?.image ?? output?.sdrImage)
+                continuation.resume(returning: output?.sdrImage)
             }
         }
     }

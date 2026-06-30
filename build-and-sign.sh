@@ -486,13 +486,17 @@ log_info "输出目录：$(pwd)/${DERIVED_DATA_DIR}"
 
 if [[ "$DO_CLEAN" -eq 1 ]]; then
     log_info "[clean] 清空旧构建产物…"
-    xcodebuild \
-        -project "${PROJECT_FILE}" \
-        -scheme  "${SCHEME}" \
-        -configuration "${CONFIGURATION}" \
-        -derivedDataPath "${DERIVED_DATA_DIR}" \
-        CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES \
-        clean >"${DERIVED_DATA_DIR}/clean.log" 2>&1 || true
+xcodebuild \
+    -project "${PROJECT_FILE}" \
+    -scheme  "${SCHEME}" \
+    -configuration "${CONFIGURATION}" \
+    -derivedDataPath "${DERIVED_DATA_DIR}" \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGNING_AUTOMATICALLY=NO \
+    DEVELOPMENT_TEAM="" \
+    PROVISIONING_PROFILE_SPECIFIER="" \
+    clean >"${DERIVED_DATA_DIR}/clean.log" 2>&1 || true
     # 额外把整个 DERIVED_DATA_DIR 清一遍，避免 Swift 模块缓存干扰
     rm -rf "${DERIVED_DATA_DIR}/Build"
 fi
@@ -512,7 +516,11 @@ xcodebuild \
     -scheme  "${SCHEME}" \
     -configuration "${CONFIGURATION}" \
     -derivedDataPath "${DERIVED_DATA_DIR}" \
-    CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGNING_AUTOMATICALLY=NO \
+    DEVELOPMENT_TEAM="" \
+    PROVISIONING_PROFILE_SPECIFIER="" \
     resolvePackageDependencies >"${DERIVED_DATA_DIR}/resolve.log" 2>&1 || true
 END_T=$(date +%s)
 spinner_stop "解析完成（$((END_T-START_T))s）"
@@ -541,15 +549,15 @@ BUILD_LOG="${DERIVED_DATA_DIR}/build.log"
 : > "$BUILD_LOG"
 
 # 直接实时输出编译日志（stdout + 留档），不再叠进度条
+# CODE_SIGNING_ALLOWED=NO：编译期完全跳过签名，避免 Xcode 要求 provisioning profile
+# 签名在阶段 3 由脚本完成
 xcodebuild \
     -project "${PROJECT_FILE}" \
     -scheme  "${SCHEME}" \
     -configuration "${CONFIGURATION}" \
     -derivedDataPath "${DERIVED_DATA_DIR}" \
-    CODE_SIGN_STYLE=Manual \
-    CODE_SIGN_IDENTITY="-" \
-    CODE_SIGNING_REQUIRED=YES \
-    CODE_SIGNING_ALLOWED=YES \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_AUTOMATICALLY=NO \
     DEVELOPMENT_TEAM="" \
     PROVISIONING_PROFILE_SPECIFIER="" \

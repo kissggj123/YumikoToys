@@ -228,15 +228,15 @@ final class OfficeDocumentParser: Sendable {
             result = try await parseDOCX(url: url)
         case .doc:
             // 👈 将涉及底层 AppKit Text 引擎解析的方法，强制分流到 MainActor，杜绝多线程段冲突崩溃
-            result = try await MainActor.run { try self.parseLegacyDoc(url: url) }
+            result = try await parseLegacyDoc(url: url)
         case .xlsx:
             result = try await parseXLSX(url: url)
         case .xls:
-            result = try await MainActor.run { try self.parseLegacyExcel(url: url) }
+            result = try await parseLegacyExcel(url: url)
         case .pptx:
             result = try await parsePPTX(url: url)
         case .ppt:
-            result = try await MainActor.run { try self.parseLegacyPPT(url: url) }
+            result = try await parseLegacyPPT(url: url)
         case .csv:
             result = try await parseCSV(url: url, delimiter: ",")
         case .tsv:
@@ -245,11 +245,11 @@ final class OfficeDocumentParser: Sendable {
             // 👈 RTF 解析强制路由至主线程
             result = try await MainActor.run { try self.parseRTF(url: url) }
         case .numbers:
-            result = try await MainActor.run { try self.parseAppleFormat(url: url, type: .numbers) }
+            result = try await parseAppleFormat(url: url, type: .numbers)
         case .pages:
-            result = try await MainActor.run { try self.parseAppleFormat(url: url, type: .pages) }
+            result = try await parseAppleFormat(url: url, type: .pages)
         case .key:
-            result = try await MainActor.run { try self.parseAppleFormat(url: url, type: .key) }
+            result = try await parseAppleFormat(url: url, type: .key)
         }
 
         logger.info("解析完成，字符数: \(result.charCount)，字数: \(result.wordCount)")
@@ -1023,7 +1023,7 @@ final class OfficeDocumentParser: Sendable {
     /// 解析 Apple iWork 格式文件
     /// 👈【主线程隔离保护】：基于 AppKit 和 QuickLook 预览机制的文件解析器需要主线程隔离
     @MainActor
-    private func parseAppleFormat(url: URL, type: OfficeDocumentType) throws -> OfficeParseResult {
+    private func parseAppleFormat(url: URL, type: OfficeDocumentType) async throws -> OfficeParseResult {
         logger.info("开始在 MainActor 解析 Apple 格式: \(type.displayName)")
 
         let data = try Data(contentsOf: url)
@@ -1079,7 +1079,7 @@ final class OfficeDocumentParser: Sendable {
             }
         }
 
-        if let text = try? parseAppleFormatFromZip(url: url, type: type) {
+        if let text = try? await parseAppleFormatFromZip(url: url, type: type) {
             if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 let truncatedText = truncateText(text)
                 let wordCount = countWords(in: truncatedText)
@@ -1138,7 +1138,7 @@ final class OfficeDocumentParser: Sendable {
         return ""
     }
 
-    private func parseAppleFormatFromZip(url: URL, type: OfficeDocumentType) throws -> String {
+    private func parseAppleFormatFromZip(url: URL, type: OfficeDocumentType) async throws -> String {
         let tempDir = try createTempDirectory()
         defer { cleanupTempDirectory(tempDir) }
 
@@ -1262,7 +1262,7 @@ final class OfficeDocumentParser: Sendable {
     // MARK: - 旧版格式解析 (主线程隔离保护)
 
     @MainActor
-    private func parseLegacyDoc(url: URL) throws -> OfficeParseResult {
+    private func parseLegacyDoc(url: URL) async throws -> OfficeParseResult {
         logger.info("尝试在 MainActor 解析旧版 DOC: \(url.lastPathComponent)")
 
         let data = try Data(contentsOf: url)

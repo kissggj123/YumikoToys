@@ -1,0 +1,1938 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 90;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1E5B4D6A25FBFE4B00092422 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E5B4D6925FBFE4B00092422 /* Cocoa.framework */; };
+		1E5B4DE525FC24CA00092422 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 1E5B4DE425FC24CA00092422 /* LaunchAtLogin */; };
+		1E6FB254260A3B890074A382 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E6FB253260A3B890074A382 /* Security.framework */; };
+		FC0664732FC0914300CABB99 /* Splash in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664722FC0914300CABB99 /* Splash */; };
+		FC0664752FC0914300CABB99 /* SplashHTMLGen in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664742FC0914300CABB99 /* SplashHTMLGen */; };
+		FC0664772FC0914300CABB99 /* SplashImageGen in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664762FC0914300CABB99 /* SplashImageGen */; };
+		FC0664792FC0914300CABB99 /* SplashMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = FC0664782FC0914300CABB99 /* SplashMarkdown */; };
+		FC06647B2FC0914300CABB99 /* SplashTokenizer in Frameworks */ = {isa = PBXBuildFile; productRef = FC06647A2FC0914300CABB99 /* SplashTokenizer */; };
+		FC06647E2FC0916C00CABB99 /* Highlightr in Frameworks */ = {isa = PBXBuildFile; productRef = FC06647D2FC0916C00CABB99 /* Highlightr */; };
+		FC3FCE1E2CB69C52008D8C7C /* YumikoWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FC5F1B1D2FBEB15D004B2F34 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B1C2FBEB15D004B2F34 /* MLX */; };
+		FC5F1B1F2FBEB15D004B2F34 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B1E2FBEB15D004B2F34 /* MLXFFT */; };
+		FC5F1B212FBEB15D004B2F34 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B202FBEB15D004B2F34 /* MLXFast */; };
+		FC5F1B232FBEB15D004B2F34 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B222FBEB15D004B2F34 /* MLXLinalg */; };
+		FC5F1B252FBEB15D004B2F34 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = FC5F1B242FBEB15D004B2F34 /* MLXNN */; };
+		FC6552A42FC373980093B726 /* 2026-05-21-mlx-model-management-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552212FC373980093B726 /* 2026-05-21-mlx-model-management-design.md */; };
+		FC6552A52FC373980093B726 /* 2026-05-22-assistant-features-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552252FC373980093B726 /* 2026-05-22-assistant-features-design.md */; };
+		FC6552A62FC373980093B726 /* MAINTENANCE.md in Resources */ = {isa = PBXBuildFile; fileRef = FC65529F2FC373980093B726 /* MAINTENANCE.md */; };
+		FC6552A72FC373980093B726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FC65520A2FC373980093B726 /* Main.storyboard */; };
+		FC6552A82FC373980093B726 /* 2026-05-21-resumable-download-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552222FC373980093B726 /* 2026-05-21-resumable-download-design.md */; };
+		FC6552A92FC373980093B726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC6552082FC373980093B726 /* Assets.xcassets */; };
+		FC6552AA2FC373980093B726 /* SplashFix.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552A02FC373980093B726 /* SplashFix.md */; };
+		FC6552AB2FC373980093B726 /* PromptTemplates.json in Resources */ = {isa = PBXBuildFile; fileRef = FC65523F2FC373980093B726 /* PromptTemplates.json */; };
+		FC6552AC2FC373980093B726 /* SplashLocalFix.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552A12FC373980093B726 /* SplashLocalFix.md */; };
+		FC6552AD2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552232FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md */; };
+		FC6552AE2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md in Resources */ = {isa = PBXBuildFile; fileRef = FC65521E2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md */; };
+		FC6552AF2FC373980093B726 /* 2026-05-21-mlx-model-management.md in Resources */ = {isa = PBXBuildFile; fileRef = FC65521D2FC373980093B726 /* 2026-05-21-mlx-model-management.md */; };
+		FC6552B12FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */ = {isa = PBXBuildFile; fileRef = FC65521F2FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md */; };
+		FC6552B22FC373980093B726 /* AaGXLZGKADS.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FC6552282FC373980093B726 /* AaGXLZGKADS.ttf */; };
+		FC6552B32FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md in Resources */ = {isa = PBXBuildFile; fileRef = FC6552242FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md */; };
+		FC6552B42FC373980093B726 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552922FC373980093B726 /* MainView.swift */; };
+		FC6552B52FC373980093B726 /* UploadedFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65523B2FC373980093B726 /* UploadedFile.swift */; };
+		FC6552B62FC373980093B726 /* CopyableMessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552752FC373980093B726 /* CopyableMessageBubble.swift */; };
+		FC6552B72FC373980093B726 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552122FC373980093B726 /* Color+Hex.swift */; };
+		FC6552B82FC373980093B726 /* LocalSentimentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552522FC373980093B726 /* LocalSentimentService.swift */; };
+		FC6552B92FC373980093B726 /* ProxyAwareDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65521A2FC373980093B726 /* ProxyAwareDownloader.swift */; };
+		FC6552BA2FC373980093B726 /* AgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552432FC373980093B726 /* AgentService.swift */; };
+		FC6552BB2FC373980093B726 /* ModelCompatibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65529C2FC373980093B726 /* ModelCompatibilityManager.swift */; };
+		FC6552BC2FC373980093B726 /* ButtonAnimations.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552702FC373980093B726 /* ButtonAnimations.swift */; };
+		FC6552BD2FC373980093B726 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522F2FC373980093B726 /* AppSettings.swift */; };
+		FC6552BE2FC373980093B726 /* PromptTemplatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552882FC373980093B726 /* PromptTemplatePicker.swift */; };
+		FC6552BF2FC373980093B726 /* MLXModelLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552162FC373980093B726 /* MLXModelLoader.swift */; };
+		FC6552C02FC373980093B726 /* UserAvatarSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65523C2FC373980093B726 /* UserAvatarSettings.swift */; };
+		FC6552C12FC373980093B726 /* LearningResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552342FC373980093B726 /* LearningResult.swift */; };
+		FC6552C22FC373980093B726 /* APISettingsServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552632FC373980093B726 /* APISettingsServiceProtocol.swift */; };
+		FC6552C32FC373980093B726 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552332FC373980093B726 /* Conversation.swift */; };
+		FC6552C42FC373980093B726 /* APISettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552452FC373980093B726 /* APISettingsService.swift */; };
+		FC6552C52FC373980093B726 /* PixelArtIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552852FC373980093B726 /* PixelArtIcons.swift */; };
+		FC6552C62FC373980093B726 /* ServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552662FC373980093B726 /* ServiceProtocols.swift */; };
+		FC6552C72FC373980093B726 /* GenderSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552792FC373980093B726 /* GenderSelectorView.swift */; };
+		FC6552C82FC373980093B726 /* ImageAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524E2FC373980093B726 /* ImageAnalysisService.swift */; };
+		FC6552C92FC373980093B726 /* ModelManagementSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552812FC373980093B726 /* ModelManagementSection.swift */; };
+		FC6552CA2FC373980093B726 /* AssistantConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552302FC373980093B726 /* AssistantConfig.swift */; };
+		FC6552CB2FC373980093B726 /* FileUploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552782FC373980093B726 /* FileUploadView.swift */; };
+		FC6552CC2FC373980093B726 /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522C2FC373980093B726 /* AIProvider.swift */; };
+		FC6552CD2FC373980093B726 /* OfficeDocumentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552562FC373980093B726 /* OfficeDocumentParser.swift */; };
+		FC6552CE2FC373980093B726 /* AssistantToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526F2FC373980093B726 /* AssistantToolbar.swift */; };
+		FC6552CF2FC373980093B726 /* HuggingFaceAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552152FC373980093B726 /* HuggingFaceAuthService.swift */; };
+		FC6552D02FC373980093B726 /* AppPromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552462FC373980093B726 /* AppPromptService.swift */; };
+		FC6552D12FC373980093B726 /* TavilySearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525D2FC373980093B726 /* TavilySearchService.swift */; };
+		FC6552D22FC373980093B726 /* PromptTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552372FC373980093B726 /* PromptTemplate.swift */; };
+		FC6552D32FC373980093B726 /* KeychainAccessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524F2FC373980093B726 /* KeychainAccessService.swift */; };
+		FC6552D42FC373980093B726 /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552502FC373980093B726 /* LaunchAtLoginService.swift */; };
+		FC6552D52FC373980093B726 /* APISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522E2FC373980093B726 /* APISettings.swift */; };
+		FC6552D62FC373980093B726 /* EnhancedWebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */; };
+		FC6552D72FC373980093B726 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528B2FC373980093B726 /* ToastView.swift */; };
+		FC6552D82FC373980093B726 /* PersonaServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552652FC373980093B726 /* PersonaServiceProtocol.swift */; };
+		FC6552D92FC373980093B726 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552932FC373980093B726 /* SettingsView.swift */; };
+		FC6552DA2FC373980093B726 /* AppHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526E2FC373980093B726 /* AppHeader.swift */; };
+		FC6552DB2FC373980093B726 /* PetProfileCardModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552952FC373980093B726 /* PetProfileCardModifier.swift */; };
+		FC6552DC2FC373980093B726 /* YumikoToysApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552A22FC373980093B726 /* YumikoToysApp.swift */; };
+		FC6552DD2FC373980093B726 /* MenuList.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527E2FC373980093B726 /* MenuList.swift */; };
+		FC6552DE2FC373980093B726 /* AnniversaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526D2FC373980093B726 /* AnniversaryCard.swift */; };
+		FC6552DF2FC373980093B726 /* UserAvatarServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552672FC373980093B726 /* UserAvatarServiceProtocol.swift */; };
+		FC6552E02FC373980093B726 /* PetProfileCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552842FC373980093B726 /* PetProfileCardView.swift */; };
+		FC6552E12FC373980093B726 /* ModelStatusCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552832FC373980093B726 /* ModelStatusCard.swift */; };
+		FC6552E22FC373980093B726 /* AdvancedFeaturesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */; };
+		FC6552E32FC373980093B726 /* ComponentLayoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552482FC373980093B726 /* ComponentLayoutService.swift */; };
+		FC6552E42FC373980093B726 /* MessageContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527F2FC373980093B726 /* MessageContextMenu.swift */; };
+		FC6552E52FC373980093B726 /* DataStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524A2FC373980093B726 /* DataStorageService.swift */; };
+		FC6552E62FC373980093B726 /* UserAvatarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525F2FC373980093B726 /* UserAvatarService.swift */; };
+		FC6552E72FC373980093B726 /* Anniversary.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522D2FC373980093B726 /* Anniversary.swift */; };
+		FC6552E82FC373980093B726 /* ModeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552802FC373980093B726 /* ModeButton.swift */; };
+		FC6552E92FC373980093B726 /* CodeHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552732FC373980093B726 /* CodeHighlightView.swift */; };
+		FC6552EA2FC373980093B726 /* ProviderConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552382FC373980093B726 /* ProviderConfig.swift */; };
+		FC6552EB2FC373980093B726 /* ChatMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552312FC373980093B726 /* ChatMode.swift */; };
+		FC6552EC2FC373980093B726 /* SettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525B2FC373980093B726 /* SettingsService.swift */; };
+		FC6552ED2FC373980093B726 /* NVIDIAProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552552FC373980093B726 /* NVIDIAProvider.swift */; };
+		FC6552EE2FC373980093B726 /* ChatModeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552712FC373980093B726 /* ChatModeSelector.swift */; };
+		FC6552EE2FC373980093B72A /* ChatIdentitySelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552712FC373980093B72A /* ChatIdentitySelector.swift */; };
+		FC6552EF2FC373980093B726 /* NTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552352FC373980093B726 /* NTPServer.swift */; };
+		FC6552F02FC373980093B726 /* ChangelogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552912FC373980093B726 /* ChangelogView.swift */; };
+		FC6552F12FC373980093B726 /* GLMServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552642FC373980093B726 /* GLMServiceProtocol.swift */; };
+		FC6552F22FC373980093B726 /* ModelMemoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552182FC373980093B726 /* ModelMemoryManager.swift */; };
+		FC6552F32FC373980093B726 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552112FC373980093B726 /* AppState.swift */; };
+		FC6552F42FC373980093B726 /* ChatSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552722FC373980093B726 /* ChatSettingsView.swift */; };
+		FC6552F52FC373980093B726 /* BackgroundLearningService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552472FC373980093B726 /* BackgroundLearningService.swift */; };
+		FC6552F62FC373980093B726 /* AIChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528F2FC373980093B726 /* AIChatViewModel.swift */; };
+		FC6552F72FC373980093B726 /* LocalEmbeddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552512FC373980093B726 /* LocalEmbeddingService.swift */; };
+		FC6552F82FC373980093B726 /* PixelIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552872FC373980093B726 /* PixelIconView.swift */; };
+		FC6552F92FC373980093B726 /* AnniversaryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552902FC373980093B726 /* AnniversaryManagementView.swift */; };
+		FC6552FA2FC373980093B726 /* FileAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524C2FC373980093B726 /* FileAnalysisService.swift */; };
+		FC6552FB2FC373980093B726 /* IconStyleSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527B2FC373980093B726 /* IconStyleSystem.swift */; };
+		FC6552FC2FC373980093B726 /* SemanticDeduplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552592FC373980093B726 /* SemanticDeduplicationService.swift */; };
+		FC6552FD2FC373980093B726 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528D2FC373980093B726 /* AboutView.swift */; };
+		FC6552FE2FC373980093B726 /* PetAgeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552192FC373980093B726 /* PetAgeCalculator.swift */; };
+		FC6552FF2FC373980093B726 /* GLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524D2FC373980093B726 /* GLMService.swift */; };
+		FC6553002FC373980093B726 /* PersonaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552572FC373980093B726 /* PersonaService.swift */; };
+		FC6553012FC373980093B726 /* SearchSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528A2FC373980093B726 /* SearchSourcesView.swift */; };
+		FC6553022FC373980093B726 /* AdaptiveLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */; };
+		FC6553032FC373980093B726 /* PetPersona.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552362FC373980093B726 /* PetPersona.swift */; };
+		FC6553042FC373980093B726 /* StatusBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65521B2FC373980093B726 /* StatusBarManager.swift */; };
+		FC6553052FC373980093B726 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552172FC373980093B726 /* ModelDownloadManager.swift */; };
+		FC6553062FC373980093B726 /* AnniversaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552442FC373980093B726 /* AnniversaryService.swift */; };
+		FC6553072FC373980093B726 /* ProviderPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552892FC373980093B726 /* ProviderPicker.swift */; };
+		FC6553082FC373980093B726 /* ModelPickerMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552822FC373980093B726 /* ModelPickerMenu.swift */; };
+		FC6553092FC373980093B726 /* SettingsMigrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525A2FC373980093B726 /* SettingsMigrationService.swift */; };
+		FC65530A2FC373980093B726 /* PixelAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552862FC373980093B726 /* PixelAvatarView.swift */; };
+		FC65530B2FC373980093B726 /* ImageCropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527C2FC373980093B726 /* ImageCropView.swift */; };
+		FC65530C2FC373980093B726 /* AIProviderProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552622FC373980093B726 /* AIProviderProtocol.swift */; };
+		FC65530D2FC373980093B726 /* HuggingFaceAuthSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527A2FC373980093B726 /* HuggingFaceAuthSheet.swift */; };
+		FC65530E2FC373980093B726 /* PreventSleepService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552582FC373980093B726 /* PreventSleepService.swift */; };
+		FC65530F2FC373980093B726 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525C2FC373980093B726 /* StorageService.swift */; };
+		FC6553102FC373980093B726 /* MarkdownContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65527D2FC373980093B726 /* MarkdownContentView.swift */; };
+		FC6553112FC373980093B726 /* ModelManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552532FC373980093B726 /* ModelManagementService.swift */; };
+		FC6553122FC373980093B726 /* ModelCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65529A2FC373980093B726 /* ModelCapability.swift */; };
+		FC6553132FC373980093B726 /* FilePreviewChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552772FC373980093B726 /* FilePreviewChip.swift */; };
+		FC6553142FC373980093B726 /* DataExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552492FC373980093B726 /* DataExportService.swift */; };
+		FC6553152FC373980093B726 /* WebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552602FC373980093B726 /* WebSearchService.swift */; };
+		FC6553162FC373980093B726 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552132FC373980093B726 /* DependencyContainer.swift */; };
+		FC6553172FC373980093B726 /* TimeSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65525E2FC373980093B726 /* TimeSyncService.swift */; };
+		FC6553182FC373980093B726 /* AIChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528E2FC373980093B726 /* AIChatView.swift */; };
+		FC6553192FC373980093B726 /* ComponentLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552322FC373980093B726 /* ComponentLayout.swift */; };
+		FC65531A2FC373980093B726 /* EnhancedSearchSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552762FC373980093B726 /* EnhancedSearchSourcesView.swift */; };
+		FC65531B2FC373980093B726 /* SearchChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65523A2FC373980093B726 /* SearchChannel.swift */; };
+		FC65531C2FC373980093B726 /* PsychologicalProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552392FC373980093B726 /* PsychologicalProfile.swift */; };
+		FC65531D2FC373980093B726 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552972FC373980093B726 /* StatusBarView.swift */; };
+		FC65531E2FC373980093B726 /* ConversationSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552742FC373980093B726 /* ConversationSidebarView.swift */; };
+		FC65531F2FC373980093B726 /* NTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552542FC373980093B726 /* NTPClient.swift */; };
+		FC6553202FC373980093B726 /* AgentFileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552422FC373980093B726 /* AgentFileService.swift */; };
+		FC6553212FC373980093B726 /* AgentStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526C2FC373980093B726 /* AgentStepView.swift */; };
+		FC6553222FC373980093B726 /* FontManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552142FC373980093B726 /* FontManager.swift */; };
+		FC6553B12FD000010093B726 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553B02FD000010093B726 /* Theme.swift */; };
+		FC6553F02FDA00000093B726 /* WidgetSyncData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553F12FDA00000093B726 /* WidgetSyncData.swift */; };
+		FC6553F22FDA00000093B726 /* MosaicRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553F32FDA00000093B726 /* MosaicRenderer.swift */; };
+		FC6553F42FDA00000093B726 /* SigningDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553F52FDA00000093B726 /* SigningDiagnostics.swift */; };
+		FC6553F62FDA00000093B726 /* ScreenshotAnnotationModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6553F72FDA00000093B726 /* ScreenshotAnnotationModule.swift */; };
+		FC6553FF0000000000000001 /* FullDiskAccessHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */; };
+		FC6554000000000000000001 /* ProactiveToolCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6554000000000000000002 /* ProactiveToolCardView.swift */; };
+		FC6559012FC373980093B726 /* AgentManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559022FC373980093B726 /* AgentManagerService.swift */; };
+		FC6559032FC373980093B726 /* PluginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559042FC373980093B726 /* PluginService.swift */; };
+		FC6559052FC373980093B726 /* YumiScriptEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559062FC373980093B726 /* YumiScriptEngine.swift */; };
+		FC6559072FC373980093B726 /* AgentsSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559082FC373980093B726 /* AgentsSidebarView.swift */; };
+		FC6559092FC373980093B726 /* SkillsSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65590A2FC373980093B726 /* SkillsSidebarView.swift */; };
+		FC65590B2FC373980093B726 /* ScreenMediaHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65590C2FC373980093B726 /* ScreenMediaHelper.swift */; };
+		FC65590D2FC373980093B726 /* GlobalHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65590E2FC373980093B726 /* GlobalHotkeyManager.swift */; };
+		FC65590F2FC373980093B726 /* AppScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559102FC373980093B726 /* AppScanner.swift */; };
+		FC6559112FC373980093B726 /* AppPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559122FC373980093B726 /* AppPickerView.swift */; };
+		FC655A012FC373980093B726 /* ProactiveAgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC655A022FC373980093B726 /* ProactiveAgentService.swift */; };
+		FCA5AF182FC0992D00E668DB /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = FCA5AF172FC0992D00E668DB /* CoreXLSX */; };
+		FCB283B32E43D77A00FA3D4A /* MediaKeyTap in Frameworks */ = {isa = PBXBuildFile; productRef = FCB283B22E43D77A00FA3D4A /* MediaKeyTap */; };
+		FCC24F1C2FBED23D00A64686 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = FCC24F1B2FBED23D00A64686 /* HuggingFace */; };
+		FCEA9FEA2FBE9E020037F6B8 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = FCEA9FE92FBE9E020037F6B8 /* MarkdownUI */; };
+		FCF267442E114619007230B1 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = FCF267432E114619007230B1 /* ArgumentParser */; };
+		FCF267472E114668007230B1 /* YumikoCLI in CopyFiles */ = {isa = PBXBuildFile; fileRef = FCF267382E114015007230B1 /* YumikoCLI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		FCF35E812E3E56BD00793FBB /* NTPClient in Frameworks */ = {isa = PBXBuildFile; productRef = FCF35E802E3E56BD00793FBB /* NTPClient */; };
+		FC65DIAG00000000000000A2 /* TCCDiagnostic.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65DIAG00000000000000A1 /* TCCDiagnostic.swift */; };
+		FCWIDGET00000000000000A2 /* WidgetKitGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCWIDGET00000000000000A1 /* WidgetKitGuide.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		1E5B4D3625FBFC4000092422 /* Embed XPC Services */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+			dstSubfolder = Product;
+			files = (
+			);
+			name = "Embed XPC Services";
+		};
+		1E5B4D6E25FBFE9100092422 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = Contents/Library/LaunchServices;
+			dstSubfolder = Wrapper;
+			files = (
+			);
+		};
+		FC3FCE1D2CB69C52008D8C7C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				FC3FCE1E2CB69C52008D8C7C /* YumikoWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+		FCF267362E114015007230B1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolder = None;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		FCF267462E114652007230B1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = Executables;
+			files = (
+				FCF267472E114668007230B1 /* YumikoCLI in CopyFiles */,
+			);
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1E5B4D6925FBFE4B00092422 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		1E6FB253260A3B890074A382 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		1EE4E20A24F97E240097C32C /* YumikoToys.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoToys.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC077BDC29DC8BA000914E98 /* IOBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOBluetooth.framework; path = System/Library/Frameworks/IOBluetooth.framework; sourceTree = SDKROOT; };
+		FC077BDE29DC8BDF00914E98 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoToysHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = YumikoWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC3FCE1A2CB69C52008D8C7D /* YumikoWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC6552082FC373980093B726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FC6552092FC373980093B726 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FC65520A2FC373980093B726 /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		FC65520B2FC373980093B726 /* YumikoToys.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YumikoToys.entitlements; sourceTree = "<group>"; };
+		FC65520C2FC373980093B726 /* YumikoToys-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YumikoToys-Bridging-Header.h"; sourceTree = "<group>"; };
+		FC65520D2FC373980093B726 /* YumikoToysDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YumikoToysDebug.entitlements; sourceTree = "<group>"; };
+		FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveLayoutManager.swift; sourceTree = "<group>"; };
+		FC6552112FC373980093B726 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		FC6552122FC373980093B726 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		FC6552132FC373980093B726 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
+		FC6552142FC373980093B726 /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontManager.swift; sourceTree = "<group>"; };
+		FC6552152FC373980093B726 /* HuggingFaceAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthService.swift; sourceTree = "<group>"; };
+		FC6552162FC373980093B726 /* MLXModelLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLXModelLoader.swift; sourceTree = "<group>"; };
+		FC6552172FC373980093B726 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
+		FC6552182FC373980093B726 /* ModelMemoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelMemoryManager.swift; sourceTree = "<group>"; };
+		FC6552192FC373980093B726 /* PetAgeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetAgeCalculator.swift; sourceTree = "<group>"; };
+		FC65521A2FC373980093B726 /* ProxyAwareDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyAwareDownloader.swift; sourceTree = "<group>"; };
+		FC65521B2FC373980093B726 /* StatusBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarManager.swift; sourceTree = "<group>"; };
+		FC65521D2FC373980093B726 /* 2026-05-21-mlx-model-management.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-mlx-model-management.md"; sourceTree = "<group>"; };
+		FC65521E2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-enhancement-plan.md"; sourceTree = "<group>"; };
+		FC65521F2FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-mode-implementation.md"; sourceTree = "<group>"; };
+		FC6552212FC373980093B726 /* 2026-05-21-mlx-model-management-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-mlx-model-management-design.md"; sourceTree = "<group>"; };
+		FC6552222FC373980093B726 /* 2026-05-21-resumable-download-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-21-resumable-download-design.md"; sourceTree = "<group>"; };
+		FC6552232FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-enhancement-design.md"; sourceTree = "<group>"; };
+		FC6552242FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-ai-assistant-mode-design.md"; sourceTree = "<group>"; };
+		FC6552252FC373980093B726 /* 2026-05-22-assistant-features-design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "2026-05-22-assistant-features-design.md"; sourceTree = "<group>"; };
+		FC6552282FC373980093B726 /* AaGXLZGKADS.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = AaGXLZGKADS.ttf; sourceTree = "<group>"; };
+		FC65522C2FC373980093B726 /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
+		FC65522D2FC373980093B726 /* Anniversary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Anniversary.swift; sourceTree = "<group>"; };
+		FC65522E2FC373980093B726 /* APISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettings.swift; sourceTree = "<group>"; };
+		FC65522F2FC373980093B726 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		FC6552302FC373980093B726 /* AssistantConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantConfig.swift; sourceTree = "<group>"; };
+		FC6552312FC373980093B726 /* ChatMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMode.swift; sourceTree = "<group>"; };
+		FC6552322FC373980093B726 /* ComponentLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayout.swift; sourceTree = "<group>"; };
+		FC6552332FC373980093B726 /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
+		FC6552342FC373980093B726 /* LearningResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningResult.swift; sourceTree = "<group>"; };
+		FC6552352FC373980093B726 /* NTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPServer.swift; sourceTree = "<group>"; };
+		FC6552362FC373980093B726 /* PetPersona.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPersona.swift; sourceTree = "<group>"; };
+		FC6552372FC373980093B726 /* PromptTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplate.swift; sourceTree = "<group>"; };
+		FC6552382FC373980093B726 /* ProviderConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConfig.swift; sourceTree = "<group>"; };
+		FC6552392FC373980093B726 /* PsychologicalProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PsychologicalProfile.swift; sourceTree = "<group>"; };
+		FC65523A2FC373980093B726 /* SearchChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchChannel.swift; sourceTree = "<group>"; };
+		FC65523B2FC373980093B726 /* UploadedFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadedFile.swift; sourceTree = "<group>"; };
+		FC65523C2FC373980093B726 /* UserAvatarSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarSettings.swift; sourceTree = "<group>"; };
+		FC65523F2FC373980093B726 /* PromptTemplates.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = PromptTemplates.json; sourceTree = "<group>"; };
+		FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedFeaturesService.swift; sourceTree = "<group>"; };
+		FC6552422FC373980093B726 /* AgentFileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFileService.swift; sourceTree = "<group>"; };
+		FC6552432FC373980093B726 /* AgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentService.swift; sourceTree = "<group>"; };
+		FC6552442FC373980093B726 /* AnniversaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryService.swift; sourceTree = "<group>"; };
+		FC6552452FC373980093B726 /* APISettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettingsService.swift; sourceTree = "<group>"; };
+		FC6552462FC373980093B726 /* AppPromptService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPromptService.swift; sourceTree = "<group>"; };
+		FC6552472FC373980093B726 /* BackgroundLearningService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundLearningService.swift; sourceTree = "<group>"; };
+		FC6552482FC373980093B726 /* ComponentLayoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComponentLayoutService.swift; sourceTree = "<group>"; };
+		FC6552492FC373980093B726 /* DataExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportService.swift; sourceTree = "<group>"; };
+		FC65524A2FC373980093B726 /* DataStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStorageService.swift; sourceTree = "<group>"; };
+		FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedWebSearchService.swift; sourceTree = "<group>"; };
+		FC65524C2FC373980093B726 /* FileAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAnalysisService.swift; sourceTree = "<group>"; };
+		FC65524D2FC373980093B726 /* GLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMService.swift; sourceTree = "<group>"; };
+		FC65524E2FC373980093B726 /* ImageAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnalysisService.swift; sourceTree = "<group>"; };
+		FC65524F2FC373980093B726 /* KeychainAccessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAccessService.swift; sourceTree = "<group>"; };
+		FC6552502FC373980093B726 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
+		FC6552512FC373980093B726 /* LocalEmbeddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalEmbeddingService.swift; sourceTree = "<group>"; };
+		FC6552522FC373980093B726 /* LocalSentimentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSentimentService.swift; sourceTree = "<group>"; };
+		FC6552532FC373980093B726 /* ModelManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementService.swift; sourceTree = "<group>"; };
+		FC6552542FC373980093B726 /* NTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPClient.swift; sourceTree = "<group>"; };
+		FC6552552FC373980093B726 /* NVIDIAProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NVIDIAProvider.swift; sourceTree = "<group>"; };
+		FC6552562FC373980093B726 /* OfficeDocumentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfficeDocumentParser.swift; sourceTree = "<group>"; };
+		FC6552572FC373980093B726 /* PersonaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaService.swift; sourceTree = "<group>"; };
+		FC6552582FC373980093B726 /* PreventSleepService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreventSleepService.swift; sourceTree = "<group>"; };
+		FC6552592FC373980093B726 /* SemanticDeduplicationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticDeduplicationService.swift; sourceTree = "<group>"; };
+		FC65525A2FC373980093B726 /* SettingsMigrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsMigrationService.swift; sourceTree = "<group>"; };
+		FC65525B2FC373980093B726 /* SettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsService.swift; sourceTree = "<group>"; };
+		FC65525C2FC373980093B726 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
+		FC65525D2FC373980093B726 /* TavilySearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TavilySearchService.swift; sourceTree = "<group>"; };
+		FC65525E2FC373980093B726 /* TimeSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeSyncService.swift; sourceTree = "<group>"; };
+		FC65525F2FC373980093B726 /* UserAvatarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarService.swift; sourceTree = "<group>"; };
+		FC6552602FC373980093B726 /* WebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchService.swift; sourceTree = "<group>"; };
+		FC6552622FC373980093B726 /* AIProviderProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderProtocol.swift; sourceTree = "<group>"; };
+		FC6552632FC373980093B726 /* APISettingsServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISettingsServiceProtocol.swift; sourceTree = "<group>"; };
+		FC6552642FC373980093B726 /* GLMServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GLMServiceProtocol.swift; sourceTree = "<group>"; };
+		FC6552652FC373980093B726 /* PersonaServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaServiceProtocol.swift; sourceTree = "<group>"; };
+		FC6552662FC373980093B726 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
+		FC6552672FC373980093B726 /* UserAvatarServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAvatarServiceProtocol.swift; sourceTree = "<group>"; };
+		FC65526C2FC373980093B726 /* AgentStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStepView.swift; sourceTree = "<group>"; };
+		FC65526D2FC373980093B726 /* AnniversaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryCard.swift; sourceTree = "<group>"; };
+		FC65526E2FC373980093B726 /* AppHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHeader.swift; sourceTree = "<group>"; };
+		FC65526F2FC373980093B726 /* AssistantToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantToolbar.swift; sourceTree = "<group>"; };
+		FC6552702FC373980093B726 /* ButtonAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonAnimations.swift; sourceTree = "<group>"; };
+		FC6552712FC373980093B726 /* ChatModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModeSelector.swift; sourceTree = "<group>"; };
+		FC6552712FC373980093B72A /* ChatIdentitySelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatIdentitySelector.swift; sourceTree = "<group>"; };
+		FC6552722FC373980093B726 /* ChatSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSettingsView.swift; sourceTree = "<group>"; };
+		FC6552732FC373980093B726 /* CodeHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeHighlightView.swift; sourceTree = "<group>"; };
+		FC6552742FC373980093B726 /* ConversationSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationSidebarView.swift; sourceTree = "<group>"; };
+		FC6552752FC373980093B726 /* CopyableMessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopyableMessageBubble.swift; sourceTree = "<group>"; };
+		FC6552762FC373980093B726 /* EnhancedSearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedSearchSourcesView.swift; sourceTree = "<group>"; };
+		FC6552772FC373980093B726 /* FilePreviewChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewChip.swift; sourceTree = "<group>"; };
+		FC6552782FC373980093B726 /* FileUploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUploadView.swift; sourceTree = "<group>"; };
+		FC6552792FC373980093B726 /* GenderSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenderSelectorView.swift; sourceTree = "<group>"; };
+		FC65527A2FC373980093B726 /* HuggingFaceAuthSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthSheet.swift; sourceTree = "<group>"; };
+		FC65527B2FC373980093B726 /* IconStyleSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconStyleSystem.swift; sourceTree = "<group>"; };
+		FC65527C2FC373980093B726 /* ImageCropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
+		FC65527D2FC373980093B726 /* MarkdownContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownContentView.swift; sourceTree = "<group>"; };
+		FC65527E2FC373980093B726 /* MenuList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuList.swift; sourceTree = "<group>"; };
+		FC65527F2FC373980093B726 /* MessageContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageContextMenu.swift; sourceTree = "<group>"; };
+		FC6552802FC373980093B726 /* ModeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeButton.swift; sourceTree = "<group>"; };
+		FC6552812FC373980093B726 /* ModelManagementSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementSection.swift; sourceTree = "<group>"; };
+		FC6552822FC373980093B726 /* ModelPickerMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPickerMenu.swift; sourceTree = "<group>"; };
+		FC6552832FC373980093B726 /* ModelStatusCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStatusCard.swift; sourceTree = "<group>"; };
+		FC6552842FC373980093B726 /* PetProfileCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetProfileCardView.swift; sourceTree = "<group>"; };
+		FC6552852FC373980093B726 /* PixelArtIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelArtIcons.swift; sourceTree = "<group>"; };
+		FC6552862FC373980093B726 /* PixelAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelAvatarView.swift; sourceTree = "<group>"; };
+		FC6552872FC373980093B726 /* PixelIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelIconView.swift; sourceTree = "<group>"; };
+		FC6552882FC373980093B726 /* PromptTemplatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplatePicker.swift; sourceTree = "<group>"; };
+		FC6552892FC373980093B726 /* ProviderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderPicker.swift; sourceTree = "<group>"; };
+		FC65528A2FC373980093B726 /* SearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSourcesView.swift; sourceTree = "<group>"; };
+		FC65528B2FC373980093B726 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		FC65528D2FC373980093B726 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		FC65528E2FC373980093B726 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
+		FC65528F2FC373980093B726 /* AIChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatViewModel.swift; sourceTree = "<group>"; };
+		FC6552902FC373980093B726 /* AnniversaryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryManagementView.swift; sourceTree = "<group>"; };
+		FC6552912FC373980093B726 /* ChangelogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogView.swift; sourceTree = "<group>"; };
+		FC6552922FC373980093B726 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		FC6552932FC373980093B726 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FC6552952FC373980093B726 /* PetProfileCardModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetProfileCardModifier.swift; sourceTree = "<group>"; };
+		FC6552972FC373980093B726 /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
+		FC65529A2FC373980093B726 /* ModelCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCapability.swift; sourceTree = "<group>"; };
+		FC65529C2FC373980093B726 /* ModelCompatibilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCompatibilityManager.swift; sourceTree = "<group>"; };
+		FC65529F2FC373980093B726 /* MAINTENANCE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MAINTENANCE.md; sourceTree = "<group>"; };
+		FC6552A02FC373980093B726 /* SplashFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashFix.md; sourceTree = "<group>"; };
+		FC6552A12FC373980093B726 /* SplashLocalFix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SplashLocalFix.md; sourceTree = "<group>"; };
+		FC6552A22FC373980093B726 /* YumikoToysApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumikoToysApp.swift; sourceTree = "<group>"; };
+		FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessHelper.swift; sourceTree = "<group>"; };
+		FC6553B02FD000010093B726 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		FC6553F12FDA00000093B726 /* WidgetSyncData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSyncData.swift; sourceTree = "<group>"; };
+		FC6553F32FDA00000093B726 /* MosaicRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicRenderer.swift; sourceTree = "<group>"; };
+		FC6553F52FDA00000093B726 /* SigningDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SigningDiagnostics.swift; sourceTree = "<group>"; };
+		FC6553F72FDA00000093B726 /* ScreenshotAnnotationModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotAnnotationModule.swift; sourceTree = "<group>"; };
+		FC6554000000000000000002 /* ProactiveToolCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProactiveToolCardView.swift; sourceTree = "<group>"; };
+		FC6559022FC373980093B726 /* AgentManagerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentManagerService.swift; sourceTree = "<group>"; };
+		FC6559042FC373980093B726 /* PluginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginService.swift; sourceTree = "<group>"; };
+		FC6559062FC373980093B726 /* YumiScriptEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumiScriptEngine.swift; sourceTree = "<group>"; };
+		FC6559082FC373980093B726 /* AgentsSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsSidebarView.swift; sourceTree = "<group>"; };
+		FC65590A2FC373980093B726 /* SkillsSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsSidebarView.swift; sourceTree = "<group>"; };
+		FC65590C2FC373980093B726 /* ScreenMediaHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenMediaHelper.swift; sourceTree = "<group>"; };
+		FC65590E2FC373980093B726 /* GlobalHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkeyManager.swift; sourceTree = "<group>"; };
+		FC6559102FC373980093B726 /* AppScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppScanner.swift; sourceTree = "<group>"; };
+		FC6559122FC373980093B726 /* AppPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPickerView.swift; sourceTree = "<group>"; };
+		FC655A022FC373980093B726 /* ProactiveAgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProactiveAgentService.swift; sourceTree = "<group>"; };
+		FCF267382E114015007230B1 /* YumikoCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YumikoCLI; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC65DIAG00000000000000A1 /* TCCDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCDiagnostic.swift; sourceTree = "<group>"; };
+		FCWIDGET00000000000000A1 /* WidgetKitGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetKitGuide.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FCA0EEDF2FE3EBE60040401B /* Exceptions for "YumikoWidget" folder in "YumikoWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FC3FCE192CB69C52008D8C7C /* YumikoWidget */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YumikoToysHelper;
+			sourceTree = "<group>";
+		};
+		FC3FCE1B2CB69C52008D8C7C /* YumikoWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FCA0EEDF2FE3EBE60040401B /* Exceptions for "YumikoWidget" folder in "YumikoWidget" target */,
+			);
+			path = YumikoWidget;
+			sourceTree = "<group>";
+		};
+		FC3FCE1B2CB69C52008D8C7D /* YumikoWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YumikoWatch;
+			sourceTree = "<group>";
+		};
+		FCF267392E114015007230B1 /* YumikoCLI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YumikoCLI;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1EE4E20724F97E240097C32C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				FC0664732FC0914300CABB99 /* Splash in Frameworks */,
+				FCA5AF182FC0992D00E668DB /* CoreXLSX in Frameworks */,
+				FC5F1B252FBEB15D004B2F34 /* MLXNN in Frameworks */,
+				FC5F1B212FBEB15D004B2F34 /* MLXFast in Frameworks */,
+				1E5B4DE525FC24CA00092422 /* LaunchAtLogin in Frameworks */,
+				FC06647B2FC0914300CABB99 /* SplashTokenizer in Frameworks */,
+				1E6FB254260A3B890074A382 /* Security.framework in Frameworks */,
+				FCB283B32E43D77A00FA3D4A /* MediaKeyTap in Frameworks */,
+				FCEA9FEA2FBE9E020037F6B8 /* MarkdownUI in Frameworks */,
+				FC5F1B232FBEB15D004B2F34 /* MLXLinalg in Frameworks */,
+				FCF35E812E3E56BD00793FBB /* NTPClient in Frameworks */,
+				FC0664772FC0914300CABB99 /* SplashImageGen in Frameworks */,
+				FC0664752FC0914300CABB99 /* SplashHTMLGen in Frameworks */,
+				1E5B4D6A25FBFE4B00092422 /* Cocoa.framework in Frameworks */,
+				FC0664792FC0914300CABB99 /* SplashMarkdown in Frameworks */,
+				FC5F1B1D2FBEB15D004B2F34 /* MLX in Frameworks */,
+				FC5F1B1F2FBEB15D004B2F34 /* MLXFFT in Frameworks */,
+				FC06647E2FC0916C00CABB99 /* Highlightr in Frameworks */,
+				FCC24F1C2FBED23D00A64686 /* HuggingFace in Frameworks */,
+			);
+		};
+		FC3FCE172CB69C52008D8C7B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		FC3FCE172CB69C52008D8C7C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		FC3FCE172CB69C52008D8C7D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		FCF267352E114015007230B1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				FCF267442E114619007230B1 /* ArgumentParser in Frameworks */,
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1E5B4D0F25FBFA4800092422 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FC077BDE29DC8BDF00914E98 /* CoreGraphics.framework */,
+				FC077BDC29DC8BA000914E98 /* IOBluetooth.framework */,
+				1E6FB253260A3B890074A382 /* Security.framework */,
+				1E5B4D6925FBFE4B00092422 /* Cocoa.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		1EE4E20124F97E240097C32C = {
+			isa = PBXGroup;
+			children = (
+				FC3FCE1B2CB69C52008D8C7D /* YumikoWatch */,
+				FC6552A32FC373980093B726 /* YumikoToys */,
+				FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */,
+				FCF267392E114015007230B1 /* YumikoCLI */,
+				1EE4E20B24F97E240097C32C /* Products */,
+				1E5B4D0F25FBFA4800092422 /* Frameworks */,
+				FC1805402FDEEC6F001A6517 /* Recovered References */,
+			);
+			sourceTree = "<group>";
+		};
+		1EE4E20B24F97E240097C32C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1EE4E20A24F97E240097C32C /* YumikoToys.app */,
+				FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */,
+				FCF267382E114015007230B1 /* YumikoCLI */,
+				FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */,
+				FC3FCE1A2CB69C52008D8C7D /* YumikoWatch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FC1805402FDEEC6F001A6517 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				FC3FCE1B2CB69C52008D8C7C /* YumikoWidget */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		FC65520E2FC373980093B726 /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552082FC373980093B726 /* Assets.xcassets */,
+				FC6552092FC373980093B726 /* Info.plist */,
+				FC65520A2FC373980093B726 /* Main.storyboard */,
+				FC65520B2FC373980093B726 /* YumikoToys.entitlements */,
+				FC65520C2FC373980093B726 /* YumikoToys-Bridging-Header.h */,
+				FC65520D2FC373980093B726 /* YumikoToysDebug.entitlements */,
+			);
+			path = Assets;
+			sourceTree = "<group>";
+		};
+		FC65520F2FC373980093B726 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		FC65521C2FC373980093B726 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				FC6553F72FDA00000093B726 /* ScreenshotAnnotationModule.swift */,
+				FC65590C2FC373980093B726 /* ScreenMediaHelper.swift */,
+				FC6553F32FDA00000093B726 /* MosaicRenderer.swift */,
+				FC6553F52FDA00000093B726 /* SigningDiagnostics.swift */,
+				FC65590E2FC373980093B726 /* GlobalHotkeyManager.swift */,
+				FC6559102FC373980093B726 /* AppScanner.swift */,
+				FC6552FF0000000000000001 /* FullDiskAccessHelper.swift */,
+				FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */,
+				FC6552112FC373980093B726 /* AppState.swift */,
+				FC6552122FC373980093B726 /* Color+Hex.swift */,
+				FC6552132FC373980093B726 /* DependencyContainer.swift */,
+				FC6552142FC373980093B726 /* FontManager.swift */,
+				FC6552152FC373980093B726 /* HuggingFaceAuthService.swift */,
+				FC6552162FC373980093B726 /* MLXModelLoader.swift */,
+				FC6552172FC373980093B726 /* ModelDownloadManager.swift */,
+				FC6552182FC373980093B726 /* ModelMemoryManager.swift */,
+				FC6552192FC373980093B726 /* PetAgeCalculator.swift */,
+				FC65521A2FC373980093B726 /* ProxyAwareDownloader.swift */,
+				FC65521B2FC373980093B726 /* StatusBarManager.swift */,
+				FC65DIAG00000000000000A1 /* TCCDiagnostic.swift */,
+				FCWIDGET00000000000000A1 /* WidgetKitGuide.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		FC6552202FC373980093B726 /* plans */ = {
+			isa = PBXGroup;
+			children = (
+				FC65521D2FC373980093B726 /* 2026-05-21-mlx-model-management.md */,
+				FC65521E2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md */,
+				FC65521F2FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md */,
+			);
+			path = plans;
+			sourceTree = "<group>";
+		};
+		FC6552262FC373980093B726 /* specs */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552212FC373980093B726 /* 2026-05-21-mlx-model-management-design.md */,
+				FC6552222FC373980093B726 /* 2026-05-21-resumable-download-design.md */,
+				FC6552232FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md */,
+				FC6552242FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md */,
+				FC6552252FC373980093B726 /* 2026-05-22-assistant-features-design.md */,
+			);
+			path = specs;
+			sourceTree = "<group>";
+		};
+		FC6552272FC373980093B726 /* docs */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552202FC373980093B726 /* plans */,
+				FC6552262FC373980093B726 /* specs */,
+			);
+			path = docs;
+			sourceTree = "<group>";
+		};
+		FC6552292FC373980093B726 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552282FC373980093B726 /* AaGXLZGKADS.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		FC65522A2FC373980093B726 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		FC65522B2FC373980093B726 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		FC65523D2FC373980093B726 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FC65522C2FC373980093B726 /* AIProvider.swift */,
+				FC65522D2FC373980093B726 /* Anniversary.swift */,
+				FC65522E2FC373980093B726 /* APISettings.swift */,
+				FC65522F2FC373980093B726 /* AppSettings.swift */,
+				FC6553B02FD000010093B726 /* Theme.swift */,
+				FC6552302FC373980093B726 /* AssistantConfig.swift */,
+				FC6552312FC373980093B726 /* ChatMode.swift */,
+				FC6552322FC373980093B726 /* ComponentLayout.swift */,
+				FC6552332FC373980093B726 /* Conversation.swift */,
+				FC6552342FC373980093B726 /* LearningResult.swift */,
+				FC6552352FC373980093B726 /* NTPServer.swift */,
+				FC6552362FC373980093B726 /* PetPersona.swift */,
+				FC6552372FC373980093B726 /* PromptTemplate.swift */,
+				FC6552382FC373980093B726 /* ProviderConfig.swift */,
+				FC6552392FC373980093B726 /* PsychologicalProfile.swift */,
+				FC65523A2FC373980093B726 /* SearchChannel.swift */,
+				FC65523B2FC373980093B726 /* UploadedFile.swift */,
+				FC65523C2FC373980093B726 /* UserAvatarSettings.swift */,
+				FC6553F12FDA00000093B726 /* WidgetSyncData.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FC65523E2FC373980093B726 /* Plugins */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Plugins;
+			sourceTree = "<group>";
+		};
+		FC6552402FC373980093B726 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				FC65523F2FC373980093B726 /* PromptTemplates.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		FC6552612FC373980093B726 /* Implementations */ = {
+			isa = PBXGroup;
+			children = (
+				FC6559022FC373980093B726 /* AgentManagerService.swift */,
+				FC6559042FC373980093B726 /* PluginService.swift */,
+				FC6559062FC373980093B726 /* YumiScriptEngine.swift */,
+				FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */,
+				FC6552422FC373980093B726 /* AgentFileService.swift */,
+				FC6552432FC373980093B726 /* AgentService.swift */,
+				FC6552442FC373980093B726 /* AnniversaryService.swift */,
+				FC6552452FC373980093B726 /* APISettingsService.swift */,
+				FC6552462FC373980093B726 /* AppPromptService.swift */,
+				FC6552472FC373980093B726 /* BackgroundLearningService.swift */,
+				FC6552482FC373980093B726 /* ComponentLayoutService.swift */,
+				FC655A022FC373980093B726 /* ProactiveAgentService.swift */,
+				FC6552492FC373980093B726 /* DataExportService.swift */,
+				FC65524A2FC373980093B726 /* DataStorageService.swift */,
+				FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */,
+				FC65524C2FC373980093B726 /* FileAnalysisService.swift */,
+				FC65524D2FC373980093B726 /* GLMService.swift */,
+				FC65524E2FC373980093B726 /* ImageAnalysisService.swift */,
+				FC65524F2FC373980093B726 /* KeychainAccessService.swift */,
+				FC6552502FC373980093B726 /* LaunchAtLoginService.swift */,
+				FC6552512FC373980093B726 /* LocalEmbeddingService.swift */,
+				FC6552522FC373980093B726 /* LocalSentimentService.swift */,
+				FC6552532FC373980093B726 /* ModelManagementService.swift */,
+				FC6552542FC373980093B726 /* NTPClient.swift */,
+				FC6552552FC373980093B726 /* NVIDIAProvider.swift */,
+				FC6552562FC373980093B726 /* OfficeDocumentParser.swift */,
+				FC6552572FC373980093B726 /* PersonaService.swift */,
+				FC6552582FC373980093B726 /* PreventSleepService.swift */,
+				FC6552592FC373980093B726 /* SemanticDeduplicationService.swift */,
+				FC65525A2FC373980093B726 /* SettingsMigrationService.swift */,
+				FC65525B2FC373980093B726 /* SettingsService.swift */,
+				FC65525C2FC373980093B726 /* StorageService.swift */,
+				FC65525D2FC373980093B726 /* TavilySearchService.swift */,
+				FC65525E2FC373980093B726 /* TimeSyncService.swift */,
+				FC65525F2FC373980093B726 /* UserAvatarService.swift */,
+				FC6552602FC373980093B726 /* WebSearchService.swift */,
+			);
+			path = Implementations;
+			sourceTree = "<group>";
+		};
+		FC6552682FC373980093B726 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552622FC373980093B726 /* AIProviderProtocol.swift */,
+				FC6552632FC373980093B726 /* APISettingsServiceProtocol.swift */,
+				FC6552642FC373980093B726 /* GLMServiceProtocol.swift */,
+				FC6552652FC373980093B726 /* PersonaServiceProtocol.swift */,
+				FC6552662FC373980093B726 /* ServiceProtocols.swift */,
+				FC6552672FC373980093B726 /* UserAvatarServiceProtocol.swift */,
+			);
+			path = Protocols;
+			sourceTree = "<group>";
+		};
+		FC6552692FC373980093B726 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552612FC373980093B726 /* Implementations */,
+				FC6552682FC373980093B726 /* Protocols */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FC65526A2FC373980093B726 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		FC65526B2FC373980093B726 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		FC65528C2FC373980093B726 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FC6559122FC373980093B726 /* AppPickerView.swift */,
+				FC6559082FC373980093B726 /* AgentsSidebarView.swift */,
+				FC65590A2FC373980093B726 /* SkillsSidebarView.swift */,
+				FC65526C2FC373980093B726 /* AgentStepView.swift */,
+				FC65526D2FC373980093B726 /* AnniversaryCard.swift */,
+				FC6554000000000000000002 /* ProactiveToolCardView.swift */,
+				FC65526E2FC373980093B726 /* AppHeader.swift */,
+				FC65526F2FC373980093B726 /* AssistantToolbar.swift */,
+				FC6552702FC373980093B726 /* ButtonAnimations.swift */,
+				FC6552712FC373980093B726 /* ChatModeSelector.swift */,
+				FC6552712FC373980093B72A /* ChatIdentitySelector.swift */,
+				FC6552722FC373980093B726 /* ChatSettingsView.swift */,
+				FC6552732FC373980093B726 /* CodeHighlightView.swift */,
+				FC6552742FC373980093B726 /* ConversationSidebarView.swift */,
+				FC6552752FC373980093B726 /* CopyableMessageBubble.swift */,
+				FC6552762FC373980093B726 /* EnhancedSearchSourcesView.swift */,
+				FC6552772FC373980093B726 /* FilePreviewChip.swift */,
+				FC6552782FC373980093B726 /* FileUploadView.swift */,
+				FC6552792FC373980093B726 /* GenderSelectorView.swift */,
+				FC65527A2FC373980093B726 /* HuggingFaceAuthSheet.swift */,
+				FC65527B2FC373980093B726 /* IconStyleSystem.swift */,
+				FC65527C2FC373980093B726 /* ImageCropView.swift */,
+				FC65527D2FC373980093B726 /* MarkdownContentView.swift */,
+				FC65527E2FC373980093B726 /* MenuList.swift */,
+				FC65527F2FC373980093B726 /* MessageContextMenu.swift */,
+				FC6552802FC373980093B726 /* ModeButton.swift */,
+				FC6552812FC373980093B726 /* ModelManagementSection.swift */,
+				FC6552822FC373980093B726 /* ModelPickerMenu.swift */,
+				FC6552832FC373980093B726 /* ModelStatusCard.swift */,
+				FC6552842FC373980093B726 /* PetProfileCardView.swift */,
+				FC6552852FC373980093B726 /* PixelArtIcons.swift */,
+				FC6552862FC373980093B726 /* PixelAvatarView.swift */,
+				FC6552872FC373980093B726 /* PixelIconView.swift */,
+				FC6552882FC373980093B726 /* PromptTemplatePicker.swift */,
+				FC6552892FC373980093B726 /* ProviderPicker.swift */,
+				FC65528A2FC373980093B726 /* SearchSourcesView.swift */,
+				FC65528B2FC373980093B726 /* ToastView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		FC6552942FC373980093B726 /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				FC65528D2FC373980093B726 /* AboutView.swift */,
+				FC65528E2FC373980093B726 /* AIChatView.swift */,
+				FC65528F2FC373980093B726 /* AIChatViewModel.swift */,
+				FC6552902FC373980093B726 /* AnniversaryManagementView.swift */,
+				FC6552912FC373980093B726 /* ChangelogView.swift */,
+				FC6552922FC373980093B726 /* MainView.swift */,
+				FC6552932FC373980093B726 /* SettingsView.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		FC6552962FC373980093B726 /* Modifiers */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552952FC373980093B726 /* PetProfileCardModifier.swift */,
+			);
+			path = Modifiers;
+			sourceTree = "<group>";
+		};
+		FC6552982FC373980093B726 /* StatusBar */ = {
+			isa = PBXGroup;
+			children = (
+				FC6552972FC373980093B726 /* StatusBarView.swift */,
+			);
+			path = StatusBar;
+			sourceTree = "<group>";
+		};
+		FC6552992FC373980093B726 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FC65528C2FC373980093B726 /* Components */,
+				FC6552942FC373980093B726 /* Main */,
+				FC6552962FC373980093B726 /* Modifiers */,
+				FC6552982FC373980093B726 /* StatusBar */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FC65529B2FC373980093B726 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FC65529A2FC373980093B726 /* ModelCapability.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FC65529D2FC373980093B726 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				FC65529C2FC373980093B726 /* ModelCompatibilityManager.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		FC65529E2FC373980093B726 /* YumikoToys */ = {
+			isa = PBXGroup;
+			children = (
+				FC65529B2FC373980093B726 /* Models */,
+				FC65529D2FC373980093B726 /* ViewModels */,
+			);
+			path = YumikoToys;
+			sourceTree = "<group>";
+		};
+		FC6552A32FC373980093B726 /* YumikoToys */ = {
+			isa = PBXGroup;
+			children = (
+				FC65520E2FC373980093B726 /* Assets */,
+				FC65520F2FC373980093B726 /* Config */,
+				FC65521C2FC373980093B726 /* Core */,
+				FC6552272FC373980093B726 /* docs */,
+				FC6552292FC373980093B726 /* Fonts */,
+				FC65522A2FC373980093B726 /* Managers */,
+				FC65522B2FC373980093B726 /* Model */,
+				FC65523D2FC373980093B726 /* Models */,
+				FC65523E2FC373980093B726 /* Plugins */,
+				FC6552402FC373980093B726 /* Resources */,
+				FC6552692FC373980093B726 /* Services */,
+				FC65526A2FC373980093B726 /* Utils */,
+				FC65526B2FC373980093B726 /* ViewModels */,
+				FC6552992FC373980093B726 /* Views */,
+				FC65529E2FC373980093B726 /* YumikoToys */,
+				FC65529F2FC373980093B726 /* MAINTENANCE.md */,
+				FC6552A02FC373980093B726 /* SplashFix.md */,
+				FC6552A12FC373980093B726 /* SplashLocalFix.md */,
+				FC6552A22FC373980093B726 /* YumikoToysApp.swift */,
+			);
+			path = YumikoToys;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1EE4E20924F97E240097C32C /* YumikoToys */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1EE4E21A24F97E250097C32C /* Build configuration list for PBXNativeTarget "YumikoToys" */;
+			buildPhases = (
+				1EE4E20624F97E240097C32C /* Sources */,
+				1EE4E20724F97E240097C32C /* Frameworks */,
+				1EE4E20824F97E240097C32C /* Resources */,
+				FC3FCE1D2CB69C52008D8C7C /* Embed Foundation Extensions */,
+				1E5B4D3625FBFC4000092422 /* Embed XPC Services */,
+				1E5B4D6E25FBFE9100092422 /* CopyFiles */,
+				1E5B4DE725FC25B000092422 /* ShellScript */,
+				FCF267462E114652007230B1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			name = YumikoToys;
+			packageProductDependencies = (
+				1E5B4DE425FC24CA00092422 /* LaunchAtLogin */,
+				FCF35E802E3E56BD00793FBB /* NTPClient */,
+				FCB283B22E43D77A00FA3D4A /* MediaKeyTap */,
+				FCEA9FE92FBE9E020037F6B8 /* MarkdownUI */,
+				FC5F1B1C2FBEB15D004B2F34 /* MLX */,
+				FC5F1B1E2FBEB15D004B2F34 /* MLXFFT */,
+				FC5F1B202FBEB15D004B2F34 /* MLXFast */,
+				FC5F1B222FBEB15D004B2F34 /* MLXLinalg */,
+				FC5F1B242FBEB15D004B2F34 /* MLXNN */,
+				FCC24F1B2FBED23D00A64686 /* HuggingFace */,
+				FC0664722FC0914300CABB99 /* Splash */,
+				FC0664742FC0914300CABB99 /* SplashHTMLGen */,
+				FC0664762FC0914300CABB99 /* SplashImageGen */,
+				FC0664782FC0914300CABB99 /* SplashMarkdown */,
+				FC06647A2FC0914300CABB99 /* SplashTokenizer */,
+				FC06647D2FC0916C00CABB99 /* Highlightr */,
+				FCA5AF172FC0992D00E668DB /* CoreXLSX */,
+			);
+			productName = keysmith;
+			productReference = 1EE4E20A24F97E240097C32C /* YumikoToys.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FC3FCE192CB69C52008D8C7B /* YumikoToysHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FC3FCE262CB69C53008D8C7B /* Build configuration list for PBXNativeTarget "YumikoToysHelper" */;
+			buildPhases = (
+				FC3FCE162CB69C52008D8C7B /* Sources */,
+				FC3FCE172CB69C52008D8C7B /* Frameworks */,
+				FC3FCE182CB69C52008D8C7B /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				FC3FCE1B2CB69C52008D8C7B /* YumikoToysHelper */,
+			);
+			name = YumikoToysHelper;
+			productName = YumikoToysHelper;
+			productReference = FC3FCE1A2CB69C52008D8C7B /* YumikoToysHelper.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FC3FCE192CB69C52008D8C7C /* YumikoWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FC3FCE262CB69C53008D8C7C /* Build configuration list for PBXNativeTarget "YumikoWidget" */;
+			buildPhases = (
+				FC3FCE162CB69C52008D8C7C /* Sources */,
+				FC3FCE172CB69C52008D8C7C /* Frameworks */,
+				FC3FCE182CB69C52008D8C7C /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				FC3FCE1B2CB69C52008D8C7C /* YumikoWidget */,
+			);
+			name = YumikoWidget;
+			productName = YumikoWidget;
+			productReference = FC3FCE1A2CB69C52008D8C7C /* YumikoWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		FC3FCE192CB69C52008D8C7D /* YumikoWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FC3FCE262CB69C53008D8C7D /* Build configuration list for PBXNativeTarget "YumikoWatch" */;
+			buildPhases = (
+				FC3FCE162CB69C52008D8C7D /* Sources */,
+				FC3FCE172CB69C52008D8C7D /* Frameworks */,
+				FC3FCE182CB69C52008D8C7D /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				FC3FCE1B2CB69C52008D8C7D /* YumikoWatch */,
+			);
+			name = YumikoWatch;
+			productName = YumikoWatch;
+			productReference = FC3FCE1A2CB69C52008D8C7D /* YumikoWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FCF267372E114015007230B1 /* YumikoCLI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FCF2673E2E114015007230B1 /* Build configuration list for PBXNativeTarget "YumikoCLI" */;
+			buildPhases = (
+				FCF267342E114015007230B1 /* Sources */,
+				FCF267352E114015007230B1 /* Frameworks */,
+				FCF267362E114015007230B1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				FCF267392E114015007230B1 /* YumikoCLI */,
+			);
+			name = YumikoCLI;
+			packageProductDependencies = (
+				FCF267432E114619007230B1 /* ArgumentParser */,
+			);
+			productName = YumikoCLI;
+			productReference = FCF267382E114015007230B1 /* YumikoCLI */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1EE4E20224F97E240097C32C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2700;
+				ORGANIZATIONNAME = Menglolita;
+				TargetAttributes = {
+					1EE4E20924F97E240097C32C = {
+						CreatedOnToolsVersion = 11.6;
+						LastSwiftMigration = 1240;
+					};
+					FC3FCE192CB69C52008D8C7B = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					FCF267372E114015007230B1 = {
+						CreatedOnToolsVersion = 26.0;
+						LastSwiftMigration = 2600;
+					};
+				};
+			};
+			buildConfigurationList = 1EE4E20524F97E240097C32C /* Build configuration list for PBXProject "YumikoToys" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 1EE4E20124F97E240097C32C;
+			packageReferences = (
+				1E5B4DE325FC24CA00092422 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
+				FCF2673F2E1140A9007230B1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+				FCF35E7F2E3E56BD00793FBB /* XCRemoteSwiftPackageReference "swift-ntp" */,
+				FCB283B12E43D77A00FA3D4A /* XCRemoteSwiftPackageReference "MediaKeyTap" */,
+				FCEA9FE82FBE9E020037F6B8 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */,
+				FCC24F1A2FBED23D00A64686 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
+				FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */,
+				FC06647C2FC0916C00CABB99 /* XCRemoteSwiftPackageReference "Highlightr" */,
+				FCA5AF162FC0992D00E668DB /* XCRemoteSwiftPackageReference "CoreXLSX" */,
+			);
+			preferredProjectObjectVersion = 90;
+			productRefGroup = 1EE4E20B24F97E240097C32C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FC3FCE192CB69C52008D8C7D /* YumikoWatch */,
+				1EE4E20924F97E240097C32C /* YumikoToys */,
+				FC3FCE192CB69C52008D8C7B /* YumikoToysHelper */,
+				FCF267372E114015007230B1 /* YumikoCLI */,
+				FC3FCE192CB69C52008D8C7C /* YumikoWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1EE4E20824F97E240097C32C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+				FC6552A42FC373980093B726 /* 2026-05-21-mlx-model-management-design.md in Resources */,
+				FC6552A52FC373980093B726 /* 2026-05-22-assistant-features-design.md in Resources */,
+				FC6552A62FC373980093B726 /* MAINTENANCE.md in Resources */,
+				FC6552A72FC373980093B726 /* Main.storyboard in Resources */,
+				FC6552A82FC373980093B726 /* 2026-05-21-resumable-download-design.md in Resources */,
+				FC6552A92FC373980093B726 /* Assets.xcassets in Resources */,
+				FC6552AA2FC373980093B726 /* SplashFix.md in Resources */,
+				FC6552AB2FC373980093B726 /* PromptTemplates.json in Resources */,
+				FC6552AC2FC373980093B726 /* SplashLocalFix.md in Resources */,
+				FC6552AD2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-design.md in Resources */,
+				FC6552AE2FC373980093B726 /* 2026-05-22-ai-assistant-enhancement-plan.md in Resources */,
+				FC6552AF2FC373980093B726 /* 2026-05-21-mlx-model-management.md in Resources */,
+				FC6552B12FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */,
+				FC6552B22FC373980093B726 /* AaGXLZGKADS.ttf in Resources */,
+				FC6552B32FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md in Resources */,
+			);
+		};
+		FC3FCE182CB69C52008D8C7B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		FC3FCE182CB69C52008D8C7C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		FC3FCE182CB69C52008D8C7D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		1E5B4DE725FC25B000092422 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			shellPath = /bin/sh;
+			shellScript = (
+				"# Type a script or drag a script file from your workspace to insert its path.",
+				"\"${BUILT_PRODUCTS_DIR}/LaunchAtLogin_LaunchAtLogin.bundle/Contents/Resources/copy-helper-swiftpm.sh\"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+			);
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1EE4E20624F97E240097C32C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				FC65590B2FC373980093B726 /* ScreenMediaHelper.swift in Sources */,
+				FC65590D2FC373980093B726 /* GlobalHotkeyManager.swift in Sources */,
+				FC65590F2FC373980093B726 /* AppScanner.swift in Sources */,
+				FC6559112FC373980093B726 /* AppPickerView.swift in Sources */,
+				FC6559012FC373980093B726 /* AgentManagerService.swift in Sources */,
+				FC6559032FC373980093B726 /* PluginService.swift in Sources */,
+				FC6559052FC373980093B726 /* YumiScriptEngine.swift in Sources */,
+				FC6559072FC373980093B726 /* AgentsSidebarView.swift in Sources */,
+				FC6559092FC373980093B726 /* SkillsSidebarView.swift in Sources */,
+				FC6553FF0000000000000001 /* FullDiskAccessHelper.swift in Sources */,
+				FC6552B42FC373980093B726 /* MainView.swift in Sources */,
+				FC6552B52FC373980093B726 /* UploadedFile.swift in Sources */,
+				FC6552B62FC373980093B726 /* CopyableMessageBubble.swift in Sources */,
+				FC6552B72FC373980093B726 /* Color+Hex.swift in Sources */,
+				FC6552B82FC373980093B726 /* LocalSentimentService.swift in Sources */,
+				FC6552B92FC373980093B726 /* ProxyAwareDownloader.swift in Sources */,
+				FC6552BA2FC373980093B726 /* AgentService.swift in Sources */,
+				FC6552BB2FC373980093B726 /* ModelCompatibilityManager.swift in Sources */,
+				FC6552BC2FC373980093B726 /* ButtonAnimations.swift in Sources */,
+				FC6552BD2FC373980093B726 /* AppSettings.swift in Sources */,
+				FC6553B12FD000010093B726 /* Theme.swift in Sources */,
+				FC6552BE2FC373980093B726 /* PromptTemplatePicker.swift in Sources */,
+				FC6552BF2FC373980093B726 /* MLXModelLoader.swift in Sources */,
+				FC6552C02FC373980093B726 /* UserAvatarSettings.swift in Sources */,
+				FC6553F02FDA00000093B726 /* WidgetSyncData.swift in Sources */,
+				FC6553F22FDA00000093B726 /* MosaicRenderer.swift in Sources */,
+				FC6553F42FDA00000093B726 /* SigningDiagnostics.swift in Sources */,
+				FC6553F62FDA00000093B726 /* ScreenshotAnnotationModule.swift in Sources */,
+				FC6552C12FC373980093B726 /* LearningResult.swift in Sources */,
+				FC6552C22FC373980093B726 /* APISettingsServiceProtocol.swift in Sources */,
+				FC6552C32FC373980093B726 /* Conversation.swift in Sources */,
+				FC6552C42FC373980093B726 /* APISettingsService.swift in Sources */,
+				FC6552C52FC373980093B726 /* PixelArtIcons.swift in Sources */,
+				FC6552C62FC373980093B726 /* ServiceProtocols.swift in Sources */,
+				FC6552C72FC373980093B726 /* GenderSelectorView.swift in Sources */,
+				FC6552C82FC373980093B726 /* ImageAnalysisService.swift in Sources */,
+				FC6552C92FC373980093B726 /* ModelManagementSection.swift in Sources */,
+				FC6552CA2FC373980093B726 /* AssistantConfig.swift in Sources */,
+				FC6552CB2FC373980093B726 /* FileUploadView.swift in Sources */,
+				FC6552CC2FC373980093B726 /* AIProvider.swift in Sources */,
+				FC6552CD2FC373980093B726 /* OfficeDocumentParser.swift in Sources */,
+				FC6552CE2FC373980093B726 /* AssistantToolbar.swift in Sources */,
+				FC6552CF2FC373980093B726 /* HuggingFaceAuthService.swift in Sources */,
+				FC6552D02FC373980093B726 /* AppPromptService.swift in Sources */,
+				FC6552D12FC373980093B726 /* TavilySearchService.swift in Sources */,
+				FC6552D22FC373980093B726 /* PromptTemplate.swift in Sources */,
+				FC6552D32FC373980093B726 /* KeychainAccessService.swift in Sources */,
+				FC6552D42FC373980093B726 /* LaunchAtLoginService.swift in Sources */,
+				FC6552D52FC373980093B726 /* APISettings.swift in Sources */,
+				FC6552D62FC373980093B726 /* EnhancedWebSearchService.swift in Sources */,
+				FC6552D72FC373980093B726 /* ToastView.swift in Sources */,
+				FC6552D82FC373980093B726 /* PersonaServiceProtocol.swift in Sources */,
+				FC6552D92FC373980093B726 /* SettingsView.swift in Sources */,
+				FC6552DA2FC373980093B726 /* AppHeader.swift in Sources */,
+				FC6552DB2FC373980093B726 /* PetProfileCardModifier.swift in Sources */,
+				FC6552DC2FC373980093B726 /* YumikoToysApp.swift in Sources */,
+				FC6552DD2FC373980093B726 /* MenuList.swift in Sources */,
+				FC6552DE2FC373980093B726 /* AnniversaryCard.swift in Sources */,
+				FC6552DF2FC373980093B726 /* UserAvatarServiceProtocol.swift in Sources */,
+				FC6552E02FC373980093B726 /* PetProfileCardView.swift in Sources */,
+				FC6552E12FC373980093B726 /* ModelStatusCard.swift in Sources */,
+				FC6552E22FC373980093B726 /* AdvancedFeaturesService.swift in Sources */,
+				FC6552E32FC373980093B726 /* ComponentLayoutService.swift in Sources */,
+				FC655A012FC373980093B726 /* ProactiveAgentService.swift in Sources */,
+				FC6552E42FC373980093B726 /* MessageContextMenu.swift in Sources */,
+				FC6552E52FC373980093B726 /* DataStorageService.swift in Sources */,
+				FC6552E62FC373980093B726 /* UserAvatarService.swift in Sources */,
+				FC6552E72FC373980093B726 /* Anniversary.swift in Sources */,
+				FC6552E82FC373980093B726 /* ModeButton.swift in Sources */,
+				FC6552E92FC373980093B726 /* CodeHighlightView.swift in Sources */,
+				FC6552EA2FC373980093B726 /* ProviderConfig.swift in Sources */,
+				FC6552EB2FC373980093B726 /* ChatMode.swift in Sources */,
+				FC6552EC2FC373980093B726 /* SettingsService.swift in Sources */,
+				FC6552ED2FC373980093B726 /* NVIDIAProvider.swift in Sources */,
+				FC6552EE2FC373980093B726 /* ChatModeSelector.swift in Sources */,
+				FC6552EE2FC373980093B72A /* ChatIdentitySelector.swift in Sources */,
+				FC6552EF2FC373980093B726 /* NTPServer.swift in Sources */,
+				FC6552F02FC373980093B726 /* ChangelogView.swift in Sources */,
+				FC6552F12FC373980093B726 /* GLMServiceProtocol.swift in Sources */,
+				FC6552F22FC373980093B726 /* ModelMemoryManager.swift in Sources */,
+				FC6552F32FC373980093B726 /* AppState.swift in Sources */,
+				FC6552F42FC373980093B726 /* ChatSettingsView.swift in Sources */,
+				FC6552F52FC373980093B726 /* BackgroundLearningService.swift in Sources */,
+				FC6552F62FC373980093B726 /* AIChatViewModel.swift in Sources */,
+				FC6552F72FC373980093B726 /* LocalEmbeddingService.swift in Sources */,
+				FC6552F82FC373980093B726 /* PixelIconView.swift in Sources */,
+				FC6552F92FC373980093B726 /* AnniversaryManagementView.swift in Sources */,
+				FC6552FA2FC373980093B726 /* FileAnalysisService.swift in Sources */,
+				FC6552FB2FC373980093B726 /* IconStyleSystem.swift in Sources */,
+				FC6552FC2FC373980093B726 /* SemanticDeduplicationService.swift in Sources */,
+				FC6552FD2FC373980093B726 /* AboutView.swift in Sources */,
+				FC6552FE2FC373980093B726 /* PetAgeCalculator.swift in Sources */,
+				FC6552FF2FC373980093B726 /* GLMService.swift in Sources */,
+				FC6553002FC373980093B726 /* PersonaService.swift in Sources */,
+				FC6553012FC373980093B726 /* SearchSourcesView.swift in Sources */,
+				FC6553022FC373980093B726 /* AdaptiveLayoutManager.swift in Sources */,
+				FC6553032FC373980093B726 /* PetPersona.swift in Sources */,
+				FC6553042FC373980093B726 /* StatusBarManager.swift in Sources */,
+				FC6553052FC373980093B726 /* ModelDownloadManager.swift in Sources */,
+				FC6553062FC373980093B726 /* AnniversaryService.swift in Sources */,
+				FC6553072FC373980093B726 /* ProviderPicker.swift in Sources */,
+				FC6553082FC373980093B726 /* ModelPickerMenu.swift in Sources */,
+				FC6553092FC373980093B726 /* SettingsMigrationService.swift in Sources */,
+				FC65530A2FC373980093B726 /* PixelAvatarView.swift in Sources */,
+				FC65530B2FC373980093B726 /* ImageCropView.swift in Sources */,
+				FC65530C2FC373980093B726 /* AIProviderProtocol.swift in Sources */,
+				FC65530D2FC373980093B726 /* HuggingFaceAuthSheet.swift in Sources */,
+				FC65530E2FC373980093B726 /* PreventSleepService.swift in Sources */,
+				FC65530F2FC373980093B726 /* StorageService.swift in Sources */,
+				FC6553102FC373980093B726 /* MarkdownContentView.swift in Sources */,
+				FC6553112FC373980093B726 /* ModelManagementService.swift in Sources */,
+				FC6553122FC373980093B726 /* ModelCapability.swift in Sources */,
+				FC6553132FC373980093B726 /* FilePreviewChip.swift in Sources */,
+				FC6553142FC373980093B726 /* DataExportService.swift in Sources */,
+				FC6553152FC373980093B726 /* WebSearchService.swift in Sources */,
+				FC6553162FC373980093B726 /* DependencyContainer.swift in Sources */,
+				FC6553172FC373980093B726 /* TimeSyncService.swift in Sources */,
+				FC6553182FC373980093B726 /* AIChatView.swift in Sources */,
+				FC6553192FC373980093B726 /* ComponentLayout.swift in Sources */,
+				FC65531A2FC373980093B726 /* EnhancedSearchSourcesView.swift in Sources */,
+				FC65531B2FC373980093B726 /* SearchChannel.swift in Sources */,
+				FC65531C2FC373980093B726 /* PsychologicalProfile.swift in Sources */,
+				FC65531D2FC373980093B726 /* StatusBarView.swift in Sources */,
+				FC65531E2FC373980093B726 /* ConversationSidebarView.swift in Sources */,
+				FC65531F2FC373980093B726 /* NTPClient.swift in Sources */,
+				FC6553202FC373980093B726 /* AgentFileService.swift in Sources */,
+				FC6553212FC373980093B726 /* AgentStepView.swift in Sources */,
+				FC6554000000000000000001 /* ProactiveToolCardView.swift in Sources */,
+				FC6553222FC373980093B726 /* FontManager.swift in Sources */,
+				FC65DIAG00000000000000A2 /* TCCDiagnostic.swift in Sources */,
+				FCWIDGET00000000000000A2 /* WidgetKitGuide.swift in Sources */,
+			);
+		};
+		FC3FCE162CB69C52008D8C7B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		FC3FCE162CB69C52008D8C7C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		FC3FCE162CB69C52008D8C7D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		FCF267342E114015007230B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1EE4E21824F97E250097C32C /* Debug configuration for PBXProject "YumikoToys" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		1EE4E21924F97E250097C32C /* Release configuration for PBXProject "YumikoToys" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		1EE4E21B24F97E250097C32C /* Debug configuration for PBXNativeTarget "YumikoToys" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = YES;
+				CLANG_ANALYZER_SECURITY_KEYCHAIN_API = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = YumikoToys/Assets/YumikoToysDebug.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 198484520;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
+				INFOPLIST_FILE = YumikoToys/Assets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 4.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "YumikoToys/Assets/YumikoToys-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		1EE4E21C24F97E250097C32C /* Release configuration for PBXNativeTarget "YumikoToys" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = YES;
+				CLANG_ANALYZER_SECURITY_KEYCHAIN_API = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = YumikoToys/Assets/YumikoToys.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 198484520;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
+				INFOPLIST_FILE = YumikoToys/Assets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 4.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "YumikoToys/Assets/YumikoToys-Bridging-Header.h";
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		FC3FCE272CB69C53008D8C7B /* Debug configuration for PBXNativeTarget "YumikoToysHelper" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = YumikoToysHelper/YumikoToysHelper.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 198484520;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 Menglolita. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoToysHelper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FC3FCE272CB69C53008D8C7C /* Debug configuration for PBXNativeTarget "YumikoWidget" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_ENTITLEMENTS = YumikoWidget/YumikoWidget.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 198484520;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YumikoWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 4.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FC3FCE272CB69C53008D8C7D /* Debug configuration for PBXNativeTarget "YumikoWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 198484520;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "兔可可";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 4.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWatch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.6;
+			};
+			name = Debug;
+		};
+		FC3FCE282CB69C53008D8C7B /* Release configuration for PBXNativeTarget "YumikoToysHelper" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = YumikoToysHelper/YumikoToysHelper.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 198484520;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 Menglolita. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoToysHelper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		FC3FCE282CB69C53008D8C7C /* Release configuration for PBXNativeTarget "YumikoWidget" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_ENTITLEMENTS = YumikoWidget/YumikoWidget.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 198484520;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YumikoWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 4.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		FC3FCE282CB69C53008D8C7D /* Release configuration for PBXNativeTarget "YumikoWatch" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 198484520;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "兔可可";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 4.5.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWatch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.6;
+			};
+			name = Release;
+		};
+		FCF2673C2E114015007230B1 /* Debug configuration for PBXNativeTarget "YumikoCLI" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.CLI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FCF2673D2E114015007230B1 /* Release configuration for PBXNativeTarget "YumikoCLI" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.CLI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1EE4E20524F97E240097C32C /* Build configuration list for PBXProject "YumikoToys" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1EE4E21824F97E250097C32C /* Debug configuration for PBXProject "YumikoToys" */,
+				1EE4E21924F97E250097C32C /* Release configuration for PBXProject "YumikoToys" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		1EE4E21A24F97E250097C32C /* Build configuration list for PBXNativeTarget "YumikoToys" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1EE4E21B24F97E250097C32C /* Debug configuration for PBXNativeTarget "YumikoToys" */,
+				1EE4E21C24F97E250097C32C /* Release configuration for PBXNativeTarget "YumikoToys" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		FC3FCE262CB69C53008D8C7B /* Build configuration list for PBXNativeTarget "YumikoToysHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC3FCE272CB69C53008D8C7B /* Debug configuration for PBXNativeTarget "YumikoToysHelper" */,
+				FC3FCE282CB69C53008D8C7B /* Release configuration for PBXNativeTarget "YumikoToysHelper" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		FC3FCE262CB69C53008D8C7C /* Build configuration list for PBXNativeTarget "YumikoWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC3FCE272CB69C53008D8C7C /* Debug configuration for PBXNativeTarget "YumikoWidget" */,
+				FC3FCE282CB69C53008D8C7C /* Release configuration for PBXNativeTarget "YumikoWidget" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		FC3FCE262CB69C53008D8C7D /* Build configuration list for PBXNativeTarget "YumikoWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC3FCE272CB69C53008D8C7D /* Debug configuration for PBXNativeTarget "YumikoWatch" */,
+				FC3FCE282CB69C53008D8C7D /* Release configuration for PBXNativeTarget "YumikoWatch" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		FCF2673E2E114015007230B1 /* Build configuration list for PBXNativeTarget "YumikoCLI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FCF2673C2E114015007230B1 /* Debug configuration for PBXNativeTarget "YumikoCLI" */,
+				FCF2673D2E114015007230B1 /* Release configuration for PBXNativeTarget "YumikoCLI" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1E5B4DE325FC24CA00092422 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.0;
+			};
+		};
+		FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "file:///Users/yumikotoys/Documents/Xcodetools/YumikoToys Lite/ThirdParty/Splash";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+		FC06647C2FC0916C00CABB99 /* XCRemoteSwiftPackageReference "Highlightr" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/raspu/Highlightr";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+		FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.31.3;
+			};
+		};
+		FCA5AF162FC0992D00E668DB /* XCRemoteSwiftPackageReference "CoreXLSX" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/CoreOffice/CoreXLSX";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.14.2;
+			};
+		};
+		FCB283B12E43D77A00FA3D4A /* XCRemoteSwiftPackageReference "MediaKeyTap" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nhurden/MediaKeyTap";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+		FCC24F1A2FBED23D00A64686 /* XCRemoteSwiftPackageReference "swift-huggingface" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-huggingface.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
+			};
+		};
+		FCEA9FE82FBE9E020037F6B8 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
+		FCF2673F2E1140A9007230B1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-argument-parser.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.1;
+			};
+		};
+		FCF35E7F2E3E56BD00793FBB /* XCRemoteSwiftPackageReference "swift-ntp" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-ntp.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1E5B4DE425FC24CA00092422 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1E5B4DE325FC24CA00092422 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */;
+			productName = LaunchAtLogin;
+		};
+		FC0664722FC0914300CABB99 /* Splash */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = Splash;
+		};
+		FC0664742FC0914300CABB99 /* SplashHTMLGen */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = SplashHTMLGen;
+		};
+		FC0664762FC0914300CABB99 /* SplashImageGen */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = SplashImageGen;
+		};
+		FC0664782FC0914300CABB99 /* SplashMarkdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = SplashMarkdown;
+		};
+		FC06647A2FC0914300CABB99 /* SplashTokenizer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC0664712FC0914300CABB99 /* XCRemoteSwiftPackageReference "Splash" */;
+			productName = SplashTokenizer;
+		};
+		FC06647D2FC0916C00CABB99 /* Highlightr */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC06647C2FC0916C00CABB99 /* XCRemoteSwiftPackageReference "Highlightr" */;
+			productName = Highlightr;
+		};
+		FC5F1B1C2FBEB15D004B2F34 /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		FC5F1B1E2FBEB15D004B2F34 /* MLXFFT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFFT;
+		};
+		FC5F1B202FBEB15D004B2F34 /* MLXFast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFast;
+		};
+		FC5F1B222FBEB15D004B2F34 /* MLXLinalg */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXLinalg;
+		};
+		FC5F1B242FBEB15D004B2F34 /* MLXNN */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC5F1B1B2FBEB15D004B2F34 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXNN;
+		};
+		FCA5AF172FC0992D00E668DB /* CoreXLSX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCA5AF162FC0992D00E668DB /* XCRemoteSwiftPackageReference "CoreXLSX" */;
+			productName = CoreXLSX;
+		};
+		FCB283B22E43D77A00FA3D4A /* MediaKeyTap */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCB283B12E43D77A00FA3D4A /* XCRemoteSwiftPackageReference "MediaKeyTap" */;
+			productName = MediaKeyTap;
+		};
+		FCC24F1B2FBED23D00A64686 /* HuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCC24F1A2FBED23D00A64686 /* XCRemoteSwiftPackageReference "swift-huggingface" */;
+			productName = HuggingFace;
+		};
+		FCEA9FE92FBE9E020037F6B8 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCEA9FE82FBE9E020037F6B8 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
+		};
+		FCF267432E114619007230B1 /* ArgumentParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCF2673F2E1140A9007230B1 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
+			productName = ArgumentParser;
+		};
+		FCF35E802E3E56BD00793FBB /* NTPClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FCF35E7F2E3E56BD00793FBB /* XCRemoteSwiftPackageReference "swift-ntp" */;
+			productName = NTPClient;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 1EE4E20224F97E240097C32C /* Project object */;
+}
