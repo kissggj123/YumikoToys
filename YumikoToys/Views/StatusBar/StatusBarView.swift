@@ -642,24 +642,27 @@ struct StatusBarView: View {
 
     private var customDaysDisplayTitle: String? {
         let settings = DependencyContainer.shared.settingsService.settings
+        var titleToUse: String? = nil
         
         // 优先使用上帝模式或自定义名称
         if settings.statusBarTextMode == .godMode || settings.statusBarTextMode == .customTitle {
             if let active = viewModel.anniversaryInfo?.anniversary, let custom = active.godModeCustomText, !custom.isEmpty {
-                return custom
-            }
-            if !settings.customStatusBarText.isEmpty {
-                return settings.customStatusBarText
+                titleToUse = custom
+            } else if !settings.customStatusBarText.isEmpty {
+                titleToUse = settings.customStatusBarText
             }
         }
         
-        // 回退到布局组件中的 customTitle
-        let layouts = DependencyContainer.shared.componentLayoutService.currentLayouts
-        if let layout = layouts.first(where: { $0.type == .daysDisplay }),
-           let title = layout.customTitle, !title.isEmpty {
-            return title
+        if titleToUse == nil {
+            // 回退到布局组件中的 customTitle
+            let layouts = DependencyContainer.shared.componentLayoutService.currentLayouts
+            if let layout = layouts.first(where: { $0.type == .daysDisplay }),
+               let title = layout.customTitle, !title.isEmpty {
+                titleToUse = title
+            }
         }
-        return nil
+        
+        return titleToUse?.replacingOccurrences(of: "\\n", with: "\n").replacingOccurrences(of: "/n", with: "\n")
     }
 
     // 主题色选择
@@ -1519,11 +1522,6 @@ struct StatusBarView: View {
                     HStack(spacing: 4) {
                         Text("🥕")
                             .font(.system(size: 10))
-                        Text(viewModel.anniversaryInfo?.anniversary.displayPetName ?? "可可")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(themeColor.accentColor)
-                            .lineLimit(1)
-                            
                         Menu {
                             ForEach(viewModel.anniversaries) { ann in
                                 Button {
@@ -1537,13 +1535,23 @@ struct StatusBarView: View {
                                 }
                             }
                         } label: {
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 10))
-                                .foregroundStyle(themeColor.secondaryTextColor)
+                            HStack(spacing: 2) {
+                                Text(viewModel.anniversaryInfo?.anniversary.displayPetName ?? "可可")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .lineLimit(1)
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 7, weight: .bold))
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .foregroundStyle(themeColor.accentColor)
+                            .background(
+                                Capsule()
+                                    .fill(themeColor.accentColor.opacity(0.1))
+                            )
                         }
                         .menuStyle(.borderlessButton)
                         .fixedSize()
-                        .frame(width: 14)
                         
                         Text("·")
                             .font(.system(size: 10))
@@ -1562,11 +1570,6 @@ struct StatusBarView: View {
                     HStack(spacing: 4) {
                         Text("🥕")
                             .font(.system(size: 10))
-                        Text("可可皇后")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(themeColor.accentColor)
-                            .lineLimit(1)
-                            
                         Menu {
                             ForEach(viewModel.anniversaries) { ann in
                                 Button {
@@ -1580,13 +1583,23 @@ struct StatusBarView: View {
                                 }
                             }
                         } label: {
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 10))
-                                .foregroundStyle(themeColor.secondaryTextColor)
+                            HStack(spacing: 2) {
+                                Text("可可皇后")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .lineLimit(1)
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 7, weight: .bold))
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .foregroundStyle(themeColor.accentColor)
+                            .background(
+                                Capsule()
+                                    .fill(themeColor.accentColor.opacity(0.1))
+                            )
                         }
                         .menuStyle(.borderlessButton)
                         .fixedSize()
-                        .frame(width: 14)
                         
                         Text("·")
                             .font(.system(size: 10))

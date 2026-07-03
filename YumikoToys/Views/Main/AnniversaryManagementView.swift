@@ -93,10 +93,10 @@ struct AnniversaryManagementView: View {
                     }
                 }
             ),
-            anniversary: selectedCardAnniversary ?? Anniversary(title: "", startDate: Date()),
+            anniversary: selectedCardAnniversary ?? Anniversary(title: "", startDate: Calendar.current.startOfDay(for: Date())),
             calculation: selectedCardAnniversary.map {
                 AnniversaryInfo.calculateTime(from: $0.startDate)
-            } ?? AnniversaryInfo.calculateTime(from: Date())
+            } ?? AnniversaryInfo.calculateTime(from: Calendar.current.startOfDay(for: Date()))
         )
         .onAppear {
             viewModel.onAppear()
@@ -291,7 +291,7 @@ struct PetProfileEditView: View {
     let onSave: (Anniversary) -> Void
     
     @State private var petName: String = ""
-    @State private var startDate = Date()
+    @State private var startDate = Calendar.current.startOfDay(for: Date())
     @State private var type: AnniversaryType = .countUp
     @State private var gender: PetGender = .unknown
     @State private var species: String = ""

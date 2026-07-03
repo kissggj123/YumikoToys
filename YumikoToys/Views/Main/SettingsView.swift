@@ -140,6 +140,7 @@ struct SettingsView: View {
                         timeSyncSection
                         skillManagementSection
                         PluginManagementSectionView()
+                        widgetManagementSection
                         dataManagementSection
                         aboutSection
                         footerText
@@ -2798,6 +2799,19 @@ extension SettingsView {
                     
                     CommandLineInstructionView()
                 }
+            }
+        }
+    }
+
+    private var widgetManagementSection: some View {
+        SettingsSection(title: "小组件修复", icon: "square.text.square.fill", iconColor: "FF9500") {
+            SettingsButtonRow(
+                icon: "arrow.triangle.2.circlepath",
+                iconColor: "FF9500",
+                title: "强制刷新小组件",
+                subtitle: "强制重新写入并重载小组件数据"
+            ) {
+                WidgetCenter.shared.reloadAllTimelines()
             }
         }
     }
