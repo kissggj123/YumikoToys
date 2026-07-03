@@ -55,16 +55,24 @@ final class YumiScriptEngine {
                     continue
                 }
 
-                // 用 `open -a "AppName"` 而非 AppleScript：
-                //  1) open 找不到应用时 stderr 直接报错，不会弹"定位"对话框
-                //  2) 异步激活，不阻塞主线程
-                //  3) 自动处理路径转义（我们再手工 escape 一次双引号作为防御）
-                let escaped = Self.shellEscape(argsStr)
-                let shellCmd = "open -a \(escaped)"
-                let shellResult = await SkillService.shared.runShell(shellCmd)
-                if shellResult.contains("error") || shellResult.contains("Unable") {
+                let url = URL(fileURLWithPath: resolvedPath!)
+                let configuration = NSWorkspace.OpenConfiguration()
+                
+                let success: Bool = await withCheckedContinuation { continuation in
+                    NSWorkspace.shared.openApplication(at: url, configuration: configuration) { (app, error) in
+                        if let _ = error {
+                            continuation.resume(returning: false)
+                        } else {
+                            continuation.resume(returning: true)
+                        }
+                    }
+                }
+                
+                if success {
+                    logs.append(" 启动应用 \"\(argsStr)\" 成功（\(resolvedPath ?? "")）")
+                } else {
                     // 二次兜底：直接用 AppleScript activate（已加 5s 超时，不会卡死）
-                    logs.append(" `open` 失败（\(shellResult)），改用 AppleScript 兜底…")
+                    logs.append(" NSWorkspace 启动失败，改用 AppleScript 兜底…")
                     let appleScript = "tell application \"\(argsStr.replacingOccurrences(of: "\"", with: "\\\""))\" to activate"
                     let result = await SkillService.shared.runAppleScript(appleScript)
                     if result.contains("error") {
@@ -72,8 +80,6 @@ final class YumiScriptEngine {
                     } else {
                         logs.append(" 启动应用 \"\(argsStr)\" 成功（AppleScript 兜底）")
                     }
-                } else {
-                    logs.append(" 启动应用 \"\(argsStr)\" 成功（\(resolvedPath ?? "")）")
                 }
                 
             case "screenshot":

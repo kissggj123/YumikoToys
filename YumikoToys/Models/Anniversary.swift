@@ -41,7 +41,7 @@ enum AppConfig {
         if let date = Bundle.main.infoDictionary?["CFBuildDate"] as? String {
             return date
         }
-        return "2026-06-29"
+        return "2026-07-03"
     }
 }
 
@@ -207,6 +207,10 @@ struct Anniversary: Codable, Identifiable, Hashable, Sendable {
     
     // 狗狗体型配置
     var dogSize: CanineSize?
+    
+    // 档案特定的状态栏配置
+    var godModeCustomText: String?
+    var allowMultiline: Bool?
 
     init(
         id: UUID = UUID(),
@@ -221,7 +225,9 @@ struct Anniversary: Codable, Identifiable, Hashable, Sendable {
         species: String? = nil,
         avatarEmoji: String? = nil,
         customStatusBarLine1: String? = nil,
-        dogSize: CanineSize? = nil
+        dogSize: CanineSize? = nil,
+        godModeCustomText: String? = nil,
+        allowMultiline: Bool? = nil
     ) {
         self.id = id
         self.title = title
@@ -238,6 +244,8 @@ struct Anniversary: Codable, Identifiable, Hashable, Sendable {
         self.avatarEmoji = avatarEmoji
         self.customStatusBarLine1 = customStatusBarLine1
         self.dogSize = dogSize
+        self.godModeCustomText = godModeCustomText
+        self.allowMultiline = allowMultiline
     }
 }
 

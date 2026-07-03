@@ -631,6 +631,18 @@ sign_bundle() {
     fi
 }
 
+# ------------------------------------------------------------------
+# 手动嵌入 App Extension 
+# 由于编译期 CODE_SIGNING_ALLOWED=NO，Xcode 不会自动执行 Embed App Extensions
+# ------------------------------------------------------------------
+APPEX_SRC="${DERIVED_DATA_DIR}/Build/Products/${CONFIGURATION}/YumikoWidget.appex"
+APPEX_DEST_DIR="${APP_PATH}/Contents/PlugIns"
+if [[ -d "$APPEX_SRC" ]]; then
+    mkdir -p "$APPEX_DEST_DIR"
+    cp -R "$APPEX_SRC" "$APPEX_DEST_DIR/"
+    log_info "已将 YumikoWidget.appex 手动嵌入到主 App 中"
+fi
+
 # 先枚举所有需要签名的 bundle（方便做精确进度条）
 declare -a SIGN_PATHS=()
 declare -a SIGN_ENTITLEMENTS=()

@@ -546,77 +546,50 @@ final class ScreenMediaHelper: ObservableObject {
         requestScreenCaptureIfNeeded()
 
         Task {
-            // 方案 A：screencapture -D 截取所有显示器（简单可靠）
-            let allScreensPath = (NSTemporaryDirectory() as NSString)
-                .appendingPathComponent("all_screens_\(Self.filenameFormatter.string(from: Date())).png")
-            ensureParentDirectoryExists(for: allScreensPath)
-
-            let (code, _) = await runScreencapture(args: ["-D", allScreensPath])
-
-            if code == 0, FileManager.default.fileExists(atPath: allScreensPath),
-               let fullImage = NSImage(contentsOfFile: allScreensPath) {
-                // screencapture -D 成功：裁剪各屏幕
-                await handleMultiScreenResult(fullImage: fullImage)
-                try? FileManager.default.removeItem(atPath: allScreensPath)
-                return
+            let screens = NSScreen.screens
+            guard !screens.isEmpty else { return }
+            
+            var paths: [String] = []
+            let tempDir = NSTemporaryDirectory()
+            let dateStr = Self.filenameFormatter.string(from: Date())
+            
+            for i in 0..<screens.count {
+                paths.append((tempDir as NSString).appendingPathComponent("screen_\(i)_\(dateStr).png"))
             }
-
-            // 方案 B：ScreenCaptureKit 逐屏拍摄（回退）
-            await captureAllScreensViaScreenCaptureKit()
+            
+            var args = ["-x"]
+            args.append(contentsOf: paths)
+            
+            let (code, _) = await runScreencapture(args: args)
+            
+            if code == 0 {
+                var capturedImages: [(screen: NSScreen, image: NSImage, index: Int)] = []
+                for (idx, path) in paths.enumerated() {
+                    if FileManager.default.fileExists(atPath: path),
+                       let nsImage = NSImage(contentsOfFile: path) {
+                        capturedImages.append((screen: screens[idx], image: nsImage, index: idx + 1))
+                        try? FileManager.default.removeItem(atPath: path)
+                    }
+                }
+                
+                guard !capturedImages.isEmpty else {
+                    notify(title: "多屏截图失败", body: "未能获取任何屏幕截图")
+                    return
+                }
+                
+                await MainActor.run {
+                    if capturedImages.count == 1 {
+                        self.showPreviewWindow(image: capturedImages[0].image)
+                    } else {
+                        self.openMultiScreenPreview(capturedImages)
+                    }
+                    self.notify(title: "多屏截图", body: "已捕获 \(capturedImages.count) 个屏幕的截图")
+                }
+            } else {
+                // 回退到 ScreenCaptureKit
+                await captureAllScreensViaScreenCaptureKit()
+            }
         }
-    }
-
-    /// 处理 screencapture -D 的全屏结果，裁剪出各显示器区域
-    private func handleMultiScreenResult(fullImage: NSImage) {
-        let screens = NSScreen.screens
-        guard screens.count > 1 else {
-            // 单屏：直接预览
-            showPreviewWindow(image: fullImage)
-            notify(title: "多屏截图", body: "已捕获 1 个屏幕的截图")
-            return
-        }
-
-        guard let fullRep = fullImage.representations.first,
-              let fullCG = fullRep.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            notify(title: "多屏截图失败", body: "无法解析截图数据")
-            return
-        }
-
-        let primaryFrame = screens.first?.frame ?? .zero
-        let fullSize = fullImage.size
-
-        var capturedImages: [(screen: NSScreen, image: NSImage, index: Int)] = []
-        for (idx, screen) in screens.enumerated() {
-            let frame = screen.frame
-            let scale = screen.backingScaleFactor
-            // NSScreen 坐标（左下角原点）→ CGImage 坐标（左上角原点）
-            let x = (frame.origin.x - primaryFrame.origin.x) * scale
-            let y = (primaryFrame.maxY - frame.maxY) * scale
-            let w = frame.width * scale
-            let h = frame.height * scale
-
-            let cropRect = CGRect(x: x, y: y, width: w, height: h)
-                .intersection(CGRect(origin: .zero, size: CGSize(width: fullSize.width * scale, height: fullSize.height * scale)))
-                .intersection(CGRect(origin: .zero, size: CGSize(width: fullCG.width, height: fullCG.height)))
-
-            guard cropRect.width > 0, cropRect.height > 0,
-                  let cropped = fullCG.cropping(to: cropRect) else { continue }
-
-            let nsImage = NSImage(cgImage: cropped, size: NSSize(width: cropped.width, height: cropped.height))
-            capturedImages.append((screen: screen, image: nsImage, index: idx + 1))
-        }
-
-        guard !capturedImages.isEmpty else {
-            notify(title: "多屏截图失败", body: "未能裁剪出任何屏幕")
-            return
-        }
-
-        if capturedImages.count == 1 {
-            showPreviewWindow(image: capturedImages[0].image)
-        } else {
-            openMultiScreenPreview(capturedImages)
-        }
-        notify(title: "多屏截图", body: "已捕获 \(capturedImages.count) 个屏幕的截图")
     }
 
     /// ScreenCaptureKit 逐屏拍摄（回退方案）

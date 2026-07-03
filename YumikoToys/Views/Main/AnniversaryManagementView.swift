@@ -297,6 +297,8 @@ struct PetProfileEditView: View {
     @State private var species: String = ""
     @State private var selectedEmoji: String = "🐾"
     @State private var statusBarLine1: String = ""
+    @State private var godModeCustomText: String = ""
+    @State private var allowMultiline: Bool = false
     
     // 【新增绑定状态】犬类体型
     @State private var dogSize: CanineSize? = nil
@@ -466,6 +468,22 @@ struct PetProfileEditView: View {
                                     }
                                 }
                                 
+                                // 上帝模式自定义文本
+                                Text("上帝模式自定义标题")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 8)
+                                TextField("例如：\(petName.isEmpty ? "可可" : petName)的专属模式", text: $godModeCustomText)
+                                    .textFieldStyle(.roundedBorder)
+                                
+                                // 允许状态栏多行显示
+                                Toggle(isOn: $allowMultiline) {
+                                    Text("允许状态栏换行显示 (解决文本过长)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(.top, 4)
+                                
                                 // 预览提示
                                 if !statusBarLine1.isEmpty {
                                     let preview = statusBarLine1
@@ -538,7 +556,7 @@ struct PetProfileEditView: View {
                 }
             }
         }
-        .frame(width: 480, height: 520)
+        .frame(width: 480, height: 600)
         .onAppear {
             if let anniversary = anniversary {
                 petName = anniversary.petName ?? anniversary.title
@@ -551,6 +569,8 @@ struct PetProfileEditView: View {
                 
                 // 【核心修复】初始化体型状态
                 dogSize = anniversary.dogSize ?? .medium
+                godModeCustomText = anniversary.godModeCustomText ?? ""
+                allowMultiline = anniversary.allowMultiline ?? false
             }
         }
     }
@@ -592,6 +612,11 @@ struct PetProfileEditView: View {
         
         let trimmedStatusBarLine1 = statusBarLine1.trimmingCharacters(in: .whitespaces)
         newAnniversary.customStatusBarLine1 = trimmedStatusBarLine1.isEmpty ? nil : trimmedStatusBarLine1
+        
+        let trimmedGodModeText = godModeCustomText.trimmingCharacters(in: .whitespaces)
+        newAnniversary.godModeCustomText = trimmedGodModeText.isEmpty ? nil : trimmedGodModeText
+        
+        newAnniversary.allowMultiline = allowMultiline
         
         onSave(newAnniversary)
         dismiss()

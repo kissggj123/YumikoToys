@@ -2,7 +2,7 @@
 //  ChangelogView.swift
 //  YumikoToys
 //
-//  更新日志视图（v4.5.2 - 荷兰垂耳兔·星尘修复记 · 稳定性修复版）
+//  更新日志视图（v4.5.3 - 苏门答腊短耳兔·贝壳与牧师 · 麦克白版）
 //
 
 import SwiftUI
@@ -17,45 +17,38 @@ struct ChangelogView: View {
                 // 荷兰垂耳兔·星尘修复记 — 版本代号区
                 CodenameSection(
                     emoji: "🐰",
-                    title: "荷兰垂耳兔·星尘修复记 (Holland Lop · Stardust Repair)",
+                    title: "苏门答腊短耳兔·贝壳与牧师 (Sumatran Striped Rabbit · The Seashell and the Clergyman)",
                     titleColor: "E9C46A",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，正如荷兰垂耳兔那对柔软下垂的耳朵，总能捕捉到最细微的声响，我们也倾听着每一处代码的低语。在 4.5.2『荷兰垂耳兔·星尘修复记』中，我们修复了 Widget 无法在通知中心显示的构建问题，修正了截图插件保存到桌面的路径错误，合并了设置中重复的 Widget 说明，并为截图标记工具带来了画笔式马赛克与可拖拽文字框。每一颗星尘的修补，都是为了让您的体验更加完美。",
+                    quote: "博士，正如那只有着短促双耳、隐匿在热带雨林深处的苏门答腊短耳兔，在《贝壳与牧师》那超现实的幻象中穿梭，我们在 4.5.3 中为您带来了一次从感官到交互的全方位进化。我们重构了截图的底层架构以支持多屏捕获的自由选择，以 macOS 原生的姿态接管了 YumiScript 的应用启动，同时为宠物名片注入了档案专属的上帝模式文本与状态栏长文本智能换行。并在顶部状态栏增加了档案快速切换通道。当喧哗与骚动平息，剩下的，唯有纯粹而优雅的体验。",
                     entries: [
                         ChangelogEntry(
-                            emoji: "🔧",
-                            prefix: "【修复】",
-                            prefixColor: "E9C46A",
-                            text: "Widget 通知中心显示修复：修复了构建脚本中签名配置导致 Widget Extension 未正确嵌入主 App 的问题，确保 Widget 能够在 macOS 通知中心正常显示。",
-                            character: "——凯尔希"
-                        ),
-                        ChangelogEntry(
-                            emoji: "🎨",
-                            prefix: "【改进】",
+                            emoji: "🖥️",
+                            prefix: "【重构】",
                             prefixColor: "A8D8A8",
-                            text: "截图标记工具升级：新增画笔式马赛克工具（涂抹打码），文字标注改为可拖拽文字框（支持自由移动与双击编辑），操作体验更接近原生截图工具。",
+                            text: "多屏截图捕获：重构截屏底层架构，原生支持遍历多屏幕的无缝捕获，现在您可以在全局预览窗体中自由选择并管理每一个屏幕的截图了。",
                             character: "——W"
                         ),
                         ChangelogEntry(
-                            emoji: "⚡",
+                            emoji: "🚀",
                             prefix: "【修复】",
-                            prefixColor: "E76F51",
-                            text: "截图保存路径修复：修正了截图插件「保存到桌面」选项失效的问题，截图文件现在正确保存到桌面而非临时目录。",
+                            prefixColor: "E9C46A",
+                            text: "快速启动插件：弃用易阻塞的 Shell 调用，采用 macOS 原生 NSWorkspace 引擎接管应用启动，彻底解决了启动终端等应用时的卡死问题。",
                             character: "——陈"
                         ),
                         ChangelogEntry(
-                            emoji: "🧹",
-                            prefix: "【优化】",
-                            prefixColor: "A8C8D8",
-                            text: "设置界面优化：合并了设置中重复的 Widget 说明部分（通知中心 + 控制中心），精简为统一的「添加 Widget 到系统」引导面板。",
+                            emoji: "✨",
+                            prefix: "【特性】",
+                            prefixColor: "E76F51",
+                            text: "状态栏长文本与上帝模式：为您带来了更为自由的定制体验。现在，您可以为每一张宠物名片单独设置『上帝模式』专属长文本，并且引入了状态栏智能换行支持，让长文本亦能优雅展示。",
                             character: "——凯尔希"
                         ),
                         ChangelogEntry(
-                            emoji: "🛡️",
-                            prefix: "【修复】",
-                            prefixColor: "E9C46A",
-                            text: "稳定性全面提升：为所有外部进程调用添加了超时保护机制，将同步阻塞操作改为异步执行，防止系统命令挂起导致应用卡死。",
-                            character: "——W"
+                            emoji: "⚡",
+                            prefix: "【新增】",
+                            prefixColor: "A8C8D8",
+                            text: "全局快速切换：状态栏新增名片快速切换入口。无需打开管理面板，轻点状态栏中的小箭头，即可在所有宠物档案间无缝穿梭。",
+                            character: "——凯尔希"
                         )
                     ]
                 )
@@ -110,7 +103,7 @@ private struct CodenameSubtitle: View {
                 Text("◈")
                     .font(.system(size: 9, weight: .thin))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.6))
-                Text("星尘织补与垂耳倾听的修复之旅")
+                Text("超现实交织与隐秘穿梭的进化之旅")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.75))
                     .tracking(0.5)
@@ -122,23 +115,23 @@ private struct CodenameSubtitle: View {
                     .fill(Color(hex: "E9C46A").opacity(0.06))
             )
 
-            // 荷兰垂耳兔解释
+            // 苏门答腊短耳兔解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("🐰  Holland Lop 荷兰垂耳兔")
+                Text("🐰  Sumatran Striped Rabbit 苏门答腊短耳兔")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("荷兰垂耳兔以其标志性的下垂耳朵闻名，圆润可爱的体型与温顺性格使其成为全球最受欢迎的宠物兔品种之一。那对柔软下垂的耳朵，象征着对每一处细节的敏锐倾听——正如我们在 4.5.2 中逐一捕捉并修复的每一个细微缺陷。")
+                Text("苏门答腊短耳兔（Nesolagus netscheri）是世界上最稀有、最鲜为人知的兔形目动物之一。它隐匿于苏门答腊岛深处，极具神秘感。以其为名，象征着我们在 4.5.3 中对最底层、最隐秘的代码逻辑（如多屏截图与底层启动机制）进行了深度挖掘与重构，捕捉那些平时难以察觉的系统级细节。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
             }
 
-            // 星尘修复记解释
+            // 贝壳与牧师解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("✨  星尘修复记 (Stardust Repair)")
+                Text("🎬  贝壳与牧师 (The Seashell and the Clergyman, 1928)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("星尘是宇宙中最细微却不可或缺的物质，每一颗尘埃的归位都维系着星辰的运转。本次版本以此隐喻：我们逐一拾取散落在代码宇宙中的微小缺陷——构建脚本的签名遗漏、截图路径的逻辑偏差、设置面板的冗余文字——将它们一一修补归位，让整个应用如星轨般稳定运行。")
+                Text("《贝壳与牧师》是法国导演热尔曼·杜拉克执导的早期超现实主义实验电影先驱。影片通过非理性的视觉幻象和梦境逻辑，打破了传统的叙事结构。此次版本以此为名，寓意着我们在多屏交互与上帝模式中，打破了原有的单向度限制，赋予用户如超现实主义般自由、无缝的档案切换与界面重构体验。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
@@ -275,14 +268,14 @@ private struct VersionEpigraph: View {
                     }
 
                     // 英文原文
-                    Text("Life's but a walking shadow, a poor player / That struts and frets his hour upon the stage / And then is heard no more.")
+                    Text("Tomorrow, and tomorrow, and tomorrow / Creeps in this petty pace from day to day / To the last syllable of recorded time... / Life's but a walking shadow, a poor player / That struts and frets his hour upon the stage / And then is heard no more. / It is a tale told by an idiot, full of sound and fury, / Signifying nothing.")
                         .font(.system(size: 13, weight: .medium, design: .serif))
                         .foregroundStyle(Color(hex: "E9C46A").opacity(0.85))
                         .italic()
                         .lineSpacing(4)
 
                     // 中文翻译
-                    Text("『人生不过是一个行走的影子，一个在舞台上指手画脚、心神不宁的拙劣伶人，登场片刻，便无声无息地悄然退去。』")
+                    Text("『明天，明天，再一个明天，一天接着一天地蹑步前进，直到最后一秒钟的时间……人生不过是一个行走的影子，一个在舞台上指手划脚的拙劣伶人，登场片刻，便在无声无息中悄然退下；它是一个愚人所讲的故事，充满着喧哗和骚动，却找不到一点意义。』")
                         .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                         .lineSpacing(3.5)
@@ -320,11 +313,11 @@ private struct VersionEpigraph: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Divider().background(Color(hex: "E9C46A").opacity(0.1))
 
-                    Text("【技术历史背景档案】")
+                    Text("【文学与哲学背景档案】")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "E9C46A"))
 
-                    Text("这段经典的叙事融合了乔治·梅里爱早期电影工业的特技魔术与现代软件交互设计的深层映射。在 4.5.1『安哥拉兔·月球旅行记』的宏大叙事中，我们借由《麦克白》中关于『行走影子』的探讨，审视了智能体在后台静默生存的状态。智能助理的心跳（Heartbeat）不再是一个毫无防备、随时可能因为找不到激活模型而折翼退场的拙劣伶人。我们为其织就了如安哥拉兔毛般松软而坚韧的异常防护网，更在人机交互的物理边界——状态栏与鼠标指针 of 触碰点，通过 Canvas 硬件加速渲染出数字雨与繁星微粒子，让那些原本冰冷的计算逻辑，在微光与阴影的交织中，焕发出影史默片般纯粹、惊艳的永恒光彩。")
+                    Text("这段著名的独白出自莎士比亚的四大悲剧之一《麦克白》（第五幕第五场）。当麦克白在重重围困中听闻妻子死讯，面对终将覆灭的命运与双手沾满的鲜血，他陷入了极度的虚无主义，对时间的无情流逝与人生的荒诞本质发出了这声绝望的感叹。将如此深沉的悲剧独白置于本次更新的注脚，并非出于悲观，而是一种对数字生命与技术演进的反思：当我们在系统中不断修补、堆砌复杂的逻辑与功能，试图对抗程序的无序时，那些喧哗与骚动最终是为了回归一种“意义”。我们重构底层启动机制，优化多屏交互与档案展示，正是为了在这如同“行走的影子”般瞬息万变的比特世界中，为您剥离毫无意义的喧嚣，留下真正优雅、纯粹且触手可及的秩序。")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)

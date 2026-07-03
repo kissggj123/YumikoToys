@@ -643,9 +643,14 @@ struct StatusBarView: View {
     private var customDaysDisplayTitle: String? {
         let settings = DependencyContainer.shared.settingsService.settings
         
-        // 优先使用用户在设置中输入的自定义名称
-        if settings.statusBarTextMode == .customTitle && !settings.customStatusBarText.isEmpty {
-            return settings.customStatusBarText
+        // 优先使用上帝模式或自定义名称
+        if settings.statusBarTextMode == .godMode || settings.statusBarTextMode == .customTitle {
+            if let active = viewModel.anniversaryInfo?.anniversary, let custom = active.godModeCustomText, !custom.isEmpty {
+                return custom
+            }
+            if !settings.customStatusBarText.isEmpty {
+                return settings.customStatusBarText
+            }
         }
         
         // 回退到布局组件中的 customTitle
@@ -1506,10 +1511,10 @@ struct StatusBarView: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 if let customTitle = customDaysDisplayTitle {
-                    Text(customTitle)
+                        Text(customTitle)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(themeColor.textColor)
-                        .lineLimit(1)
+                        .lineLimit(viewModel.anniversaryInfo?.anniversary.allowMultiline == true ? nil : 1)
 
                     HStack(spacing: 4) {
                         Text("🥕")
@@ -1518,6 +1523,28 @@ struct StatusBarView: View {
                             .font(.system(size: 10, weight: .medium))
                             .foregroundStyle(themeColor.accentColor)
                             .lineLimit(1)
+                            
+                        Menu {
+                            ForEach(viewModel.anniversaries) { ann in
+                                Button {
+                                    viewModel.setActiveAnniversary(id: ann.id)
+                                } label: {
+                                    if ann.id == viewModel.anniversaryInfo?.anniversary.id {
+                                        Text("✓ " + ann.displayPetName)
+                                    } else {
+                                        Text(ann.displayPetName)
+                                    }
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 10))
+                                .foregroundStyle(themeColor.secondaryTextColor)
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
+                        .frame(width: 14)
+                        
                         Text("·")
                             .font(.system(size: 10))
                             .foregroundStyle(themeColor.secondaryTextColor)
@@ -1530,7 +1557,7 @@ struct StatusBarView: View {
                     Text(AppConfig.appName)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(themeColor.textColor)
-                        .lineLimit(1)
+                        .lineLimit(viewModel.anniversaryInfo?.anniversary.allowMultiline == true ? nil : 1)
 
                     HStack(spacing: 4) {
                         Text("🥕")
@@ -1539,6 +1566,28 @@ struct StatusBarView: View {
                             .font(.system(size: 10, weight: .medium))
                             .foregroundStyle(themeColor.accentColor)
                             .lineLimit(1)
+                            
+                        Menu {
+                            ForEach(viewModel.anniversaries) { ann in
+                                Button {
+                                    viewModel.setActiveAnniversary(id: ann.id)
+                                } label: {
+                                    if ann.id == viewModel.anniversaryInfo?.anniversary.id {
+                                        Text("✓ " + ann.displayPetName)
+                                    } else {
+                                        Text(ann.displayPetName)
+                                    }
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 10))
+                                .foregroundStyle(themeColor.secondaryTextColor)
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
+                        .frame(width: 14)
+                        
                         Text("·")
                             .font(.system(size: 10))
                             .foregroundStyle(themeColor.secondaryTextColor)
@@ -2313,6 +2362,7 @@ struct StatusBarView: View {
 @MainActor
 final class StatusBarViewModel: ObservableObject {
     @Published var anniversaryInfo: AnniversaryInfo?
+    @Published var anniversaries: [Anniversary] = []
     @Published var shortCountdown: String = ""
     @Published var isPreventSleepEnabled: Bool = false
     @Published var selectedIconStyle: IconStyle = .pixelAnimal
@@ -2334,6 +2384,14 @@ final class StatusBarViewModel: ObservableObject {
             .sink { [weak self] info in
                 guard let self = self else { return }
                 self.anniversaryInfo = info
+            }
+            .store(in: &cancellables)
+            
+        container.anniversaryService.anniversariesPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] lists in
+                guard let self = self else { return }
+                self.anniversaries = lists
             }
             .store(in: &cancellables)
         
@@ -2364,6 +2422,7 @@ final class StatusBarViewModel: ObservableObject {
             .store(in: &cancellables)
         
         self.anniversaryInfo = container.anniversaryService.activeAnniversaryInfo
+        self.anniversaries = container.anniversaryService.anniversaries
         self.isPreventSleepEnabled = container.preventSleepService.isPreventSleepEnabled
         self.selectedIconStyle = container.settingsService.settings.selectedIconStyle
         self.themeColor = container.settingsService.settings.selectedThemeColor
@@ -2379,6 +2438,10 @@ final class StatusBarViewModel: ObservableObject {
     
     func togglePreventSleep() {
         container.preventSleepService.togglePreventSleep()
+    }
+    
+    func setActiveAnniversary(id: UUID) {
+        container.anniversaryService.setActiveAnniversary(id: id)
     }
 }
 
