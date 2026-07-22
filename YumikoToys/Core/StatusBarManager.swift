@@ -493,6 +493,11 @@ final class AdaptiveHostingController<Content: View>: NSHostingController<Conten
         setupSettingsObserver()
     }
     
+    override func viewWillAppear() {
+        super.viewWillAppear()
+        updatePopoverColors()
+    }
+    
     private func setupSettingsObserver() {
         DependencyContainer.shared.settingsService.settingsPublisher
             .receive(on: DispatchQueue.main)
@@ -507,7 +512,9 @@ final class AdaptiveHostingController<Content: View>: NSHostingController<Conten
         let settings = DependencyContainer.shared.settingsService.settings
         let themeColor = settings.selectedThemeColor
         let nsBg = themeColor.nsBackgroundColor(customHex: settings.customThemeColorHex)
-        window.backgroundColor = nsBg
+        if window.backgroundColor != nsBg {
+            window.backgroundColor = nsBg
+        }
         if let frameView = window.contentView?.superview {
             colorizePopoverBackground(in: frameView, color: nsBg)
         }
@@ -527,7 +534,9 @@ final class AdaptiveHostingController<Content: View>: NSHostingController<Conten
             }
         }
         
-        updatePopoverColors()
+        DispatchQueue.main.async { [weak self] in
+            self?.updatePopoverColors()
+        }
     }
 }
 
@@ -653,7 +662,17 @@ struct EmojiRainView: View {
             if !particles.isEmpty {
                 TimelineView(.animation(minimumInterval: 0.016)) { context in
                     let elapsed = context.date.timeIntervalSince(startDate)
-                    let effectType = DependencyContainer.shared.settingsService.settings.activeSpecialEffect
+                    let effectType: SpecialEffectType = {
+                        if AnimeThemeService.shared.isEnabled {
+                            switch AnimeThemeService.shared.currentToken.particleStyle {
+                            case .sakura: return .sakura
+                            case .dataStream: return .matrix
+                            case .stars: return .star
+                            case .clouds: return .snowflake
+                            }
+                        }
+                        return DependencyContainer.shared.settingsService.settings.activeSpecialEffect
+                    }()
                     
                     Canvas { canvasContext, size in
                         for p in particles {
@@ -816,30 +835,45 @@ struct EmojiRainView: View {
         .ignoresSafeArea()
         .onAppear {
             startDate = Date()
-            let effectType = DependencyContainer.shared.settingsService.settings.activeSpecialEffect
-            
+            let isAnimeActive = AnimeThemeService.shared.isEnabled
+            let effectType: SpecialEffectType = {
+                if isAnimeActive {
+                    switch AnimeThemeService.shared.currentToken.particleStyle {
+                    case .sakura: return .sakura
+                    case .dataStream: return .matrix
+                    case .stars: return .star
+                    case .clouds: return .snowflake
+                    }
+                }
+                return DependencyContainer.shared.settingsService.settings.activeSpecialEffect
+            }()
+
             let emojiPresets: [String]
-            switch effectType {
-            case .emoji:
-                emojiPresets = ["🐰", "🥕", "🐱", "🐶", "🐹", "🦊", "🐼", "🐸", "🐻", "🐾", "🥕", "🐰"]
-            case .sakura:
-                emojiPresets = ["🌸", "💮", "🌺", "🍃", "🌸", "💮"]
-            case .star:
-                emojiPresets = ["⭐", "✨", "🌟", "💫", "⭐", "✨"]
-            case .heart:
-                emojiPresets = ["❤️", "💖", "💝", "💕", "💘", "💓"]
-            case .snowflake:
-                emojiPresets = ["❄️", "🌨️", "✨", "❄️", "🌨️"]
-            case .bubble:
-                emojiPresets = ["🫧", "🫧", "🔵", "⚪", "🫧"]
-            case .firework:
-                emojiPresets = ["🎆", "🎇", "✨", "💥", "🔴", "🔵", "🟡", "🟢", "⭐"]
-            case .matrix:
-                emojiPresets = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "X", "Y"]
-            case .halo:
-                emojiPresets = ["😇", "✨", "👑", "💫", "🌟", "🪽"]
-            case .gravityBubble:
-                emojiPresets = ["💧", "💦", "🌧️", "💧", "🔵", "💦"]
+            if isAnimeActive, AnimeThemeService.shared.currentToken.particleStyle == .clouds {
+                emojiPresets = ["☁️", "⛅", "🌤️", "🌥️", "☁️", "🌦️"]
+            } else {
+                switch effectType {
+                case .emoji:
+                    emojiPresets = ["🐰", "🥕", "🐱", "🐶", "🐹", "🦊", "🐼", "🐸", "🐻", "🐾", "🥕", "🐰"]
+                case .sakura:
+                    emojiPresets = ["🌸", "💮", "🌺", "🍃", "🌸", "💮"]
+                case .star:
+                    emojiPresets = ["⭐", "✨", "🌟", "💫", "⭐", "✨"]
+                case .heart:
+                    emojiPresets = ["❤️", "💖", "💝", "💕", "💘", "💓"]
+                case .snowflake:
+                    emojiPresets = ["❄️", "🌨️", "✨", "❄️", "🌨️"]
+                case .bubble:
+                    emojiPresets = ["🫧", "🫧", "🔵", "⚪", "🫧"]
+                case .firework:
+                    emojiPresets = ["🎆", "🎇", "✨", "💥", "🔴", "🔵", "🟡", "🟢", "⭐"]
+                case .matrix:
+                    emojiPresets = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "X", "Y"]
+                case .halo:
+                    emojiPresets = ["😇", "✨", "👑", "💫", "🌟", "🪽"]
+                case .gravityBubble:
+                    emojiPresets = ["💧", "💦", "🌧️", "💧", "🔵", "💦"]
+                }
             }
             
             let count = 45

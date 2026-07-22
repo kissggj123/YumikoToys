@@ -50,6 +50,8 @@ struct WidgetSyncData: Codable {
     let minutesPart: Int
     let secondsPart: Int
     let themePrimaryHex: String
+    let isAnimeMode: Bool
+    let animeStyle: String
 
     // 注意：主 App 侧的 WidgetSyncData 多一个 schemaVersion 字段。
     // 主 App 写出的 JSON 一定包含 schemaVersion，若 Widget 端
@@ -59,7 +61,7 @@ struct WidgetSyncData: Codable {
         case petName, avatar, startDate, totalDays, milestones,
              proactiveBubbleText, appVersion, displayStyle,
              title, totalHours, hoursPart, minutesPart, secondsPart,
-             themePrimaryHex
+             themePrimaryHex, isAnimeMode, animeStyle
     }
 
     // 成员初始化器（供 defaultData 最后回退使用）
@@ -67,7 +69,7 @@ struct WidgetSyncData: Codable {
          milestones: [WidgetMilestone], proactiveBubbleText: String?,
          appVersion: String, displayStyle: String,
          title: String, totalHours: Double, hoursPart: Int, minutesPart: Int, secondsPart: Int,
-         themePrimaryHex: String) {
+         themePrimaryHex: String, isAnimeMode: Bool = false, animeStyle: String = "healing") {
         self.petName = petName
         self.avatar = avatar
         self.startDate = startDate
@@ -82,6 +84,8 @@ struct WidgetSyncData: Codable {
         self.minutesPart = minutesPart
         self.secondsPart = secondsPart
         self.themePrimaryHex = themePrimaryHex
+        self.isAnimeMode = isAnimeMode
+        self.animeStyle = animeStyle
     }
 
     init(from decoder: Decoder) throws {
@@ -112,6 +116,8 @@ struct WidgetSyncData: Codable {
             self.secondsPart = Int(remain - Double(self.minutesPart) * 60)
         }
         self.themePrimaryHex = (try container.decodeIfPresent(String.self, forKey: .themePrimaryHex)) ?? "FF6B9D"
+        self.isAnimeMode = (try container.decodeIfPresent(Bool.self, forKey: .isAnimeMode)) ?? false
+        self.animeStyle = (try container.decodeIfPresent(String.self, forKey: .animeStyle)) ?? "healing"
     }
 }
 
@@ -138,7 +144,8 @@ struct Provider: TimelineProvider {
                 appVersion: data.appVersion, displayStyle: styleOverride,
                 title: data.title, totalHours: data.totalHours, hoursPart: data.hoursPart,
                 minutesPart: data.minutesPart, secondsPart: data.secondsPart,
-                themePrimaryHex: data.themePrimaryHex
+                themePrimaryHex: data.themePrimaryHex,
+                isAnimeMode: data.isAnimeMode, animeStyle: data.animeStyle
             )
         }
         let entries = [SimpleEntry(date: Date(), info: data)]
@@ -273,31 +280,82 @@ extension Color {
 
 struct GradientBackground: View {
     let primaryHex: String
+    let isAnimeMode: Bool
+    let animeStyle: String
+
+    init(primaryHex: String, isAnimeMode: Bool = false, animeStyle: String = "healing") {
+        self.primaryHex = primaryHex
+        self.isAnimeMode = isAnimeMode
+        self.animeStyle = animeStyle
+    }
+
+    /// 二次元主题渐变色对
+    private var animeGradient: (start: Color, end: Color) {
+        switch animeStyle {
+        case "cyber":
+            return (Color.hex("0A0E1A"), Color.hex("00F0FF"))
+        case "kawaii":
+            return (Color.hex("FFB6D9"), Color.hex("C9B6FF"))
+        case "makoto":
+            return (Color.hex("B4D4E7"), Color.hex("E4C4C8"))
+        default: // "healing"
+            return (Color.hex("E8C4B8"), Color.hex("F0E4D4"))
+        }
+    }
 
     var body: some View {
-        let primary = Color.hex(primaryHex)
-        ZStack {
-            LinearGradient(colors: [
-                primary.opacity(0.85),
-                primary.opacity(0.45)
-            ], startPoint: .topLeading, endPoint: .bottomTrailing)
+        if isAnimeMode {
+            let gradient = animeGradient
+            ZStack {
+                LinearGradient(colors: [
+                    gradient.start,
+                    gradient.end
+                ], startPoint: .topLeading, endPoint: .bottomTrailing)
 
-            GeometryReader { geo in
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.18))
-                        .frame(width: geo.size.width * 0.75,
-                               height: geo.size.width * 0.75)
-                        .position(x: geo.size.width * 0.85,
-                                  y: geo.size.height * 0.12)
-                        .blur(radius: geo.size.width * 0.12)
-                    Circle()
-                        .fill(Color.white.opacity(0.14))
-                        .frame(width: geo.size.width * 0.6,
-                               height: geo.size.width * 0.6)
-                        .position(x: geo.size.width * 0.15,
-                                  y: geo.size.height * 0.85)
-                        .blur(radius: geo.size.width * 0.1)
+                GeometryReader { geo in
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(animeStyle == "cyber" ? 0.08 : 0.18))
+                            .frame(width: geo.size.width * 0.75,
+                                   height: geo.size.width * 0.75)
+                            .position(x: geo.size.width * 0.85,
+                                      y: geo.size.height * 0.12)
+                            .blur(radius: geo.size.width * 0.12)
+                        Circle()
+                            .fill(Color.white.opacity(animeStyle == "cyber" ? 0.05 : 0.14))
+                            .frame(width: geo.size.width * 0.6,
+                                   height: geo.size.width * 0.6)
+                            .position(x: geo.size.width * 0.15,
+                                      y: geo.size.height * 0.85)
+                            .blur(radius: geo.size.width * 0.1)
+                    }
+                }
+            }
+        } else {
+            let primary = Color.hex(primaryHex)
+            ZStack {
+                LinearGradient(colors: [
+                    primary.opacity(0.85),
+                    primary.opacity(0.45)
+                ], startPoint: .topLeading, endPoint: .bottomTrailing)
+
+                GeometryReader { geo in
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: geo.size.width * 0.75,
+                                   height: geo.size.width * 0.75)
+                            .position(x: geo.size.width * 0.85,
+                                      y: geo.size.height * 0.12)
+                            .blur(radius: geo.size.width * 0.12)
+                        Circle()
+                            .fill(Color.white.opacity(0.14))
+                            .frame(width: geo.size.width * 0.6,
+                                   height: geo.size.width * 0.6)
+                            .position(x: geo.size.width * 0.15,
+                                      y: geo.size.height * 0.85)
+                            .blur(radius: geo.size.width * 0.1)
+                    }
                 }
             }
         }
@@ -630,7 +688,11 @@ struct YumikoWidgetEntryView: View {
             }
         }
         .containerBackground(for: .widget) {
-            GradientBackground(primaryHex: entry.info.themePrimaryHex)
+            GradientBackground(
+                primaryHex: entry.info.themePrimaryHex,
+                isAnimeMode: entry.info.isAnimeMode,
+                animeStyle: entry.info.animeStyle
+            )
         }
     }
 }

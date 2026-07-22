@@ -1833,7 +1833,7 @@ final class AIChatViewModel: ObservableObject {
                     }
                 } catch {}
             }
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             prompt = buildAssistantPrompt(resolvedAgentMode: resolvedAgentMode)
             let settings = container.settingsService.settings
             if settings.enablePsychologyParams && (embeddingService.isModelLoaded || sentimentService.isModelLoaded) {

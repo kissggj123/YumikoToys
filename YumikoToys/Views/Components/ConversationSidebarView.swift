@@ -34,7 +34,7 @@ struct ConversationSidebarView: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.backgroundColor
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "0A0F0D")
         }
     }
@@ -43,7 +43,7 @@ struct ConversationSidebarView: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.dividerColor
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669").opacity(0.15)
         }
     }
@@ -52,7 +52,7 @@ struct ConversationSidebarView: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.textColor
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "E6F4EA")
         }
     }
@@ -61,7 +61,7 @@ struct ConversationSidebarView: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.secondaryTextColor
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "81C784").opacity(0.8)
         }
     }
@@ -70,7 +70,7 @@ struct ConversationSidebarView: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.textColor.opacity(0.06)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color.white.opacity(0.05)
         }
     }
@@ -79,7 +79,7 @@ struct ConversationSidebarView: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.accentColor
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669")
         }
     }
@@ -88,7 +88,7 @@ struct ConversationSidebarView: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.accentColor.opacity(0.6)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669").opacity(0.6)
         }
     }
@@ -97,7 +97,7 @@ struct ConversationSidebarView: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.secondaryTextColor
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color.gray.opacity(0.8)
         }
     }
@@ -268,14 +268,14 @@ private struct ConversationRow: View {
             switch chatMode {
             case .petCompanion:
                 return themeColor.textColor
-            case .aiAssistant:
+            case .aiAssistant, .universalAgent:
                 return .white
             }
         } else {
             switch chatMode {
             case .petCompanion:
                 return themeColor.secondaryTextColor
-            case .aiAssistant:
+            case .aiAssistant, .universalAgent:
                 return .gray
             }
         }
@@ -285,7 +285,7 @@ private struct ConversationRow: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.secondaryTextColor.opacity(0.8)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return .gray.opacity(0.8)
         }
     }
@@ -294,7 +294,7 @@ private struct ConversationRow: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.accentColor.opacity(0.15)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669").opacity(0.15)
         }
     }
@@ -304,14 +304,14 @@ private struct ConversationRow: View {
             switch chatMode {
             case .petCompanion:
                 return themeColor.accentColor.opacity(0.08)
-            case .aiAssistant:
+            case .aiAssistant, .universalAgent:
                 return Color(hex: "059669").opacity(0.08)
             }
         } else if isHovered {
             switch chatMode {
             case .petCompanion:
                 return themeColor.textColor.opacity(0.04)
-            case .aiAssistant:
+            case .aiAssistant, .universalAgent:
                 return Color.white.opacity(0.03)
             }
         } else {

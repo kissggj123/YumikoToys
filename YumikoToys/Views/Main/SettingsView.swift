@@ -118,6 +118,7 @@ struct SettingsView: View {
                     case .appearance:
                         generalSettingsSection
                         iconStyleSection
+                        animeThemeSection
                         statusBarIconStyleSection
                         statusBarTextModeSection
                         fontSection
@@ -699,6 +700,46 @@ struct SettingsView: View {
                         isSelected: viewModel.selectedIconStyle == style,
                         action: { viewModel.selectIconStyle(style) }
                     )
+                }
+            }
+        }
+    }
+
+    private var animeThemeSection: some View {
+        SettingsSection(title: "二次元主题", icon: "sparkles.rectangle.stack.fill", iconColor: "C44FE2") {
+            VStack(alignment: .leading, spacing: 12) {
+                // 总开关
+                Toggle(isOn: Binding(
+                    get: { viewModel.isAnimeModeEnabled },
+                    set: { viewModel.toggleAnimeMode($0) }
+                )) {
+                    HStack(spacing: 8) {
+                        Text("启用二次元主题")
+                            .font(.system(size: 13, weight: .medium))
+                        Text("覆盖标准主题配色")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+
+                if viewModel.isAnimeModeEnabled {
+                    Divider()
+
+                    // 风格选择
+                    Text("选择风格")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140))], spacing: 10) {
+                        ForEach(AnimeThemeStyle.allCases) { style in
+                            AnimeThemeCard(
+                                style: style,
+                                isSelected: viewModel.selectedAnimeThemeStyle == style,
+                                action: { viewModel.selectAnimeThemeStyle(style) }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -3471,6 +3512,80 @@ private struct SettingsButtonRow: View {
     }
 }
 
+// MARK: - 二次元主题卡片
+
+private struct AnimeThemeCard: View {
+    let style: AnimeThemeStyle
+    let isSelected: Bool
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    private var token: AnimeThemeToken {
+        AnimeThemeToken.preset(for: style)
+    }
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                // 渐变色预览条
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(LinearGradient(
+                        colors: [Color(hex: token.gradientStart), Color(hex: token.gradientEnd)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
+                    .frame(height: 28)
+                    .overlay(
+                        // 色板预览
+                        HStack(spacing: 4) {
+                            Circle().fill(Color(hex: token.accentColor)).frame(width: 10, height: 10)
+                            Circle().fill(Color(hex: token.glowColor)).frame(width: 10, height: 10)
+                            Circle().fill(Color(hex: token.textPrimary)).frame(width: 10, height: 10)
+                        }
+                    )
+
+                HStack(spacing: 6) {
+                    Image(systemName: style.themeIcon)
+                        .font(.system(size: 12))
+                        .foregroundStyle(isSelected ? Color(hex: token.accentColor) : .secondary)
+                    Text(style.displayName)
+                        .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                        .foregroundStyle(isSelected ? .primary : .secondary)
+                    Spacer()
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color(hex: token.accentColor))
+                    }
+                }
+
+                Text(style.description)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isSelected ? Color(hex: token.accentColor).opacity(0.08) : Color.primary.opacity(0.03))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(
+                        isSelected ? Color(hex: token.accentColor).opacity(0.5) : Color.clear,
+                        lineWidth: 1.5
+                    )
+            )
+            .scaleEffect(isHovered ? 1.02 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isHovered)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
 // MARK: - 图标风格选择行
 
 private struct SettingsIconStyleRow: View {
@@ -3829,6 +3944,10 @@ final class SettingsViewModel: ObservableObject {
     @Published var customMainWindowThemeColorHex: String = "FF6B9D"
     @Published var showMainWindowOnAutoLaunch: Bool = false
     @Published var showMainWindowOnManualLaunch: Bool = true
+
+    // 二次元主题模式
+    @Published var isAnimeModeEnabled: Bool = false
+    @Published var selectedAnimeThemeStyle: AnimeThemeStyle = .healing
     
     // v4.5.0 settings
     @Published var hideFloatingLayoutToolbar: Bool = false
@@ -3976,6 +4095,10 @@ final class SettingsViewModel: ObservableObject {
         customThemeColorHex = settings.customThemeColorHex
         mainWindowThemeColor = settings.mainWindowThemeColor
         customMainWindowThemeColorHex = settings.customMainWindowThemeColorHex
+        isAnimeModeEnabled = settings.isAnimeModeEnabled
+        selectedAnimeThemeStyle = settings.selectedAnimeThemeStyle
+        AnimeThemeService.shared.isEnabled = settings.isAnimeModeEnabled
+        AnimeThemeService.shared.currentStyle = settings.selectedAnimeThemeStyle
         showMainWindowOnAutoLaunch = settings.showMainWindowOnAutoLaunch
         showMainWindowOnManualLaunch = settings.showMainWindowOnManualLaunch
         
@@ -4297,6 +4420,24 @@ final class SettingsViewModel: ObservableObject {
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("Icon style changed to: \(style.displayName)")
     }
+
+    func toggleAnimeMode(_ enabled: Bool) {
+        isAnimeModeEnabled = enabled
+        var settings = container.settingsService.settings
+        settings.isAnimeModeEnabled = enabled
+        container.settingsService.updateSettings(settings)
+        AnimeThemeService.shared.isEnabled = enabled
+        LoggerService.shared.info("Anime mode \(enabled ? "enabled" : "disabled")")
+    }
+
+    func selectAnimeThemeStyle(_ style: AnimeThemeStyle) {
+        selectedAnimeThemeStyle = style
+        var settings = container.settingsService.settings
+        settings.selectedAnimeThemeStyle = style
+        container.settingsService.updateSettings(settings)
+        AnimeThemeService.shared.currentStyle = style
+        LoggerService.shared.info("Anime theme changed to: \(style.displayName)")
+    }
     
     func selectStatusBarIconStyle(_ style: IconStyle) {
         statusBarIconStyle = style
@@ -4429,6 +4570,8 @@ final class SettingsViewModel: ObservableObject {
         
         mainWindowThemeColor = settings.mainWindowThemeColor
         customMainWindowThemeColorHex = settings.customMainWindowThemeColorHex
+        isAnimeModeEnabled = settings.isAnimeModeEnabled
+        selectedAnimeThemeStyle = settings.selectedAnimeThemeStyle
         showMainWindowOnAutoLaunch = settings.showMainWindowOnAutoLaunch
         showMainWindowOnManualLaunch = settings.showMainWindowOnManualLaunch
         

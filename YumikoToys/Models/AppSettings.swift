@@ -629,7 +629,11 @@ struct AppSettings: Codable, Sendable {
     
     // MARK: - Widget 显示样式
     var widgetDisplayStyle: WidgetDisplayStyle
-    
+
+    // MARK: - 二次元主题模式
+    var isAnimeModeEnabled: Bool
+    var selectedAnimeThemeStyle: AnimeThemeStyle
+
     // MARK: - 允许多开
     var allowMultipleInstances: Bool
     
@@ -701,6 +705,8 @@ struct AppSettings: Codable, Sendable {
         quickLaunchIconSize: QuickLaunchIconSize = .small,
         screenshotOutputMode: ScreenshotOutputMode = .fileOnly,
         widgetDisplayStyle: WidgetDisplayStyle = .classic,
+        isAnimeModeEnabled: Bool = false,
+        selectedAnimeThemeStyle: AnimeThemeStyle = .healing,
         allowMultipleInstances: Bool = false,
         enableProactiveAssistant: Bool = false,
         proactiveHeartbeatInterval: Double = 15.0,
@@ -768,6 +774,8 @@ struct AppSettings: Codable, Sendable {
         self.quickLaunchIconSize = quickLaunchIconSize
         self.screenshotOutputMode = screenshotOutputMode
         self.widgetDisplayStyle = widgetDisplayStyle
+        self.isAnimeModeEnabled = isAnimeModeEnabled
+        self.selectedAnimeThemeStyle = selectedAnimeThemeStyle
         self.allowMultipleInstances = allowMultipleInstances
         self.enableProactiveAssistant = enableProactiveAssistant
         self.proactiveHeartbeatInterval = proactiveHeartbeatInterval
@@ -852,7 +860,9 @@ struct AppSettings: Codable, Sendable {
         screenshotOutputMode = container.decodeIsolated(ScreenshotOutputMode.self, forKey: .screenshotOutputMode, fallback: .fileOnly)
         widgetDisplayStyle = container.decodeIsolated(WidgetDisplayStyle.self, forKey: .widgetDisplayStyle, fallback: .classic)
         allowMultipleInstances = try container.decodeIfPresent(Bool.self, forKey: .allowMultipleInstances) ?? false
-        
+        isAnimeModeEnabled = try container.decodeIfPresent(Bool.self, forKey: .isAnimeModeEnabled) ?? false
+        selectedAnimeThemeStyle = container.decodeIsolated(AnimeThemeStyle.self, forKey: .selectedAnimeThemeStyle, fallback: .healing)
+
         enableProactiveAssistant = try container.decodeIfPresent(Bool.self, forKey: .enableProactiveAssistant) ?? false
         proactiveHeartbeatInterval = try container.decodeIfPresent(Double.self, forKey: .proactiveHeartbeatInterval) ?? 15.0
         proactiveAutoExecuteTasks = try container.decodeIfPresent(Bool.self, forKey: .proactiveAutoExecuteTasks) ?? false

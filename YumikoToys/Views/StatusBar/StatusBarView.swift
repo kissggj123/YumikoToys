@@ -120,7 +120,59 @@ import Combine
     var destructiveButtonColor: Color { destructiveButtonColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
     var iconColor: Color { iconColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
     var hoverBackgroundColor: Color { hoverBackgroundColor(customHex: DependencyContainer.shared.settingsService.settings.customThemeColorHex) }
-    
+
+    // MARK: - Anime Bridge Properties
+    // 当二次元主题启用时，返回 AnimeThemeService 的颜色令牌；否则回退到标准 ThemeColor。
+
+    var animeOrBackground: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.background() : backgroundColor
+    }
+    var animeOrAccent: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.accent() : accentColor
+    }
+    var animeOrGlow: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.glow() : accentColor
+    }
+    var animeOrGradient: [Color] {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.gradient() : iconGradient
+    }
+    var animeOrCardBackground: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.cardBackground() : cardBackgroundColor
+    }
+    var animeOrTextPrimary: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.textPrimary() : textColor
+    }
+    var animeOrTextSecondary: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.textSecondary() : secondaryTextColor
+    }
+    var animeOrBorder: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.cardBorder() : borderColor
+    }
+    var animeOrDivider: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.cardBorder() : dividerColor
+    }
+    var animeOrHover: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.hoverColor() : hoverBackgroundColor
+    }
+    var animeOrButton: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.buttonColor() : buttonBackgroundColor
+    }
+    var animeOrToggleOn: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.accent() : toggleOnColor
+    }
+    var animeOrToggleBackground: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.hoverColor() : toggleBackgroundColor
+    }
+    var animeOrIcon: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.textSecondary() : iconColor
+    }
+    var animeOrSecondaryButton: Color {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.hoverColor() : secondaryButtonBackground
+    }
+    var animeOrIsDark: Bool {
+        AnimeThemeService.shared.isEnabled ? AnimeThemeService.shared.currentToken.isDark : isDarkTheme
+    }
+
     var originalIconGradient: [Color] {
         switch self {
         case .dark:
@@ -753,8 +805,8 @@ struct StatusBarView: View {
             }
         }
         .frame(width: 340)
-        .background(themeColor.backgroundColor)
-        .preferredColorScheme(themeColor.isDarkTheme ? .dark : .light)
+        .background(themeColor.animeOrBackground)
+        .preferredColorScheme(themeColor.animeOrIsDark ? .dark : .light)
         .onAppear {
             viewModel.onAppear()
             themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor
@@ -786,12 +838,12 @@ struct StatusBarView: View {
                         Text(tab.title)
                             .font(.system(size: 11, weight: .medium, design: .rounded))
                     }
-                    .foregroundStyle(selectedTab == tab ? themeColor.backgroundColor : themeColor.textColor)
+                    .foregroundStyle(selectedTab == tab ? themeColor.animeOrBackground : themeColor.animeOrTextPrimary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(
                         Capsule()
-                            .fill(selectedTab == tab ? themeColor.accentColor : themeColor.buttonBackgroundColor)
+                            .fill(selectedTab == tab ? themeColor.animeOrAccent : themeColor.animeOrButton)
                     )
                 }
                 .buttonStyle(.plain)
@@ -825,7 +877,7 @@ struct StatusBarView: View {
                 HStack(spacing: 6) {
                     Text("🔌 YumiScript")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(themeColor.textColor)
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
 
                     Spacer()
 
@@ -835,7 +887,7 @@ struct StatusBarView: View {
                                 Circle().fill(Color.green).frame(width: 5, height: 5)
                                 Text("查看日志")
                                     .font(.system(size: 9))
-                                    .foregroundStyle(themeColor.accentColor)
+                                    .foregroundStyle(themeColor.animeOrAccent)
                             }
                         }
                         .buttonStyle(.plain)
@@ -859,7 +911,7 @@ struct StatusBarView: View {
                     Button(action: { showPluginConfig.toggle() }) {
                         Image(systemName: "slider.horizontal.3")
                             .font(.system(size: 10))
-                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .foregroundStyle(themeColor.animeOrTextSecondary)
                     }
                     .buttonStyle(.plain)
                     .popover(isPresented: $showPluginConfig, arrowEdge: .trailing) {
@@ -1019,7 +1071,7 @@ struct StatusBarView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("🚀 快速启动")
                             .font(.system(size: 9, weight: .bold, design: .rounded))
-                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .foregroundStyle(themeColor.animeOrTextSecondary)
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
@@ -1044,11 +1096,11 @@ struct StatusBarView: View {
                                                     .font(.system(size: iconSize.fontValue, weight: .medium))
                                             }
                                         }
-                                        .foregroundStyle(themeColor.textColor)
+                                        .foregroundStyle(themeColor.animeOrTextPrimary)
                                         .padding(.horizontal, iconSize == .large ? 10 : 8)
                                         .padding(.vertical, iconSize == .large ? 6 : 4)
-                                        .background(Capsule().fill(themeColor.buttonBackgroundColor))
-                                        .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                        .background(Capsule().fill(themeColor.animeOrButton))
+                                        .overlay(Capsule().stroke(themeColor.animeOrBorder, lineWidth: 1))
                                     }
                                     .buttonStyle(.plain)
                                     .modifier(TooltipModifier(text: app.name))
@@ -1068,7 +1120,7 @@ struct StatusBarView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("🧩 扩展插件")
                                 .font(.system(size: 9, weight: .bold, design: .rounded))
-                                .foregroundStyle(themeColor.secondaryTextColor)
+                                .foregroundStyle(themeColor.animeOrTextSecondary)
 
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 6) {
@@ -1103,11 +1155,11 @@ struct StatusBarView: View {
                                                 Text(plugin.name)
                                                     .font(.system(size: 10, weight: .medium))
                                             }
-                                            .foregroundStyle(themeColor.textColor)
+                                            .foregroundStyle(themeColor.animeOrTextPrimary)
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
-                                            .background(Capsule().fill(themeColor.buttonBackgroundColor))
-                                            .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                            .background(Capsule().fill(themeColor.animeOrButton))
+                                            .overlay(Capsule().stroke(themeColor.animeOrBorder, lineWidth: 1))
                                         }
                                         .buttonStyle(.plain)
                                         .modifier(TooltipModifier(text: plugin.description.isEmpty ? plugin.name : plugin.description))
@@ -1132,7 +1184,7 @@ struct StatusBarView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("截图")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(themeColor.secondaryTextColor)
+                        .foregroundStyle(themeColor.animeOrTextSecondary)
                         .padding(.horizontal, 4)
 
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
@@ -1165,10 +1217,10 @@ struct StatusBarView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "info.circle")
                             .font(.system(size: 9))
-                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .foregroundStyle(themeColor.animeOrTextSecondary)
                         Text("TouchBar 仅 2016–2019 款带 Touch Bar 的 MacBook 支持；其他机型会直接提示无 TouchBar。")
                             .font(.system(size: 9))
-                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .foregroundStyle(themeColor.animeOrTextSecondary)
                             .lineLimit(2)
                     }
                     .padding(.horizontal, 4)
@@ -1180,7 +1232,7 @@ struct StatusBarView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("录屏")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(themeColor.secondaryTextColor)
+                        .foregroundStyle(themeColor.animeOrTextSecondary)
                         .padding(.horizontal, 4)
 
                     if screenMedia.isRecording {
@@ -1203,10 +1255,10 @@ struct StatusBarView: View {
                                 Text("开始录屏").font(.system(size: 11, weight: .medium))
                                 Spacer()
                             }
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 7)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.buttonBackgroundColor))
+                            .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.animeOrButton))
                         }
                         .buttonStyle(.plain)
                     }
@@ -1218,10 +1270,10 @@ struct StatusBarView: View {
                             Text("诊断授权状态").font(.system(size: 11, weight: .medium))
                             Spacer()
                         }
-                        .foregroundStyle(themeColor.textColor)
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.buttonBackgroundColor))
+                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.animeOrButton))
                     }
                     .buttonStyle(.plain)
 
@@ -1231,10 +1283,10 @@ struct StatusBarView: View {
                             Text("打开屏幕录制设置").font(.system(size: 11, weight: .medium))
                             Spacer()
                         }
-                        .foregroundStyle(themeColor.textColor)
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.buttonBackgroundColor))
+                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.animeOrButton))
                     }
                     .buttonStyle(.plain)
                 }
@@ -1245,13 +1297,13 @@ struct StatusBarView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("设置")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(themeColor.secondaryTextColor)
+                        .foregroundStyle(themeColor.animeOrTextSecondary)
                         .padding(.horizontal, 4)
 
                     HStack {
                         Text("全局快捷键")
                             .font(.system(size: 11))
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                         Spacer()
                         Picker("", selection: Binding(
                             get: { DependencyContainer.shared.settingsService.settings.screenshotHotkeyPreset },
@@ -1274,7 +1326,7 @@ struct StatusBarView: View {
                     HStack {
                         Text("输出模式")
                             .font(.system(size: 11))
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                         Spacer()
                         Picker("", selection: Binding(
                             get: { DependencyContainer.shared.settingsService.settings.screenshotOutputMode },
@@ -1305,11 +1357,11 @@ struct StatusBarView: View {
                 Text(title)
                     .font(.system(size: 10, weight: .medium))
             }
-            .foregroundStyle(themeColor.textColor)
+            .foregroundStyle(themeColor.animeOrTextPrimary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.buttonBackgroundColor))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(themeColor.borderColor.opacity(0.5), lineWidth: 0.5))
+            .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.animeOrButton))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(themeColor.animeOrBorder.opacity(0.5), lineWidth: 0.5))
         }
         .buttonStyle(.plain)
     }
@@ -1326,22 +1378,22 @@ struct StatusBarView: View {
                 Image(systemName: themeColor.themeIcon)
                     .font(.system(size: 10))
                 Circle()
-                    .fill(themeColor.accentColor)
+                    .fill(themeColor.animeOrAccent)
                     .frame(width: 8, height: 8)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .medium))
                     .rotationEffect(.degrees(showThemePicker ? 180 : 0))
             }
-            .foregroundStyle(themeColor.accentColor)
+            .foregroundStyle(themeColor.animeOrAccent)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(
                 Capsule()
-                    .fill(themeColor.buttonBackgroundColor)
+                    .fill(themeColor.animeOrButton)
             )
             .overlay(
                 Capsule()
-                    .stroke(themeColor.borderColor, lineWidth: 1)
+                    .stroke(themeColor.animeOrBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -1357,7 +1409,7 @@ struct StatusBarView: View {
         VStack(spacing: 10) {
             Text("选择主题")
                 .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(themeColor.secondaryTextColor)
+                .foregroundStyle(themeColor.animeOrTextSecondary)
 
             let columns = [
                 GridItem(.flexible(), spacing: 8),
@@ -1394,13 +1446,13 @@ struct StatusBarView: View {
             if themeColor == .custom {
                 VStack(spacing: 8) {
                     Divider()
-                        .background(themeColor.dividerColor)
+                        .background(themeColor.animeOrDivider)
                         .padding(.vertical, 2)
                     
                     HStack(spacing: 8) {
                         Text("自定义 HEX")
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                         
                         Spacer()
                         
@@ -1427,14 +1479,14 @@ struct StatusBarView: View {
                         .padding(.vertical, 3)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(themeColor.textColor.opacity(0.05))
+                                .fill(themeColor.animeOrTextPrimary.opacity(0.05))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 4)
-                                .stroke(themeColor.borderColor, lineWidth: 1)
+                                .stroke(themeColor.animeOrBorder, lineWidth: 1)
                         )
                         .frame(width: 80)
-                        .foregroundStyle(themeColor.textColor)
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
                         
                         ColorPicker("", selection: Binding(
                             get: {
@@ -1459,11 +1511,11 @@ struct StatusBarView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(themeColor.cardBackgroundColor)
+                .fill(themeColor.animeOrCardBackground)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(themeColor.borderColor, lineWidth: 1)
+                .stroke(themeColor.animeOrBorder, lineWidth: 1)
         )
     }
 
@@ -1493,7 +1545,7 @@ struct StatusBarView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: themeColor.iconGradient,
+                            colors: themeColor.animeOrGradient,
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -1513,103 +1565,21 @@ struct StatusBarView: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
+                // 标题行
                 if let customTitle = customDaysDisplayTitle {
-                        Text(customTitle)
+                    Text(customTitle)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(themeColor.textColor)
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
                         .lineLimit(viewModel.anniversaryInfo?.anniversary.allowMultiline == true ? nil : 1)
-
-                    HStack(spacing: 4) {
-                        Text("🥕")
-                            .font(.system(size: 10))
-                        Menu {
-                            ForEach(viewModel.anniversaries) { ann in
-                                Button {
-                                    viewModel.setActiveAnniversary(id: ann.id)
-                                } label: {
-                                    if ann.id == viewModel.anniversaryInfo?.anniversary.id {
-                                        Text("✓ " + ann.displayPetName)
-                                    } else {
-                                        Text(ann.displayPetName)
-                                    }
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 2) {
-                                Text(viewModel.anniversaryInfo?.anniversary.displayPetName ?? "可可")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .lineLimit(1)
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 7, weight: .bold))
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .foregroundStyle(themeColor.accentColor)
-                            .background(
-                                Capsule()
-                                    .fill(themeColor.accentColor.opacity(0.1))
-                            )
-                        }
-                        .menuStyle(.borderlessButton)
-                        .fixedSize()
-                        
-                        Text("·")
-                            .font(.system(size: 10))
-                            .foregroundStyle(themeColor.secondaryTextColor)
-                        Text("v\(AppConfig.version)")
-                            .font(.system(size: 10))
-                            .foregroundStyle(themeColor.secondaryTextColor)
-                            .lineLimit(1)
-                    }
                 } else {
                     Text(AppConfig.appName)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(themeColor.textColor)
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
                         .lineLimit(viewModel.anniversaryInfo?.anniversary.allowMultiline == true ? nil : 1)
-
-                    HStack(spacing: 4) {
-                        Text("🥕")
-                            .font(.system(size: 10))
-                        Menu {
-                            ForEach(viewModel.anniversaries) { ann in
-                                Button {
-                                    viewModel.setActiveAnniversary(id: ann.id)
-                                } label: {
-                                    if ann.id == viewModel.anniversaryInfo?.anniversary.id {
-                                        Text("✓ " + ann.displayPetName)
-                                    } else {
-                                        Text(ann.displayPetName)
-                                    }
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 2) {
-                                Text("可可皇后")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .lineLimit(1)
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 7, weight: .bold))
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .foregroundStyle(themeColor.accentColor)
-                            .background(
-                                Capsule()
-                                    .fill(themeColor.accentColor.opacity(0.1))
-                            )
-                        }
-                        .menuStyle(.borderlessButton)
-                        .fixedSize()
-                        
-                        Text("·")
-                            .font(.system(size: 10))
-                            .foregroundStyle(themeColor.secondaryTextColor)
-                        Text("v\(AppConfig.version)")
-                            .font(.system(size: 10))
-                            .foregroundStyle(themeColor.secondaryTextColor)
-                            .lineLimit(1)
-                    }
                 }
+
+                // 宠物选择器 + 版本号（共享）
+                petSelectorRow
             }
             
             Spacer()
@@ -1620,13 +1590,55 @@ struct StatusBarView: View {
             // 状态指示器
             if viewModel.isPreventSleepEnabled {
                 Circle()
-                    .fill(themeColor.accentColor)
+                    .fill(themeColor.animeOrAccent)
                     .frame(width: 8, height: 8)
-                    .shadow(color: themeColor.accentColor.opacity(0.5), radius: 4)
+                    .shadow(color: themeColor.animeOrAccent.opacity(0.5), radius: 4)
             }
         }
     }
-    
+
+    /// 宠物选择器 + 版本号行（headerView 共享子视图）
+    private var petSelectorRow: some View {
+        HStack(spacing: 6) {
+            // 宠物选择 — 仅文字 + 极细 chevron，不叠加多余箭头
+            Menu {
+                ForEach(viewModel.anniversaries) { ann in
+                    Button {
+                        viewModel.setActiveAnniversary(id: ann.id)
+                    } label: {
+                        if ann.id == viewModel.anniversaryInfo?.anniversary.id {
+                            Label(ann.displayPetName, systemImage: "checkmark")
+                        } else {
+                            Text(ann.displayPetName)
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 3) {
+                    Text("🥕")
+                        .font(.system(size: 9))
+                    Text(viewModel.anniversaryInfo?.anniversary.displayPetName ?? "可可皇后")
+                        .font(.system(size: 10, weight: .medium))
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .foregroundStyle(themeColor.animeOrAccent)
+                .background(
+                    Capsule()
+                        .fill(themeColor.animeOrAccent.opacity(0.08))
+                )
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+
+            Text("v\(AppConfig.version)")
+                .font(.system(size: 9, design: .monospaced))
+                .foregroundStyle(themeColor.animeOrTextSecondary.opacity(0.6))
+                .lineLimit(1)
+        }
+    }
+
     // MARK: - 天数预览
     
     private func daysPreview(info: AnniversaryInfo, countdown: String) -> some View {
@@ -1655,7 +1667,7 @@ struct StatusBarView: View {
                     .lineLimit(1)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: themeColor.iconGradient,
+                            colors: themeColor.animeOrGradient,
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -1663,7 +1675,7 @@ struct StatusBarView: View {
                 
                 Text("天")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(themeColor.secondaryTextColor)
+                    .foregroundStyle(themeColor.animeOrTextSecondary)
                 
                 Spacer()
             }
@@ -1671,7 +1683,7 @@ struct StatusBarView: View {
             // 倒计时
             Text(countdown)
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundStyle(themeColor.secondaryTextColor.opacity(0.7))
+                .foregroundStyle(themeColor.animeOrTextSecondary.opacity(0.7))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .minimumScaleFactor(0.8)
                 .lineLimit(1)
@@ -1679,7 +1691,7 @@ struct StatusBarView: View {
             // 纪念日里程碑列表 (100, 180, 300天及周年里程碑展示)
             if !info.milestones.isEmpty {
                 Divider()
-                    .background(themeColor.dividerColor)
+                    .background(themeColor.animeOrDivider)
                     .padding(.vertical, 4)
                 
                 VStack(spacing: 6) {
@@ -1690,7 +1702,7 @@ struct StatusBarView: View {
                             
                             Text(milestone.label)
                                 .font(.system(size: 10))
-                                .foregroundStyle(themeColor.secondaryTextColor)
+                                .foregroundStyle(themeColor.animeOrTextSecondary)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             
@@ -1698,12 +1710,12 @@ struct StatusBarView: View {
                             
                             Text(milestone.formattedDate)
                                 .font(.system(size: 10, design: .monospaced))
-                                .foregroundStyle(themeColor.textColor.opacity(0.8))
+                                .foregroundStyle(themeColor.animeOrTextPrimary.opacity(0.8))
                                 .frame(width: 75, alignment: .leading)
                             
                             Text("(\(milestone.countDisplay))")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(themeColor.accentColor)
+                                .foregroundStyle(themeColor.animeOrAccent)
                                 .frame(width: 55, alignment: .trailing)
                         }
                     }
@@ -1713,13 +1725,13 @@ struct StatusBarView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(themeColor.cardBackgroundColor)
+                .fill(themeColor.animeOrCardBackground)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
                     LinearGradient(
-                        colors: themeColor.iconGradient.map { $0.opacity(0.8) },
+                        colors: themeColor.animeOrGradient.map { $0.opacity(0.8) },
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -1727,7 +1739,7 @@ struct StatusBarView: View {
                 )
         )
         .scaleEffect(isDaysCardHovered ? 1.015 : 1.0)
-        .shadow(color: themeColor.accentColor.opacity(isDaysCardHovered ? 0.12 : 0.0), radius: 8)
+        .shadow(color: themeColor.animeOrAccent.opacity(isDaysCardHovered ? 0.12 : 0.0), radius: 8)
         .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isDaysCardHovered)
         .onHover { isDaysCardHovered = $0 }
     }
@@ -1741,7 +1753,7 @@ struct StatusBarView: View {
             HStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(viewModel.isPreventSleepEnabled ? themeColor.accentColor.opacity(0.15) : themeColor.secondaryButtonBackground)
+                        .fill(viewModel.isPreventSleepEnabled ? themeColor.animeOrAccent.opacity(0.15) : themeColor.animeOrSecondaryButton)
                         .frame(width: 36, height: 36)
                     
                     PixelArtIconView(
@@ -1749,19 +1761,19 @@ struct StatusBarView: View {
                         style: viewModel.uiIconStyle,
                         size: 18
                     )
-                    .foregroundStyle(viewModel.isPreventSleepEnabled ? themeColor.accentColor : themeColor.iconColor)
+                    .foregroundStyle(viewModel.isPreventSleepEnabled ? themeColor.animeOrAccent : themeColor.animeOrIcon)
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("不休眠模式")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundStyle(themeColor.textColor)
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
                         .lineLimit(1)
                     
                     Text(viewModel.isPreventSleepEnabled ? "已开启" : "已关闭")
                         .font(.caption2)
-                        .foregroundStyle(viewModel.isPreventSleepEnabled ? themeColor.accentColor : themeColor.secondaryTextColor)
+                        .foregroundStyle(viewModel.isPreventSleepEnabled ? themeColor.animeOrAccent : themeColor.animeOrTextSecondary)
                         .lineLimit(1)
                 }
                 
@@ -1772,7 +1784,7 @@ struct StatusBarView: View {
                     set: { _ in viewModel.togglePreventSleep() }
                 ))
                 .toggleStyle(.switch)
-                .tint(themeColor.toggleOnColor)
+                .tint(themeColor.animeOrToggleOn)
                 .labelsHidden()
                 .allowsHitTesting(false) // 【核心修复】阻断 Toggle 本身对鼠标的响应，统一由外层整行手势接管，消除冲突 [1]
             }
@@ -1781,7 +1793,7 @@ struct StatusBarView: View {
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(isPreventSleepHovered ? themeColor.hoverBackgroundColor : Color.clear)
+                    .fill(isPreventSleepHovered ? themeColor.animeOrHover : Color.clear)
             )
             .scaleEffect(isPreventSleepHovered ? 1.02 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isPreventSleepHovered)
@@ -1806,19 +1818,19 @@ struct StatusBarView: View {
                         .fontWeight(.medium)
                         .lineLimit(1)
                 }
-                .foregroundStyle(themeColor.textColor)
+                .foregroundStyle(themeColor.animeOrTextPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(themeColor.secondaryButtonBackground)
+                        .fill(themeColor.animeOrSecondaryButton)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(themeColor.borderColor, lineWidth: 1)
+                        .stroke(themeColor.animeOrBorder, lineWidth: 1)
                 )
                 .scaleEffect(isMainBtnHovered ? 1.03 : 1.0)
-                .shadow(color: themeColor.accentColor.opacity(isMainBtnHovered ? 0.35 : 0.0), radius: 6)
+                .shadow(color: themeColor.animeOrAccent.opacity(isMainBtnHovered ? 0.35 : 0.0), radius: 6)
                 .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isMainBtnHovered)
                 .onHover { isMainBtnHovered = $0 }
             }
@@ -1864,7 +1876,7 @@ struct StatusBarView: View {
             HStack(spacing: 6) {
                 Text("🔌 YumiScript 插件系统")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(themeColor.textColor)
+                    .foregroundStyle(themeColor.animeOrTextPrimary)
                 
                 Spacer()
                 
@@ -1874,7 +1886,7 @@ struct StatusBarView: View {
                             Circle().fill(Color.green).frame(width: 5, height: 5)
                             Text("查看日志")
                                 .font(.system(size: 9))
-                                .foregroundStyle(themeColor.accentColor)
+                                .foregroundStyle(themeColor.animeOrAccent)
                         }
                     }
                     .buttonStyle(.plain)
@@ -1899,7 +1911,7 @@ struct StatusBarView: View {
                 Button(action: { showPluginConfig.toggle() }) {
                     Image(systemName: "slider.horizontal.3")
                         .font(.system(size: 10))
-                        .foregroundStyle(themeColor.secondaryTextColor)
+                        .foregroundStyle(themeColor.animeOrTextSecondary)
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showPluginConfig, arrowEdge: .trailing) {
@@ -2081,7 +2093,7 @@ struct StatusBarView: View {
                     HStack(spacing: 4) {
                         Text("📸 截图工具")
                             .font(.system(size: 9, weight: .bold, design: .rounded))
-                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .foregroundStyle(themeColor.animeOrTextSecondary)
                         
                         Spacer()
                         
@@ -2090,10 +2102,10 @@ struct StatusBarView: View {
                         if hotkeyPreset != .none {
                             Text(hotkeyPreset.displayName)
                                 .font(.system(size: 8, design: .monospaced))
-                                .foregroundStyle(themeColor.secondaryTextColor)
+                                .foregroundStyle(themeColor.animeOrTextSecondary)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 2)
-                                .background(Capsule().fill(themeColor.borderColor.opacity(0.3)))
+                                .background(Capsule().fill(themeColor.animeOrBorder.opacity(0.3)))
                         }
                     }
                     
@@ -2110,10 +2122,10 @@ struct StatusBarView: View {
                                 Text("区域")
                                     .font(.system(size: 8, weight: .medium))
                             }
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.animeOrButton))
                         }
                         .buttonStyle(.plain)
                         .help("区域截图 (快捷键)")
@@ -2129,10 +2141,10 @@ struct StatusBarView: View {
                                 Text("全屏")
                                     .font(.system(size: 8, weight: .medium))
                             }
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.animeOrButton))
                         }
                         .buttonStyle(.plain)
                         
@@ -2147,10 +2159,10 @@ struct StatusBarView: View {
                                 Text("TouchBar")
                                     .font(.system(size: 8, weight: .medium))
                             }
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.animeOrButton))
                         }
                         .buttonStyle(.plain)
                         
@@ -2165,10 +2177,10 @@ struct StatusBarView: View {
                                 Text("多屏")
                                     .font(.system(size: 8, weight: .medium))
                             }
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.animeOrButton))
                         }
                         .buttonStyle(.plain)
                     }
@@ -2184,10 +2196,10 @@ struct StatusBarView: View {
                                 Text("开始录屏")
                                     .font(.system(size: 9, weight: .medium))
                             }
-                            .foregroundStyle(screenMedia.isRecording ? .red : themeColor.textColor)
+                            .foregroundStyle(screenMedia.isRecording ? .red : themeColor.animeOrTextPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 3)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.animeOrButton))
                         }
                         .buttonStyle(.plain)
                         .disabled(screenMedia.isRecording)
@@ -2221,10 +2233,10 @@ struct StatusBarView: View {
                                 Text("标注")
                                     .font(.system(size: 9, weight: .medium))
                             }
-                            .foregroundStyle(themeColor.textColor)
+                            .foregroundStyle(themeColor.animeOrTextPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 3)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.buttonBackgroundColor))
+                            .background(RoundedRectangle(cornerRadius: 4).fill(themeColor.animeOrButton))
                         }
                         .buttonStyle(.plain)
                     }
@@ -2233,7 +2245,7 @@ struct StatusBarView: View {
                     HStack(spacing: 4) {
                         Text("全局快捷键:")
                             .font(.system(size: 8))
-                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .foregroundStyle(themeColor.animeOrTextSecondary)
                         
                         Picker("", selection: Binding(
                             get: { DependencyContainer.shared.settingsService.settings.screenshotHotkeyPreset },
@@ -2254,7 +2266,7 @@ struct StatusBarView: View {
                     }
                 }
                 .padding(6)
-                .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.borderColor.opacity(0.15)))
+                .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.animeOrBorder.opacity(0.15)))
             }
             
             // MARK: 快速启动应用列表
@@ -2264,7 +2276,7 @@ struct StatusBarView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("🚀 快速启动")
                         .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .foregroundStyle(themeColor.secondaryTextColor)
+                        .foregroundStyle(themeColor.animeOrTextSecondary)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
@@ -2289,11 +2301,11 @@ struct StatusBarView: View {
                                                 .font(.system(size: iconSize.fontValue, weight: .medium))
                                         }
                                     }
-                                    .foregroundStyle(themeColor.textColor)
+                                    .foregroundStyle(themeColor.animeOrTextPrimary)
                                     .padding(.horizontal, iconSize == .large ? 10 : 8)
                                     .padding(.vertical, iconSize == .large ? 6 : 4)
-                                    .background(Capsule().fill(themeColor.buttonBackgroundColor))
-                                    .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                    .background(Capsule().fill(themeColor.animeOrButton))
+                                    .overlay(Capsule().stroke(themeColor.animeOrBorder, lineWidth: 1))
                                 }
                                 .buttonStyle(.plain)
                                 .modifier(TooltipModifier(text: app.name))
@@ -2313,7 +2325,7 @@ struct StatusBarView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("🧩 扩展插件")
                             .font(.system(size: 9, weight: .bold, design: .rounded))
-                            .foregroundStyle(themeColor.secondaryTextColor)
+                            .foregroundStyle(themeColor.animeOrTextSecondary)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
@@ -2342,11 +2354,11 @@ struct StatusBarView: View {
                                             Text(plugin.name)
                                                 .font(.system(size: 10, weight: .medium))
                                         }
-                                        .foregroundStyle(themeColor.textColor)
+                                        .foregroundStyle(themeColor.animeOrTextPrimary)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
-                                        .background(Capsule().fill(themeColor.buttonBackgroundColor))
-                                        .overlay(Capsule().stroke(themeColor.borderColor, lineWidth: 1))
+                                        .background(Capsule().fill(themeColor.animeOrButton))
+                                        .overlay(Capsule().stroke(themeColor.animeOrBorder, lineWidth: 1))
                                     }
                                     .buttonStyle(.plain)
                                     .modifier(TooltipModifier(text: plugin.description.isEmpty ? plugin.name : plugin.description))
@@ -2361,11 +2373,11 @@ struct StatusBarView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(themeColor.cardBackgroundColor)
+                .fill(themeColor.animeOrCardBackground)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(themeColor.borderColor, lineWidth: 1)
+                .stroke(themeColor.animeOrBorder, lineWidth: 1)
         )
     }
 }

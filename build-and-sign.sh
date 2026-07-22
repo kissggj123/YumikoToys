@@ -8,7 +8,9 @@
 #
 # 用法：
 #   ./build-and-sign.sh                    # 进入交互式选单
-#   ./build-and-sign.sh auto               # 非交互式：Debug + ad-hoc（适合 CI）
+#   ./build-and-sign.sh auto               # 非交互式：Debug + 自动选证书（推荐，Widget 注册必需）
+#   ./build-and-sign.sh auto --deploy      # 构建 + 部署到 /Applications + 注册 Widget
+#   ./build-and-sign.sh auto --force-adhoc # 非交互式：Debug + ad-hoc（跳过证书，Widget 不会注册）
 #   ./build-and-sign.sh --clean            # 先 clean 再 build（加在任意组合里）
 #   ./build-and-sign.sh release --cert "Apple Development: xxx (TEAMID)"
 #   CONFIGURATION=Release CODESIGN_IDENTITY="-" DO_CLEAN=1 ./build-and-sign.sh
@@ -17,7 +19,8 @@
 #   debug / release         # 指定构建配置（可省略，会走选单或默认 Debug）
 #   --cert "证书名" 或 --cert=-   # 指定签名证书 / ad-hoc
 #   --clean / -c / clean    # 先执行 xcodebuild clean 再 build
-#   auto / -y / --auto      # 跳过交互，直接 Debug + ad-hoc
+#   auto / -y / --auto      # 跳过交互，直接 Debug + 自动选证书
+#   --deploy                # 构建完成后部署到 /Applications 并注册 Widget
 #
 # 签名策略（交互式会让你选）：
 #   1) Apple ID / Developer ID 证书 — 正式签名，可公证分发
@@ -406,6 +409,7 @@ DERIVED_DATA_DIR="${DERIVED_DATA_DIR:-./build}"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-}"
 IS_ADHOC=0
 DO_CLEAN=0
+DO_DEPLOY=0
 
 POSITIONAL_ARGS=()
 while [[ $# -gt 0 ]]; do
@@ -422,6 +426,12 @@ while [[ $# -gt 0 ]]; do
             DO_CLEAN=1; shift ;;
         auto|--auto|-y)
             AUTO_MODE=1; shift ;;
+        --force-adhoc)
+            CODESIGN_IDENTITY="-"
+            IS_ADHOC=1
+            FORCE_ADHOC=1; shift ;;
+        --deploy)
+            DO_DEPLOY=1; shift ;;
         *)
             POSITIONAL_ARGS+=("$1"); shift ;;
     esac
@@ -457,9 +467,29 @@ AUTO_MODE="${AUTO_MODE:-0}"
 if [[ -z "$CONFIGURATION" || (-z "$CODESIGN_IDENTITY" && "$AUTO_MODE" -eq 0) ]]; then
     if [[ "$AUTO_MODE" -eq 1 ]]; then
         CONFIGURATION="${CONFIGURATION:-Debug}"
-        CODESIGN_IDENTITY="-"
-        IS_ADHOC=1
-        log_info "auto 模式：CONFIGURATION=${CONFIGURATION}，签名=ad-hoc"
+        # 如果用户通过 --force-adhoc 明确要求 ad-hoc，直接使用
+        if [[ "${FORCE_ADHOC:-0}" -eq 1 ]]; then
+            log_info "auto 模式：CONFIGURATION=${CONFIGURATION}，签名=ad-hoc（用户指定）"
+        else
+            # auto 模式智能签名：优先使用 Apple Development 证书（Widget 注册必需），
+            # 找不到则回退到 ad-hoc
+            _auto_cert=""
+            while IFS= read -r _line; do
+                [[ -z "$_line" ]] && continue
+                _auto_cert="$_line"
+                break  # 取第一个可用证书
+            done < <(list_certs 2>/dev/null)
+
+            if [[ -n "$_auto_cert" ]]; then
+                CODESIGN_IDENTITY="$_auto_cert"
+                IS_ADHOC=0
+                log_info "auto 模式：CONFIGURATION=${CONFIGURATION}，签名=证书 (${CODESIGN_IDENTITY})"
+            else
+                CODESIGN_IDENTITY="-"
+                IS_ADHOC=1
+                log_info "auto 模式：CONFIGURATION=${CONFIGURATION}，签名=ad-hoc（未找到证书，Widget 将无法注册到系统）"
+            fi
+        fi
     else
         run_menu
     fi
@@ -681,10 +711,8 @@ for i in "${!SIGN_PATHS[@]}"; do
 done
 progress_bar "$TOTAL_SIGNS" "$TOTAL_SIGNS" "正在签名" "全部完成"
 
-# ad-hoc 需清 quarantine
-if [[ "$IS_ADHOC" -eq 1 ]]; then
-    xattr -dr com.apple.quarantine "$APP_PATH" 2>/dev/null || true
-fi
+# 清除 quarantine（所有签名方式都需要，否则 Gatekeeper 阻止扩展加载）
+xattr -cr "$APP_PATH" 2>/dev/null || true
 
 END_T=$(date +%s)
 progress_done "$((END_T-START_T))" "签名完成（$TOTAL_SIGNS 个 bundle）"
@@ -728,3 +756,47 @@ echo "  ${GRAY}完整验证日志：${RESET}${SIGN_VERIFY_LOG}"
 echo
 echo -e "${GREEN}${BOLD}✅ 全部完成 ✅${RESET}"
 echo "  可直接双击运行：${APP_PATH}"
+
+# ==================================================================
+# 阶段 5（可选）：部署到 /Applications 并注册 Widget
+# ==================================================================
+if [[ "$DO_DEPLOY" -eq 1 ]]; then
+    echo
+    echo -e "${BOLD}▸ 阶段 5：部署到 /Applications${RESET}"
+    START_T=$(date +%s)
+
+    DEPLOY_PATH="/Applications/YumikoToys.app"
+
+    # 终止正在运行的实例
+    killall YumikoToys 2>/dev/null && sleep 1
+
+    # 复制到 /Applications
+    rm -rf "$DEPLOY_PATH"
+    cp -R "$APP_PATH" "$DEPLOY_PATH"
+    echo "  已复制到 ${DEPLOY_PATH}"
+
+    # 清除 quarantine 属性
+    xattr -cr "$DEPLOY_PATH" 2>/dev/null || true
+
+    # 重新注册 LaunchServices（触发系统扫描扩展）
+    /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister \
+        -f "$DEPLOY_PATH" 2>/dev/null
+    echo "  已注册到 LaunchServices"
+
+    # 验证 Widget 扩展是否被系统发现
+    sleep 2
+    WIDGET_REG=$(pluginkit -m -p com.apple.widgetkit-extension 2>/dev/null | grep -i "YumikoToys")
+    if [[ -n "$WIDGET_REG" ]]; then
+        echo "  ${GREEN}✓ Widget 已注册：${WIDGET_REG}${RESET}"
+    else
+        echo "  ${YELLOW}⚠ Widget 尚未注册（可能需要启动 App 后等待几秒）${RESET}"
+        echo "    手动检查：pluginkit -m -p com.apple.widgetkit-extension | grep Yumiko"
+    fi
+
+    # 启动 App
+    open "$DEPLOY_PATH"
+    echo "  已启动 YumikoToys.app"
+
+    END_T=$(date +%s)
+    echo "  ${GRAY}部署用时 $((END_T-START_T))s${RESET}"
+fi

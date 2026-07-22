@@ -54,6 +54,18 @@ enum PixelPalette {
         Color(hex: "FFD4E0"),  // 6: 腮红
     ]
     
+    /// 二次元手绘风 - 玫瑰粉（状态栏用）
+    static let animeHandDrawn: [Color] = [
+        Color(hex: "FF6B9D"),  // 1: 主色（草莓粉）
+        Color(hex: "FFB5D0"),  // 2: 亮色内芯（樱花粉）
+    ]
+    
+    /// 二次元像素风 - 紫罗兰（状态栏用）
+    static let animePixel: [Color] = [
+        Color(hex: "9B6BCD"),  // 1: 主色（薰衣草紫）
+        Color(hex: "C9A8F0"),  // 2: 亮色内芯（淡紫）
+    ]
+    
     /// 狐狸 - 橙色系
     static let fox: [Color] = [
         Color(hex: "F4A261"),  // 1: 橙色（主体）
@@ -636,6 +648,10 @@ struct PixelArtIconView: View {
                 nativeSFView
             case .nativeEmoji:
                 nativeEmojiView
+            case .animeHandDrawn:
+                AnimeHandDrawnIcon(button: function, size: size, color: Color(hex: "FF6B9D"))
+            case .animePixel:
+                AnimePixelIcon(button: function, size: size, color: Color(hex: "9B6BCD"))
             }
         }
         .frame(width: size, height: size)
@@ -840,6 +856,20 @@ extension IconStyle {
             return renderSystemIcon("heart.fill", size: size, color: NSColor.systemPink)
         case .nativeEmoji:
             return renderEmojiIcon("🐰", size: size)
+        case .animeHandDrawn:
+            // 二次元手绘风 - 状态栏用四角星（玫瑰粉）
+            return PixelArtRenderer.renderNSImage(
+                pixels: AnimePixelData.sparkle.map { $0.map { UInt8($0) } },
+                palette: PixelPalette.animeHandDrawn,
+                size: size
+            )
+        case .animePixel:
+            // 二次元像素风 - 状态栏用四角星（薰衣草紫）
+            return PixelArtRenderer.renderNSImage(
+                pixels: AnimePixelData.sparkle.map { $0.map { UInt8($0) } },
+                palette: PixelPalette.animePixel,
+                size: size
+            )
         }
     }
     

@@ -134,12 +134,12 @@ struct MainView: View {
         .background(
             ZStack {
                 // 主背景
-                viewModel.resolvedTheme.backgroundColor
+                viewModel.resolvedTheme.animeOrBackground
                 
                 // 顶部渐变光晕
                 EllipticalGradient(
                     stops: [
-                        .init(color: viewModel.resolvedTheme.accentColor.opacity(0.08), location: 0.0),
+                        .init(color: viewModel.resolvedTheme.animeOrAccent.opacity(0.08), location: 0.0),
                         .init(color: .clear, location: 0.5)
                     ],
                     center: .top,
@@ -155,7 +155,7 @@ struct MainView: View {
             // 【核心修复：解决不更新 Bug】绑定 viewModel 响应式宿主，打破闭包捕获死锁，实现数据完全实时更新 [1]
             LearnedPreferencesSheet(viewModel: viewModel)
         }
-        .preferredColorScheme(viewModel.resolvedTheme.isDarkTheme ? .dark : .light)
+        .preferredColorScheme(viewModel.resolvedTheme.animeOrIsDark ? .dark : .light)
         .onReceive(viewModel.$componentLayouts) { layouts in
             self.adjustMainWindowSize(layouts: layouts)
         }
@@ -2864,7 +2864,7 @@ struct FloatingLayoutToolbar: View {
             // Header row
             HStack(spacing: 12) {
                 Image(systemName: "wand.and.stars")
-                    .foregroundStyle(viewModel.resolvedTheme.accentColor)
+                    .foregroundStyle(viewModel.resolvedTheme.animeOrAccent)
                     .font(.system(size: 14, weight: .bold))
                 
                 Text("布局编辑器")
@@ -2884,7 +2884,7 @@ struct FloatingLayoutToolbar: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
-                    .background(Capsule().fill(viewModel.resolvedTheme.accentColor))
+                    .background(Capsule().fill(viewModel.resolvedTheme.animeOrAccent))
                 }
                 .buttonStyle(.plain)
                 .help("根据内容自动计算最优窗口大小")
@@ -2980,7 +2980,7 @@ struct FloatingLayoutToolbar: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(viewModel.resolvedTheme.accentColor))
+                        .background(RoundedRectangle(cornerRadius: 6).fill(viewModel.resolvedTheme.animeOrAccent))
                     }
                     .buttonStyle(.plain)
                     

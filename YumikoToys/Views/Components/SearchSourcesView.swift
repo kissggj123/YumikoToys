@@ -17,7 +17,7 @@ struct SearchSourcesView: View {
         switch chatMode {
         case .petCompanion:
             return Color(hex: "3B82F6")
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669")
         }
     }

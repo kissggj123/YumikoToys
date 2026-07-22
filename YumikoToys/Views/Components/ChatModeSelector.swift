@@ -62,19 +62,11 @@ private struct ChatModeButton: View {
     }
 
     private var modeGradient: LinearGradient {
-        switch mode {
-        case .petCompanion:
-            return LinearGradient(
-                colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        case .aiAssistant:
-            return LinearGradient(
-                colors: [Color(hex: "059669"), Color(hex: "0891B2")],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        }
+        let hexColors = mode.themeGradient
+        return LinearGradient(
+            colors: hexColors.map { Color(hex: $0) },
+            startPoint: .leading,
+            endPoint: .trailing
+        )
     }
 }

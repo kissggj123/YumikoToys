@@ -41,7 +41,11 @@
 		FC6552B52FC373980093B726 /* UploadedFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65523B2FC373980093B726 /* UploadedFile.swift */; };
 		FC6552B62FC373980093B726 /* CopyableMessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552752FC373980093B726 /* CopyableMessageBubble.swift */; };
 		FC6552B72FC373980093B726 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552122FC373980093B726 /* Color+Hex.swift */; };
+		AA000001AAAA0001AAAAAA02 /* AnimeThemeSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA0001AAAAAA01 /* AnimeThemeSystem.swift */; };
+		AA000002AAAA0001AAAAAA02 /* AgentToolProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000002AAAA0001AAAAAA01 /* AgentToolProtocol.swift */; };
+		AA000003AAAA0001AAAAAA02 /* AgentSystemTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000003AAAA0001AAAAAA01 /* AgentSystemTools.swift */; };
 		FC6552B82FC373980093B726 /* LocalSentimentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552522FC373980093B726 /* LocalSentimentService.swift */; };
+		EE000001EE000001EEEEEE02 /* EmotionalStateTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE000001EE000001EEEEEE01 /* EmotionalStateTracker.swift */; };
 		FC6552B92FC373980093B726 /* ProxyAwareDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65521A2FC373980093B726 /* ProxyAwareDownloader.swift */; };
 		FC6552BA2FC373980093B726 /* AgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552432FC373980093B726 /* AgentService.swift */; };
 		FC6552BB2FC373980093B726 /* ModelCompatibilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65529C2FC373980093B726 /* ModelCompatibilityManager.swift */; };
@@ -166,6 +170,7 @@
 		FC65590F2FC373980093B726 /* AppScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559102FC373980093B726 /* AppScanner.swift */; };
 		FC6559112FC373980093B726 /* AppPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6559122FC373980093B726 /* AppPickerView.swift */; };
 		FC655A012FC373980093B726 /* ProactiveAgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC655A022FC373980093B726 /* ProactiveAgentService.swift */; };
+		FC65DIAG00000000000000A2 /* TCCDiagnostic.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65DIAG00000000000000A1 /* TCCDiagnostic.swift */; };
 		FCA5AF182FC0992D00E668DB /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = FCA5AF172FC0992D00E668DB /* CoreXLSX */; };
 		FCB283B32E43D77A00FA3D4A /* MediaKeyTap in Frameworks */ = {isa = PBXBuildFile; productRef = FCB283B22E43D77A00FA3D4A /* MediaKeyTap */; };
 		FCC24F1C2FBED23D00A64686 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = FCC24F1B2FBED23D00A64686 /* HuggingFace */; };
@@ -173,7 +178,6 @@
 		FCF267442E114619007230B1 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = FCF267432E114619007230B1 /* ArgumentParser */; };
 		FCF267472E114668007230B1 /* YumikoCLI in CopyFiles */ = {isa = PBXBuildFile; fileRef = FCF267382E114015007230B1 /* YumikoCLI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		FCF35E812E3E56BD00793FBB /* NTPClient in Frameworks */ = {isa = PBXBuildFile; productRef = FCF35E802E3E56BD00793FBB /* NTPClient */; };
-		FC65DIAG00000000000000A2 /* TCCDiagnostic.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65DIAG00000000000000A1 /* TCCDiagnostic.swift */; };
 		FCWIDGET00000000000000A2 /* WidgetKitGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCWIDGET00000000000000A1 /* WidgetKitGuide.swift */; };
 /* End PBXBuildFile section */
 
@@ -238,6 +242,9 @@
 		FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveLayoutManager.swift; sourceTree = "<group>"; };
 		FC6552112FC373980093B726 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		FC6552122FC373980093B726 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		AA000001AAAA0001AAAAAA01 /* AnimeThemeSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimeThemeSystem.swift; sourceTree = "<group>"; };
+		AA000002AAAA0001AAAAAA01 /* AgentToolProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentToolProtocol.swift; sourceTree = "<group>"; };
+		AA000003AAAA0001AAAAAA01 /* AgentSystemTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSystemTools.swift; sourceTree = "<group>"; };
 		FC6552132FC373980093B726 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
 		FC6552142FC373980093B726 /* FontManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontManager.swift; sourceTree = "<group>"; };
 		FC6552152FC373980093B726 /* HuggingFaceAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceAuthService.swift; sourceTree = "<group>"; };
@@ -292,6 +299,7 @@
 		FC6552502FC373980093B726 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
 		FC6552512FC373980093B726 /* LocalEmbeddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalEmbeddingService.swift; sourceTree = "<group>"; };
 		FC6552522FC373980093B726 /* LocalSentimentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSentimentService.swift; sourceTree = "<group>"; };
+		EE000001EE000001EEEEEE01 /* EmotionalStateTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmotionalStateTracker.swift; sourceTree = "<group>"; };
 		FC6552532FC373980093B726 /* ModelManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementService.swift; sourceTree = "<group>"; };
 		FC6552542FC373980093B726 /* NTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NTPClient.swift; sourceTree = "<group>"; };
 		FC6552552FC373980093B726 /* NVIDIAProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NVIDIAProvider.swift; sourceTree = "<group>"; };
@@ -377,8 +385,8 @@
 		FC6559102FC373980093B726 /* AppScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppScanner.swift; sourceTree = "<group>"; };
 		FC6559122FC373980093B726 /* AppPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPickerView.swift; sourceTree = "<group>"; };
 		FC655A022FC373980093B726 /* ProactiveAgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProactiveAgentService.swift; sourceTree = "<group>"; };
-		FCF267382E114015007230B1 /* YumikoCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YumikoCLI; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC65DIAG00000000000000A1 /* TCCDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCCDiagnostic.swift; sourceTree = "<group>"; };
+		FCF267382E114015007230B1 /* YumikoCLI */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = YumikoCLI; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCWIDGET00000000000000A1 /* WidgetKitGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetKitGuide.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -544,6 +552,7 @@
 				FC6552102FC373980093B726 /* AdaptiveLayoutManager.swift */,
 				FC6552112FC373980093B726 /* AppState.swift */,
 				FC6552122FC373980093B726 /* Color+Hex.swift */,
+				AA000001AAAA0001AAAAAA01 /* AnimeThemeSystem.swift */,
 				FC6552132FC373980093B726 /* DependencyContainer.swift */,
 				FC6552142FC373980093B726 /* FontManager.swift */,
 				FC6552152FC373980093B726 /* HuggingFaceAuthService.swift */,
@@ -662,6 +671,7 @@
 				FC6552412FC373980093B726 /* AdvancedFeaturesService.swift */,
 				FC6552422FC373980093B726 /* AgentFileService.swift */,
 				FC6552432FC373980093B726 /* AgentService.swift */,
+				AA000003AAAA0001AAAAAA01 /* AgentSystemTools.swift */,
 				FC6552442FC373980093B726 /* AnniversaryService.swift */,
 				FC6552452FC373980093B726 /* APISettingsService.swift */,
 				FC6552462FC373980093B726 /* AppPromptService.swift */,
@@ -678,6 +688,7 @@
 				FC6552502FC373980093B726 /* LaunchAtLoginService.swift */,
 				FC6552512FC373980093B726 /* LocalEmbeddingService.swift */,
 				FC6552522FC373980093B726 /* LocalSentimentService.swift */,
+				EE000001EE000001EEEEEE01 /* EmotionalStateTracker.swift */,
 				FC6552532FC373980093B726 /* ModelManagementService.swift */,
 				FC6552542FC373980093B726 /* NTPClient.swift */,
 				FC6552552FC373980093B726 /* NVIDIAProvider.swift */,
@@ -699,6 +710,7 @@
 		FC6552682FC373980093B726 /* Protocols */ = {
 			isa = PBXGroup;
 			children = (
+				AA000002AAAA0001AAAAAA01 /* AgentToolProtocol.swift */,
 				FC6552622FC373980093B726 /* AIProviderProtocol.swift */,
 				FC6552632FC373980093B726 /* APISettingsServiceProtocol.swift */,
 				FC6552642FC373980093B726 /* GLMServiceProtocol.swift */,
@@ -1122,9 +1134,13 @@
 				FC6552B52FC373980093B726 /* UploadedFile.swift in Sources */,
 				FC6552B62FC373980093B726 /* CopyableMessageBubble.swift in Sources */,
 				FC6552B72FC373980093B726 /* Color+Hex.swift in Sources */,
+				AA000001AAAA0001AAAAAA02 /* AnimeThemeSystem.swift in Sources */,
 				FC6552B82FC373980093B726 /* LocalSentimentService.swift in Sources */,
+				EE000001EE000001EEEEEE02 /* EmotionalStateTracker.swift in Sources */,
 				FC6552B92FC373980093B726 /* ProxyAwareDownloader.swift in Sources */,
 				FC6552BA2FC373980093B726 /* AgentService.swift in Sources */,
+				AA000002AAAA0001AAAAAA02 /* AgentToolProtocol.swift in Sources */,
+				AA000003AAAA0001AAAAAA02 /* AgentSystemTools.swift in Sources */,
 				FC6552BB2FC373980093B726 /* ModelCompatibilityManager.swift in Sources */,
 				FC6552BC2FC373980093B726 /* ButtonAnimations.swift in Sources */,
 				FC6552BD2FC373980093B726 /* AppSettings.swift in Sources */,
@@ -1405,6 +1421,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 198484520;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
@@ -1419,7 +1436,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 4.5.3;
+				MARKETING_VERSION = 4.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1451,6 +1468,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 198484520;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
@@ -1464,7 +1482,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 4.5.3;
+				MARKETING_VERSION = 4.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1496,6 +1514,7 @@
 				CURRENT_PROJECT_VERSION = 198484520;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1527,8 +1546,19 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 198484520;
-				ENABLE_APP_SANDBOX = NO;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = YumikoWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1537,7 +1567,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 4.5.3;
+				MARKETING_VERSION = 4.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1555,6 +1585,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 198484520;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "兔可可";
 				INFOPLIST_KEY_WKApplication = YES;
@@ -1563,7 +1594,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.5.3;
+				MARKETING_VERSION = 4.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWatch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1588,6 +1619,7 @@
 				CURRENT_PROJECT_VERSION = 198484520;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1618,8 +1650,19 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 198484520;
-				ENABLE_APP_SANDBOX = NO;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = YumikoWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1628,7 +1671,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 4.5.3;
+				MARKETING_VERSION = 4.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1646,6 +1689,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 198484520;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "兔可可";
 				INFOPLIST_KEY_WKApplication = YES;
@@ -1654,7 +1698,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.5.3;
+				MARKETING_VERSION = 4.5.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWatch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1672,6 +1716,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -1693,6 +1738,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;

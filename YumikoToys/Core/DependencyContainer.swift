@@ -44,6 +44,9 @@ final class DependencyContainer: ObservableObject {
     let modelDownloadManager: ModelDownloadManager
     let modelManagementService: ModelManagementService
 
+    // Agent 工具注册中心
+    let agentToolRegistry: AgentToolRegistry
+
     // 动态存储的服务（在 initialize 中创建）
     private var services: [String: Any] = [:]
 
@@ -102,6 +105,9 @@ final class DependencyContainer: ObservableObject {
             embeddingService: embeddingService,
             sentimentService: localSentimentService
         )
+
+        // Agent 工具注册中心
+        self.agentToolRegistry = AgentToolRegistry.shared
     }
     
     // MARK: - Lifecycle

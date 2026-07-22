@@ -34,7 +34,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.iconGradient
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return [Color(hex: "059669"), Color(hex: "0891B2")]
         }
     }
@@ -50,7 +50,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.accentColor.opacity(0.25)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669").opacity(0.25)
         }
     }
@@ -59,7 +59,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return [themeColor.accentColor.opacity(0.2), Color(hex: "22D3EE").opacity(0.15)]
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return [Color(hex: "059669").opacity(0.2), Color(hex: "0891B2").opacity(0.15)]
         }
     }
@@ -68,7 +68,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return [Color(hex: "FFE4EC"), Color(hex: "E8D6FF")]
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return [Color(hex: "0E1A16"), Color(hex: "0A0F0D")]
         }
     }
@@ -77,7 +77,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.accentColor.opacity(0.3)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669").opacity(0.3)
         }
     }
@@ -86,7 +86,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return themeColor.accentColor.opacity(0.15)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669").opacity(0.15)
         }
     }
@@ -95,7 +95,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return [Color(hex: "FFE4EC"), Color(hex: "E8D6FF")]
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return [Color(hex: "0E1A16"), Color(hex: "0A0F0D")]
         }
     }
@@ -104,7 +104,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return Color(hex: "FF6B9D").opacity(0.3)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669").opacity(0.3)
         }
     }
@@ -113,7 +113,7 @@ struct CopyableMessageBubble: View {
         switch chatMode {
         case .petCompanion:
             return Color(hex: "FF6B9D").opacity(0.15)
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669").opacity(0.15)
         }
     }
@@ -531,7 +531,7 @@ struct BubbleThinkingProcessView: View {
         switch chatMode {
         case .petCompanion:
             return Color(hex: "8B5CF6")
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669")
         }
     }
@@ -656,7 +656,7 @@ struct BubbleAgentStepView: View {
         switch chatMode {
         case .petCompanion:
             return Color(hex: "8B5CF6")
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669")
         }
     }

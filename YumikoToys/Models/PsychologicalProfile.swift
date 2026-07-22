@@ -434,3 +434,178 @@ extension PsychologicalProfile {
         }
     }
 }
+
+// MARK: - 临床评估量表扩展
+
+extension PsychologicalProfile {
+
+    /// PHQ-9 抑郁筛查量表
+    struct PHQ9Assessment: Codable, Sendable {
+        /// 9 个条目，每项 0-3 分
+        var items: [Int]
+
+        var totalScore: Int { items.reduce(0, +) }
+
+        var severity: Severity {
+            switch totalScore {
+            case 0...4: return .minimal
+            case 5...9: return .mild
+            case 10...14: return .moderate
+            case 15...19: return .moderatelySevere
+            case 20...27: return .severe
+            default: return .minimal
+            }
+        }
+
+        enum Severity: String, Codable, Sendable {
+            case minimal = "极轻"
+            case mild = "轻度"
+            case moderate = "中度"
+            case moderatelySevere = "中重度"
+            case severe = "重度"
+        }
+
+        static let itemDescriptions = [
+            "做事时提不起劲或没有兴趣",
+            "感到心情低落、沮丧或绝望",
+            "入睡困难、睡不安稳或睡眠过多",
+            "感觉疲倦或没有活力",
+            "食欲不振或吃太多",
+            "觉得自己很糟或是个失败者，或让自己或家人失望",
+            "对事物专注有困难",
+            "动作或说话慢到别人注意到，或正好相反",
+            "有不如死掉或用某种方式伤害自己的念头"
+        ]
+    }
+
+    /// GAD-7 焦虑筛查量表
+    struct GAD7Assessment: Codable, Sendable {
+        var items: [Int]
+
+        var totalScore: Int { items.reduce(0, +) }
+
+        var severity: Severity {
+            switch totalScore {
+            case 0...4: return .minimal
+            case 5...9: return .mild
+            case 10...14: return .moderate
+            case 15...21: return .severe
+            default: return .minimal
+            }
+        }
+
+        enum Severity: String, Codable, Sendable {
+            case minimal = "极轻"
+            case mild = "轻度"
+            case moderate = "中度"
+            case severe = "重度"
+        }
+
+        static let itemDescriptions = [
+            "感觉紧张、焦虑或急切",
+            "不能够停止或控制担忧",
+            "对各种各样的事情担忧过多",
+            "很难放松下来",
+            "由于不安而无法静坐",
+            "变得容易烦恼或急躁",
+            "感到似乎将有可怕的事情发生"
+        ]
+    }
+
+    /// PSS-10 压力知觉量表
+    struct PSS10Assessment: Codable, Sendable {
+        var items: [Int]
+
+        var totalScore: Int { items.reduce(0, +) }
+
+        var stressLevel: StressLevel {
+            switch totalScore {
+            case 0...13: return .low
+            case 14...26: return .moderate
+            case 27...40: return .high
+            default: return .low
+            }
+        }
+
+        enum StressLevel: String, Codable, Sendable {
+            case low = "低压力"
+            case moderate = "中等压力"
+            case high = "高压力"
+        }
+    }
+
+    /// Maslach 职业倦怠量表 (简版)
+    struct BurnoutAssessment: Codable, Sendable {
+        var emotionalExhaustion: Double   // 情绪耗竭 0-6
+        var depersonalization: Double     // 去人格化 0-6
+        var personalAccomplishment: Double // 个人成就感 0-6 (反向计分)
+
+        var burnoutLevel: BurnoutLevel {
+            let avg = (emotionalExhaustion + depersonalization + (6 - personalAccomplishment)) / 3
+            switch avg {
+            case 0..<2: return .low
+            case 2..<4: return .moderate
+            default: return .high
+            }
+        }
+
+        enum BurnoutLevel: String, Codable, Sendable {
+            case low = "低倦怠"
+            case moderate = "中度倦怠"
+            case high = "高倦怠"
+        }
+    }
+
+    /// 将所有量表结果整合为 system prompt 补充
+    func generateClinicalPromptSupplement(
+        phq9: PHQ9Assessment? = nil,
+        gad7: GAD7Assessment? = nil,
+        pss10: PSS10Assessment? = nil,
+        burnout: BurnoutAssessment? = nil,
+        emotionTrend: EmotionTrendSummary? = nil
+    ) -> String {
+        var sections: [String] = []
+
+        if let phq9 = phq9 {
+            sections.append("""
+            【PHQ-9 抑郁筛查】总分: \(phq9.totalScore)/27，严重程度: \(phq9.severity.rawValue)
+            \(phq9.severity == .severe || phq9.severity == .moderatelySevere ? "⚠️ 提示：评分较高，请在对话中温和地关注用户的抑郁症状，必要时引导寻求专业帮助。" : "")
+            """)
+        }
+
+        if let gad7 = gad7 {
+            sections.append("""
+            【GAD-7 焦虑筛查】总分: \(gad7.totalScore)/21，严重程度: \(gad7.severity.rawValue)
+            \(gad7.severity == .severe ? "⚠️ 提示：焦虑水平较高，请优先使用正念接地技术和呼吸练习帮助用户缓解急性焦虑。" : "")
+            """)
+        }
+
+        if let pss10 = pss10 {
+            sections.append("【PSS-10 压力知觉】总分: \(pss10.totalScore)/40，压力水平: \(pss10.stressLevel.rawValue)")
+        }
+
+        if let burnout = burnout {
+            sections.append("""
+            【Maslach 职业倦怠】情绪耗竭: \(String(format: "%.1f", burnout.emotionalExhaustion)), 去人格化: \(String(format: "%.1f", burnout.depersonalization)), 个人成就感: \(String(format: "%.1f", burnout.personalAccomplishment))
+            倦怠水平: \(burnout.burnoutLevel.rawValue)
+            \(burnout.burnoutLevel == .high ? "⚠️ 提示：高度职业倦怠，请引导「停滞合法化」——告诉用户休息不是偷懒，是维持长期生产力的必要投资。" : "")
+            """)
+        }
+
+        if let trend = emotionTrend {
+            sections.append("""
+            【情绪趋势（近\(trend.periodDays)天）】
+            - 采样数: \(trend.snapshotCount)
+            - 主导情绪: \(trend.dominantEmotion.displayName)
+            - 平均效价: \(String(format: "%.2f", trend.averageValence))（-1消极 ~ +1积极）
+            - 趋势方向: \(trend.trendDirection == .improving ? "改善中 📈" : trend.trendDirection == .declining ? "下降中 📉" : trend.trendDirection == .volatile ? "波动较大 📊" : "稳定 ➡️")
+            """)
+        }
+
+        if sections.isEmpty {
+            return ""
+        }
+
+        return "═══ 临床评估数据（仅供对话参考，不可直接告知用户具体分数）═══\n" + sections.joined(separator: "\n\n")
+    }
+}

@@ -29,7 +29,7 @@ struct AIChatView: View {
 
     var body: some View {
         NavigationSplitView {
-            if viewModel.chatMode == .aiAssistant {
+            if viewModel.chatMode.isAgentMode {
                 VStack(spacing: 0) {
                     Picker("", selection: $selectedSidebarTab) {
                         Text("对话").tag(0)
@@ -79,7 +79,7 @@ struct AIChatView: View {
                         viewModel.switchConversation(to: id)
                     },
                     onNewConversation: {
-                        let defaultTitle = viewModel.chatMode == .aiAssistant ? "新 Yumiko Claw 对话" : "新宠物对话"
+                        let defaultTitle = viewModel.chatMode.isAgentMode ? "新 Yumiko Claw 对话" : "新宠物对话"
                         let newConv = conversationService.createConversation(title: defaultTitle, chatMode: viewModel.chatMode)
                         viewModel.startNewConversation(id: newConv.id)
                     },
@@ -117,7 +117,7 @@ struct AIChatView: View {
                 switchConversationForMode(viewModel.chatMode)
             }
         }
-        .preferredColorScheme(viewModel.chatMode == .aiAssistant ? .dark : (viewModel.resolvedTheme.isDarkTheme ? .dark : .light))
+        .preferredColorScheme(viewModel.chatMode.isAgentMode ? .dark : (viewModel.resolvedTheme.animeOrIsDark ? .dark : .light))
     }
 
     // MARK: - 聊天详情
@@ -144,19 +144,19 @@ struct AIChatView: View {
             HStack(spacing: 12) {
                 // AI 像素头像
                 PixelAvatarView(
-                    emoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
+                    emoji: viewModel.chatMode.isAgentMode ? "🌱" : viewModel.aiAvatarEmoji,
                     size: 36,
-                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.iconGradient
+                    gradientColors: viewModel.chatMode.isAgentMode ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.animeOrGradient
                 )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.chatMode == .aiAssistant ? "Yumiko Claw" : viewModel.characterName)
+                    Text(viewModel.chatMode.isAgentMode ? "Yumiko Claw" : viewModel.characterName)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(viewModel.chatMode == .aiAssistant ? .white : viewModel.resolvedTheme.textColor)
+                        .foregroundStyle(viewModel.chatMode.isAgentMode ? .white : viewModel.resolvedTheme.animeOrTextPrimary)
 
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(viewModel.chatMode == .aiAssistant ? Color(hex: "059669") : Color.green)
+                            .fill(viewModel.chatMode.isAgentMode ? Color(hex: "059669") : Color.green)
                             .frame(width: 6, height: 6)
 
                         Text("在线")
@@ -237,7 +237,7 @@ struct AIChatView: View {
                 PixelAvatarView(
                     emoji: emoji,
                     size: 28,
-                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.iconGradient
+                    gradientColors: viewModel.chatMode.isAgentMode ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.animeOrGradient
                 )
             } else if let path = viewModel.userAvatarPath {
                 Image(nsImage: NSImage(contentsOfFile: path) ?? NSImage())
@@ -247,7 +247,7 @@ struct AIChatView: View {
                     .clipShape(Circle())
             } else {
                 Circle()
-                    .fill(viewModel.chatMode == .aiAssistant ? Color.white.opacity(0.1) : (viewModel.resolvedTheme.isDarkTheme ? Color.white.opacity(0.1) : Color.black.opacity(0.1)))
+                    .fill(viewModel.chatMode.isAgentMode ? Color.white.opacity(0.1) : (viewModel.resolvedTheme.animeOrIsDark ? Color.white.opacity(0.1) : Color.black.opacity(0.1)))
                     .frame(width: 28, height: 28)
                     .overlay(
                         Image(systemName: "person.fill")
@@ -286,8 +286,8 @@ struct AIChatView: View {
                             
                             if viewModel.isLoading {
                                 TypingIndicator(
-                                    aiAvatarEmoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
-                                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.iconGradient
+                                    aiAvatarEmoji: viewModel.chatMode.isAgentMode ? "🌱" : viewModel.aiAvatarEmoji,
+                                    gradientColors: viewModel.chatMode.isAgentMode ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.animeOrGradient
                                 )
                                 .id("typing")
                             }
@@ -420,9 +420,9 @@ struct AIChatView: View {
                     .frame(width: 100, height: 100)
 
                 PixelAvatarView(
-                    emoji: viewModel.chatMode == .aiAssistant ? "🌱" : viewModel.aiAvatarEmoji,
+                    emoji: viewModel.chatMode.isAgentMode ? "🌱" : viewModel.aiAvatarEmoji,
                     size: 60,
-                    gradientColors: viewModel.chatMode == .aiAssistant ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.iconGradient
+                    gradientColors: viewModel.chatMode.isAgentMode ? [Color(hex: "059669"), Color(hex: "0891B2")] : viewModel.resolvedTheme.animeOrGradient
                 )
             }
 
@@ -438,11 +438,11 @@ struct AIChatView: View {
             }
 
             HStack(spacing: 8) {
-                QuickPromptButton(text: "介绍一下自己", themeGradient: themeGradient, isDark: viewModel.chatMode == .aiAssistant || viewModel.resolvedTheme.isDarkTheme) {
+                QuickPromptButton(text: "介绍一下自己", themeGradient: themeGradient, isDark: viewModel.chatMode.isAgentMode || viewModel.resolvedTheme.animeOrIsDark) {
                     viewModel.inputText = "介绍一下自己"
                     sendMessage()
                 }
-                QuickPromptButton(text: "今天心情如何", themeGradient: themeGradient, isDark: viewModel.chatMode == .aiAssistant || viewModel.resolvedTheme.isDarkTheme) {
+                QuickPromptButton(text: "今天心情如何", themeGradient: themeGradient, isDark: viewModel.chatMode.isAgentMode || viewModel.resolvedTheme.animeOrIsDark) {
                     viewModel.inputText = "今天心情如何"
                     sendMessage()
                 }
@@ -472,7 +472,7 @@ struct AIChatView: View {
     private var inputArea: some View {
         VStack(spacing: 0) {
             // 助手模式工具栏
-            if viewModel.chatMode == .aiAssistant {
+            if viewModel.chatMode.isAgentMode {
                 AssistantToolbar(
                     enableDeepThinking: $viewModel.enableDeepThinking,
                     enableWebSearch: $viewModel.enableWebSearch,
@@ -497,7 +497,7 @@ struct AIChatView: View {
 
             HStack(spacing: 12) {
                 // 文件上传按钮（助手模式）- 仅小型回形针按钮，不再渲染占位拖拽区
-                if viewModel.chatMode == .aiAssistant {
+                if viewModel.chatMode.isAgentMode {
                     CompactFileUploadButton(onFilesAdded: { urls in
                         viewModel.addFiles(urls: urls)
                     })
@@ -605,7 +605,7 @@ struct AIChatView: View {
             conversationService.switchToConversation(lastActive.id)
             viewModel.switchConversation(to: lastActive.id)
         } else {
-            let defaultTitle = mode == .aiAssistant ? "新 Yumiko Claw 对话" : "新宠物对话"
+            let defaultTitle = mode.isAgentMode ? "新 Yumiko Claw 对话" : "新宠物对话"
             let newConv = conversationService.createConversation(title: defaultTitle, chatMode: mode)
             viewModel.startNewConversation(id: newConv.id)
         }
@@ -617,11 +617,11 @@ struct AIChatView: View {
         switch viewModel.chatMode {
         case .petCompanion:
             return LinearGradient(
-                colors: viewModel.resolvedTheme.iconGradient,
+                colors: viewModel.resolvedTheme.animeOrGradient,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-        case .aiAssistant:
+        case .aiAssistant, .universalAgent:
             return LinearGradient(
                 colors: [Color(hex: "059669"), Color(hex: "0891B2")],
                 startPoint: .topLeading,
@@ -633,8 +633,8 @@ struct AIChatView: View {
     private var themeColor: Color {
         switch viewModel.chatMode {
         case .petCompanion:
-            return viewModel.resolvedTheme.accentColor
-        case .aiAssistant:
+            return viewModel.resolvedTheme.animeOrAccent
+        case .aiAssistant, .universalAgent:
             return Color(hex: "059669")
         }
     }
@@ -642,8 +642,8 @@ struct AIChatView: View {
     private var detailBackgroundColor: Color {
         switch viewModel.chatMode {
         case .petCompanion:
-            return viewModel.resolvedTheme.backgroundColor
-        case .aiAssistant:
+            return viewModel.resolvedTheme.animeOrBackground
+        case .aiAssistant, .universalAgent:
             return Color(hex: "0A0F0D")
         }
     }
@@ -651,26 +651,26 @@ struct AIChatView: View {
     private var panelBackgroundColor: Color {
         switch viewModel.chatMode {
         case .petCompanion:
-            return viewModel.resolvedTheme.cardBackgroundColor
-        case .aiAssistant:
+            return viewModel.resolvedTheme.animeOrCardBackground
+        case .aiAssistant, .universalAgent:
             return Color(hex: "141E1A")
         }
     }
 
     private var inputTextColor: Color {
-        viewModel.chatMode == .aiAssistant ? .white : viewModel.resolvedTheme.textColor
+        viewModel.chatMode.isAgentMode ? .white : viewModel.resolvedTheme.animeOrTextPrimary
     }
 
     private var inputBackgroundColor: Color {
-        viewModel.chatMode == .aiAssistant ? Color.white.opacity(0.05) : (viewModel.resolvedTheme.isDarkTheme ? Color.white.opacity(0.05) : Color.black.opacity(0.05))
+        viewModel.chatMode.isAgentMode ? Color.white.opacity(0.05) : (viewModel.resolvedTheme.animeOrIsDark ? Color.white.opacity(0.05) : Color.black.opacity(0.05))
     }
 
     private var emptyStateTitleColor: Color {
-        viewModel.chatMode == .aiAssistant ? .white : viewModel.resolvedTheme.textColor
+        viewModel.chatMode.isAgentMode ? .white : viewModel.resolvedTheme.animeOrTextPrimary
     }
 
     private var emptyStateSubtitleColor: Color {
-        viewModel.chatMode == .aiAssistant ? .secondary : viewModel.resolvedTheme.secondaryTextColor
+        viewModel.chatMode.isAgentMode ? .secondary : viewModel.resolvedTheme.animeOrTextSecondary
     }
 }
 
