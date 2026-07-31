@@ -61,6 +61,8 @@ struct WidgetSyncData: Codable, Hashable, Sendable {
 
     // v2: 主题与显示
     let themePrimaryHex: String
+    let isAnimeMode: Bool
+    let animeStyle: String
 
     init(schemaVersion: Int = 2,
          petName: String,
@@ -75,7 +77,9 @@ struct WidgetSyncData: Codable, Hashable, Sendable {
          hoursPart: Int,
          minutesPart: Int,
          secondsPart: Int,
-         themePrimaryHex: String) {
+         themePrimaryHex: String,
+         isAnimeMode: Bool = false,
+         animeStyle: String = "healing") {
         self.schemaVersion = schemaVersion
         self.petName = petName
         self.avatar = avatar
@@ -90,6 +94,8 @@ struct WidgetSyncData: Codable, Hashable, Sendable {
         self.minutesPart = minutesPart
         self.secondsPart = secondsPart
         self.themePrimaryHex = themePrimaryHex
+        self.isAnimeMode = isAnimeMode
+        self.animeStyle = animeStyle
     }
 
     /// 从 totalDays 反推出 hour / minute / second 分量

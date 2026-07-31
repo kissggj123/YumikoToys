@@ -90,23 +90,38 @@ struct WidgetSyncData: Codable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        // 全部字段用 decodeIfPresent，即使主 App 版本调整也能容错
-        self.petName = (try container.decodeIfPresent(String.self, forKey: .petName)) ?? "兔可可"
-        self.avatar = (try container.decodeIfPresent(String.self, forKey: .avatar)) ?? "🐰"
-        self.startDate = (try container.decodeIfPresent(Date.self, forKey: .startDate)) ?? Date()
-        self.totalDays = (try container.decodeIfPresent(Double.self, forKey: .totalDays)) ?? 0.0
-        self.milestones = (try container.decodeIfPresent([WidgetMilestone].self, forKey: .milestones)) ?? []
-        self.proactiveBubbleText = try container.decodeIfPresent(String.self, forKey: .proactiveBubbleText)
-        self.appVersion = (try container.decodeIfPresent(String.self, forKey: .appVersion)) ?? ""
-        self.displayStyle = (try container.decodeIfPresent(String.self, forKey: .displayStyle)) ?? "classic"
+        self.petName = (try? container.decodeIfPresent(String.self, forKey: .petName)) ?? "兔可可"
+        self.avatar = (try? container.decodeIfPresent(String.self, forKey: .avatar)) ?? "🐰"
+        
+        // 强容错 Date 解析：先解 Date，若失败解 ISO8601 String，若再失败取当前/默认时间
+        if let d = try? container.decodeIfPresent(Date.self, forKey: .startDate) {
+            self.startDate = d
+        } else if let dateStr = try? container.decodeIfPresent(String.self, forKey: .startDate) {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let parsed = formatter.date(from: dateStr) {
+                self.startDate = parsed
+            } else {
+                let simpleFormatter = ISO8601DateFormatter()
+                self.startDate = simpleFormatter.date(from: dateStr) ?? Date()
+            }
+        } else {
+            self.startDate = Date()
+        }
+        
+        self.totalDays = (try? container.decodeIfPresent(Double.self, forKey: .totalDays)) ?? 0.0
+        self.milestones = (try? container.decodeIfPresent([WidgetMilestone].self, forKey: .milestones)) ?? []
+        self.proactiveBubbleText = try? container.decodeIfPresent(String.self, forKey: .proactiveBubbleText)
+        self.appVersion = (try? container.decodeIfPresent(String.self, forKey: .appVersion)) ?? ""
+        self.displayStyle = (try? container.decodeIfPresent(String.self, forKey: .displayStyle)) ?? "classic"
 
         // v2 字段，缺省则按 totalDays 推断
-        self.title = (try container.decodeIfPresent(String.self, forKey: .title)) ?? "在一起已经"
-        if let hours = try container.decodeIfPresent(Double.self, forKey: .totalHours) {
+        self.title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? "在一起已经"
+        if let hours = try? container.decodeIfPresent(Double.self, forKey: .totalHours) {
             self.totalHours = hours
-            self.hoursPart = try container.decodeIfPresent(Int.self, forKey: .hoursPart) ?? Int(hours)
-            self.minutesPart = try container.decodeIfPresent(Int.self, forKey: .minutesPart) ?? 0
-            self.secondsPart = try container.decodeIfPresent(Int.self, forKey: .secondsPart) ?? 0
+            self.hoursPart = (try? container.decodeIfPresent(Int.self, forKey: .hoursPart)) ?? Int(hours)
+            self.minutesPart = (try? container.decodeIfPresent(Int.self, forKey: .minutesPart)) ?? 0
+            self.secondsPart = (try? container.decodeIfPresent(Int.self, forKey: .secondsPart)) ?? 0
         } else {
             let t = totalDays * 86_400
             self.totalHours = t / 3_600
@@ -115,9 +130,9 @@ struct WidgetSyncData: Codable {
             self.minutesPart = Int(remain / 60)
             self.secondsPart = Int(remain - Double(self.minutesPart) * 60)
         }
-        self.themePrimaryHex = (try container.decodeIfPresent(String.self, forKey: .themePrimaryHex)) ?? "FF6B9D"
-        self.isAnimeMode = (try container.decodeIfPresent(Bool.self, forKey: .isAnimeMode)) ?? false
-        self.animeStyle = (try container.decodeIfPresent(String.self, forKey: .animeStyle)) ?? "healing"
+        self.themePrimaryHex = (try? container.decodeIfPresent(String.self, forKey: .themePrimaryHex)) ?? "FF6B9D"
+        self.isAnimeMode = (try? container.decodeIfPresent(Bool.self, forKey: .isAnimeMode)) ?? false
+        self.animeStyle = (try? container.decodeIfPresent(String.self, forKey: .animeStyle)) ?? "healing"
     }
 }
 
@@ -134,29 +149,59 @@ struct Provider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
-        var data = loadData() ?? defaultData()
+        let baseData = loadData() ?? defaultData()
+        // 以主 App 同步数据里的 displayStyle 为准；若 Defaults 中有明确更新且不一致，再做同步覆盖
+        var styleOverride = baseData.displayStyle
         if let shared = UserDefaults(suiteName: "group.com.Lite.YumikoToys"),
-           let styleOverride = shared.string(forKey: "widget_display_style") {
-            data = WidgetSyncData(
-                petName: data.petName, avatar: data.avatar,
-                startDate: data.startDate, totalDays: data.totalDays,
-                milestones: data.milestones, proactiveBubbleText: data.proactiveBubbleText,
-                appVersion: data.appVersion, displayStyle: styleOverride,
-                title: data.title, totalHours: data.totalHours, hoursPart: data.hoursPart,
-                minutesPart: data.minutesPart, secondsPart: data.secondsPart,
-                themePrimaryHex: data.themePrimaryHex,
-                isAnimeMode: data.isAnimeMode, animeStyle: data.animeStyle
-            )
+           let overrideVal = shared.string(forKey: "widget_display_style"),
+           !overrideVal.isEmpty {
+            styleOverride = overrideVal
         }
-        let entries = [SimpleEntry(date: Date(), info: data)]
-        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 5, to: Date())!
+        
+        let now = Date()
+        var entries: [SimpleEntry] = []
+        
+        // 为未来 2 小时内，每隔 15 分钟生成一条 Entry，确保 WidgetKit 能够按 Timeline 自动实时翻页刷新
+        for minuteOffset in stride(from: 0, through: 120, by: 15) {
+            guard let entryDate = Calendar.current.date(byAdding: .minute, value: minuteOffset, to: now) else { continue }
+            
+            // 基于 entryDate 动态精准计算相伴天数
+            let dynamicTotalDays = max(0, entryDate.timeIntervalSince(baseData.startDate) / 86_400.0)
+            let totalSeconds = dynamicTotalDays * 86_400.0
+            let totalHours = totalSeconds / 3_600.0
+            let hoursPart = Int(totalHours)
+            let remain = totalSeconds - Double(hoursPart) * 3_600.0
+            let minutesPart = Int(remain / 60.0)
+            let secondsPart = Int(remain - Double(minutesPart) * 60.0)
+            
+            let updatedData = WidgetSyncData(
+                petName: baseData.petName,
+                avatar: baseData.avatar,
+                startDate: baseData.startDate,
+                totalDays: dynamicTotalDays,
+                milestones: baseData.milestones,
+                proactiveBubbleText: baseData.proactiveBubbleText,
+                appVersion: baseData.appVersion,
+                displayStyle: styleOverride,
+                title: baseData.title,
+                totalHours: totalHours,
+                hoursPart: hoursPart,
+                minutesPart: minutesPart,
+                secondsPart: secondsPart,
+                themePrimaryHex: baseData.themePrimaryHex,
+                isAnimeMode: baseData.isAnimeMode,
+                animeStyle: baseData.animeStyle
+            )
+            
+            entries.append(SimpleEntry(date: entryDate, info: updatedData))
+        }
+        
+        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: now)!
         let timeline = Timeline(entries: entries, policy: .after(nextRefresh))
         completion(timeline)
     }
 
     private func defaultData() -> WidgetSyncData {
-        // 纯占位数据（Widget 首次安装 / 数据尚未写入时的兜底显示）
-        // 注意：绝对不使用 fatalError，避免 Widget 崩溃。
         let totalDays: Double = 827.085
         let totalSeconds = totalDays * 86_400
         let totalHours = totalSeconds / 3_600
@@ -177,7 +222,7 @@ struct Provider: TimelineProvider {
             {"icon":"🎉","label":"下一周年","date":"2027-03-12","countDisplay":"(第3周年)"}
           ],
           "proactiveBubbleText":null,
-          "appVersion":"4.5.1","displayStyle":"classic",
+          "appVersion":"4.5.5","displayStyle":"classic",
           "title":"在一起已经","totalHours":\(totalHours),"hoursPart":\(hoursPart),
           "minutesPart":\(minutesPart),"secondsPart":\(secondsPart),
           "themePrimaryHex":"FF6B9D"
@@ -189,32 +234,23 @@ struct Provider: TimelineProvider {
            let v = try? decoder.decode(WidgetSyncData.self, from: data) {
             return v
         }
-        // 最严重的回退：手动构造 WidgetSyncData 需要 JSON 解码，所以这里再试一次空的里程碑
-        // （理论上上面的硬编码 JSON 不可能失败）
-        let fallback = #"{"petName":"兔可可","avatar":"🐰","startDate":"2024-03-12T00:00:00Z","totalDays":\#(totalDays),"milestones":[],"proactiveBubbleText":null,"appVersion":"4.5.1","displayStyle":"classic","title":"在一起已经","totalHours":\#(totalHours),"hoursPart":\#(hoursPart),"minutesPart":\#(minutesPart),"secondsPart":\#(secondsPart),"themePrimaryHex":"FF6B9D"}"#
-        if let data = fallback.data(using: .utf8),
-           let v = try? decoder.decode(WidgetSyncData.self, from: data) {
-            return v
-        }
-        // 极难到达的路径——用最小字段解码。若仍失败则重走 defaultData，避免无限递归
-        assertionFailure("Widget defaultData 构造失败，请检查 JSON 格式")
         return WidgetSyncData(
             petName: "兔可可", avatar: "🐰",
             startDate: Date(timeIntervalSinceReferenceDate: 0),
             totalDays: totalDays,
             milestones: [], proactiveBubbleText: nil,
-            appVersion: "4.5.1", displayStyle: "classic",
+            appVersion: "4.5.5", displayStyle: "classic",
             title: "在一起已经", totalHours: totalHours, hoursPart: hoursPart,
             minutesPart: minutesPart, secondsPart: secondsPart,
             themePrimaryHex: "FF6B9D"
         )
     }
 
-    private func loadData() -> WidgetSyncData? {
+    fileprivate func loadData() -> WidgetSyncData? {
         let fileManager = FileManager.default
         let groupID = "group.com.Lite.YumikoToys"
 
-        // 机制 1：UserDefaults
+        // 机制 1：UserDefaults (App Group)
         if let sharedDefaults = UserDefaults(suiteName: groupID),
            let data = sharedDefaults.data(forKey: "widget_payload"),
            data.count > 0 {
@@ -225,17 +261,23 @@ struct Provider: TimelineProvider {
             }
         }
 
-        // 机制 2：App Group 容器中的 JSON 文件
+        // 机制 2：App Group 容器、共享 /tmp 目录及 Application Support 目录中的 JSON 文件
         var fileCandidates: [URL] = []
         if let container = fileManager.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
             fileCandidates.append(container.appendingPathComponent("widget.json"))
         }
+        
+        // 跨进程 / 沙盒零死角突破：系统的 /tmp/com.Lite.YumikoToys 目录
+        fileCandidates.append(URL(fileURLWithPath: "/tmp/com.Lite.YumikoToys/widget.json"))
+        fileCandidates.append(URL(fileURLWithPath: "/private/tmp/com.Lite.YumikoToys/widget.json"))
+
         if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-            fileCandidates.append(appSupport.appendingPathComponent("com.Lite.YumikoToys/widget.json"))
+            fileCandidates.append(appSupport.appendingPathComponent("com.Lite.YumikoToys", isDirectory: true).appendingPathComponent("widget.json"))
         }
         fileCandidates.append(
             fileManager.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Application Support/com.Lite.YumikoToys/widget.json")
+                .appendingPathComponent("Library/Application Support/com.Lite.YumikoToys", isDirectory: true)
+                .appendingPathComponent("widget.json")
         )
 
         for url in fileCandidates {
@@ -780,14 +822,8 @@ struct YumikoControlWidget: ControlWidget {
 
 /// 简单的同步加载（控制中心 widget 必须极快返回，所以失败就退到默认值）
 private func loadWidgetData() -> WidgetSyncData {
-    if let shared = UserDefaults(suiteName: "group.com.Lite.YumikoToys"),
-       let data = shared.data(forKey: "widget_payload"),
-       data.count > 0 {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        if let v = try? decoder.decode(WidgetSyncData.self, from: data) {
-            return v
-        }
+    if let data = Provider().loadData() {
+        return data
     }
     // 兜底
     return WidgetSyncData(
@@ -795,7 +831,7 @@ private func loadWidgetData() -> WidgetSyncData {
         startDate: Date(timeIntervalSinceReferenceDate: 0),
         totalDays: 827.0,
         milestones: [], proactiveBubbleText: nil,
-        appVersion: "", displayStyle: "compact",
+        appVersion: "", displayStyle: "detailed",
         title: "在一起已经", totalHours: 19848, hoursPart: 19848,
         minutesPart: 0, secondsPart: 0,
         themePrimaryHex: "FF6B9D"

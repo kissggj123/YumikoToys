@@ -79,11 +79,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             if isAutoLaunch {
                 if settings.showMainWindowOnAutoLaunch {
+                    LoggerService.shared.info("Auto launch: Showing main window per user setting.")
                     showMainWindow()
+                } else {
+                    LoggerService.shared.info("Auto launch: Skipping main window display per user setting.")
                 }
             } else {
                 if settings.showMainWindowOnManualLaunch {
+                    LoggerService.shared.info("Manual launch: Showing main window per user setting.")
                     showMainWindow()
+                } else {
+                    LoggerService.shared.info("Manual launch: Skipping main window display per user setting.")
                 }
             }
         }
@@ -160,12 +166,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     /// 检测是否为开机自启动
     private nonisolated var launchedAsLogInItem: Bool {
-        // 1. 现代 macOS Login Item (SMAppService) 检测：父进程为 launchd (PID 1)
+        // 1. 命令行参数检测（SMAppService / LaunchAtLogin 自动启动触发特征）
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-RegisterForSystemEvents") ||
+           args.contains("--launched-at-login") ||
+           args.contains("-launchedAtLogin") ||
+           args.contains("LaunchAtLogin") {
+            return true
+        }
+        
+        // 2. 环境变量检测（系统的 XPC Service LoginItem 环境）
+        if let xpcService = ProcessInfo.processInfo.environment["XPC_SERVICE_NAME"],
+           xpcService.lowercased().contains("login") {
+            return true
+        }
+        
+        // 3. 现代 macOS Login Item (SMAppService) 检测：父进程为 launchd (PID 1)
         if getppid() == 1 {
             return true
         }
         
-        // 2. 传统 Apple Event 检测
+        // 4. 传统 Apple Event 检测
         if let event = NSAppleEventManager.shared().currentAppleEvent {
             let isOapp = event.eventClass == 0x61657674 && event.eventID == 0x6f617070
             if isOapp, let propData = event.paramDescriptor(forKeyword: 0x70727074) {

@@ -79,6 +79,7 @@ final class AnniversaryService: AnniversaryServiceProtocol {
     func initialize() async {
         loadAnniversaries()
         startSecondUpdates()
+        forceSyncAndReloadWidget()
         LoggerService.shared.info("AnniversaryService initialized with \(anniversaries.count) anniversaries")
     }
     
@@ -266,11 +267,14 @@ final class AnniversaryService: AnniversaryServiceProtocol {
             milestones: milestones
         )
         
-        // 推送秒级倒计时文本
+        // 推送秒级倒计时文本（低损耗轻量字符串推送）
         countdownTextSubject.send(calc.formattedString)
         
-        // 推送更新后的 info
-        activeAnniversaryInfoSubject.send(activeAnniversaryInfo)
+        // 仅在天数数额发生改变或初次载入时，才触发 activeAnniversaryInfoSubject 全量推送（避免 UI 树被每秒重绘）
+        let currentDayCount = Int(calc.totalDays)
+        if currentDayCount != lastSyncedDayCount || activeAnniversaryInfoSubject.value == nil {
+            activeAnniversaryInfoSubject.send(activeAnniversaryInfo)
+        }
         
         // 状态栏：仅在分钟变化时更新（减少不必要的 UI 刷新）
         let currentMinute = calc.minutes
@@ -285,10 +289,18 @@ final class AnniversaryService: AnniversaryServiceProtocol {
     
     private func writeWidgetSyncData(anniversary: Anniversary, calc: AnniversaryCalculation, milestones: [AnniversaryMilestone]) {
         let bubbleText = UserDefaults.standard.string(forKey: "YumikoToys_ProactiveBubbleText")
-        let name = DependencyContainer.shared.componentLayoutService.currentLayouts.first(where: { $0.type == .daysDisplay })?.customTitle ?? anniversary.displayPetName
+        let custom = DependencyContainer.shared.componentLayoutService.currentLayouts.first(where: { $0.type == .daysDisplay })?.customTitle
+        let name: String
+        if let c = custom, !c.isEmpty && c != "相伴天数" && c != "已到到" && c != "驴可可" {
+            name = c
+        } else {
+            name = anniversary.displayPetName
+        }
 
         let timeParts = WidgetSyncData.deriveTimeParts(from: calc.totalDays)
-        let themeHex = DependencyContainer.shared.settingsService.settings.customThemeColorHex
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeHex = settings.customThemeColorHex
+        let currentStyle = settings.widgetDisplayStyle.rawValue
 
         let syncData = WidgetSyncData(
             petName: name,
@@ -306,12 +318,14 @@ final class AnniversaryService: AnniversaryServiceProtocol {
             },
             proactiveBubbleText: bubbleText,
             appVersion: AppConfig.version,
-            displayStyle: DependencyContainer.shared.settingsService.settings.widgetDisplayStyle.rawValue,
+            displayStyle: currentStyle,
             totalHours: timeParts.totalHours,
             hoursPart: timeParts.hoursPart,
             minutesPart: timeParts.minutesPart,
             secondsPart: timeParts.secondsPart,
-            themePrimaryHex: themeHex
+            themePrimaryHex: themeHex,
+            isAnimeMode: AnimeThemeService.shared.isEnabled,
+            animeStyle: AnimeThemeService.shared.currentStyle.rawValue
         )
 
         let encoder = JSONEncoder()
@@ -323,14 +337,14 @@ final class AnniversaryService: AnniversaryServiceProtocol {
 
         if let sharedDefaults = UserDefaults(suiteName: groupID) {
             sharedDefaults.set(data, forKey: "widget_payload")
-            sharedDefaults.set(syncData.displayStyle, forKey: "widget_display_style")
+            sharedDefaults.set(currentStyle, forKey: "widget_display_style")
             sharedDefaults.synchronize()
             anySuccess = true
         } else {
             LoggerService.shared.warning("UserDefaults(suiteName:) returned nil for \(groupID)")
         }
 
-        // ── 机制 2：App Group / App Support / Home 目录文件（额外冗余） ──
+        // ── 机制 2：App Group / 共享 /tmp / App Support / Home 目录文件 ──
         let fileManager = FileManager.default
         var writePaths: [URL] = []
 
@@ -340,13 +354,17 @@ final class AnniversaryService: AnniversaryServiceProtocol {
             LoggerService.shared.warning("App Group container unavailable for \(groupID) — signature/entitlements issue")
         }
 
+        // 跨沙盒全通路写入系统的 /tmp/com.Lite.YumikoToys 目录
+        writePaths.append(URL(fileURLWithPath: "/tmp/com.Lite.YumikoToys/widget.json"))
+        writePaths.append(URL(fileURLWithPath: "/private/tmp/com.Lite.YumikoToys/widget.json"))
+
         if let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-            let folderURL = appSupportURL.appendingPathComponent("com.Lite.YumikoToys")
+            let folderURL = appSupportURL.appendingPathComponent("com.Lite.YumikoToys", isDirectory: true)
             writePaths.append(folderURL.appendingPathComponent("widget.json"))
         }
 
         let homeAppSupport = fileManager.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/com.Lite.YumikoToys")
+            .appendingPathComponent("Library/Application Support/com.Lite.YumikoToys", isDirectory: true)
         writePaths.append(homeAppSupport.appendingPathComponent("widget.json"))
 
         for fileURL in writePaths {

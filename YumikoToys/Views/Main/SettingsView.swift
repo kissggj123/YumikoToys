@@ -4516,12 +4516,23 @@ final class SettingsViewModel: ObservableObject {
         var settings = container.settingsService.settings
         settings.widgetDisplayStyle = style
         container.settingsService.updateSettings(settings)
-        // 同步写入共享 UserDefaults 供 Widget 直接读取
+        
+        // 1. 同步写入共享 UserDefaults 供 Widget 直接读取
         let groupID = "group.com.Lite.YumikoToys"
         if let shared = UserDefaults(suiteName: groupID) {
             shared.set(style.rawValue, forKey: "widget_display_style")
             shared.synchronize()
         }
+        
+        // 2. 跨沙盒全通路写入 /tmp 目录
+        do {
+            let tmpDir = URL(fileURLWithPath: "/tmp/com.Lite.YumikoToys", isDirectory: true)
+            try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
+            try style.rawValue.write(to: tmpDir.appendingPathComponent("widget_style.txt"), atomically: true, encoding: .utf8)
+        } catch {
+            LoggerService.shared.debug("Failed to write widget_style.txt: \(error)")
+        }
+        
         DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
         LoggerService.shared.info("Widget display style changed to: \(style.displayName)")
     }

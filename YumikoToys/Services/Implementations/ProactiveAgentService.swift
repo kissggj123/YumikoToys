@@ -190,11 +190,9 @@ final class ProactiveAgentService: ObservableObject {
         
         LoggerService.shared.info("ProactiveAgentService: Heartbeat tick triggered")
         
-        // 2. 收集系统 CPU 与内存负载
-        let cpuMemoryStats = await SkillService.shared.runShell("top -l 1 | head -n 10")
-        
-        // 2.1 获取详细系统内存统计
+        // 2. 收集系统内存与负载（使用轻量原生接口代替昂贵的 top -l 1 shell 子进程）
         let memStats = ModelMemoryManager.getSystemMemoryStats()
+        let cpuMemoryStats = "MemoryStats: Total \(memStats.total / (1024*1024))MB, Used \(memStats.used / (1024*1024))MB, Available \(memStats.available / (1024*1024))MB, Compressed \(memStats.compressed / (1024*1024))MB"
         
         // 3. 统计桌面文件堆积数
         let desktopPath = (NSSearchPathForDirectoriesInDomains(.desktopDirectory, .userDomainMask, true).first ?? "~/Desktop")

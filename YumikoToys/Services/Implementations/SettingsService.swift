@@ -30,6 +30,7 @@ final class SettingsService: SettingsServiceProtocol {
     
     init(storageService: StorageServiceProtocol) {
         self.storageService = storageService
+        loadSettings()
     }
     
     // MARK: - ServiceLifecycle

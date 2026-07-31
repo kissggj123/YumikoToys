@@ -2425,6 +2425,10 @@ final class StatusBarViewModel: ObservableObject {
             .sink { [weak self] text in
                 guard let self = self else { return }
                 self.shortCountdown = text
+                // Popover 展开展示期间：同步更新 activeAnniversaryInfo，确保弹窗内天数(如 868.590)与状态栏毫秒级实时同步
+                if let active = self.container.anniversaryService.activeAnniversaryInfo {
+                    self.anniversaryInfo = active
+                }
             }
             .store(in: &cancellables)
         

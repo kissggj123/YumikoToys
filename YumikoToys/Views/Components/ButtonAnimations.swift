@@ -249,60 +249,72 @@ struct ClickEffectModifier: ViewModifier {
                     }
             )
             .overlay(
-                TimelineView(.animation(minimumInterval: 0.016)) { timelineContext in
-                    Canvas { context, size in
-                        let now = timelineContext.date
-                        for p in particles {
-                            let elapsed = now.timeIntervalSince(p.spawnTime)
-                            guard elapsed >= 0 && elapsed < p.lifetime else { continue }
-                            
-                            let progress = elapsed / p.lifetime
-                            let opacity = 1.0 - progress
-                            
-                            if p.emoji.isEmpty {
-                                // Ripple or shape-based effects
-                                let radius = 80.0 * progress
-                                var path = Path()
-                                path.addEllipse(in: CGRect(x: p.x - radius, y: p.y - radius, width: radius * 2, height: radius * 2))
-                                context.stroke(path, with: .color(p.color.opacity(opacity)), style: StrokeStyle(lineWidth: CGFloat(3.5 - 2.0 * progress)))
-                            } else if p.emoji == "COLOR_DOT" {
-                                let gravity: CGFloat = 280.0
-                                let dx = p.vx * CGFloat(elapsed)
-                                let dy = p.vy * CGFloat(elapsed) + 0.5 * gravity * CGFloat(elapsed * elapsed)
-                                let radius = 6.0 * CGFloat(1.0 - progress)
-                                var path = Path()
-                                path.addEllipse(in: CGRect(x: p.x + dx - radius, y: p.y + dy - radius, width: radius * 2, height: radius * 2))
-                                context.fill(path, with: .color(p.color.opacity(opacity)))
-                            } else {
-                                // Emoji-based effects (sparkle, heart)
-                                let dx: CGFloat
-                                let dy: CGFloat
-                                let effect = DependencyContainer.shared.settingsService.settings.activeClickEffect
-                                if effect == .heart {
-                                    let sway = 15.0 * sin(elapsed * 8.0 + Double(p.id.uuidString.hashValue % 5))
-                                    dx = p.vx * CGFloat(elapsed) + CGFloat(sway)
-                                    dy = p.vy * CGFloat(elapsed)
-                                } else {
-                                    dx = p.vx * CGFloat(elapsed)
-                                    dy = p.vy * CGFloat(elapsed)
+                Group {
+                    if !particles.isEmpty {
+                        TimelineView(.animation(minimumInterval: 0.016)) { timelineContext in
+                            Canvas { context, size in
+                                let now = timelineContext.date
+                                for p in particles {
+                                    let elapsed = now.timeIntervalSince(p.spawnTime)
+                                    guard elapsed >= 0 && elapsed < p.lifetime else { continue }
+                                    
+                                    let progress = elapsed / p.lifetime
+                                    let opacity = 1.0 - progress
+                                    
+                                    if p.emoji.isEmpty {
+                                        // Ripple or shape-based effects
+                                        let radius = 80.0 * progress
+                                        var path = Path()
+                                        path.addEllipse(in: CGRect(x: p.x - radius, y: p.y - radius, width: radius * 2, height: radius * 2))
+                                        context.stroke(path, with: .color(p.color.opacity(opacity)), style: StrokeStyle(lineWidth: CGFloat(3.5 - 2.0 * progress)))
+                                    } else if p.emoji == "COLOR_DOT" {
+                                        let gravity: CGFloat = 280.0
+                                        let dx = p.vx * CGFloat(elapsed)
+                                        let dy = p.vy * CGFloat(elapsed) + 0.5 * gravity * CGFloat(elapsed * elapsed)
+                                        let radius = 6.0 * CGFloat(1.0 - progress)
+                                        var path = Path()
+                                        path.addEllipse(in: CGRect(x: p.x + dx - radius, y: p.y + dy - radius, width: radius * 2, height: radius * 2))
+                                        context.fill(path, with: .color(p.color.opacity(opacity)))
+                                    } else {
+                                        // Emoji-based effects (sparkle, heart)
+                                        let dx: CGFloat
+                                        let dy: CGFloat
+                                        let effect = DependencyContainer.shared.settingsService.settings.activeClickEffect
+                                        if effect == .heart {
+                                            let sway = 15.0 * sin(elapsed * 8.0 + Double(p.id.uuidString.hashValue % 5))
+                                            dx = p.vx * CGFloat(elapsed) + CGFloat(sway)
+                                            dy = p.vy * CGFloat(elapsed)
+                                        } else {
+                                            dx = p.vx * CGFloat(elapsed)
+                                            dy = p.vy * CGFloat(elapsed)
+                                        }
+                                        
+                                        let currentRotation = p.rotation + p.rotationSpeed * elapsed
+                                        let currentScale = p.scale * CGFloat(1.0 - progress)
+                                        
+                                        var particleContext = context
+                                        particleContext.opacity = opacity
+                                        let resolved = context.resolve(
+                                            Text(p.emoji)
+                                                .font(.system(size: 24 * currentScale))
+                                        )
+                                        particleContext.translateBy(x: p.x + dx, y: p.y + dy)
+                                        particleContext.rotate(by: Angle(degrees: currentRotation))
+                                        particleContext.draw(resolved, at: .zero)
+                                    }
                                 }
                                 
-                                let currentRotation = p.rotation + p.rotationSpeed * elapsed
-                                let currentScale = p.scale * CGFloat(1.0 - progress)
-                                
-                                var particleContext = context
-                                particleContext.opacity = opacity
-                                let resolved = context.resolve(
-                                    Text(p.emoji)
-                                        .font(.system(size: 24 * currentScale))
-                                )
-                                particleContext.translateBy(x: p.x + dx, y: p.y + dy)
-                                particleContext.rotate(by: Angle(degrees: currentRotation))
-                                particleContext.draw(resolved, at: .zero)
+                                // 自动清理已过期的粒子，防止内存和计算泄漏
+                                Task { @MainActor in
+                                    let activeParticles = particles.filter { now.timeIntervalSince($0.spawnTime) < $0.lifetime }
+                                    if activeParticles.count != particles.count {
+                                        particles = activeParticles
+                                    }
+                                }
                             }
+                            .allowsHitTesting(false)
                         }
                     }
-                    .allowsHitTesting(false)
                 }
             )
     }
