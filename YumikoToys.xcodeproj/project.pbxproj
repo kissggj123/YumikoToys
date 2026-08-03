@@ -7,6 +7,33 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B43B2CE2F4B4BF48419609DD /* PetTouchBarWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */; };
+		C3BCA5F23AB3604C30981411 /* pet_white_frame_5.png in Resources */ = {isa = PBXBuildFile; fileRef = R3D49B953BE8CE4D0B84DDE4 /* pet_white_frame_5.png */; };
+		C39ED74096D5F941148B5D16 /* pet_white_frame_4.png in Resources */ = {isa = PBXBuildFile; fileRef = R3B959F9051C2D46198DD95D /* pet_white_frame_4.png */; };
+		C3793B4DB86AC54FB29E2BA7 /* pet_white_frame_3.png in Resources */ = {isa = PBXBuildFile; fileRef = R3053A0378AED2423285BDFC /* pet_white_frame_3.png */; };
+		C35FE972C80F784B11A03925 /* pet_white_frame_2.png in Resources */ = {isa = PBXBuildFile; fileRef = R3BC2A8ED18E7F4FADAA0999 /* pet_white_frame_2.png */; };
+		C345C8EDF861B1442AA471EF /* pet_white_frame_1.png in Resources */ = {isa = PBXBuildFile; fileRef = R3EC7F896EAC8544409CB691 /* pet_white_frame_1.png */; };
+		C3F45CD3D5D58F4CCD8D8A66 /* pet_white_frame_0.png in Resources */ = {isa = PBXBuildFile; fileRef = R30F1A106CD8AB42AABCF17D /* pet_white_frame_0.png */; };
+		C356C1A46B499B4B06838B22 /* pet_tall_frame_5.png in Resources */ = {isa = PBXBuildFile; fileRef = R3D483BCC3CF014171B5C89C /* pet_tall_frame_5.png */; };
+		C38525EBFCACF64AD78997B4 /* pet_tall_frame_4.png in Resources */ = {isa = PBXBuildFile; fileRef = R3BA6A03CFB3584E92B13A31 /* pet_tall_frame_4.png */; };
+		C385262942766F4E018E16CC /* pet_tall_frame_3.png in Resources */ = {isa = PBXBuildFile; fileRef = R34A3E37F41B194F08A1DB02 /* pet_tall_frame_3.png */; };
+		C3B0692694B45E4AC69AB09F /* pet_tall_frame_2.png in Resources */ = {isa = PBXBuildFile; fileRef = R3CEFEC9D2A1904C9492448D /* pet_tall_frame_2.png */; };
+		C392A48C47988E4F3FB2D883 /* pet_tall_frame_1.png in Resources */ = {isa = PBXBuildFile; fileRef = R304C7B0BA6A7B4C9AA1D38E /* pet_tall_frame_1.png */; };
+		C3BA7290D1839F43DB8AC13F /* pet_tall_frame_0.png in Resources */ = {isa = PBXBuildFile; fileRef = R38114ED0786E848A89FF7FE /* pet_tall_frame_0.png */; };
+		C39E25F1560D5A47B8B5D73E /* pet_gray_frame_5.png in Resources */ = {isa = PBXBuildFile; fileRef = R352741513408647B8BA9D7F /* pet_gray_frame_5.png */; };
+		C30B40B75BB1374941A492F6 /* pet_gray_frame_4.png in Resources */ = {isa = PBXBuildFile; fileRef = R374557FB33ADC4D22968425 /* pet_gray_frame_4.png */; };
+		C3D90CCEA3DE2E4EE4B7776A /* pet_gray_frame_3.png in Resources */ = {isa = PBXBuildFile; fileRef = R34068BBEB76984863AF5D1D /* pet_gray_frame_3.png */; };
+		C3EED52386122B4B82A15D76 /* pet_gray_frame_2.png in Resources */ = {isa = PBXBuildFile; fileRef = R3CAE2725C217C46638B5E20 /* pet_gray_frame_2.png */; };
+		C3665ADDDB666E460C84200C /* pet_gray_frame_1.png in Resources */ = {isa = PBXBuildFile; fileRef = R367585299E905423F8D8DCB /* pet_gray_frame_1.png */; };
+		C368B52A6C1EC54094B2BC8E /* pet_gray_frame_0.png in Resources */ = {isa = PBXBuildFile; fileRef = R3C530EAF823334D7F8EFDDE /* pet_gray_frame_0.png */; };
+		C35971655B8D3D4AE8B9FF3C /* pet_blue_frame_5.png in Resources */ = {isa = PBXBuildFile; fileRef = R30D57387AAA454A63A16DCF /* pet_blue_frame_5.png */; };
+		C30BE0B773805C401E8BE580 /* pet_blue_frame_4.png in Resources */ = {isa = PBXBuildFile; fileRef = R327EDC8BDE0B24E5E9F694A /* pet_blue_frame_4.png */; };
+		C3F9D76E08E40A4D67A1450F /* pet_blue_frame_3.png in Resources */ = {isa = PBXBuildFile; fileRef = R389104F62DBED49E19F68CC /* pet_blue_frame_3.png */; };
+		C32452839C1711492EB4A2FC /* pet_blue_frame_2.png in Resources */ = {isa = PBXBuildFile; fileRef = R3BFE405436DB14B968CCD0A /* pet_blue_frame_2.png */; };
+		C3D2D7CD2D98BE48F0B94E63 /* pet_blue_frame_1.png in Resources */ = {isa = PBXBuildFile; fileRef = R3387B0688DE124561A3865F /* pet_blue_frame_1.png */; };
+		C32C2E16534F9A4D50BBCE82 /* pet_blue_frame_0.png in Resources */ = {isa = PBXBuildFile; fileRef = R3F958123ADE3E43F49CA78E /* pet_blue_frame_0.png */; };
+		B32639655650B74FEBA991E3 /* YumikoTouchBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D9A78F5299B545C480F49B /* YumikoTouchBarManager.swift */; };
+		B3141674EE5F604DE9A36AD0 /* PetPlaygroundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3585897DE749643058DB6E0 /* PetPlaygroundService.swift */; };
 		1E5B4D6A25FBFE4B00092422 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E5B4D6925FBFE4B00092422 /* Cocoa.framework */; };
 		1E5B4DE525FC24CA00092422 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 1E5B4DE425FC24CA00092422 /* LaunchAtLogin */; };
 		1E6FB254260A3B890074A382 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E6FB253260A3B890074A382 /* Security.framework */; };
@@ -225,6 +252,33 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetTouchBarWindow.swift; sourceTree = "<group>"; };
+		R3D49B953BE8CE4D0B84DDE4 /* pet_white_frame_5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_5.png; sourceTree = "<group>"; };
+		R3B959F9051C2D46198DD95D /* pet_white_frame_4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_4.png; sourceTree = "<group>"; };
+		R3053A0378AED2423285BDFC /* pet_white_frame_3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_3.png; sourceTree = "<group>"; };
+		R3BC2A8ED18E7F4FADAA0999 /* pet_white_frame_2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_2.png; sourceTree = "<group>"; };
+		R3EC7F896EAC8544409CB691 /* pet_white_frame_1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_1.png; sourceTree = "<group>"; };
+		R30F1A106CD8AB42AABCF17D /* pet_white_frame_0.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_0.png; sourceTree = "<group>"; };
+		R3D483BCC3CF014171B5C89C /* pet_tall_frame_5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_tall_frame_5.png; sourceTree = "<group>"; };
+		R3BA6A03CFB3584E92B13A31 /* pet_tall_frame_4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_tall_frame_4.png; sourceTree = "<group>"; };
+		R34A3E37F41B194F08A1DB02 /* pet_tall_frame_3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_tall_frame_3.png; sourceTree = "<group>"; };
+		R3CEFEC9D2A1904C9492448D /* pet_tall_frame_2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_tall_frame_2.png; sourceTree = "<group>"; };
+		R304C7B0BA6A7B4C9AA1D38E /* pet_tall_frame_1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_tall_frame_1.png; sourceTree = "<group>"; };
+		R38114ED0786E848A89FF7FE /* pet_tall_frame_0.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_tall_frame_0.png; sourceTree = "<group>"; };
+		R352741513408647B8BA9D7F /* pet_gray_frame_5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_gray_frame_5.png; sourceTree = "<group>"; };
+		R374557FB33ADC4D22968425 /* pet_gray_frame_4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_gray_frame_4.png; sourceTree = "<group>"; };
+		R34068BBEB76984863AF5D1D /* pet_gray_frame_3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_gray_frame_3.png; sourceTree = "<group>"; };
+		R3CAE2725C217C46638B5E20 /* pet_gray_frame_2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_gray_frame_2.png; sourceTree = "<group>"; };
+		R367585299E905423F8D8DCB /* pet_gray_frame_1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_gray_frame_1.png; sourceTree = "<group>"; };
+		R3C530EAF823334D7F8EFDDE /* pet_gray_frame_0.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_gray_frame_0.png; sourceTree = "<group>"; };
+		R30D57387AAA454A63A16DCF /* pet_blue_frame_5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_blue_frame_5.png; sourceTree = "<group>"; };
+		R327EDC8BDE0B24E5E9F694A /* pet_blue_frame_4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_blue_frame_4.png; sourceTree = "<group>"; };
+		R389104F62DBED49E19F68CC /* pet_blue_frame_3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_blue_frame_3.png; sourceTree = "<group>"; };
+		R3BFE405436DB14B968CCD0A /* pet_blue_frame_2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_blue_frame_2.png; sourceTree = "<group>"; };
+		R3387B0688DE124561A3865F /* pet_blue_frame_1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_blue_frame_1.png; sourceTree = "<group>"; };
+		R3F958123ADE3E43F49CA78E /* pet_blue_frame_0.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_blue_frame_0.png; sourceTree = "<group>"; };
+		F3D9A78F5299B545C480F49B /* YumikoTouchBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YumikoTouchBarManager.swift; sourceTree = "<group>"; };
+		F3585897DE749643058DB6E0 /* PetPlaygroundService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPlaygroundService.swift; sourceTree = "<group>"; };
 		1E5B4D6925FBFE4B00092422 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		1E6FB253260A3B890074A382 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		1EE4E20A24F97E240097C32C /* YumikoToys.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YumikoToys.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -542,6 +596,8 @@
 		FC65521C2FC373980093B726 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */,
+				F3D9A78F5299B545C480F49B /* YumikoTouchBarManager.swift */,
 				FC6553F72FDA00000093B726 /* ScreenshotAnnotationModule.swift */,
 				FC65590C2FC373980093B726 /* ScreenMediaHelper.swift */,
 				FC6553F32FDA00000093B726 /* MosaicRenderer.swift */,
@@ -657,6 +713,30 @@
 		FC6552402FC373980093B726 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				R3D49B953BE8CE4D0B84DDE4 /* pet_white_frame_5.png */,
+				R3B959F9051C2D46198DD95D /* pet_white_frame_4.png */,
+				R3053A0378AED2423285BDFC /* pet_white_frame_3.png */,
+				R3BC2A8ED18E7F4FADAA0999 /* pet_white_frame_2.png */,
+				R3EC7F896EAC8544409CB691 /* pet_white_frame_1.png */,
+				R30F1A106CD8AB42AABCF17D /* pet_white_frame_0.png */,
+				R3D483BCC3CF014171B5C89C /* pet_tall_frame_5.png */,
+				R3BA6A03CFB3584E92B13A31 /* pet_tall_frame_4.png */,
+				R34A3E37F41B194F08A1DB02 /* pet_tall_frame_3.png */,
+				R3CEFEC9D2A1904C9492448D /* pet_tall_frame_2.png */,
+				R304C7B0BA6A7B4C9AA1D38E /* pet_tall_frame_1.png */,
+				R38114ED0786E848A89FF7FE /* pet_tall_frame_0.png */,
+				R352741513408647B8BA9D7F /* pet_gray_frame_5.png */,
+				R374557FB33ADC4D22968425 /* pet_gray_frame_4.png */,
+				R34068BBEB76984863AF5D1D /* pet_gray_frame_3.png */,
+				R3CAE2725C217C46638B5E20 /* pet_gray_frame_2.png */,
+				R367585299E905423F8D8DCB /* pet_gray_frame_1.png */,
+				R3C530EAF823334D7F8EFDDE /* pet_gray_frame_0.png */,
+				R30D57387AAA454A63A16DCF /* pet_blue_frame_5.png */,
+				R327EDC8BDE0B24E5E9F694A /* pet_blue_frame_4.png */,
+				R389104F62DBED49E19F68CC /* pet_blue_frame_3.png */,
+				R3BFE405436DB14B968CCD0A /* pet_blue_frame_2.png */,
+				R3387B0688DE124561A3865F /* pet_blue_frame_1.png */,
+				R3F958123ADE3E43F49CA78E /* pet_blue_frame_0.png */,
 				FC65523F2FC373980093B726 /* PromptTemplates.json */,
 			);
 			path = Resources;
@@ -665,6 +745,7 @@
 		FC6552612FC373980093B726 /* Implementations */ = {
 			isa = PBXGroup;
 			children = (
+				F3585897DE749643058DB6E0 /* PetPlaygroundService.swift */,
 				FC6559022FC373980093B726 /* AgentManagerService.swift */,
 				FC6559042FC373980093B726 /* PluginService.swift */,
 				FC6559062FC373980093B726 /* YumiScriptEngine.swift */,
@@ -1059,6 +1140,30 @@
 		1EE4E20824F97E240097C32C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
+				C3BCA5F23AB3604C30981411 /* pet_white_frame_5.png in Resources */,
+				C39ED74096D5F941148B5D16 /* pet_white_frame_4.png in Resources */,
+				C3793B4DB86AC54FB29E2BA7 /* pet_white_frame_3.png in Resources */,
+				C35FE972C80F784B11A03925 /* pet_white_frame_2.png in Resources */,
+				C345C8EDF861B1442AA471EF /* pet_white_frame_1.png in Resources */,
+				C3F45CD3D5D58F4CCD8D8A66 /* pet_white_frame_0.png in Resources */,
+				C356C1A46B499B4B06838B22 /* pet_tall_frame_5.png in Resources */,
+				C38525EBFCACF64AD78997B4 /* pet_tall_frame_4.png in Resources */,
+				C385262942766F4E018E16CC /* pet_tall_frame_3.png in Resources */,
+				C3B0692694B45E4AC69AB09F /* pet_tall_frame_2.png in Resources */,
+				C392A48C47988E4F3FB2D883 /* pet_tall_frame_1.png in Resources */,
+				C3BA7290D1839F43DB8AC13F /* pet_tall_frame_0.png in Resources */,
+				C39E25F1560D5A47B8B5D73E /* pet_gray_frame_5.png in Resources */,
+				C30B40B75BB1374941A492F6 /* pet_gray_frame_4.png in Resources */,
+				C3D90CCEA3DE2E4EE4B7776A /* pet_gray_frame_3.png in Resources */,
+				C3EED52386122B4B82A15D76 /* pet_gray_frame_2.png in Resources */,
+				C3665ADDDB666E460C84200C /* pet_gray_frame_1.png in Resources */,
+				C368B52A6C1EC54094B2BC8E /* pet_gray_frame_0.png in Resources */,
+				C35971655B8D3D4AE8B9FF3C /* pet_blue_frame_5.png in Resources */,
+				C30BE0B773805C401E8BE580 /* pet_blue_frame_4.png in Resources */,
+				C3F9D76E08E40A4D67A1450F /* pet_blue_frame_3.png in Resources */,
+				C32452839C1711492EB4A2FC /* pet_blue_frame_2.png in Resources */,
+				C3D2D7CD2D98BE48F0B94E63 /* pet_blue_frame_1.png in Resources */,
+				C32C2E16534F9A4D50BBCE82 /* pet_blue_frame_0.png in Resources */,
 				FC6552A42FC373980093B726 /* 2026-05-21-mlx-model-management-design.md in Resources */,
 				FC6552A52FC373980093B726 /* 2026-05-22-assistant-features-design.md in Resources */,
 				FC6552A62FC373980093B726 /* MAINTENANCE.md in Resources */,
@@ -1120,6 +1225,9 @@
 		1EE4E20624F97E240097C32C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
+				B43B2CE2F4B4BF48419609DD /* PetTouchBarWindow.swift in Sources */,
+				B32639655650B74FEBA991E3 /* YumikoTouchBarManager.swift in Sources */,
+				B3141674EE5F604DE9A36AD0 /* PetPlaygroundService.swift in Sources */,
 				FC65590B2FC373980093B726 /* ScreenMediaHelper.swift in Sources */,
 				FC65590D2FC373980093B726 /* GlobalHotkeyManager.swift in Sources */,
 				FC65590F2FC373980093B726 /* AppScanner.swift in Sources */,

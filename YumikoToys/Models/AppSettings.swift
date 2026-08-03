@@ -548,6 +548,8 @@ struct AppSettings: Codable, Sendable {
     var currentMode: AppMode
     var isBackgroundLearningEnabled: Bool  // 后台学习开关状态（与 currentMode.study 同步）
     var isPreventSleepEnabled: Bool
+    var isPetPlaygroundEnabled: Bool
+    var isPetTouchBarEnabled: Bool
     var isLaunchAtLoginEnabled: Bool
     var showStatusBarIcon: Bool
     var activeAnniversaryId: UUID?
@@ -648,6 +650,8 @@ struct AppSettings: Codable, Sendable {
         currentMode: AppMode = .normal,
         isBackgroundLearningEnabled: Bool = false,
         isPreventSleepEnabled: Bool = false,
+        isPetPlaygroundEnabled: Bool = false,
+        isPetTouchBarEnabled: Bool = true,
         isLaunchAtLoginEnabled: Bool = false,
         showStatusBarIcon: Bool = true,
         activeAnniversaryId: UUID? = nil,
@@ -717,6 +721,8 @@ struct AppSettings: Codable, Sendable {
         self.currentMode = currentMode
         self.isBackgroundLearningEnabled = isBackgroundLearningEnabled
         self.isPreventSleepEnabled = isPreventSleepEnabled
+        self.isPetPlaygroundEnabled = isPetPlaygroundEnabled
+        self.isPetTouchBarEnabled = isPetTouchBarEnabled
         self.isLaunchAtLoginEnabled = isLaunchAtLoginEnabled
         self.showStatusBarIcon = showStatusBarIcon
         self.activeAnniversaryId = activeAnniversaryId
@@ -794,6 +800,8 @@ struct AppSettings: Codable, Sendable {
         currentMode = container.decodeIsolated(AppMode.self, forKey: .currentMode, fallback: .normal)
         isBackgroundLearningEnabled = try container.decodeIfPresent(Bool.self, forKey: .isBackgroundLearningEnabled) ?? false
         isPreventSleepEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPreventSleepEnabled) ?? false
+        isPetPlaygroundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPetPlaygroundEnabled) ?? false
+        isPetTouchBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPetTouchBarEnabled) ?? true
         isLaunchAtLoginEnabled = try container.decodeIfPresent(Bool.self, forKey: .isLaunchAtLoginEnabled) ?? false
         showStatusBarIcon = try container.decodeIfPresent(Bool.self, forKey: .showStatusBarIcon) ?? true
         activeAnniversaryId = try container.decodeIfPresent(UUID.self, forKey: .activeAnniversaryId)

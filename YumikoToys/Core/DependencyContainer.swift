@@ -36,6 +36,7 @@ final class DependencyContainer: ObservableObject {
     let personaService: PersonaService
     let userAvatarService: UserAvatarService
     let apiSettingsService: APISettingsService
+    let petPlaygroundService: PetPlaygroundService
     
     // MLX 本地 AI 服务
     let localEmbeddingService: LocalEmbeddingService
@@ -93,6 +94,7 @@ final class DependencyContainer: ObservableObject {
         self.personaService = PersonaService(dataStorageService: dataStorage, glmService: glm)
         self.userAvatarService = UserAvatarService(dataStorageService: dataStorage)
         self.apiSettingsService = APISettingsService(dataStorageService: dataStorage)
+        self.petPlaygroundService = PetPlaygroundService.shared
         
         // 创建 MLX 本地 AI 服务
         let embeddingService = LocalEmbeddingService()
@@ -156,6 +158,10 @@ final class DependencyContainer: ObservableObject {
 
         // 确保在所有异步加载任务完成后重新校准模型状态
         await modelManagementService.refreshAllStatus()
+        
+        await MainActor.run {
+            petPlaygroundService.initialize()
+        }
 
         // 初始化后台学习服务
         let backgroundLearningService = BackgroundLearningService(
@@ -439,7 +445,8 @@ final class WindowManager {
             
             window.title = type.title
             window.contentView = view
-            
+            PetTouchBarWindowManager.shared.attach(to: window)
+
             window.center()
             window.isReleasedWhenClosed = false
             window.delegate = WindowDelegate.shared
@@ -644,4 +651,3 @@ extension ButtonStyle where Self == PremiumButtonStyle {
         PremiumButtonStyle(scaleOnPress: scale)
     }
 }
-

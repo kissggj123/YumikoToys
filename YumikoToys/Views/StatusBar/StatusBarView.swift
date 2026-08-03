@@ -1213,12 +1213,12 @@ struct StatusBarView: View {
                             .frame(height: 1)
                     }
 
-                    // TouchBar 截图机型提示（2019 以后机型自带 TouchBar 的不多，给个一键确认按钮）
+                    // TouchBar 截图机型提示（2020 以后机型自带 TouchBar 的不多，给个一键确认按钮）
                     HStack(spacing: 4) {
                         Image(systemName: "info.circle")
                             .font(.system(size: 9))
                             .foregroundStyle(themeColor.animeOrTextSecondary)
-                        Text("TouchBar 仅 2016–2019 款带 Touch Bar 的 MacBook 支持；其他机型会直接提示无 TouchBar。")
+                        Text("TouchBar 仅 2016–2020 款带 Touch Bar 的 MacBook 支持；其他机型会直接提示无 TouchBar。")
                             .font(.system(size: 9))
                             .foregroundStyle(themeColor.animeOrTextSecondary)
                             .lineLimit(2)
@@ -2390,6 +2390,7 @@ final class StatusBarViewModel: ObservableObject {
     @Published var anniversaries: [Anniversary] = []
     @Published var shortCountdown: String = ""
     @Published var isPreventSleepEnabled: Bool = false
+    @Published var isPetPlaygroundEnabled: Bool = false
     @Published var selectedIconStyle: IconStyle = .pixelAnimal
     @Published var themeColor: ThemeColor = .dark
     @Published var customThemeColorHex: String = "FF6B9D"
@@ -2453,6 +2454,7 @@ final class StatusBarViewModel: ObservableObject {
         self.anniversaryInfo = container.anniversaryService.activeAnniversaryInfo
         self.anniversaries = container.anniversaryService.anniversaries
         self.isPreventSleepEnabled = container.preventSleepService.isPreventSleepEnabled
+        self.isPetPlaygroundEnabled = container.petPlaygroundService.isEnabled
         self.selectedIconStyle = container.settingsService.settings.selectedIconStyle
         self.themeColor = container.settingsService.settings.selectedThemeColor
         self.customThemeColorHex = container.settingsService.settings.customThemeColorHex
@@ -2467,6 +2469,11 @@ final class StatusBarViewModel: ObservableObject {
     
     func togglePreventSleep() {
         container.preventSleepService.togglePreventSleep()
+    }
+
+    func togglePetPlayground() {
+        container.petPlaygroundService.togglePlayground()
+        isPetPlaygroundEnabled = container.petPlaygroundService.isEnabled
     }
     
     func setActiveAnniversary(id: UUID) {

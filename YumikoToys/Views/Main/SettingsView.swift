@@ -138,6 +138,7 @@ struct SettingsView: View {
                         proactiveSettingsSection
                     case .system:
                         preventSleepSection
+                        petPlaygroundSection
                         timeSyncSection
                         skillManagementSection
                         PluginManagementSectionView()
@@ -1742,6 +1743,38 @@ extension SettingsView {
         }
         .padding(.horizontal, 4)
         .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    private var petPlaygroundSection: some View {
+        SettingsSection(title: "桌宠爬爬乐", icon: "pawprint.fill", iconColor: "A78BFA") {
+            SettingsToggleRow(
+                icon: viewModel.isPetPlaygroundEnabled ? "pawprint.circle.fill" : "pawprint",
+                iconColor: viewModel.isPetPlaygroundEnabled ? "34C759" : "A78BFA",
+                title: "桌宠悬浮层",
+                subtitle: viewModel.isPetPlaygroundEnabled
+                    ? "4 个 Q 版角色正在 macOS Dock 上方独立步行爬行"
+                    : "开启后会在屏幕底端开启透明桌宠步行悬浮层",
+                isOn: $viewModel.isPetPlaygroundEnabled,
+                onToggle: viewModel.togglePetPlayground
+            )
+
+            if viewModel.isPetPlaygroundEnabled {
+                HStack(spacing: 12) {
+                    Button(action: viewModel.togglePausePets) {
+                        Label("暂停 / 继续", systemImage: "pause.fill")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button(action: viewModel.resetPets) {
+                        Label("重新集合", systemImage: "arrow.counterclockwise")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding(.top, 4)
+            }
+        }
     }
 
     private var timeSyncSection: some View {
@@ -4064,6 +4097,8 @@ final class SettingsViewModel: ObservableObject {
     private let exportService = DataExportService()
     private var cancellables = Set<AnyCancellable>()
 
+    @Published var isPetPlaygroundEnabled: Bool = false
+
     var isPreventSleepEnabled: Bool {
         preventSleep
     }
@@ -4080,6 +4115,7 @@ final class SettingsViewModel: ObservableObject {
 
     init() {
         preventSleep = container.preventSleepService.isPreventSleepEnabled
+        isPetPlaygroundEnabled = container.petPlaygroundService.isEnabled
         launchAtLogin = container.launchAtLoginService.isEnabled
         timeOffset = container.timeSyncService.timeOffset
         
@@ -4486,6 +4522,20 @@ final class SettingsViewModel: ObservableObject {
         LoggerService.shared.info("Hide floating layout toolbar toggled to: \(hide)")
     }
     
+    func togglePetPlayground(_ enabled: Bool) {
+        isPetPlaygroundEnabled = enabled
+        container.petPlaygroundService.setEnabled(enabled)
+        LoggerService.shared.info("PetPlayground toggled to: \(enabled)")
+    }
+
+    func togglePausePets() {
+        container.petPlaygroundService.togglePause()
+    }
+
+    func resetPets() {
+        container.petPlaygroundService.resetPositions()
+    }
+
     func selectSpecialEffect(_ effect: SpecialEffectType) {
         activeSpecialEffect = effect
         var settings = container.settingsService.settings
