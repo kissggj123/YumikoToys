@@ -838,7 +838,7 @@ struct StatusBarView: View {
                         Text(tab.title)
                             .font(.system(size: 11, weight: .medium, design: .rounded))
                     }
-                    .foregroundStyle(selectedTab == tab ? themeColor.animeOrBackground : themeColor.animeOrTextPrimary)
+                    .foregroundStyle(selectedTab == tab ? (themeColor.animeOrIsDark ? Color.black : Color.white) : themeColor.animeOrTextPrimary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(

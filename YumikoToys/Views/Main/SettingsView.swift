@@ -1750,12 +1750,23 @@ extension SettingsView {
             SettingsToggleRow(
                 icon: viewModel.isPetPlaygroundEnabled ? "pawprint.circle.fill" : "pawprint",
                 iconColor: viewModel.isPetPlaygroundEnabled ? "34C759" : "A78BFA",
-                title: "桌宠悬浮层",
+                title: "桌宠悬浮层（桌面）",
                 subtitle: viewModel.isPetPlaygroundEnabled
                     ? "4 个 Q 版角色正在 macOS Dock 上方独立步行爬行"
                     : "开启后会在屏幕底端开启透明桌宠步行悬浮层",
                 isOn: $viewModel.isPetPlaygroundEnabled,
                 onToggle: viewModel.togglePetPlayground
+            )
+
+            SettingsToggleRow(
+                icon: viewModel.isPetTouchBarEnabled ? "rectangle.on.rectangle.angled.fill" : "rectangle.on.rectangle.angled",
+                iconColor: viewModel.isPetTouchBarEnabled ? "34C759" : "8E8E93",
+                title: "Touch Bar 桌宠走秀",
+                subtitle: viewModel.isPetTouchBarEnabled
+                    ? "Touch Bar 正在展示桌宠步行动画"
+                    : "开启后会在 Touch Bar 上实时展示 4 只桌宠步行走秀（独立控制）",
+                isOn: $viewModel.isPetTouchBarEnabled,
+                onToggle: viewModel.togglePetTouchBar
             )
 
             if viewModel.isPetPlaygroundEnabled {
@@ -1774,6 +1785,9 @@ extension SettingsView {
                 }
                 .padding(.top, 4)
             }
+
+            PetPerformanceCardView()
+                .padding(.top, 6)
         }
     }
 
@@ -3561,22 +3575,59 @@ private struct AnimeThemeCard: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
-                // 渐变色预览条
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(LinearGradient(
-                        colors: [Color(hex: token.gradientStart), Color(hex: token.gradientEnd)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ))
-                    .frame(height: 28)
-                    .overlay(
-                        // 色板预览
+                // 迷你 UI 调色板真实预览
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(hex: token.backgroundPrimary))
+
+                    VStack(spacing: 4) {
+                        // 渐变顶条
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(LinearGradient(
+                                colors: [Color(hex: token.gradientStart), Color(hex: token.gradientEnd)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
+                            .frame(height: 8)
+
                         HStack(spacing: 4) {
-                            Circle().fill(Color(hex: token.accentColor)).frame(width: 10, height: 10)
-                            Circle().fill(Color(hex: token.glowColor)).frame(width: 10, height: 10)
-                            Circle().fill(Color(hex: token.textPrimary)).frame(width: 10, height: 10)
+                            // 迷你卡片
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color(hex: token.cardBackground))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color(hex: token.cardBorder), lineWidth: 0.5)
+                                )
+                                .overlay(
+                                    HStack(spacing: 3) {
+                                        Circle()
+                                            .fill(Color(hex: token.accentColor))
+                                            .frame(width: 5, height: 5)
+                                        RoundedRectangle(cornerRadius: 1)
+                                            .fill(Color(hex: token.textPrimary))
+                                            .frame(width: 14, height: 3)
+                                    }
+                                )
+                                .frame(height: 16)
+
+                            // 迷你强调按钮
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color(hex: token.buttonColor))
+                                .overlay(
+                                    Circle()
+                                        .fill(Color(hex: token.glowColor))
+                                        .frame(width: 4, height: 4)
+                                )
+                                .frame(width: 16, height: 16)
                         }
-                    )
+                    }
+                    .padding(4)
+                }
+                .frame(height: 38)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+                )
 
                 HStack(spacing: 6) {
                     Image(systemName: style.themeIcon)
@@ -3607,7 +3658,7 @@ private struct AnimeThemeCard: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .strokeBorder(
-                        isSelected ? Color(hex: token.accentColor).opacity(0.5) : Color.clear,
+                        isSelected ? Color(hex: token.accentColor).opacity(0.6) : Color.clear,
                         lineWidth: 1.5
                     )
             )
@@ -4098,6 +4149,7 @@ final class SettingsViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     @Published var isPetPlaygroundEnabled: Bool = false
+    @Published var isPetTouchBarEnabled: Bool = true
 
     var isPreventSleepEnabled: Bool {
         preventSleep
@@ -4120,6 +4172,7 @@ final class SettingsViewModel: ObservableObject {
         timeOffset = container.timeSyncService.timeOffset
         
         let settings = container.settingsService.settings
+        isPetTouchBarEnabled = settings.isPetTouchBarEnabled
         selectedFont = settings.selectedFont
         selectedIconStyle = settings.selectedIconStyle
         statusBarIconStyle = settings.statusBarIconStyle
@@ -4526,6 +4579,15 @@ final class SettingsViewModel: ObservableObject {
         isPetPlaygroundEnabled = enabled
         container.petPlaygroundService.setEnabled(enabled)
         LoggerService.shared.info("PetPlayground toggled to: \(enabled)")
+    }
+
+    func togglePetTouchBar(_ enabled: Bool) {
+        isPetTouchBarEnabled = enabled
+        var settings = container.settingsService.settings
+        settings.isPetTouchBarEnabled = enabled
+        container.settingsService.updateSettings(settings)
+        PetTouchBarWindowManager.shared.updateTouchBarState(isEnabled: enabled)
+        LoggerService.shared.info("PetTouchBar toggled to: \(enabled)")
     }
 
     func togglePausePets() {
@@ -5628,6 +5690,159 @@ struct VariableTag: View {
 
 enum FontPickerError: Error, Equatable {
     case cancelled
+}
+
+// MARK: - 实时渲染与性能监控卡片
+
+struct PetPerformanceCardView: View {
+    @ObservedObject var monitor = PetPerformanceMonitor.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("实时渲染与性能监控", systemImage: "cpu.fill")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Color(hex: "A78BFA"))
+
+                Spacer()
+
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 6, height: 6)
+                    Text("LIVE 监控中")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.green)
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.green.opacity(0.12))
+                .clipShape(Capsule())
+            }
+
+            Divider()
+
+            // 渲染引擎与实时状态
+            VStack(spacing: 8) {
+                PetEngineStatusRow(
+                    location: "状态栏 (Status Bar)",
+                    icon: "menubar.rectangle",
+                    engine: monitor.statusBarEngineName,
+                    isActive: monitor.isStatusBarActive,
+                    fps: monitor.statusBarFPS
+                )
+
+                PetEngineStatusRow(
+                    location: "Touch Bar",
+                    icon: "rectangle.on.rectangle.angled",
+                    engine: monitor.touchBarEngineName,
+                    isActive: monitor.isTouchBarActive,
+                    fps: monitor.touchBarFPS
+                )
+
+                PetEngineStatusRow(
+                    location: "桌面底端悬浮层",
+                    icon: "desktopcomputer",
+                    engine: monitor.desktopEngineName,
+                    isActive: monitor.isDesktopActive,
+                    fps: monitor.desktopFPS
+                )
+            }
+
+            Divider()
+
+            // 实时资源占用
+            HStack(spacing: 16) {
+                PetMetricPill(
+                    title: "App CPU 占用",
+                    value: String(format: "%.1f%%", monitor.cpuUsage),
+                    icon: "speedometer",
+                    color: monitor.cpuUsage > 30 ? Color.orange : Color.blue
+                )
+
+                PetMetricPill(
+                    title: "内存 Footprint",
+                    value: String(format: "%.1f MB", monitor.memoryUsageMB),
+                    icon: "memorychip",
+                    color: Color.purple
+                )
+
+                PetMetricPill(
+                    title: "已加载动画帧",
+                    value: "24 帧 (PNG)",
+                    icon: "photo.stack",
+                    color: Color.teal
+                )
+            }
+        }
+        .padding(12)
+        .background(Color.primary.opacity(0.04))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+    }
+}
+
+private struct PetEngineStatusRow: View {
+    let location: String
+    let icon: String
+    let engine: String
+    let isActive: Bool
+    let fps: String
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundStyle(isActive ? Color(hex: "34C759") : Color.secondary)
+                .frame(width: 16)
+
+            Text(location)
+                .font(.system(size: 12, weight: .medium))
+
+            Spacer()
+
+            Text(engine)
+                .font(.system(size: 11, weight: .semibold))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(isActive ? Color.purple.opacity(0.12) : Color.secondary.opacity(0.12))
+                .foregroundStyle(isActive ? Color(hex: "A78BFA") : Color.secondary)
+                .cornerRadius(4)
+
+            Text(fps)
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundStyle(isActive ? Color.primary : Color.secondary)
+                .frame(width: 50, alignment: .trailing)
+        }
+    }
+}
+
+private struct PetMetricPill: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .foregroundStyle(color)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.primary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
 #Preview {

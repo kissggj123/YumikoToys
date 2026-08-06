@@ -109,6 +109,14 @@ final class PetTouchBarWindowManager {
 
     private init() {}
 
+    func updateTouchBarState(isEnabled: Bool) {
+        if isEnabled {
+            install()
+        } else {
+            uninstall()
+        }
+    }
+
     func attach(to window: NSWindow) {
         guard systemTouchBar == nil,
               let touchBarVC,

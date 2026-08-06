@@ -16,12 +16,21 @@ enum IconStyle: String, CaseIterable, Identifiable, Codable, Sendable {
     case nativeEmoji = "nativeEmoji"       // 原生动物 Emoji
     case animeHandDrawn = "animeHandDrawn" // 二次元手绘风（大尺寸界面用）
     case animePixel = "animePixel"         // 二次元像素风（小尺寸/状态栏用）
+    case petBlue = "petBlue"               // 蓝兔桌宠
+    case petGray = "petGray"               // 灰猫桌宠
+    case petWhite = "petWhite"             // 白鼠桌宠
+    case petTall = "petTall"               // 松鼠桌宠
 
     var id: String { rawValue }
     
     /// 是否仅用于状态栏图标（不影响界面中的图标）
     var isStatusBarOnly: Bool {
-        self == .originalHattie
+        switch self {
+        case .originalHattie, .petBlue, .petGray, .petWhite, .petTall:
+            return true
+        default:
+            return false
+        }
     }
     
     /// 用于界面显示的风格列表（排除仅状态栏的风格）
@@ -38,6 +47,10 @@ enum IconStyle: String, CaseIterable, Identifiable, Codable, Sendable {
         case .nativeEmoji: return "😊 原生 Emoji"
         case .animeHandDrawn: return "✏️ 二次元手绘"
         case .animePixel: return "🎮 二次元像素"
+        case .petBlue: return "桌宠浅蓝队员 (蓝兔)"
+        case .petGray: return "桌宠深灰队员 (灰猫)"
+        case .petWhite: return "桌宠白衣队员 (白鼠)"
+        case .petTall: return "桌宠浅灰队员 (松鼠)"
         }
     }
     
@@ -50,6 +63,10 @@ enum IconStyle: String, CaseIterable, Identifiable, Codable, Sendable {
         case .nativeEmoji: return "系统原生 Emoji 表情"
         case .animeHandDrawn: return "圆润线条手绘风格，二次元柔和美感"
         case .animePixel: return "精致像素风二次元图标，适合状态栏小尺寸"
+        case .petBlue: return "桌宠浅蓝队员动态步行动画"
+        case .petGray: return "桌宠深灰队员动态步行动画"
+        case .petWhite: return "桌宠白衣队员动态步行动画"
+        case .petTall: return "桌宠浅灰队员动态步行动画"
         }
     }
 }
@@ -132,6 +149,8 @@ struct StyledIconView: View {
                 AnimeHandDrawnIcon(button: button, size: size, color: color)
             case .animePixel:
                 AnimePixelIcon(button: button, size: size, color: color)
+            case .petBlue, .petGray, .petWhite, .petTall:
+                PixelAnimalIcon(button: button, size: size)
             }
         }
         .scaleEffect(isHovered ? 1.1 : 1.0)

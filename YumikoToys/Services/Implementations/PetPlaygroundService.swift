@@ -377,10 +377,11 @@ final class PetPlaygroundService: ObservableObject {
     private init() {}
 
     func initialize() {
-        let enabled = DependencyContainer.shared.settingsService.settings.isPetPlaygroundEnabled
-        if enabled {
+        let settings = DependencyContainer.shared.settingsService.settings
+        if settings.isPetPlaygroundEnabled {
             startPlayground()
         }
+        PetTouchBarWindowManager.shared.updateTouchBarState(isEnabled: settings.isPetTouchBarEnabled)
     }
 
     func setEnabled(_ enabled: Bool) {
@@ -419,7 +420,6 @@ final class PetPlaygroundService: ObservableObject {
         isEnabled = true
         PetPlaygroundEngine.shared.start()
         installOverlays()
-        PetTouchBarWindowManager.shared.install()
         LoggerService.shared.info("PetPlaygroundService started desktop pets overlay")
     }
 
@@ -427,7 +427,6 @@ final class PetPlaygroundService: ObservableObject {
         isEnabled = false
         PetPlaygroundEngine.shared.stop()
         removeOverlays()
-        PetTouchBarWindowManager.shared.uninstall()
         LoggerService.shared.info("PetPlaygroundService stopped desktop pets overlay")
     }
 

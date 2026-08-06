@@ -8,6 +8,7 @@
 
 import SwiftUI
 import AppKit
+import SpriteKit
 
 // MARK: - 像素图标绘制引擎
 
@@ -652,6 +653,14 @@ struct PixelArtIconView: View {
                 AnimeHandDrawnIcon(button: function, size: size, color: Color(hex: "FF6B9D"))
             case .animePixel:
                 AnimePixelIcon(button: function, size: size, color: Color(hex: "9B6BCD"))
+            case .petBlue:
+                PetAnimatedFrameView(petName: "blue", size: size)
+            case .petGray:
+                PetAnimatedFrameView(petName: "gray", size: size)
+            case .petWhite:
+                PetAnimatedFrameView(petName: "white", size: size)
+            case .petTall:
+                PetAnimatedFrameView(petName: "tall", size: size)
             }
         }
         .frame(width: size, height: size)
@@ -870,8 +879,109 @@ extension IconStyle {
                 palette: PixelPalette.animePixel,
                 size: size
             )
+        case .petBlue:
+            return renderPetFrame(name: "blue", frameIndex: 0, size: size)
+        case .petGray:
+            return renderPetFrame(name: "gray", frameIndex: 0, size: size)
+        case .petWhite:
+            return renderPetFrame(name: "white", frameIndex: 0, size: size)
+        case .petTall:
+            return renderPetFrame(name: "tall", frameIndex: 0, size: size)
         }
     }
+
+    /// 渲染桌宠特定步行动画帧为 NSImage
+    func renderPetFrame(name: String, frameIndex: Int, size: CGFloat = 22) -> NSImage {
+        let frameName = "pet_\(name)_frame_\(frameIndex)"
+        if let url = Bundle.main.url(forResource: frameName, withExtension: "png"),
+           let img = NSImage(contentsOf: url) {
+            let resized = img.copy() as! NSImage
+            resized.size = NSSize(width: size, height: size)
+            return resized
+        }
+        let candidates = [
+            Bundle.main.bundlePath + "/Contents/Resources/\(frameName).png",
+            "/Applications/YumikoToys.app/Contents/Resources/\(frameName).png"
+        ]
+        for path in candidates {
+            if let img = NSImage(contentsOfFile: path) {
+                let resized = img.copy() as! NSImage
+                resized.size = NSSize(width: size, height: size)
+                return resized
+            }
+        }
+        let emojiMap = ["blue": "🐰", "gray": "🐱", "white": "🐭", "tall": "🐿️"]
+        return renderEmojiIcon(emojiMap[name] ?? "🐾", size: size)
+    }
+}
+
+// MARK: - SpriteKit 桌宠 硬件加速渲染 (SKSpriteNode + SKScene)
+
+struct SpriteKitPetIconView: NSViewRepresentable {
+    let petName: String
+    let size: CGFloat
+
+    func makeNSView(context: Context) -> SKView {
+        let skView = SKView(frame: NSRect(x: 0, y: 0, width: size, height: size))
+        skView.allowsTransparency = true
+        skView.wantsLayer = true
+        skView.layer?.backgroundColor = NSColor.clear.cgColor
+
+        let scene = SKScene(size: CGSize(width: size, height: size))
+        scene.backgroundColor = .clear
+        scene.scaleMode = .resizeFill
+
+        let textures = loadTextures(name: petName)
+        if !textures.isEmpty {
+            let sprite = SKSpriteNode(texture: textures[0])
+            sprite.size = CGSize(width: size, height: size)
+            sprite.position = CGPoint(x: size / 2, y: size / 2)
+            scene.addChild(sprite)
+
+            let anim = SKAction.animate(with: textures, timePerFrame: 0.14, resize: false, restore: false)
+            sprite.run(SKAction.repeatForever(anim))
+        }
+
+        skView.presentScene(scene)
+        return skView
+    }
+
+    func updateNSView(_ nsView: SKView, context: Context) {}
+
+    private func loadTextures(name: String) -> [SKTexture] {
+        (0..<6).compactMap { i -> SKTexture? in
+            let frameName = "pet_\(name)_frame_\(i)"
+            if let url = Bundle.main.url(forResource: frameName, withExtension: "png"),
+               let img = NSImage(contentsOf: url) {
+                return SKTexture(image: img)
+            }
+            let candidates = [
+                Bundle.main.bundlePath + "/Contents/Resources/\(frameName).png",
+                "/Applications/YumikoToys.app/Contents/Resources/\(frameName).png"
+            ]
+            for path in candidates {
+                if let img = NSImage(contentsOfFile: path) {
+                    return SKTexture(image: img)
+                }
+            }
+            return nil
+        }
+    }
+}
+
+// MARK: - 桌宠步行动画预览视图（设置界面使用）
+
+struct PetAnimatedFrameView: View {
+    let petName: String
+    let size: CGFloat
+
+    var body: some View {
+        SpriteKitPetIconView(petName: petName, size: size)
+            .frame(width: size, height: size)
+    }
+}
+
+extension IconStyle {
     
     /// 渲染 SF Symbol 为 NSImage（适配深色/浅色模式）
     private func renderSystemIcon(_ name: String, size: CGFloat, color: NSColor) -> NSImage {

@@ -201,9 +201,18 @@ final class StatusBarManager: NSObject {
     
     // MARK: - 图标动画系统
     
-    /// 根据防休眠状态更新图标
+    private func isPetStyle(_ style: IconStyle) -> Bool {
+        switch style {
+        case .petBlue, .petGray, .petWhite, .petTall:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// 根据防休眠状态或桌宠图标类型更新图标
     func updateIconForPreventSleepState(_ isEnabled: Bool) {
-        if isEnabled {
+        if isEnabled || isPetStyle(currentIconStyle) {
             startIconAnimation()
         } else {
             stopIconAnimation()
@@ -215,7 +224,9 @@ final class StatusBarManager: NSObject {
         stopIconAnimation()
         currentIconIndex = 0
         
-        iconAnimationCancellable = Timer.publish(every: animationInterval, on: .main, in: .common)
+        let interval: TimeInterval = isPetStyle(currentIconStyle) ? 0.14 : animationInterval
+        
+        iconAnimationCancellable = Timer.publish(every: interval, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 self?.cycleIcon()
@@ -228,10 +239,24 @@ final class StatusBarManager: NSObject {
     }
     
     private func cycleIcon() {
-        if currentIconStyle == .originalHattie {
+        switch currentIconStyle {
+        case .originalHattie:
             let iconName = animatedIcons[currentIconIndex % animatedIcons.count]
             setIcon(iconName)
-        } else {
+        case .petBlue, .petGray, .petWhite, .petTall:
+            let petName: String
+            switch currentIconStyle {
+            case .petBlue: petName = "blue"
+            case .petGray: petName = "gray"
+            case .petWhite: petName = "white"
+            case .petTall: petName = "tall"
+            default: petName = "blue"
+            }
+            let frameIdx = currentIconIndex % 6
+            let frameImg = currentIconStyle.renderPetFrame(name: petName, frameIndex: frameIdx, size: 22)
+            self.currentImage = frameImg
+            updateStatusBarRepresentation()
+        default:
             guard let baseImage = currentIconStyle.renderStatusBarIcon(size: 22).copy() as? NSImage else { return }
             let scale: CGFloat = 1.0 + 0.08 * sin(Double(currentIconIndex) * 0.5)
             let newSize = NSSize(width: 22 * scale, height: 22 * scale)
@@ -252,10 +277,15 @@ final class StatusBarManager: NSObject {
     }
     
     private func updateStatusBarIcon() {
-        guard let baseImage = currentIconStyle.renderStatusBarIcon(size: 22).copy() as? NSImage else { return }
-        baseImage.size = NSSize(width: 22, height: 22)
-        self.currentImage = baseImage
-        updateStatusBarRepresentation()
+        if isPetStyle(currentIconStyle) || container.preventSleepService.isPreventSleepEnabled {
+            startIconAnimation()
+        } else {
+            stopIconAnimation()
+            guard let baseImage = currentIconStyle.renderStatusBarIcon(size: 22).copy() as? NSImage else { return }
+            baseImage.size = NSSize(width: 22, height: 22)
+            self.currentImage = baseImage
+            updateStatusBarRepresentation()
+        }
     }
     
     func refreshAfterServicesInitialized() {
@@ -297,9 +327,7 @@ final class StatusBarManager: NSObject {
                 let style = settings.statusBarIconStyle
                 if self.currentIconStyle != style {
                     self.currentIconStyle = style
-                    if !self.container.preventSleepService.isPreventSleepEnabled {
-                        self.updateStatusBarIcon()
-                    }
+                    self.updateStatusBarIcon()
                     LoggerService.shared.info("Status bar icon updated to style: \(style.displayName)")
                 }
                 
@@ -408,7 +436,8 @@ final class StatusBarManager: NSObject {
         let buttonView = StatusBarButtonView(
             days: currentDays,
             line1: currentLine1,
-            currentImage: currentImage
+            currentImage: currentImage,
+            currentIconStyle: currentIconStyle
         )
         
         if let hostingView = statusBarHostingView {
@@ -423,6 +452,7 @@ final class StatusBarManager: NSObject {
             // 首次渲染：清除 AppKit 默认的前景，防止视觉重合
             button.title = ""
             button.image = nil
+            button.appearsDisabled = false
             
             let hostingView = NSHostingView(rootView: buttonView)
             let size = hostingView.fittingSize
@@ -948,6 +978,17 @@ struct StatusBarButtonView: View {
     let days: Double
     let line1: String
     let currentImage: NSImage?
+    let currentIconStyle: IconStyle
+
+    private var petName: String? {
+        switch currentIconStyle {
+        case .petBlue: return "blue"
+        case .petGray: return "gray"
+        case .petWhite: return "white"
+        case .petTall: return "tall"
+        default: return nil
+        }
+    }
     
     // 【修复】直接使用非可选的 NSFont 进行桥接转换，无需 if let
     private var font1: Font {
@@ -962,7 +1003,10 @@ struct StatusBarButtonView: View {
     
     var body: some View {
         HStack(spacing: 5) {
-            if let img = currentImage {
+            if let pet = petName {
+                SpriteKitPetIconView(petName: pet, size: 18)
+                    .frame(width: 18, height: 18)
+            } else if let img = currentImage {
                 Image(nsImage: img)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -972,11 +1016,14 @@ struct StatusBarButtonView: View {
             VStack(alignment: .center, spacing: -1) {
                 Text(line1)
                     .font(font1) // 完美套用 AppKit 自定义字体 1
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color(NSColor.headerTextColor))
+                    .shadow(color: Color.black.opacity(0.35), radius: 1, x: 0, y: 1)
                     .lineLimit(1)
                 
                 Text(String(format: "%.3f天", days))
                     .font(font2) // 完美套用 AppKit 自定义字体 2
+                    .foregroundStyle(Color(NSColor.headerTextColor))
+                    .shadow(color: Color.black.opacity(0.35), radius: 1, x: 0, y: 1)
                     .lineLimit(1)
             }
         }

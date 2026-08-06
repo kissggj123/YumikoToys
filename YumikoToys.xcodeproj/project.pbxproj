@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B4E029FDF6099541BFAAE133 /* PetPerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49B9DD63A0BD843B290C3D8 /* PetPerformanceMonitor.swift */; };
 		B43B2CE2F4B4BF48419609DD /* PetTouchBarWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */; };
 		C3BCA5F23AB3604C30981411 /* pet_white_frame_5.png in Resources */ = {isa = PBXBuildFile; fileRef = R3D49B953BE8CE4D0B84DDE4 /* pet_white_frame_5.png */; };
 		C39ED74096D5F941148B5D16 /* pet_white_frame_4.png in Resources */ = {isa = PBXBuildFile; fileRef = R3B959F9051C2D46198DD95D /* pet_white_frame_4.png */; };
@@ -252,6 +253,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F49B9DD63A0BD843B290C3D8 /* PetPerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPerformanceMonitor.swift; sourceTree = "<group>"; };
 		F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetTouchBarWindow.swift; sourceTree = "<group>"; };
 		R3D49B953BE8CE4D0B84DDE4 /* pet_white_frame_5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_5.png; sourceTree = "<group>"; };
 		R3B959F9051C2D46198DD95D /* pet_white_frame_4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_4.png; sourceTree = "<group>"; };
@@ -596,6 +598,7 @@
 		FC65521C2FC373980093B726 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				F49B9DD63A0BD843B290C3D8 /* PetPerformanceMonitor.swift */,
 				F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */,
 				F3D9A78F5299B545C480F49B /* YumikoTouchBarManager.swift */,
 				FC6553F72FDA00000093B726 /* ScreenshotAnnotationModule.swift */,
@@ -1225,6 +1228,7 @@
 		1EE4E20624F97E240097C32C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
+				B4E029FDF6099541BFAAE133 /* PetPerformanceMonitor.swift in Sources */,
 				B43B2CE2F4B4BF48419609DD /* PetTouchBarWindow.swift in Sources */,
 				B32639655650B74FEBA991E3 /* YumikoTouchBarManager.swift in Sources */,
 				B3141674EE5F604DE9A36AD0 /* PetPlaygroundService.swift in Sources */,

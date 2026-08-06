@@ -81,10 +81,10 @@ enum AnimeThemeStyle: String, CaseIterable, Codable, Sendable, Identifiable {
 
     var description: String {
         switch self {
-        case .healing: return "吉卜力森林色调，鼠尾草绿与蜂蜜金的自然治愈"
-        case .cyber:   return "深空霓虹光效，电光蓝与品红的赛博朋克未来感"
-        case .kawaii:  return "三丽鸥糖果色，草莓粉与柠檬黄的甜蜜活力"
-        case .makoto:  return "新海诚黄昏天空，暮光蓝与落日金的精致光影"
+        case .healing: return "抹茶绿与晨光金，自然温暖的清爽森林调"
+        case .cyber:   return "深空霓虹电光蓝，极具未来感的高科技二次元"
+        case .kawaii:  return "草莓奶油草莓粉，甜美柔和的高级软萌氛围"
+        case .makoto:  return "新海诚暮光晴空，蔚蓝与落日玫瑰红的电影光影"
         }
     }
 }
@@ -119,20 +119,20 @@ struct AnimeThemeToken: Codable, Sendable, Equatable {
 
     // MARK: - Static Presets
 
-    /// 日系治愈风 —— 吉卜力森林小屋，鼠尾草绿+蜂蜜金，自然温暖
+    /// 日系治愈风 —— 抹茶温感与自然淡雅，清爽森林美学
     static let healing = AnimeThemeToken(
-        backgroundPrimary:   "FBF5EC",
-        backgroundSecondary: "F4EDE0",
-        accentColor:         "6B9E78",
-        glowColor:           "E8B86D",
-        gradientStart:       "F8D8B0",
-        gradientEnd:         "D8E8D0",
-        cardBackground:      "FFFDF8",
-        cardBorder:          "E4D8C8",
-        textPrimary:         "3D2E1E",
-        textSecondary:       "7A6850",
-        hoverColor:          "F0E8D8",
-        buttonColor:         "6B9E78",
+        backgroundPrimary:   "F7FAF6",
+        backgroundSecondary: "EFF5ED",
+        accentColor:         "3B7A57",
+        glowColor:           "D99B26",
+        gradientStart:       "81C784",
+        gradientEnd:         "FBC02D",
+        cardBackground:      "FFFFFF",
+        cardBorder:          "D5E6D8",
+        textPrimary:         "1B3022",
+        textSecondary:       "4E6B56",
+        hoverColor:          "E4F0E6",
+        buttonColor:         "3B7A57",
         isDark:              false,
         cardBlurRadius:      12.0,
         borderWidth:         0.5,
@@ -141,20 +141,20 @@ struct AnimeThemeToken: Codable, Sendable, Equatable {
         animationStyle:      .float
     )
 
-    /// 赛博二次元 —— 深空底色，电光蓝+品红霓虹，赛博朋克未来感
+    /// 赛博二次元 —— 霓虹电光与深空黑，顶级高科技质感
     static let cyber = AnimeThemeToken(
-        backgroundPrimary:   "0C1020",
-        backgroundSecondary: "141830",
-        accentColor:         "4DC9F6",
-        glowColor:           "FF2D78",
-        gradientStart:       "4DC9F6",
-        gradientEnd:         "A855F7",
-        cardBackground:      "181E38",
-        cardBorder:          "2E3658",
-        textPrimary:         "EEF2FF",
-        textSecondary:       "8890B0",
-        hoverColor:          "222848",
-        buttonColor:         "4DC9F6",
+        backgroundPrimary:   "0B0E17",
+        backgroundSecondary: "121726",
+        accentColor:         "00E5FF",
+        glowColor:           "D946EF",
+        gradientStart:       "00E5FF",
+        gradientEnd:         "8B5CF6",
+        cardBackground:      "161C2E",
+        cardBorder:          "293552",
+        textPrimary:         "F8FAFC",
+        textSecondary:       "94A3B8",
+        hoverColor:          "1E263D",
+        buttonColor:         "00E5FF",
         isDark:              true,
         cardBlurRadius:      20.0,
         borderWidth:         1.0,
@@ -163,20 +163,20 @@ struct AnimeThemeToken: Codable, Sendable, Equatable {
         animationStyle:      .pulse
     )
 
-    /// 软萌可爱风 —— 三丽鸥糖果屋，草莓粉+柠檬黄，甜蜜活力
+    /// 软萌可爱风 —— 草莓莓果与奶霜柔粉，甜美高级不俗套
     static let kawaii = AnimeThemeToken(
-        backgroundPrimary:   "FFF0F5",
-        backgroundSecondary: "FFE8F0",
-        accentColor:         "FF6B9D",
-        glowColor:           "FFE066",
-        gradientStart:       "FFB0D0",
-        gradientEnd:         "C8B0F8",
-        cardBackground:      "FFFAFD",
-        cardBorder:          "F8D0E0",
-        textPrimary:         "4A1830",
-        textSecondary:       "8A5070",
-        hoverColor:          "FFE0EC",
-        buttonColor:         "FF6B9D",
+        backgroundPrimary:   "FFF6F8",
+        backgroundSecondary: "FFECF1",
+        accentColor:         "FF5376",
+        glowColor:           "FFB703",
+        gradientStart:       "FF7597",
+        gradientEnd:         "FFB3C6",
+        cardBackground:      "FFFFFF",
+        cardBorder:          "FFD5E1",
+        textPrimary:         "3D1424",
+        textSecondary:       "7D425A",
+        hoverColor:          "FFE4EC",
+        buttonColor:         "FF5376",
         isDark:              false,
         cardBlurRadius:      10.0,
         borderWidth:         0.5,
@@ -185,20 +185,20 @@ struct AnimeThemeToken: Codable, Sendable, Equatable {
         animationStyle:      .bounce
     )
 
-    /// 新海诚精致写实 —— 黄昏天空，暮光蓝+落日金，光影交织
+    /// 新海诚精致写实 —— 暮光晴空与落日渐变，电影级漫彩光影
     static let makoto = AnimeThemeToken(
-        backgroundPrimary:   "F0F6FC",
-        backgroundSecondary: "E4EEF8",
-        accentColor:         "5B8DB8",
-        glowColor:           "F0A050",
-        gradientStart:       "88C8F0",
-        gradientEnd:         "F8C888",
-        cardBackground:      "F8FBFF",
-        cardBorder:          "D0E0F0",
-        textPrimary:         "1E3048",
-        textSecondary:       "506880",
-        hoverColor:          "E0ECF6",
-        buttonColor:         "5B8DB8",
+        backgroundPrimary:   "F2F7FD",
+        backgroundSecondary: "E4EEFB",
+        accentColor:         "2563EB",
+        glowColor:           "F59E0B",
+        gradientStart:       "3B82F6",
+        gradientEnd:         "F43F5E",
+        cardBackground:      "FFFFFF",
+        cardBorder:          "D1E2F8",
+        textPrimary:         "0F172A",
+        textSecondary:       "475569",
+        hoverColor:          "E2EDFC",
+        buttonColor:         "2563EB",
         isDark:              false,
         cardBlurRadius:      14.0,
         borderWidth:         0.5,
@@ -296,7 +296,8 @@ final class AnimeThemeService: ObservableObject, @unchecked Sendable {
     }
 
     func buttonColor(from token: AnimeThemeToken? = nil) -> Color {
-        Color(hex: (token ?? currentToken).buttonColor)
+        let t = token ?? currentToken
+        return Color(hex: t.buttonColor).opacity(t.isDark ? 0.15 : 0.08)
     }
 
     // MARK: - Resolved Theme Bridge
