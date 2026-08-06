@@ -317,6 +317,30 @@ final class StatusBarManager: NSObject {
                 self?.updateIconForPreventSleepState(isEnabled)
             }
             .store(in: &cancellables)
+            
+        NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.statusItem?.button?.appearsDisabled = false
+                self?.updateStatusBarRepresentation()
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.statusItem?.button?.appearsDisabled = false
+                self?.updateStatusBarRepresentation()
+            }
+            .store(in: &cancellables)
+
+        NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.activeSpaceDidChangeNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.statusItem?.button?.appearsDisabled = false
+                self?.updateStatusBarRepresentation()
+            }
+            .store(in: &cancellables)
         
         container.settingsService.settingsPublisher
             .receive(on: DispatchQueue.main)
@@ -455,6 +479,8 @@ final class StatusBarManager: NSObject {
             button.appearsDisabled = false
             
             let hostingView = NSHostingView(rootView: buttonView)
+            hostingView.wantsLayer = true
+            hostingView.layerContentsRedrawPolicy = .onSetNeedsDisplay
             let size = hostingView.fittingSize
             hostingView.frame = NSRect(origin: .zero, size: size)
             
@@ -1016,14 +1042,12 @@ struct StatusBarButtonView: View {
             VStack(alignment: .center, spacing: -1) {
                 Text(line1)
                     .font(font1) // 完美套用 AppKit 自定义字体 1
-                    .foregroundStyle(Color(NSColor.headerTextColor))
-                    .shadow(color: Color.black.opacity(0.35), radius: 1, x: 0, y: 1)
+                    .foregroundStyle(Color(NSColor.labelColor))
                     .lineLimit(1)
                 
                 Text(String(format: "%.3f天", days))
                     .font(font2) // 完美套用 AppKit 自定义字体 2
-                    .foregroundStyle(Color(NSColor.headerTextColor))
-                    .shadow(color: Color.black.opacity(0.35), radius: 1, x: 0, y: 1)
+                    .foregroundStyle(Color(NSColor.labelColor))
                     .lineLimit(1)
             }
         }

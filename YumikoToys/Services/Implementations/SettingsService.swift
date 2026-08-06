@@ -69,6 +69,9 @@ final class SettingsService: SettingsServiceProtocol {
             enablePoke: settings.enablePoke,
             apiKey: settings.pokeApiKey
         )
+
+        // 同步至 二次元主题服务
+        syncAnimeTheme(from: settings)
     }
     
     func updateMode(_ mode: AppMode) {
@@ -93,6 +96,13 @@ final class SettingsService: SettingsServiceProtocol {
     }
     
     // MARK: - Private Methods
+
+    private func syncAnimeTheme(from settings: AppSettings) {
+        Task { @MainActor in
+            AnimeThemeService.shared.isEnabled = settings.isAnimeModeEnabled
+            AnimeThemeService.shared.currentStyle = settings.selectedAnimeThemeStyle
+        }
+    }
     
     private func saveSettings() {
         storageService.save(settings, forKey: settingsKey)
@@ -114,5 +124,7 @@ final class SettingsService: SettingsServiceProtocol {
             enablePoke: settings.enablePoke,
             apiKey: settings.pokeApiKey
         )
+
+        syncAnimeTheme(from: settings)
     }
 }
