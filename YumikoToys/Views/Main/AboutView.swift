@@ -321,7 +321,7 @@ private struct YumikoPopoverMockupView: View {
                                 Image(systemName: "carrot.fill").font(.system(size: 8)).foregroundStyle(.orange)
                                 Text("▾").font(.system(size: 8)).foregroundStyle(.tertiary)
                             }
-                            Text("v4.5.6").font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(.tertiary)
+                            Text("v4.5.7").font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(.tertiary)
                         }
                     }
 

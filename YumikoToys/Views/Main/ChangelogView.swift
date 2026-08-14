@@ -16,45 +16,45 @@ struct ChangelogView: View {
 
                 // 明日方舟罗德岛战术协议 — 版本代号区
                 CodenameSection(
-                    emoji: "🔷",
-                    title: "罗德岛战术协议 · 凯尔希的特别复查 (Rhodes Island Tactical Protocol · Kal'tsit's Audit)",
+                    emoji: "⚔️",
+                    title: "罗德岛战术协议 · 麦克白不休眠史诗 (Rhodes Island Tactical Protocol · Macbeth Unsleeping Epic)",
                     titleColor: "E9C46A",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，正如大地上的源石扩散与冗余的系统特权指令有着相似的副作用，我们在 v4.5.6 中为您实施了一次全局代码净化。我们消除了滥用特权电源指令造成的睡眠因果反噬，以最优雅的用户级 LaunchAgent 守护静默启动，全面优化了特效雨与图形渲染的算力损耗，并为爬爬乐与 NPU 推理框注入了全新的物理拖拽与平滑滚动体验。秩序已重新建立，请您审阅。",
+                    quote: "博士，正如《麦克白》原著中所吟唱的：‘睡眠已死，麦克白杀死了睡眠！’ 在 v4.5.7 协议中，我们完成了睡眠守护重置与硬解冻方案，绘制了 1:1 状态栏下拉面板与呼吸指示点，并为全员名录注入了莎士比亚《麦克白》原著典故与 ⓘ 交互解构。此外，我们彻底消除了爬爬乐全屏点击拦截，实现了白名单应用动态实时刷新。请您审阅。",
                     entries: [
                         ChangelogEntry(
-                            emoji: "💤",
-                            prefix: "【电源净化】",
+                            emoji: "🖼️",
+                            prefix: "【1:1 状态栏模拟】",
                             prefixColor: "A8D8A8",
-                            text: "睡眠因果归位：彻底废除 sudo pmset 全局物理电源改写与 LaunchDaemon 特权部署，回归 macOS 原生 IOPMAssertion 动态断言机制。应用退出即释放休眠阻断，彻底解决开机默认禁用睡眠的隐患。",
+                            text: "1:1 矢量绘制 YumikoToys 状态栏下拉菜单面板，精准还原防休眠关闭/开启状态，并在 Header 栏右侧精准亮起蓝绿脉冲呼吸点特效。",
                             character: "——凯尔希"
                         ),
                         ChangelogEntry(
-                            emoji: "🚀",
-                            prefix: "【优雅自启】",
+                            emoji: "📖",
+                            prefix: "【莎士比亚典故】",
                             prefixColor: "E9C46A",
-                            text: "LaunchAgent 配置文件：弃用不稳定易误判的 helper 进程，改为向 ~/Library/LaunchAgents 写入规范 plist 并注入 --autostart 标记。开机自启静默驻留菜单栏，100% 解决误弹主界面的问题。",
+                            text: "功勋名录重构为《麦克白》悲剧史诗风格，为全员名字加入精致 ⓘ 交互按钮，点击弹窗即可查阅《麦克白》、《暴风雨》、《仲夏夜之梦》原著典故出处与角色解构。",
                             character: "——阿米娅"
                         ),
                         ChangelogEntry(
-                            emoji: "🌧️",
-                            prefix: "【算力优化】",
+                            emoji: "🐾",
+                            prefix: "【爬爬乐穿透修复】",
                             prefixColor: "E76F51",
-                            text: "特效雨与渲染流控：重构 EmojiRainView 渲染逻辑，在 Canvas 外部建立文本解析缓存表，大幅降低高频 Layout 布局开销，特效雨结束时即刻物理销毁窗口内存，大幅降低 CPU 与 RAM 占用。",
+                            text: "彻底消除开启爬爬乐后全屏遮罩对鼠标点击的意外拦截。hitTest 节点级精准判定：点击桌宠人物触发现场拖拽，点击空白桌面或状态栏 100% 物理穿透，随时自由开关。",
                             character: "——W (维什戴尔)"
                         ),
                         ChangelogEntry(
-                            emoji: "🐾",
-                            prefix: "【爬爬乐重构】",
+                            emoji: "⚡",
+                            prefix: "【白名单实时刷新】",
                             prefixColor: "A8C8D8",
-                            text: "四干员识别与拖拽：优化几何拓扑识别准确度，过滤应用自身面板干扰；实现自定义物理 hitTest 穿透，支持鼠标拖拽 4 位干员移动至屏幕顶端、左右墙壁或 Dock 栏并自动吸附攀爬。",
+                            text: "白名单勾选列表接入 NSWorkspace 应用生命周期通知流，Mac 系统中任何应用启动或退出时，勾选菜单毫秒级自动实时刷新，无需重新打开设置界面。",
                             character: "——华法琳"
                         ),
                         ChangelogEntry(
-                            emoji: "🧠",
-                            prefix: "【推理框增强】",
+                            emoji: "⏱️",
+                            prefix: "【秒级构建戳记】",
                             prefixColor: "B8C0E0",
-                            text: "NPU 框穿透与平滑滚动：NPU Telemetry 推理框支持全区域按住鼠标拖动位移；非按钮透光区域自动物理穿透；推理日志新增平滑滚动视图，文本更新不再刺眼跳跃。",
+                            text: "应用版本号升级为 v4.5.7，修订构建号采用自 2024-03-12 00:00:00 起精确计算的秒级时间戳 (76555427)，精确记录每一个不休眠之夜。",
                             character: "——缪尔赛思"
                         )
                     ]
