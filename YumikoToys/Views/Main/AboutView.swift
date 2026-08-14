@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.6 - Shakespearean Macbeth Allusion Popovers & Info Buttons）
+//  关于页面视图（v4.5.6 - Shakespearean Macbeth Allusion Popovers & Vector Info Buttons）
 //
 
 import SwiftUI
@@ -62,7 +62,7 @@ struct AboutView: View {
                 }
 
                 // MARK: - Dramatis Personae 功勋名录 (Macbeth Edition with Info Allusion Buttons)
-                AboutSectionCard(title: "Dramatis Personae", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录（点击 ⓘ 按钮查阅原著典故）”") {
+                AboutSectionCard(title: "Dramatis Personae", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”", showInfoHint: true) {
                     VStack(alignment: .leading, spacing: 12) {
                         CreditsRow(
                             title: "The Grand Artificer",
@@ -128,7 +128,7 @@ struct AboutView: View {
                 }
 
                 // MARK: - 致谢深情群星 (Shakespearean Chorus Edition)
-                AboutSectionCard(title: "A Note of Gratitude Most Profound", subtitle: "“汝等之光，亦使此剧增辉（点击 ⓘ 查阅原著典故）”") {
+                AboutSectionCard(title: "A Note of Gratitude Most Profound", subtitle: "“汝等之光，亦使此剧增辉”", showInfoHint: true) {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("吾辈亦向此众友献上敬意：")
                             .font(.system(size: 13))
@@ -164,7 +164,7 @@ struct AboutView: View {
                 }
 
                 // MARK: - 命运的信使 (Shakespearean Oracle Edition)
-                AboutSectionCard(title: "A Wyrd Messenger", subtitle: "“荒野神谕，低语建言扭转浩瀚航程（点击 ⓘ 查阅原著典故）”") {
+                AboutSectionCard(title: "A Wyrd Messenger", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”", showInfoHint: true) {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("如荒野上之回响，自迷雾中而来，其低语之建言，足以扭转吾辈大业之航向者，乃")
                             .font(.system(size: 13))
@@ -556,26 +556,43 @@ private struct AboutTextCard<Content: View>: View {
     }
 }
 
-// MARK: - 分区卡片
+// MARK: - 分区卡片 (支持精致矢量 SF Symbol 图标提示)
 
 private struct AboutSectionCard<Content: View>: View {
     let title: String
     var subtitle: String? = nil
+    var showInfoHint: Bool = false
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             // 标题
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.primary)
 
                 if let subtitle = subtitle {
-                    Text(subtitle)
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(.tertiary)
-                        .italic()
+                    HStack(spacing: 4) {
+                        Text(subtitle)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(.tertiary)
+                            .italic()
+
+                        if showInfoHint {
+                            HStack(spacing: 3) {
+                                Text("· 点击")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.tertiary)
+                                Image(systemName: "info.circle.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(Color(hex: "FF6B9D"))
+                                Text("查阅原著典故")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                    }
                 }
             }
 
