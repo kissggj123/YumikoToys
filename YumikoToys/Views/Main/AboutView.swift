@@ -127,45 +127,58 @@ struct AboutView: View {
                     }
                 }
 
-                // MARK: - 致谢深情群星
-                AboutSectionCard(title: "A Note of Gratitude Most Profound", subtitle: "致以最深沉的谢意") {
-                    VStack(alignment: .leading, spacing: 10) {
+                // MARK: - 致谢深情群星 (Shakespearean Chorus Edition)
+                AboutSectionCard(title: "A Note of Gratitude Most Profound", subtitle: "“汝等之光，亦使此剧增辉（点击 ⓘ 查阅原著典故）”") {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("吾辈亦向此众友献上敬意：")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
 
-                        Text("@saya.ka,   @sayu,   @さおり")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                        CreditsRow(
+                            title: "The Muse of Celestial Grace",
+                            subtitle: "晨星与真情之缪斯 (Cordelia / Rosalind)",
+                            name: "@saya.ka",
+                            tagline: "“如天际璀璨之晨星，以温润真情与无声之光照拂众生。”",
+                            originalAllusion: "“《李尔王》与《皆大欢喜》：‘Love, and be silent... All the world's a stage.’（‘爱在无声处，天地皆剧场。’）”",
+                            literaryDecoding: "真理无须繁复雕琢。如天际璀璨之晨星，以温润之真情与无声之光照拂众生，为全剧注入宁静力量。"
+                        )
 
-                        Text("“汝等之光，亦使此剧增辉。”")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                            .italic()
+                        CreditsRow(
+                            title: "The Spirit of Woodland Harmony",
+                            subtitle: "绿林与颂歌之精灵 (Celia / Ophelia)",
+                            name: "@sayu",
+                            tagline: "“林间和煦之微风，赋予剧场欢快和谐之韵律与治愈之力。”",
+                            originalAllusion: "“《仲夏夜之梦》与《皆大欢喜》：‘Under the greenwood tree, Who loves to lie with me...’（‘在绿林树荫之下，同唱甜美歌谣。’）”",
+                            literaryDecoding: "森林间和煦之微风，赋予剧场欢快和谐之韵律与治愈之力，使全剧洋溢欢乐生机。"
+                        )
+
+                        CreditsRow(
+                            title: "The Guardian of Serene Moonlight",
+                            subtitle: "宁静月光之守护者 (Juliet / Viola)",
+                            name: "@さおり",
+                            tagline: "“宁静月光之守护者，以纯真与柔情照亮凡间，使全剧平添温情。”",
+                            originalAllusion: "“《罗密欧与朱丽叶》与《第十二夜》：‘It is the east, and Juliet is the sun.’（‘那是东方，朱丽叶就是太阳，柔月为之倾倒。’）”",
+                            literaryDecoding: "宁静月光之守护者，以纯真与柔情照亮凡间，使全剧平添无尽温情与美意。"
+                        )
                     }
                 }
 
-                // MARK: - 命运的信使
-                AboutSectionCard(title: "A Wyrd Messenger", subtitle: "命运的信使") {
-                    VStack(alignment: .leading, spacing: 10) {
+                // MARK: - 命运的信使 (Shakespearean Oracle Edition)
+                AboutSectionCard(title: "A Wyrd Messenger", subtitle: "“荒野神谕，低语建言扭转浩瀚航程（点击 ⓘ 查阅原著典故）”") {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("如荒野上之回响，自迷雾中而来，其低语之建言，足以扭转吾辈大业之航向者，乃")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                             .lineSpacing(4)
 
-                        Text("@小汐shio")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Color(hex: "C44FE2"))
-
-                        Text("也。")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                        CreditsRow(
+                            title: "The Prophet of Wyrd Echoes",
+                            subtitle: "荒野神谕与命运信使 (Ariel / Hecate)",
+                            name: "@小汐shio",
+                            tagline: "“自迷雾破空而来，其金石低语建言扭转全剧浩瀚航程！”",
+                            originalAllusion: "“《暴风雨》与《麦克白》：‘I come to answer thy best pleasure... be it to fly, to swim, into the fire.’（‘我应你之召而来，乘风破浪、入火腾云。’）”",
+                            literaryDecoding: "如荒野上响彻之神谕信使，自迷雾与狂风中破空而来。其关键时刻之金石低语与建言，扭转了全剧大业之浩瀚航程！"
+                        )
                     }
                 }
 
