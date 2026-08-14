@@ -20,23 +20,23 @@ enum NTPServerPreset: String, CaseIterable, Identifiable, Codable, Sendable {
     
     var displayName: String {
         switch self {
-        case .apple: return "🍎 Apple 全球"
-        case .appleAsia: return "🍎 Apple 亚洲"
-        case .cnPool: return "🇨🇳 中国 NTP 池"
-        case .aliyun: return "☁️ 阿里云"
-        case .tencent: return "☁️ 腾讯云"
-        case .custom: return "🔧 自定义"
+        case .apple: return "🍎 Apple 全球授时"
+        case .appleAsia: return "🍎 Apple 亚洲授时"
+        case .cnPool: return "🇨🇳 中国授时池"
+        case .aliyun: return "☁️ 阿里云授时"
+        case .tencent: return "☁️ 腾讯云授时"
+        case .custom: return "🔧 自定义授时"
         }
     }
     
     var description: String {
         switch self {
-        case .apple: return "Apple 官方 NTP 服务器"
-        case .appleAsia: return "Apple 亚洲区域服务器"
-        case .cnPool: return "中国 NTP 服务器池"
-        case .aliyun: return "阿里云 NTP 服务"
-        case .tencent: return "腾讯云 NTP 服务"
-        case .custom: return "自定义 NTP 服务器地址"
+        case .apple: return "Apple 官方标准授时服务"
+        case .appleAsia: return "Apple 亚洲区域授时服务"
+        case .cnPool: return "中国国家标准授时池"
+        case .aliyun: return "阿里云高精网络授时服务"
+        case .tencent: return "腾讯云高精网络授时服务"
+        case .custom: return "自定义授时服务器地址"
         }
     }
     

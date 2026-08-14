@@ -5394,11 +5394,11 @@ final class SettingsViewModel: ObservableObject {
         case .idle:
             isTimeSyncing = false
             timeSyncSuccess = false
-            timeSyncStatus = "点击同步 NTP 时间"
+            timeSyncStatus = "点击同步网络标准时间"
         case .syncing:
             isTimeSyncing = true
             timeSyncSuccess = false
-            timeSyncStatus = "正在同步 NTP 服务器..."
+            timeSyncStatus = "正在与授时中心同步校准..."
         case .success(let offset):
             isTimeSyncing = false
             timeSyncSuccess = true
