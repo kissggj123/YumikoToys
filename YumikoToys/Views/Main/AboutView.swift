@@ -17,10 +17,10 @@ struct AboutView: View {
                 // MARK: - App Hero Icon Header
                 appHeroHeader
 
-                // MARK: - 主描述
+                // MARK: - 主描述 (Shakespearean Macbeth Style)
                 AboutTextCard {
                     VStack(spacing: 12) {
-                        Text("🐷 就算合盖暗无天日，也能默默为资👦本👧家输出劳动力！")
+                        Text("⚔️ “睡眠已死，麦克白杀死了睡眠！”")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(
                                 LinearGradient(
@@ -30,7 +30,7 @@ struct AboutView: View {
                                 )
                             )
 
-                        Text("✨ 本神器搭载 YumikoToys 🐰兔可可皇后的粉色魔晶内核，支持跨次元合盖防护！让 AI 挂机、后台任务与大模型工作流永不停歇，拒绝 Mac 偷懒打瞌睡！")
+                        Text("“不眠之钟声已然响彻，纵使天地合闭、MacBook 暗无天日，此神器亦如永不熄灭之圣血符文！搭载 YumikoToys 🐰兔可可皇后之粉色魔晶王权，禁绝万物休眠，使 AI 炼金阵与后台劳作永无止境！”")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -61,32 +61,32 @@ struct AboutView: View {
                     }
                 }
 
-                // MARK: - Dramatis Personae 功勋名录
-                AboutSectionCard(title: "Dramatis Personae", subtitle: "或曰：铸就此杰作之功勋名录") {
+                // MARK: - Dramatis Personae 功勋名录 (Macbeth Edition)
+                AboutSectionCard(title: "Dramatis Personae", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”") {
                     VStack(alignment: .leading, spacing: 12) {
                         CreditsRow(
                             title: "The Grand Artificer",
-                            subtitle: "伟大之工匠",
+                            subtitle: "伟大之工匠 (Macbeth / Lord of the Anvil)",
                             name: "@🍊蜜柑工具人",
-                            tagline: "“打字如飞的修 Bug 工具人，缔造万物逻辑之枢纽”"
+                            tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”"
                         )
                         CreditsRow(
                             title: "The Limner of the Sigil",
-                            subtitle: "徽记描绘者",
+                            subtitle: "徽记描绘者 (Lady Macbeth / Sovereign of Sorcery)",
                             name: "@会拧头的ruarua怪",
-                            tagline: "“按住画笔拧爆狗头，赐予界面极彩光芒与视觉灵魂”"
+                            tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”"
                         )
                         CreditsRow(
                             title: "The Muse of Whimsy",
-                            subtitle: "奇思之缪斯",
+                            subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)",
                             name: "@cici 的胡扯",
-                            tagline: "“胡思乱想界的天才脑洞，注入无限生机与快乐源泉”"
+                            tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”"
                         )
                         CreditsRow(
                             title: "The Patron of New Marvels",
-                            subtitle: "新奇赞助人",
+                            subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)",
                             name: "@🐰可可",
-                            tagline: "“粉色魔法最高元首，兼全剧终极爱心守护神”"
+                            tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”"
                         )
                         
                         Divider().padding(.vertical, 4)
