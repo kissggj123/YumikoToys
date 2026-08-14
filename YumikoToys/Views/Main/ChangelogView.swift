@@ -20,7 +20,7 @@ struct ChangelogView: View {
                     title: "《幻影马车与银狐兔》 · The Phantom Carriage & Silver Fox",
                     titleColor: "E9C46A",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，欢迎回到罗德岛。在 v4.5.7 战术协议中，全舰工程部完成了‘防休眠’物理守护阵列的终极重构。我们彻底消除了误触休眠的隐患，在状态栏下拉面板中为您绘制了高精 1:1 仪表盘与柔和呼吸指示灯，并为功勋干员名录注入了莎士比亚《麦克白》冷门史诗典故与 info 交互解构。此外，爬爬乐干员的桌面攀爬与白名单应用列表均已实现毫秒级感应。祝您战术指挥愉快。",
+                    quote: "博士，欢迎回到罗德岛。在 v4.5.7 战术协议中，全舰工程部完成了‘防休眠’物理守护阵列的终极重构。我们彻底消除了误触休眠的隐患，在状态栏下拉面板中为您绘制了高精 1:1 仪表盘与柔和呼吸指示灯，并为功勋干员名录注入了莎士比亚《麦克白》冷门史诗典故与交互弹窗解构。此外，爬爬乐干员的桌面攀爬与白名单应用列表均已实现毫秒级感应。祝您战术指挥愉快。",
                     entries: [
                         ChangelogEntry(
                             emoji: "🖼️",
@@ -33,8 +33,9 @@ struct ChangelogView: View {
                             emoji: "📖",
                             prefix: "【莎士比亚典故】",
                             prefixColor: "E9C46A",
-                            text: "功勋干员名录全面升级为《麦克白》悲剧史诗风格！在每位干员与功勋伙伴的名字右侧，点击名字旁精致的粉色 info 按钮，即可弹窗解构《麦克白》、《暴风雨》、《仲夏夜之梦》原著典故与角色寓意。",
-                            character: "——阿米娅"
+                            text: "功勋干员名录全面升级为《麦克白》悲剧史诗风格！在每位干员与功勋伙伴的名字右侧，点击名字旁精致的粉色按钮，即可弹窗解构《麦克白》、《暴风雨》、《仲夏夜之梦》原著典故与角色寓意。",
+                            character: "——阿米娅",
+                            hasInfoIcon: true
                         ),
                         ChangelogEntry(
                             emoji: "🐾",
@@ -282,6 +283,7 @@ private struct ChangelogEntry: Identifiable {
     let prefixColor: String
     let text: String
     let character: String
+    var hasInfoIcon: Bool = false
 }
 
 private struct ChangelogEntryRow: View {
@@ -305,11 +307,23 @@ private struct ChangelogEntryRow: View {
                         .foregroundStyle(.tertiary)
                 }
 
-                Text(entry.text)
+                if entry.hasInfoIcon {
+                    (
+                        Text("功勋干员名录全面升级为《麦克白》悲剧史诗风格！在每位干员与功勋伙伴的名字右侧，点击名字旁精致的粉色 ")
+                        + Text(Image(systemName: "info.circle.fill")).font(.system(size: 11, weight: .bold)).foregroundColor(Color(hex: "FF6B9D"))
+                        + Text(" 按钮，即可弹窗解构《麦克白》、《暴风雨》、《仲夏夜之梦》原著典故与角色寓意。")
+                    )
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text(entry.text)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
