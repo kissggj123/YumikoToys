@@ -36,12 +36,12 @@ enum AppConfig {
         Bundle.main.infoDictionary?["CFBundleName"] as? String ?? "YumikoToys"
     }
 
-    /// 构建日期（优先从 Info.plist 读取，否则返回编译日期）
+    /// 构建日期（优先从 Info.plist 读取，否则返回最新编译日期）
     static var buildDate: String {
         if let date = Bundle.main.infoDictionary?["CFBuildDate"] as? String {
             return date
         }
-        return "2026-08-10"
+        return "2026-08-15"
     }
 }
 
