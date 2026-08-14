@@ -2,7 +2,7 @@
 //  ChangelogView.swift
 //  YumikoToys
 //
-//  更新日志视图（v4.5.6 - 罗德岛战术协议 · 凯尔希的特别复查 · 麦克白版）
+//  更新日志视图（v4.5.7 - 《幻影马车与银狐兔》 · The Phantom Carriage & Silver Fox Edition）
 //
 
 import SwiftUI
@@ -16,11 +16,11 @@ struct ChangelogView: View {
 
                 // 明日方舟罗德岛战术协议 — 版本代号区
                 CodenameSection(
-                    emoji: "⚔️",
-                    title: "罗德岛战术协议 · 麦克白不休眠史诗 (Rhodes Island Tactical Protocol · Macbeth Unsleeping Epic)",
+                    emoji: "🎬",
+                    title: "《幻影马车与银狐兔》 · The Phantom Carriage & Silver Fox",
                     titleColor: "E9C46A",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，欢迎回到罗德岛。在 v4.5.7 战术协议中，全舰工程部完成了‘防休眠’物理守护阵列的终极重构。我们彻底消除了误触休眠的隐患，在状态栏下拉面板中为您绘制了高精 1:1 仪表盘与柔和呼吸指示灯，并为功勋干员名录注入了莎士比亚《麦克白》史诗典故与 ⓘ 交互解构。此外，爬爬乐干员的桌面攀爬与白名单应用列表均已实现毫秒级感应。祝您战术指挥愉快。",
+                    quote: "博士，欢迎回到罗德岛。在 v4.5.7 战术协议中，全舰工程部完成了‘防休眠’物理守护阵列的终极重构。我们彻底消除了误触休眠的隐患，在状态栏下拉面板中为您绘制了高精 1:1 仪表盘与柔和呼吸指示灯，并为功勋干员名录注入了莎士比亚《麦克白》冷门史诗典故与 info 交互解构。此外，爬爬乐干员的桌面攀爬与白名单应用列表均已实现毫秒级感应。祝您战术指挥愉快。",
                     entries: [
                         ChangelogEntry(
                             emoji: "🖼️",
@@ -33,7 +33,7 @@ struct ChangelogView: View {
                             emoji: "📖",
                             prefix: "【莎士比亚典故】",
                             prefixColor: "E9C46A",
-                            text: "功勋干员名录全面升级为《麦克白》悲剧史诗风格！在每位干员与功勋伙伴的名字右侧，点击全新的粉色 ⓘ 按钮，即可弹窗解构《麦克白》、《暴风雨》、《仲夏夜之梦》原著典故与角色寓意。",
+                            text: "功勋干员名录全面升级为《麦克白》悲剧史诗风格！在每位干员与功勋伙伴的名字右侧，点击名字旁精致的粉色 info 按钮，即可弹窗解构《麦克白》、《暴风雨》、《仲夏夜之梦》原著典故与角色寓意。",
                             character: "——阿米娅"
                         ),
                         ChangelogEntry(
@@ -60,7 +60,7 @@ struct ChangelogView: View {
                     ]
                 )
 
-                // 版本诗引
+                // 版本诗引 (冷门麦克白引文)
                 VersionEpigraph()
             }
             .padding(24)
@@ -99,7 +99,7 @@ struct ChangelogView: View {
     }
 }
 
-// MARK: - 代号副标题
+// MARK: - 代号副标题 (18-20世纪国外冷门电影 × 真实罕见兔种)
 
 private struct CodenameSubtitle: View {
     var body: some View {
@@ -110,7 +110,7 @@ private struct CodenameSubtitle: View {
                 Text("◈")
                     .font(.system(size: 9, weight: .thin))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.6))
-                Text("罗德岛战术协议 · 大地源石与系统逻辑净化")
+                Text("代号规则：18-20世纪国外冷门电影 × 真实罕见兔种")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.75))
                     .tracking(0.5)
@@ -122,19 +122,75 @@ private struct CodenameSubtitle: View {
                     .fill(Color(hex: "E9C46A").opacity(0.06))
             )
 
-            // 凯尔希特别复查解释
+            // 简短出处与代号解构
             VStack(alignment: .leading, spacing: 3) {
-                Text("⚔️  Kal'tsit's Tactical Audit 凯尔希的战术复查")
+                Text("🎬  The Phantom Carriage & Silver Fox 代号解构")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("凯尔希对罗德岛全舰防休眠战术设备进行了全面复查。在 4.5.7 协议中，我们重构了守护阵列，建立了 1:1 状态栏下拉仪表盘与莎士比亚《麦克白》典故解构，全面提升了系统的运算流畅度与干员交互体验。")
-                    .font(.system(size: 11))
+                Text("• 电影出处：1921 年瑞典经典默片名作《幻影马车》（The Phantom Carriage / Victor Sjöström 执导，讲述除夕夜灵魂因果与救赎的奇幻黑白先驱）\n• 兔种出处：美洲银狐兔（Silver Fox Rabbit，诞生于 20 世纪 20 年代、拥有漆黑锦缎底色与银针毛尖的极稀有保护兔种）")
+                    .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
-                    .lineSpacing(2)
+                    .lineSpacing(3)
             }
         }
         .padding(.top, 4)
         .padding(.bottom, 8)
+    }
+}
+
+// MARK: - 代号卡片区块
+
+private struct CodenameSection: View {
+    let emoji: String
+    let title: String
+    let titleColor: String
+    let subtitle: CodenameSubtitle
+    let quote: String
+    let entries: [ChangelogEntry]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // 标题
+            HStack(alignment: .top, spacing: 8) {
+                Text(emoji)
+                    .font(.system(size: 16))
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color(hex: titleColor))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            subtitle
+
+            // 引言
+            Text(quote)
+                .font(.system(size: 11.5))
+                .foregroundStyle(.secondary)
+                .lineSpacing(3.5)
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.primary.opacity(0.03))
+                )
+
+            Divider()
+
+            // 条目列表
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(entries) { entry in
+                    ChangelogEntryRow(entry: entry)
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(hex: titleColor).opacity(0.2), lineWidth: 1)
+                )
+        )
     }
 }
 
@@ -149,75 +205,18 @@ private struct ChangelogEntry: Identifiable {
     let character: String
 }
 
-// MARK: - 代号分区
-
-private struct CodenameSection: View {
-    let emoji: String
-    let title: String
-    let titleColor: String
-    let subtitle: CodenameSubtitle
-    let quote: String
-    let entries: [ChangelogEntry]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // 大标题
-            HStack(spacing: 8) {
-                Text(emoji)
-                    .font(.system(size: 20))
-                Text(title)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color(hex: titleColor))
-                Spacer()
-            }
-
-            subtitle
-
-            // 专属名言/引言
-            Text(quote)
-                .font(.system(size: 12))
-                .foregroundStyle(Color(hex: "E9C46A").opacity(0.9))
-                .padding(12)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(hex: "E9C46A").opacity(0.06))
-                )
-                .lineSpacing(4)
-
-            // 条目列表
-            VStack(spacing: 12) {
-                ForEach(entries) { entry in
-                    ChangelogRow(entry: entry)
-                }
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.primary.opacity(0.02))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(hex: titleColor).opacity(0.15), lineWidth: 1.5)
-                )
-        )
-    }
-}
-
-// MARK: - 单条更新行
-
-private struct ChangelogRow: View {
+private struct ChangelogEntryRow: View {
     let entry: ChangelogEntry
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Text(entry.emoji)
                 .font(.system(size: 13))
-                .padding(.top, 1)
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
                     Text(entry.prefix)
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 11.5, weight: .bold))
                         .foregroundStyle(Color(hex: entry.prefixColor))
 
                     Spacer()
@@ -237,7 +236,7 @@ private struct ChangelogRow: View {
     }
 }
 
-// MARK: - 版本诗引
+// MARK: - 版本诗引 (冷门麦克白引文)
 
 private struct VersionEpigraph: View {
     @State private var isExpanded = false
@@ -255,7 +254,7 @@ private struct VersionEpigraph: View {
                             .fill(Color(hex: "E9C46A").opacity(0.5))
                             .frame(width: 20, height: 1.5)
 
-                        Text("William Shakespeare · Macbeth, Act I, Scene VII")
+                        Text("William Shakespeare · Macbeth, Act III, Scene II")
                             .font(.system(size: 10, weight: .semibold, design: .serif))
                             .foregroundStyle(Color(hex: "E9C46A"))
                             .tracking(1.5)
@@ -263,15 +262,15 @@ private struct VersionEpigraph: View {
                         Spacer()
                     }
 
-                    // 英文原文
-                    Text("If it were done when 'tis done, then 'twere well / It were done quickly: if the assassination / Could trammel up the consequence, and catch / With his surcease success; that but this blow / Might be the be-all and the end-all here... But in these cases / We still have judgment here; that we but teach / Bloody instructions, which, being taught, return / To plague the inventor...")
+                    // 英文冷门引文原文
+                    Text("“Light thickens; and the crow makes wing to the rooky wood:\nGood things of day begin to droop and drowse;\nWhiles night's black agents to their preys do rouse.”")
                         .font(.system(size: 13, weight: .medium, design: .serif))
-                        .foregroundStyle(Color(hex: "E9C46A").opacity(0.85))
+                        .foregroundStyle(Color(hex: "E9C46A").opacity(0.9))
                         .italic()
-                        .lineSpacing(4)
+                        .lineSpacing(5)
 
-                    // 中文翻译
-                    Text("『如果干了之后就算干完了，那么最好快点干；如果这次刺杀能把后果全给拴住，伴随着他的死带来成功；如果这一击就能成为一切的终结……然而在这类事情上，我们在此世便要受到审判；我们所教授的流血指令，一旦被学去，终将返回来折磨发明者自己。』")
+                    // 中文冷门引文翻译
+                    Text("『天色渐沉，乌鸦飞向白桦树林；昼间万物尽皆沉睡委顿，唯夜之暗黑信使纷纷暴起，寻觅猎物。』")
                         .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                         .lineSpacing(3.5)
@@ -283,7 +282,7 @@ private struct VersionEpigraph: View {
 
                         Spacer()
 
-                        Text(isExpanded ? "收起戏剧背景与考据" : "阅读戏剧背景与考据")
+                        Text(isExpanded ? "收起戏剧背景与系统隐喻" : "阅读戏剧背景与系统隐喻")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(Color(hex: "E9C46A"))
 
@@ -314,11 +313,9 @@ private struct VersionEpigraph: View {
                         .foregroundStyle(Color(hex: "E9C46A"))
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("• 前因（女巫预言与弑君诱惑）：在第一幕第 1~3 场中，战功赫赫的麦克白在荒野遭遇三位女巫预言他将成为考特爵士并终将登基为王。预言应验后，苏格兰国王邓肯亲自下榻麦克白的城堡。麦克白将预言写信告知妻子，果敢狠辣的麦克白夫人极力劝诱他趁国王过夜时将其刺杀。")
-                        
-                        Text("• 本场现场（宴会独白与内心交战）：在第一幕第 7 场中，大厅正举办欢庆晚宴。麦克白中途离席躲入偏厅阴影中，陷入剧烈的道德煎熬。他深知邓肯不仅是君主更是客人，且爱民如子，弑君不仅违背天理，更告诫自己『流血的指令终将折磨发明者』。他一度动摇，对赶来的妻子说：『我们不要干这件事了！』")
+                        Text("• 戏剧情境（第三幕第二场 · 黄昏独白）：在刺杀邓肯国王登基后，麦克白深陷疑网与无眠折磨。当黄昏落日余晖消逝，麦克白向麦克白夫人说出了这句极具暗黑诗意的冷门独白。乌鸦归林、万物委顿昏睡，而独属于夜间的守护信使却在寂静中悄然复苏。")
 
-                        Text("• 后果（夫人逼迫与崩溃毁灭）：麦克白夫人用极其冷酷的言语质问其男子气概，并提出灌醉侍卫、嫁祸于人的周密计划。麦克白最终被说服，深夜刺杀了邓肯。但刺杀完成后，麦克白即刻陷入永无止境的惊恐幻听（『麦克白杀死了睡眠！』）与狂躁疑虑，自此踏上狂暴专制与身死国灭的悲剧毁灭之路。")
+                        Text("• 后续发展：随后夜幕降临，麦克白派出的黑夜信使在荒野完成了命运的伏击。而麦克白自己则在宴会上目睹了班柯的幻影，最终走向身死国灭的毁灭悲剧。")
                     }
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
@@ -328,7 +325,7 @@ private struct VersionEpigraph: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "E9C46A"))
 
-                    Text("1606 年《麦克白》首演前夕，英国爆发了震撼朝野的『火药阴谋』（Gunpowder Plot）。莎士比亚借麦克白独白探讨弑君因果，实则暗指耶稣会教士亨利·加奈特在审判中使用的『模棱两可论』（Equivocation）。『流血的指令终将折磨发明者』在现代软件架构中有着绝妙的隐喻：试图通过特权命令（如 sudo pmset）绕过操作系统底层规范的『快捷手段』，就像弑君篡位一样，最终都会像回旋镖一样生成难以根除的系统副作用与开机电源紊乱。只有回归优雅与原生规范，才能彻底摆脱这层因果反噬。")
+                    Text("莎士比亚在此处借‘夜之暗黑信使’（night's black agents）展现了黄昏交替时的神秘秩序。在现代 Mac 操作系统与 YumikoToys 系统架构中，这展现了绝妙的防休眠隐喻：当 MacBook 屏幕熄灭、昼间用户操作归于静止委顿之际，YumikoToys 防休眠阵列与后台 AI 炼金进程如同夜间忠诚的信使，在暗夜中持续守护任务与系统的安全运转。")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .lineSpacing(3.5)
