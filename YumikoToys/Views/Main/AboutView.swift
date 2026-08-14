@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.6 - 1:1 Status Bar Popover Mockups & Shakespearean Credits）
+//  关于页面视图（v4.5.6 - Shakespearean Macbeth Allusion Popovers & Info Buttons）
 //
 
 import SwiftUI
@@ -61,32 +61,40 @@ struct AboutView: View {
                     }
                 }
 
-                // MARK: - Dramatis Personae 功勋名录 (Macbeth Edition)
-                AboutSectionCard(title: "Dramatis Personae", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”") {
+                // MARK: - Dramatis Personae 功勋名录 (Macbeth Edition with Info Allusion Buttons)
+                AboutSectionCard(title: "Dramatis Personae", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录（点击 ⓘ 按钮查阅原著典故）”") {
                     VStack(alignment: .leading, spacing: 12) {
                         CreditsRow(
                             title: "The Grand Artificer",
                             subtitle: "伟大之工匠 (Macbeth / Lord of the Anvil)",
                             name: "@🍊蜜柑工具人",
-                            tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”"
+                            tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”",
+                            originalAllusion: "“《麦克白》第一幕第二场：‘Brave Macbeth — well he deserves that name!’（‘勇敢的麦克白——他当得起这个称号！’）”",
+                            literaryDecoding: "麦克白身披重铠，执掌铁血宝剑。作为代码高塔的伟大工匠，日夜披荆斩棘斩尽千百 Bug，以无畏魄力捍卫程序城邦！"
                         )
                         CreditsRow(
                             title: "The Limner of the Sigil",
                             subtitle: "徽记描绘者 (Lady Macbeth / Sovereign of Sorcery)",
                             name: "@会拧头的ruarua怪",
-                            tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”"
+                            tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”",
+                            originalAllusion: "“《麦克白》第五幕第一场：‘Out, damned spot!... All the perfumes of Arabia will not sweeten this little hand.’（‘洗掉，该死墨迹！阿拉伯所有香料都洗不净这只手。’）”",
+                            literaryDecoding: "洗不净手中的极彩颜料墨迹，以极致审美的神笔抹去世间平庸苍白，赐予界面华美绝伦之霓裳。"
                         )
                         CreditsRow(
                             title: "The Muse of Whimsy",
                             subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)",
                             name: "@cici 的胡扯",
-                            tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”"
+                            tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”",
+                            originalAllusion: "“《麦克白》第一幕第三场：‘Fair is foul, and foul is fair: Hover through the fog and filthy air.’（‘美即是恶，恶即是美；在迷雾中飞翔。’）”",
+                            literaryDecoding: "荒野上的命运魔女，以颠覆常理的天才脑洞在大锅中沸腾翻滚，炼化出冲破思维禁锢的颠覆性灵感。"
                         )
                         CreditsRow(
                             title: "The Patron of New Marvels",
                             subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)",
                             name: "@🐰兔可可",
-                            tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”"
+                            tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”",
+                            originalAllusion: "“《麦克白》第四幕第三场：‘A most miraculous work in this good king... Full of grace’（‘圣王天命，上天自会赐予祂神圣之力量与荣光。’）”",
+                            literaryDecoding: "戴上粉色魔晶王冠，端坐于永恒王座。以无限爱心与魔法最高权威，庇佑万物免受黑暗休眠侵蚀。"
                         )
                         
                         Divider().padding(.vertical, 4)
@@ -96,19 +104,25 @@ struct AboutView: View {
                             title: "The Enchantress of Mist & Song",
                             subtitle: "雾霭与歌咏之灵 (Puck / Ophelia)",
                             name: "@烟烟",
-                            tagline: "“如《仲夏夜之梦》薄雾凝霜之灵，赋万物以飘逸诗意。”"
+                            tagline: "“如《仲夏夜之梦》薄雾凝霜之灵，赋万物以飘逸诗意。”",
+                            originalAllusion: "“《仲夏夜之梦》与《哈姆雷特》：‘I go, I go, swifter than arrow from the Tartar's bow.’（‘如薄雾凝霜之灵，比飞箭更快。’）”",
+                            literaryDecoding: "薄雾与歌咏之灵，如《仲夏夜之梦》薄雾凝霜，赋万物以飘逸诗意与空灵之美。"
                         )
                         CreditsRow(
                             title: "The Sovereign of Eternal Starlight",
                             subtitle: "永恒星芒之女王 (Titania / Portia)",
                             name: "@ching_1222",
-                            tagline: "“如《第十二夜》璀璨星辰，以优雅与睿智光照剧场。”"
+                            tagline: "“如《第十二夜》璀璨星辰，以优雅与睿智光照剧场。”",
+                            originalAllusion: "“《第十二夜》与《威尼斯商人》：‘The quality of mercy is not strain'd, It droppeth as the gentle rain from heaven.’（‘慈爱如天际甘霖。’）”",
+                            literaryDecoding: "永恒星芒之女王，如《第十二夜》璀璨星辰，以优雅与睿智之光无私照耀剧场。"
                         )
                         CreditsRow(
                             title: "The Guardian of Enchanted Realm",
                             subtitle: "幻境奇迹之守护者 (Miranda / Beatrice)",
                             name: "@邱",
-                            tagline: "“如《暴风雨》奇迹女神 Miranda，赐予作品纯真神圣之守护。”"
+                            tagline: "“如《暴风雨》奇迹女神 Miranda，赐予作品纯真神圣之守护。”",
+                            originalAllusion: "“《暴风雨》：‘O wonder! How many goodly creatures are there here! How beauteous mankind is!’（‘啊，奇迹！’）”",
+                            literaryDecoding: "幻境奇迹之守护者，如《暴风雨》奇迹女神 Miranda，赐予作品最纯真神圣之守护。"
                         )
                     }
                 }
@@ -577,15 +591,19 @@ private struct AboutSectionCard<Content: View>: View {
     }
 }
 
-// MARK: - 致敬行
+// MARK: - 致敬行 (带 ⓘ 按钮弹出莎士比亚原著典故卡片)
 
 private struct CreditsRow: View {
     let title: String
     let subtitle: String
     let name: String
     var tagline: String? = nil
+    var originalAllusion: String? = nil
+    var literaryDecoding: String? = nil
 
     @State private var isHovered = false
+    @State private var showInfoPopover = false
+    @State private var isInfoBtnHovered = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -606,10 +624,81 @@ private struct CreditsRow: View {
                     .italic()
             }
 
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .center, spacing: 6) {
                 Text(name)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.primary)
+
+                // ⓘ 按钮：展现原著典故与文学深层解读
+                if originalAllusion != nil || literaryDecoding != nil {
+                    Button(action: {
+                        showInfoPopover.toggle()
+                    }) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 13.5, weight: .bold))
+                            .foregroundStyle(
+                                isInfoBtnHovered || showInfoPopover
+                                    ? Color(hex: "FF6B9D")
+                                    : Color.primary.opacity(0.35)
+                            )
+                            .scaleEffect(isInfoBtnHovered ? 1.15 : 1.0)
+                    }
+                    .buttonStyle(.plain)
+                    .help("点击查阅莎士比亚原著典故与角色解读")
+                    .onHover { isInfoBtnHovered = $0 }
+                    .popover(isPresented: $showInfoPopover, arrowEdge: .top) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            // Header
+                            HStack(spacing: 6) {
+                                Image(systemName: "book.pages.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color(hex: "FF6B9D"))
+
+                                Text("\(name) · 原著典故解构")
+                                    .font(.system(size: 12.5, weight: .bold))
+                                    .foregroundStyle(.primary)
+                            }
+
+                            Divider()
+
+                            // 原著典故引用
+                            if let allusion = originalAllusion {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("📖 莎士比亚原著出处")
+                                        .font(.system(size: 10.5, weight: .bold))
+                                        .foregroundStyle(Color(hex: "C44FE2"))
+
+                                    Text(allusion)
+                                        .font(.system(size: 11, design: .serif))
+                                        .foregroundStyle(.primary)
+                                        .italic()
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .padding(8)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
+                            }
+
+                            // 文学深层解读
+                            if let decoding = literaryDecoding {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("🗡️ 角色象征与深层解构")
+                                        .font(.system(size: 10.5, weight: .bold))
+                                        .foregroundStyle(Color(hex: "FF6B9D"))
+
+                                    Text(decoding)
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .lineSpacing(3)
+                                }
+                                .padding(8)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.pink.opacity(0.04)))
+                            }
+                        }
+                        .padding(14)
+                        .frame(width: 290)
+                    }
+                }
 
                 if let tagline = tagline {
                     Text(tagline)
