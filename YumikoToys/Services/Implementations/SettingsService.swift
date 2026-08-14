@@ -95,6 +95,13 @@ final class SettingsService: SettingsServiceProtocol {
         LoggerService.shared.info("Launch at login setting updated: \(enabled)")
     }
     
+    func updateSleepGuardWhitelist(_ whitelist: [String]) {
+        settings.sleepGuardWhitelist = whitelist
+        settingsSubject.send(settings)
+        saveSettings()
+        LoggerService.shared.info("Sleep guard whitelist updated: \(whitelist)")
+    }
+    
     // MARK: - Private Methods
 
     private func syncAnimeTheme(from settings: AppSettings) {

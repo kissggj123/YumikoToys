@@ -919,27 +919,56 @@ extension IconStyle {
 
 struct SpriteKitPetIconView: NSViewRepresentable {
     let petName: String
-    let size: CGFloat
+    var width: CGFloat = 30
+    var height: CGFloat = 18
+
+    init(petName: String, size: CGFloat = 18) {
+        self.petName = petName
+        self.width = size >= 24 ? size : 30
+        self.height = size
+    }
+
+    init(petName: String, width: CGFloat, height: CGFloat) {
+        self.petName = petName
+        self.width = width
+        self.height = height
+    }
 
     func makeNSView(context: Context) -> SKView {
-        let skView = SKView(frame: NSRect(x: 0, y: 0, width: size, height: size))
+        let skView = SKView(frame: NSRect(x: 0, y: 0, width: width, height: height))
         skView.allowsTransparency = true
         skView.wantsLayer = true
         skView.layer?.backgroundColor = NSColor.clear.cgColor
 
-        let scene = SKScene(size: CGSize(width: size, height: size))
+        let scene = SKScene(size: CGSize(width: width, height: height))
         scene.backgroundColor = .clear
         scene.scaleMode = .resizeFill
 
         let textures = loadTextures(name: petName)
         if !textures.isEmpty {
             let sprite = SKSpriteNode(texture: textures[0])
-            sprite.size = CGSize(width: size, height: size)
-            sprite.position = CGPoint(x: size / 2, y: size / 2)
+            sprite.size = CGSize(width: height, height: height)
+            sprite.position = CGPoint(x: 9, y: height / 2)
             scene.addChild(sprite)
 
-            let anim = SKAction.animate(with: textures, timePerFrame: 0.14, resize: false, restore: false)
-            sprite.run(SKAction.repeatForever(anim))
+            // 1. 6 帧迈步步行动画
+            let anim = SKAction.animate(with: textures, timePerFrame: 0.12, resize: false, restore: false)
+            sprite.run(SKAction.repeatForever(anim), withKey: "walk")
+
+            // 2. 状态栏左右巡慢走 (Left & Right Patrol)
+            let walkRight = SKAction.run { sprite.xScale = -1.0 }
+            let moveRight = SKAction.moveTo(x: max(width - 9, 9), duration: 1.8)
+            let walkLeft = SKAction.run { sprite.xScale = 1.0 }
+            let moveLeft = SKAction.moveTo(x: 9, duration: 1.8)
+            let patrol = SKAction.repeatForever(SKAction.sequence([walkRight, moveRight, walkLeft, moveLeft]))
+            sprite.run(patrol, withKey: "patrol")
+
+            // 3. 小幅跳跃 (Cute Small Hops)
+            let hopUp = SKAction.moveBy(x: 0, y: 3.0, duration: 0.12)
+            let hopDown = SKAction.moveBy(x: 0, y: -3.0, duration: 0.12)
+            let pause = SKAction.wait(forDuration: 0.35)
+            let hopSeq = SKAction.repeatForever(SKAction.sequence([hopUp, hopDown, pause]))
+            sprite.run(hopSeq, withKey: "hop")
         }
 
         skView.presentScene(scene)

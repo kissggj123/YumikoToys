@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B414C02628AEB64BF98011E2 /* AppleNeuralVisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4AA6FC98866A946E38B5BBE /* AppleNeuralVisionDetector.swift */; };
+		B46B03060DC8464612AE7D61 /* DesktopWindowDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F47FB8ECFF779A4B7F9E56CB /* DesktopWindowDetector.swift */; };
 		B4E029FDF6099541BFAAE133 /* PetPerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49B9DD63A0BD843B290C3D8 /* PetPerformanceMonitor.swift */; };
 		B43B2CE2F4B4BF48419609DD /* PetTouchBarWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */; };
 		C3BCA5F23AB3604C30981411 /* pet_white_frame_5.png in Resources */ = {isa = PBXBuildFile; fileRef = R3D49B953BE8CE4D0B84DDE4 /* pet_white_frame_5.png */; };
@@ -253,6 +255,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F4AA6FC98866A946E38B5BBE /* AppleNeuralVisionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleNeuralVisionDetector.swift; sourceTree = "<group>"; };
+		F47FB8ECFF779A4B7F9E56CB /* DesktopWindowDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopWindowDetector.swift; sourceTree = "<group>"; };
 		F49B9DD63A0BD843B290C3D8 /* PetPerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPerformanceMonitor.swift; sourceTree = "<group>"; };
 		F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetTouchBarWindow.swift; sourceTree = "<group>"; };
 		R3D49B953BE8CE4D0B84DDE4 /* pet_white_frame_5.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pet_white_frame_5.png; sourceTree = "<group>"; };
@@ -598,6 +602,8 @@
 		FC65521C2FC373980093B726 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				F4AA6FC98866A946E38B5BBE /* AppleNeuralVisionDetector.swift */,
+				F47FB8ECFF779A4B7F9E56CB /* DesktopWindowDetector.swift */,
 				F49B9DD63A0BD843B290C3D8 /* PetPerformanceMonitor.swift */,
 				F4778C6569AD49423CAC8CFB /* PetTouchBarWindow.swift */,
 				F3D9A78F5299B545C480F49B /* YumikoTouchBarManager.swift */,
@@ -1228,6 +1234,8 @@
 		1EE4E20624F97E240097C32C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
+				B414C02628AEB64BF98011E2 /* AppleNeuralVisionDetector.swift in Sources */,
+				B46B03060DC8464612AE7D61 /* DesktopWindowDetector.swift in Sources */,
 				B4E029FDF6099541BFAAE133 /* PetPerformanceMonitor.swift in Sources */,
 				B43B2CE2F4B4BF48419609DD /* PetTouchBarWindow.swift in Sources */,
 				B32639655650B74FEBA991E3 /* YumikoTouchBarManager.swift in Sources */,
@@ -1531,7 +1539,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 198484520;
+				CURRENT_PROJECT_VERSION = 21166103;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_APP_SANDBOX = NO;
@@ -1548,7 +1556,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 4.5.5;
+				MARKETING_VERSION = 4.5.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1578,7 +1586,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 198484520;
+				CURRENT_PROJECT_VERSION = 21166103;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1594,7 +1602,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 4.5.5;
+				MARKETING_VERSION = 4.5.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1623,7 +1631,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 198484520;
+				CURRENT_PROJECT_VERSION = 21166103;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
 				DEVELOPMENT_TEAM = E3AH4URHDH;
@@ -1657,7 +1665,7 @@
 				CODE_SIGN_ENTITLEMENTS = YumikoWidget/YumikoWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 198484520;
+				CURRENT_PROJECT_VERSION = 21166103;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1679,7 +1687,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 4.5.5;
+				MARKETING_VERSION = 4.5.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1696,7 +1704,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 198484520;
+				CURRENT_PROJECT_VERSION = 21166103;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "兔可可";
@@ -1706,7 +1714,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.5.5;
+				MARKETING_VERSION = 4.5.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWatch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1728,7 +1736,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 198484520;
+				CURRENT_PROJECT_VERSION = 21166103;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"YumikoToysHelper/Preview Content\"";
 				DEVELOPMENT_TEAM = E3AH4URHDH;
@@ -1761,7 +1769,7 @@
 				CODE_SIGN_ENTITLEMENTS = YumikoWidget/YumikoWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 198484520;
+				CURRENT_PROJECT_VERSION = 21166103;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1783,7 +1791,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 4.5.5;
+				MARKETING_VERSION = 4.5.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1800,7 +1808,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 198484520;
+				CURRENT_PROJECT_VERSION = 21166103;
 				DEVELOPMENT_TEAM = E3AH4URHDH;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "兔可可";
@@ -1810,7 +1818,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.5.5;
+				MARKETING_VERSION = 4.5.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Lite.YumikoToys.YumikoWatch;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;

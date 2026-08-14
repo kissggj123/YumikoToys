@@ -1724,10 +1724,134 @@ extension SettingsView {
                 onToggle: viewModel.togglePreventSleep
             )
 
+            SettingsToggleRow(
+                icon: "power.circle.fill",
+                iconColor: viewModel.autoDisableSleepOnLaunch ? "34C759" : "8E8E93",
+                title: "开机自启自动禁用休眠",
+                subtitle: viewModel.autoDisableSleepOnLaunch
+                    ? "开机或应用启动时将自动激活防休眠模式"
+                    : "未开启时每次启动自动执行 pmset 恢复睡眠保护（解冻苹果菜单 Sleep 选项）",
+                isOn: $viewModel.autoDisableSleepOnLaunch,
+                onToggle: viewModel.toggleAutoDisableSleepOnLaunch
+            )
+
             if viewModel.isPreventSleepEnabled {
                 preventSleepActiveIndicator
             }
+
+            sleepGuardTelemetryCard
         }
+    }
+
+    private var sleepGuardTelemetryCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: "shield.checkered")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(viewModel.isPreventSleepEnabled ? Color.green : Color.orange)
+
+                Text("睡眠守护与接管监控 (Sleep Guard Telemetry)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color.secondary)
+            }
+
+            HStack {
+                Text("当前接管程序:")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.secondary)
+                Text(viewModel.activeAssertionOwner)
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(viewModel.activeAssertionOwner.contains("PID") ? Color.orange : Color.green)
+            }
+
+            HStack {
+                Button(action: viewModel.restoreSystemSleepMode) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.clockwise.circle.fill")
+                        Text("一键恢复睡眠模式 (Restore Sleep Now)")
+                    }
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.blue)
+                    .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("AI 与开发放行白名单 (Sleep Guard WhiteList):")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color.secondary)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(viewModel.sleepGuardWhitelist, id: \.self) { tag in
+                            HStack(spacing: 3) {
+                                Text(tag)
+                                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(Color.purple)
+
+                                Button(action: { viewModel.removeSleepGuardWhitelistItem(tag) }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(Color.purple.opacity(0.8))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Color.purple.opacity(0.12))
+                            .cornerRadius(5)
+                        }
+                    }
+                }
+
+                HStack(spacing: 6) {
+                    Menu {
+                        ForEach(viewModel.runningApplications, id: \.processIdentifier) { app in
+                            let appName = app.localizedName ?? "App"
+                            let isChecked = viewModel.sleepGuardWhitelist.contains(appName.lowercased())
+                            Button(action: { viewModel.toggleWhitelistApp(appName) }) {
+                                if isChecked {
+                                    Label(appName, systemImage: "checkmark.circle.fill")
+                                } else {
+                                    Text(appName)
+                                }
+                            }
+                        }
+                    } label: {
+                        Label("从运行应用中勾选...", systemImage: "checklist")
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .onAppear { viewModel.refreshRunningApplications() }
+                    .onHover { isHovered in if isHovered { viewModel.refreshRunningApplications() } }
+                    .buttonStyle(.bordered)
+
+                    TextField("关键字 (如 docker)", text: $viewModel.newWhitelistItem)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 10))
+
+                    Button("添加", action: viewModel.addSleepGuardWhitelistItem)
+                        .font(.system(size: 10, weight: .medium))
+                        .buttonStyle(.borderedProminent)
+                        .tint(.purple)
+                }
+            }
+            .padding(.top, 4)
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.primary.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                )
+        )
+        .padding(.top, 4)
     }
 
     private var preventSleepActiveIndicator: some View {
@@ -1756,6 +1880,17 @@ extension SettingsView {
                     : "开启后会在屏幕底端开启透明桌宠步行悬浮层",
                 isOn: $viewModel.isPetPlaygroundEnabled,
                 onToggle: viewModel.togglePetPlayground
+            )
+
+            SettingsToggleRow(
+                icon: viewModel.showANEVisionInspector ? "eye.square.fill" : "eye.square",
+                iconColor: viewModel.showANEVisionInspector ? "34C759" : "00F0FF",
+                title: "NPU 视觉识别框 (开发者图层标框)",
+                subtitle: viewModel.showANEVisionInspector
+                    ? "开发者模式: 实时框选出所有由 NPU 神经网络识别到的 UI 控件、按钮与虚拟物理墙"
+                    : "开启后类似浏览器开发者工具 (Inspect Element)，高亮描绘所有窗口与控件识别框及虚拟墙",
+                isOn: $viewModel.showANEVisionInspector,
+                onToggle: viewModel.toggleANEVisionInspector
             )
 
             SettingsToggleRow(
@@ -4012,6 +4147,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var launchAtLogin = false
     @Published var showStatusBarIcon = true
     @Published var preventSleep = false
+    @Published var autoDisableSleepOnLaunch = false
     @Published var selectedFont: AppFont = .cute
     @Published var selectedIconStyle: IconStyle = .pixelAnimal
     @Published var statusBarIconStyle: IconStyle = .originalHattie
@@ -4150,6 +4286,47 @@ final class SettingsViewModel: ObservableObject {
 
     @Published var isPetPlaygroundEnabled: Bool = false
     @Published var isPetTouchBarEnabled: Bool = true
+    @Published var showANEVisionInspector: Bool = false
+
+    @Published var activeAssertionOwner: String = "系统准备就绪 (无第三方程序接管)"
+    @Published var sleepGuardWhitelist: [String] = []
+    @Published var newWhitelistItem: String = ""
+    @Published var runningApplications: [NSRunningApplication] = []
+    @Published var showRunningAppPicker: Bool = false
+
+    func restoreSystemSleepMode() {
+        container.preventSleepService.restoreSystemSleepMode()
+    }
+
+    func refreshRunningApplications() {
+        let apps = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.localizedName != nil }
+            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+        self.runningApplications = apps
+    }
+
+    func toggleWhitelistApp(_ appName: String) {
+        let lower = appName.lowercased()
+        if let idx = sleepGuardWhitelist.firstIndex(where: { $0.lowercased() == lower }) {
+            sleepGuardWhitelist.remove(at: idx)
+        } else {
+            sleepGuardWhitelist.append(lower)
+        }
+        container.settingsService.updateSleepGuardWhitelist(sleepGuardWhitelist)
+    }
+
+    func addSleepGuardWhitelistItem() {
+        let trimmed = newWhitelistItem.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !trimmed.isEmpty, !sleepGuardWhitelist.contains(trimmed) else { return }
+        sleepGuardWhitelist.append(trimmed)
+        newWhitelistItem = ""
+        container.settingsService.updateSleepGuardWhitelist(sleepGuardWhitelist)
+    }
+
+    func removeSleepGuardWhitelistItem(_ item: String) {
+        sleepGuardWhitelist.removeAll { $0 == item }
+        container.settingsService.updateSleepGuardWhitelist(sleepGuardWhitelist)
+    }
 
     var isPreventSleepEnabled: Bool {
         preventSleep
@@ -4167,12 +4344,37 @@ final class SettingsViewModel: ObservableObject {
 
     init() {
         preventSleep = container.preventSleepService.isPreventSleepEnabled
+        autoDisableSleepOnLaunch = container.preventSleepService.autoDisableSleepOnLaunch
+        activeAssertionOwner = container.preventSleepService.activeAssertionOwner
+        sleepGuardWhitelist = container.settingsService.settings.sleepGuardWhitelist
+
+        refreshRunningApplications()
+
+        NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didLaunchApplicationNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refreshRunningApplications()
+            }
+            .store(in: &cancellables)
+
+        NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didTerminateApplicationNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refreshRunningApplications()
+            }
+            .store(in: &cancellables)
+
+        container.preventSleepService.activeAssertionOwnerPublisher
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$activeAssertionOwner)
+
         isPetPlaygroundEnabled = container.petPlaygroundService.isEnabled
         launchAtLogin = container.launchAtLoginService.isEnabled
         timeOffset = container.timeSyncService.timeOffset
         
         let settings = container.settingsService.settings
         isPetTouchBarEnabled = settings.isPetTouchBarEnabled
+        showANEVisionInspector = settings.showANEVisionInspector
         selectedFont = settings.selectedFont
         selectedIconStyle = settings.selectedIconStyle
         statusBarIconStyle = settings.statusBarIconStyle
@@ -4376,13 +4578,6 @@ final class SettingsViewModel: ObservableObject {
             LoggerService.shared.info("Administrator password securely synchronized into system Keychain.")
             checkKeychainStatus()
             keychainInputPassword = ""
-            
-            // 【系统集成】如果用户之前开启了开机自启动，我们在保存完密码后，在后台静默尝试部署/修复系统级守护进程
-            if launchAtLogin {
-                Task {
-                    _ = await container.launchAtLoginService.deploySystemWideDaemon()
-                }
-            }
         } else {
             errorMessage = "无法写入钥匙串：系统安全限制失败。"
             showError = true
@@ -4588,6 +4783,14 @@ final class SettingsViewModel: ObservableObject {
         container.settingsService.updateSettings(settings)
         PetTouchBarWindowManager.shared.updateTouchBarState(isEnabled: enabled)
         LoggerService.shared.info("PetTouchBar toggled to: \(enabled)")
+    }
+
+    func toggleANEVisionInspector(_ enabled: Bool) {
+        showANEVisionInspector = enabled
+        var settings = container.settingsService.settings
+        settings.showANEVisionInspector = enabled
+        container.settingsService.updateSettings(settings)
+        LoggerService.shared.info("ANEVisionInspector toggled to: \(enabled)")
     }
 
     func togglePausePets() {
@@ -5228,6 +5431,13 @@ final class SettingsViewModel: ObservableObject {
         } else {
             container.preventSleepService.disablePreventSleep()
         }
+    }
+
+    func toggleAutoDisableSleepOnLaunch(_ enabled: Bool) {
+        container.preventSleepService.setAutoDisableSleepOnLaunch(enabled)
+        var settings = container.settingsService.settings
+        settings.autoDisableSleepOnLaunch = enabled
+        container.settingsService.updateSettings(settings)
     }
 
     func exportData() async {

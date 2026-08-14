@@ -63,25 +63,38 @@ final class LaunchAtLoginService: LaunchAtLoginServiceProtocol {
         self.storageService = storageService
     }
     
+    // MARK: - LaunchAgent Plist Helper
+    
+    private var launchAgentPlistURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/LaunchAgents/com.yumikotoys.autostart.plist")
+    }
+    
+    private var appExecutablePath: String {
+        Bundle.main.executablePath ?? (Bundle.main.bundlePath + "/Contents/MacOS/YumikoToys")
+    }
+    
     // MARK: - ServiceLifecycle
     
     func initialize() async {
         healthStatus = await checkLaunchItemHealth()
         healthStatusSubject.send(healthStatus)
         
+        // 自动卸载并清除过时的旧版 system level sleep daemon（如果残留）
+        let legacyDaemonPath = "/Library/LaunchDaemons/com.yumikotoys.sleepdaemon.plist"
+        if FileManager.default.fileExists(atPath: legacyDaemonPath) {
+            LoggerService.shared.warning("Removing legacy system sleep daemon: \(legacyDaemonPath)")
+            let process = Process()
+            process.launchPath = "/bin/rm"
+            process.arguments = ["-f", legacyDaemonPath]
+            try? process.run()
+        }
+        
         if let enabled: Bool = storageService.load(forKey: settingsKey) {
-            if enabled && healthStatus != .healthy {
-                LoggerService.shared.warning("Launch item unhealthy, attempting repair...")
-                do {
-                    try await repairLaunchItem()
-                    healthStatus = await checkLaunchItemHealth()
-                    healthStatusSubject.send(healthStatus)
-                } catch {
-                    LoggerService.shared.error("Failed to repair launch item: \(error)")
-                }
-            }
-            
-            isEnabled = (SMAppService.mainApp.status == .enabled) && (healthStatus == .healthy)
+            isEnabled = enabled && (healthStatus == .healthy)
+            isEnabledSubject.send(isEnabled)
+        } else {
+            isEnabled = (healthStatus == .healthy)
             isEnabledSubject.send(isEnabled)
         }
         
@@ -101,10 +114,10 @@ final class LaunchAtLoginService: LaunchAtLoginServiceProtocol {
     func enable() {
         Task {
             do {
-                try await enableWithRetry()
-                sendNotification(title: "🐰 开机自启动", body: "已成功开启，兔可可将在登录时自动启动")
+                try await enableLaunchAgentPlist()
+                sendNotification(title: "🐰 开机自启动", body: "已成功开启，兔可可将在登录时自动在后台启动")
             } catch {
-                LoggerService.shared.error("Failed to enable launch at login after retries: \(error)")
+                LoggerService.shared.error("Failed to enable launch at login: \(error)")
                 sendNotification(title: "🐰 开机自启动", body: "开启失败：\(error.localizedDescription)")
             }
         }
@@ -113,10 +126,10 @@ final class LaunchAtLoginService: LaunchAtLoginServiceProtocol {
     func disable() {
         Task {
             do {
-                try await disableWithRetry()
+                try await disableLaunchAgentPlist()
                 sendNotification(title: "🐰 开机自启动", body: "已关闭开机自启动")
             } catch {
-                LoggerService.shared.error("Failed to disable launch at login after retries: \(error)")
+                LoggerService.shared.error("Failed to disable launch at login: \(error)")
                 sendNotification(title: "🐰 开机自启动", body: "关闭失败：\(error.localizedDescription)")
             }
         }
@@ -130,111 +143,87 @@ final class LaunchAtLoginService: LaunchAtLoginServiceProtocol {
         }
     }
     
-    // MARK: - 【特权提权功能】利用钥匙串密码部署系统级守护进程 (System Daemon)
+    // MARK: - LaunchAgent Plist Implementation
     
-    /// 部署系统级永久防休眠自启守护进程 (需要钥匙串中的管理员密码)
-    func deploySystemWideDaemon() async -> Bool {
-        // 安全尝试从钥匙串中提取已存储的管理员密码
-        guard let savedPassword = YumikoToysKeychain.getSavedPassword(), !savedPassword.isEmpty else {
-            LoggerService.shared.warning("No administrator password found in Keychain. Cannot deploy System Daemon.")
-            return false
+    private func enableLaunchAgentPlist() async throws {
+        let launchAgentsDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/LaunchAgents")
+        if !FileManager.default.fileExists(atPath: launchAgentsDir.path) {
+            try FileManager.default.createDirectory(at: launchAgentsDir, withIntermediateDirectories: true)
         }
         
-        LoggerService.shared.info("Retrieved authorization credentials. Preparing System Daemon installation...")
-        
-        let daemonLabel = "com.yumikotoys.sleepdaemon"
-        let plistPath = "/Library/LaunchDaemons/\(daemonLabel).plist"
-        
+        let plistLabel = "com.yumikotoys.autostart"
         let plistContent = """
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
             <key>Label</key>
-            <string>\(daemonLabel)</string>
+            <string>\(plistLabel)</string>
             <key>ProgramArguments</key>
             <array>
-                <string>/usr/bin/pmset</string>
-                <string>-a</string>
-                <string>disablesleep</string>
-                <string>1</string>
+                <string>\(appExecutablePath)</string>
+                <string>--autostart</string>
             </array>
             <key>RunAtLoad</key>
             <true/>
-            <key>KeepAlive</key>
-            <false/>
+            <key>ProcessType</key>
+            <string>Interactive</string>
         </dict>
         </plist>
         """
         
-        let tempPlistURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(daemonLabel).plist")
-        try? plistContent.write(to: tempPlistURL, atomically: true, encoding: .utf8)
+        try plistContent.write(to: launchAgentPlistURL, atomically: true, encoding: .utf8)
         
-        let scriptText = """
-        mkdir -p /Library/LaunchDaemons && \\
-        cp -f "\(tempPlistURL.path)" "\(plistPath)" && \\
-        chown root:wheel "\(plistPath)" && \\
-        chmod 644 "\(plistPath)" && \\
-        launchctl load -w "\(plistPath)"
-        """
+        // 加载 LaunchAgent
+        let process = Process()
+        process.launchPath = "/bin/launchctl"
+        process.arguments = ["load", "-w", launchAgentPlistURL.path]
+        try? process.run()
+        process.waitUntilExit()
         
-        return await withCheckedContinuation { continuation in
-            let escapedScript = scriptText.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            let appleScriptSource = """
-            do shell script "\(escapedScript)" with administrator privileges user name "\(NSUserName())" password "\(savedPassword)"
-            """
-            
-            if let appleScript = NSAppleScript(source: appleScriptSource) {
-                var error: NSDictionary?
-                appleScript.executeAndReturnError(&error)
-                if let err = error {
-                    let msg = err[NSAppleScript.errorMessage] as? String ?? "未知特权指令错误"
-                    LoggerService.shared.error("System Daemon deployment failed: \(msg)")
-                    continuation.resume(returning: false)
-                } else {
-                    LoggerService.shared.info("✅ System Daemon deployed and loaded successfully at system-level")
-                    continuation.resume(returning: true)
-                }
-            } else {
-                continuation.resume(returning: false)
-            }
+        // 尝试 SMAppService 兼容注册（不抛错）
+        try? await SMAppService.mainApp.register()
+        
+        await MainActor.run {
+            isEnabled = true
+            isEnabledSubject.send(true)
+            healthStatus = .healthy
+            healthStatusSubject.send(.healthy)
+            storageService.save(true, forKey: settingsKey)
         }
+        LoggerService.shared.info("LaunchAgent plist deployed successfully to \(launchAgentPlistURL.path)")
     }
     
-    /// 注销并清除系统自启守护进程 (需要钥匙串中的管理员密码)
-    func removeSystemWideDaemon() async -> Bool {
-        guard let savedPassword = YumikoToysKeychain.getSavedPassword(), !savedPassword.isEmpty else { return false }
-        
-        let plistPath = "/Library/LaunchDaemons/com.yumikotoys.sleepdaemon.plist"
-        let scriptText = """
-        launchctl unload -w "\(plistPath)" && \\
-        rm -f "\(plistPath)"
-        """
-        
-        return await withCheckedContinuation { continuation in
-            let escapedScript = scriptText.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-            let appleScriptSource = """
-            do shell script "\(escapedScript)" with administrator privileges user name "\(NSUserName())" password "\(savedPassword)"
-            """
+    private func disableLaunchAgentPlist() async throws {
+        if FileManager.default.fileExists(atPath: launchAgentPlistURL.path) {
+            let process = Process()
+            process.launchPath = "/bin/launchctl"
+            process.arguments = ["unload", "-w", launchAgentPlistURL.path]
+            try? process.run()
+            process.waitUntilExit()
             
-            if let appleScript = NSAppleScript(source: appleScriptSource) {
-                var error: NSDictionary?
-                appleScript.executeAndReturnError(&error)
-                if error != nil {
-                    continuation.resume(returning: false)
-                } else {
-                    LoggerService.shared.info("✅ System Daemon removed successfully")
-                    continuation.resume(returning: true)
-                }
-            } else {
-                continuation.resume(returning: false)
-            }
+            try? FileManager.default.removeItem(at: launchAgentPlistURL)
         }
+        
+        // 尝试 SMAppService 注销
+        try? await SMAppService.mainApp.unregister()
+        
+        await MainActor.run {
+            isEnabled = false
+            isEnabledSubject.send(false)
+            healthStatus = .notRegistered
+            healthStatusSubject.send(.notRegistered)
+            storageService.save(false, forKey: settingsKey)
+        }
+        LoggerService.shared.info("LaunchAgent plist removed successfully")
     }
     
     // MARK: - Health Check
     
     func checkLaunchItemHealth() async -> LaunchItemStatus {
+        if FileManager.default.fileExists(atPath: launchAgentPlistURL.path) {
+            return .healthy
+        }
         let status = SMAppService.mainApp.status
         switch status {
         case .enabled:
@@ -252,89 +241,8 @@ final class LaunchAtLoginService: LaunchAtLoginServiceProtocol {
     
     func repairLaunchItem() async throws {
         LoggerService.shared.info("Repairing launch item...")
-        
-        try? await SMAppService.mainApp.unregister()
-        try await Task.sleep(nanoseconds: 500_000_000)
-        try await SMAppService.mainApp.register()
-        try await Task.sleep(nanoseconds: 300_000_000)
-        let newStatus = await checkLaunchItemHealth()
-        
-        guard newStatus == .healthy else {
-            throw LaunchAtLoginError.repairFailed(status: newStatus)
-        }
-        
-        LoggerService.shared.info("Launch item repaired successfully")
+        try await enableLaunchAgentPlist()
     }
-    
-    // MARK: - Private Methods
-    
-    private func enableWithRetry(retryCount: Int = 0) async throws {
-            do {
-                try await SMAppService.mainApp.register()
-                try await Task.sleep(nanoseconds: 200_000_000)
-                let status = await checkLaunchItemHealth()
-                
-                guard status == .healthy else {
-                    throw LaunchAtLoginError.registrationFailed(status: status)
-                }
-                
-                // 【架构闭环】自启开启成功后，若检测到钥匙串有密码，在底层自动同步部署系统级守护进程
-                if YumikoToysKeychain.getSavedPassword() != nil {
-                    _ = await deploySystemWideDaemon()
-                }
-                
-                await MainActor.run {
-                    isEnabled = true
-                    isEnabledSubject.send(true)
-                    healthStatus = status
-                    healthStatusSubject.send(status)
-                    storageService.save(true, forKey: settingsKey)
-                }
-                
-                LoggerService.shared.info("Launch at login enabled successfully")
-            } catch {
-                if retryCount < maxRetryCount {
-                    LoggerService.shared.warning("Enable failed, retrying (\(retryCount + 1)/\(maxRetryCount))...")
-                    try await Task.sleep(nanoseconds: 500_000_000)
-                    try await enableWithRetry(retryCount: retryCount + 1)
-                } else {
-                    throw error
-                }
-            }
-        }
-        
-        private func disableWithRetry(retryCount: Int = 0) async throws {
-            do {
-                try await SMAppService.mainApp.unregister()
-                try await Task.sleep(nanoseconds: 200_000_000)
-                let status = await checkLaunchItemHealth()
-                
-                guard status == .notRegistered || status == .notFound else {
-                    throw LaunchAtLoginError.unregistrationFailed(status: status)
-                }
-                
-                // 【架构闭环】自启关闭成功后，同步在底层卸载并清除特权自启守护进程
-                _ = await removeSystemWideDaemon()
-                
-                await MainActor.run {
-                    isEnabled = false
-                    isEnabledSubject.send(false)
-                    healthStatus = status
-                    healthStatusSubject.send(status)
-                    storageService.save(false, forKey: settingsKey)
-                }
-                
-                LoggerService.shared.info("Launch at login disabled successfully")
-            } catch {
-                if retryCount < maxRetryCount {
-                    LoggerService.shared.warning("Disable failed, retrying (\(retryCount + 1)/\(maxRetryCount))...")
-                    try await Task.sleep(nanoseconds: 500_000_000)
-                    try await disableWithRetry(retryCount: retryCount + 1)
-                } else {
-                    throw error
-                }
-            }
-        }
     
     // MARK: - Notifications
     

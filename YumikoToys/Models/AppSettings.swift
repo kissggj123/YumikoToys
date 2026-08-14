@@ -548,6 +548,7 @@ struct AppSettings: Codable, Sendable {
     var currentMode: AppMode
     var isBackgroundLearningEnabled: Bool  // 后台学习开关状态（与 currentMode.study 同步）
     var isPreventSleepEnabled: Bool
+    var autoDisableSleepOnLaunch: Bool
     var isPetPlaygroundEnabled: Bool
     var isPetTouchBarEnabled: Bool
     var isLaunchAtLoginEnabled: Bool
@@ -646,11 +647,19 @@ struct AppSettings: Codable, Sendable {
     var proactiveEnabledTriggers: [String] // 开启的检测领域，如 ["health", "performance", "emotion", "workspace"]
     var proactiveAutoConfigured: Bool      // 是否已完成自动配置
 
+    // MARK: - 桌面爬爬乐 NPU 视觉识别框与虚拟物理透明墙 Inspector (DevTools 样式)
+    var showANEVisionInspector: Bool
+
+    // MARK: - 睡眠守护 AI 与开发工具白名单
+    var sleepGuardWhitelist: [String]
+
     init(
         currentMode: AppMode = .normal,
         isBackgroundLearningEnabled: Bool = false,
         isPreventSleepEnabled: Bool = false,
+        autoDisableSleepOnLaunch: Bool = false,
         isPetPlaygroundEnabled: Bool = false,
+        showANEVisionInspector: Bool = false,
         isPetTouchBarEnabled: Bool = true,
         isLaunchAtLoginEnabled: Bool = false,
         showStatusBarIcon: Bool = true,
@@ -716,12 +725,16 @@ struct AppSettings: Codable, Sendable {
         proactiveHeartbeatInterval: Double = 15.0,
         proactiveAutoExecuteTasks: Bool = false,
         proactiveEnabledTriggers: [String] = ["health", "performance", "emotion", "workspace"],
-        proactiveAutoConfigured: Bool = false
+        proactiveAutoConfigured: Bool = false,
+        sleepGuardWhitelist: [String] = ["antigravity", "trae", "xcodebuild", "code", "git", "ffmpeg", "rsync"]
     ) {
         self.currentMode = currentMode
         self.isBackgroundLearningEnabled = isBackgroundLearningEnabled
         self.isPreventSleepEnabled = isPreventSleepEnabled
+        self.autoDisableSleepOnLaunch = autoDisableSleepOnLaunch
         self.isPetPlaygroundEnabled = isPetPlaygroundEnabled
+        self.showANEVisionInspector = showANEVisionInspector
+        self.sleepGuardWhitelist = sleepGuardWhitelist
         self.isPetTouchBarEnabled = isPetTouchBarEnabled
         self.isLaunchAtLoginEnabled = isLaunchAtLoginEnabled
         self.showStatusBarIcon = showStatusBarIcon
@@ -800,7 +813,10 @@ struct AppSettings: Codable, Sendable {
         currentMode = container.decodeIsolated(AppMode.self, forKey: .currentMode, fallback: .normal)
         isBackgroundLearningEnabled = try container.decodeIfPresent(Bool.self, forKey: .isBackgroundLearningEnabled) ?? false
         isPreventSleepEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPreventSleepEnabled) ?? false
+        autoDisableSleepOnLaunch = try container.decodeIfPresent(Bool.self, forKey: .autoDisableSleepOnLaunch) ?? false
         isPetPlaygroundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPetPlaygroundEnabled) ?? false
+        showANEVisionInspector = try container.decodeIfPresent(Bool.self, forKey: .showANEVisionInspector) ?? false
+        sleepGuardWhitelist = try container.decodeIfPresent([String].self, forKey: .sleepGuardWhitelist) ?? ["antigravity", "trae", "xcodebuild", "code", "git", "ffmpeg", "rsync"]
         isPetTouchBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPetTouchBarEnabled) ?? true
         isLaunchAtLoginEnabled = try container.decodeIfPresent(Bool.self, forKey: .isLaunchAtLoginEnabled) ?? false
         showStatusBarIcon = try container.decodeIfPresent(Bool.self, forKey: .showStatusBarIcon) ?? true

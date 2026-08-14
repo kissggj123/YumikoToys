@@ -222,7 +222,7 @@ struct Provider: TimelineProvider {
             {"icon":"🎉","label":"下一周年","date":"2027-03-12","countDisplay":"(第3周年)"}
           ],
           "proactiveBubbleText":null,
-          "appVersion":"4.5.5","displayStyle":"classic",
+          "appVersion":"4.5.6","displayStyle":"classic",
           "title":"在一起已经","totalHours":\(totalHours),"hoursPart":\(hoursPart),
           "minutesPart":\(minutesPart),"secondsPart":\(secondsPart),
           "themePrimaryHex":"FF6B9D"
@@ -239,7 +239,7 @@ struct Provider: TimelineProvider {
             startDate: Date(timeIntervalSinceReferenceDate: 0),
             totalDays: totalDays,
             milestones: [], proactiveBubbleText: nil,
-            appVersion: "4.5.5", displayStyle: "classic",
+            appVersion: "4.5.6", displayStyle: "classic",
             title: "在一起已经", totalHours: totalHours, hoursPart: hoursPart,
             minutesPart: minutesPart, secondsPart: secondsPart,
             themePrimaryHex: "FF6B9D"

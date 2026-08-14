@@ -285,15 +285,14 @@ enum WindowType: String, CaseIterable {
         case .settings: return NSSize(width: 780, height: 600)
         case .anniversaryManager: return NSSize(width: 540, height: 500)
         case .changelog: return NSSize(width: 460, height: 550)
-        case .about: return NSSize(width: 350, height: 450)
+        case .about: return NSSize(width: 620, height: 720)
         case .aiChat: return NSSize(width: 800, height: 600)
         }
     }
     
     var styleMask: NSWindow.StyleMask {
         switch self {
-        case .main: return [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-        case .aiChat: return [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        case .main, .aiChat, .about: return [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         default: return [.titled, .closable, .fullSizeContentView]
         }
     }

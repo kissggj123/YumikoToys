@@ -59,10 +59,17 @@ protocol AnniversaryServiceProtocol: ServiceLifecycle {
 protocol PreventSleepServiceProtocol: ServiceLifecycle {
     var isPreventSleepEnabled: Bool { get }
     var isPreventSleepEnabledPublisher: AnyPublisher<Bool, Never> { get }
+    var autoDisableSleepOnLaunch: Bool { get }
+    
+    var activeAssertionOwner: String { get }
+    var activeAssertionType: String { get }
+    var activeAssertionOwnerPublisher: AnyPublisher<String, Never> { get }
     
     func enablePreventSleep()
     func disablePreventSleep()
     func togglePreventSleep()
+    func setAutoDisableSleepOnLaunch(_ enabled: Bool)
+    func restoreSystemSleepMode()
 }
 
 // MARK: - 设置服务协议
@@ -75,6 +82,7 @@ protocol SettingsServiceProtocol: ServiceLifecycle {
     func updateMode(_ mode: AppMode)
     func updatePreventSleep(_ enabled: Bool)
     func updateLaunchAtLogin(_ enabled: Bool)
+    func updateSleepGuardWhitelist(_ whitelist: [String])
 }
 
 // MARK: - 开机自启动服务协议

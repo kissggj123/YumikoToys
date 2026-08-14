@@ -2,7 +2,7 @@
 //  ChangelogView.swift
 //  YumikoToys
 //
-//  更新日志视图（v4.5.3 - 苏门答腊短耳兔·贝壳与牧师 · 麦克白版）
+//  更新日志视图（v4.5.6 - 罗德岛战术协议 · 凯尔希的特别复查 · 麦克白版）
 //
 
 import SwiftUI
@@ -14,41 +14,48 @@ struct ChangelogView: View {
                 // 版本头
                 versionHeader
 
-                // 荷兰垂耳兔·星尘修复记 — 版本代号区
+                // 明日方舟罗德岛战术协议 — 版本代号区
                 CodenameSection(
-                    emoji: "🐰",
-                    title: "苏门答腊短耳兔·贝壳与牧师 (Sumatran Striped Rabbit · The Seashell and the Clergyman)",
+                    emoji: "🔷",
+                    title: "罗德岛战术协议 · 凯尔希的特别复查 (Rhodes Island Tactical Protocol · Kal'tsit's Audit)",
                     titleColor: "E9C46A",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，正如那只有着短促双耳、隐匿在热带雨林深处的苏门答腊短耳兔，在《贝壳与牧师》那超现实的幻象中穿梭，我们在 4.5.3 中为您带来了一次从感官到交互的全方位进化。我们重构了截图的底层架构以支持多屏捕获的自由选择，以 macOS 原生的姿态接管了 YumiScript 的应用启动，同时为宠物名片注入了档案专属的上帝模式文本与状态栏长文本智能换行。并在顶部状态栏增加了档案快速切换通道。当喧哗与骚动平息，剩下的，唯有纯粹而优雅的体验。",
+                    quote: "博士，正如大地上的源石扩散与冗余的系统特权指令有着相似的副作用，我们在 v4.5.6 中为您实施了一次全局代码净化。我们消除了滥用特权电源指令造成的睡眠因果反噬，以最优雅的用户级 LaunchAgent 守护静默启动，全面优化了特效雨与图形渲染的算力损耗，并为爬爬乐与 NPU 推理框注入了全新的物理拖拽与平滑滚动体验。秩序已重新建立，请您审阅。",
                     entries: [
                         ChangelogEntry(
-                            emoji: "🖥️",
-                            prefix: "【重构】",
+                            emoji: "💤",
+                            prefix: "【电源净化】",
                             prefixColor: "A8D8A8",
-                            text: "多屏截图捕获：重构截屏底层架构，原生支持遍历多屏幕的无缝捕获，现在您可以在全局预览窗体中自由选择并管理每一个屏幕的截图了。",
-                            character: "——W"
+                            text: "睡眠因果归位：彻底废除 sudo pmset 全局物理电源改写与 LaunchDaemon 特权部署，回归 macOS 原生 IOPMAssertion 动态断言机制。应用退出即释放休眠阻断，彻底解决开机默认禁用睡眠的隐患。",
+                            character: "——凯尔希"
                         ),
                         ChangelogEntry(
                             emoji: "🚀",
-                            prefix: "【修复】",
+                            prefix: "【优雅自启】",
                             prefixColor: "E9C46A",
-                            text: "快速启动插件：弃用易阻塞的 Shell 调用，采用 macOS 原生 NSWorkspace 引擎接管应用启动，彻底解决了启动终端等应用时的卡死问题。",
-                            character: "——陈"
+                            text: "LaunchAgent 配置文件：弃用不稳定易误判的 helper 进程，改为向 ~/Library/LaunchAgents 写入规范 plist 并注入 --autostart 标记。开机自启静默驻留菜单栏，100% 解决误弹主界面的问题。",
+                            character: "——阿米娅"
                         ),
                         ChangelogEntry(
-                            emoji: "✨",
-                            prefix: "【特性】",
+                            emoji: "🌧️",
+                            prefix: "【算力优化】",
                             prefixColor: "E76F51",
-                            text: "状态栏长文本与上帝模式：为您带来了更为自由的定制体验。现在，您可以为每一张宠物名片单独设置『上帝模式』专属长文本，并且引入了状态栏智能换行支持，让长文本亦能优雅展示。",
-                            character: "——凯尔希"
+                            text: "特效雨与渲染流控：重构 EmojiRainView 渲染逻辑，在 Canvas 外部建立文本解析缓存表，大幅降低高频 Layout 布局开销，特效雨结束时即刻物理销毁窗口内存，大幅降低 CPU 与 RAM 占用。",
+                            character: "——W (维什戴尔)"
                         ),
                         ChangelogEntry(
-                            emoji: "⚡",
-                            prefix: "【新增】",
+                            emoji: "🐾",
+                            prefix: "【爬爬乐重构】",
                             prefixColor: "A8C8D8",
-                            text: "全局快速切换：状态栏新增名片快速切换入口。无需打开管理面板，轻点状态栏中的小箭头，即可在所有宠物档案间无缝穿梭。",
-                            character: "——凯尔希"
+                            text: "四干员识别与拖拽：优化几何拓扑识别准确度，过滤应用自身面板干扰；实现自定义物理 hitTest 穿透，支持鼠标拖拽 4 位干员移动至屏幕顶端、左右墙壁或 Dock 栏并自动吸附攀爬。",
+                            character: "——华法琳"
+                        ),
+                        ChangelogEntry(
+                            emoji: "🧠",
+                            prefix: "【推理框增强】",
+                            prefixColor: "B8C0E0",
+                            text: "NPU 框穿透与平滑滚动：NPU Telemetry 推理框支持全区域按住鼠标拖动位移；非按钮透光区域自动物理穿透；推理日志新增平滑滚动视图，文本更新不再刺眼跳跃。",
+                            character: "——缪尔赛思"
                         )
                     ]
                 )
@@ -103,7 +110,7 @@ private struct CodenameSubtitle: View {
                 Text("◈")
                     .font(.system(size: 9, weight: .thin))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.6))
-                Text("超现实交织与隐秘穿梭的进化之旅")
+                Text("罗德岛战术协议 · 大地源石与系统逻辑净化")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.75))
                     .tracking(0.5)
@@ -115,23 +122,12 @@ private struct CodenameSubtitle: View {
                     .fill(Color(hex: "E9C46A").opacity(0.06))
             )
 
-            // 苏门答腊短耳兔解释
+            // 凯尔希特别复查解释
             VStack(alignment: .leading, spacing: 3) {
-                Text("🐰  Sumatran Striped Rabbit 苏门答腊短耳兔")
+                Text("🔷  Kal'tsit's Special Audit 凯尔希的特别复查")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("苏门答腊短耳兔（Nesolagus netscheri）是世界上最稀有、最鲜为人知的兔形目动物之一。它隐匿于苏门答腊岛深处，极具神秘感。以其为名，象征着我们在 4.5.3 中对最底层、最隐秘的代码逻辑（如多屏截图与底层启动机制）进行了深度挖掘与重构，捕捉那些平时难以察觉的系统级细节。")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(2)
-            }
-
-            // 贝壳与牧师解释
-            VStack(alignment: .leading, spacing: 3) {
-                Text("🎬  贝壳与牧师 (The Seashell and the Clergyman, 1928)")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color(hex: "E9C46A"))
-                Text("《贝壳与牧师》是法国导演热尔曼·杜拉克执导的早期超现实主义实验电影先驱。影片通过非理性的视觉幻象和梦境逻辑，打破了传统的叙事结构。此次版本以此为名，寓意着我们在多屏交互与上帝模式中，打破了原有的单向度限制，赋予用户如超现实主义般自由、无缝的档案切换与界面重构体验。")
+                Text("凯尔希对罗德岛全舰战术设备与底层逻辑进行了全面复查。在 4.5.6 协议中，我们排除了原先滥用特权指令造成的系统电源紊乱，建立了优雅规范的用户级 LaunchAgent 开机防护，全面提升了系统的运算流畅度与干员交互体验。")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
@@ -259,7 +255,7 @@ private struct VersionEpigraph: View {
                             .fill(Color(hex: "E9C46A").opacity(0.5))
                             .frame(width: 20, height: 1.5)
 
-                        Text("William Shakespeare · Macbeth, Act V, Scene V")
+                        Text("William Shakespeare · Macbeth, Act I, Scene VII")
                             .font(.system(size: 10, weight: .semibold, design: .serif))
                             .foregroundStyle(Color(hex: "E9C46A"))
                             .tracking(1.5)
@@ -268,14 +264,14 @@ private struct VersionEpigraph: View {
                     }
 
                     // 英文原文
-                    Text("Tomorrow, and tomorrow, and tomorrow / Creeps in this petty pace from day to day / To the last syllable of recorded time... / Life's but a walking shadow, a poor player / That struts and frets his hour upon the stage / And then is heard no more. / It is a tale told by an idiot, full of sound and fury, / Signifying nothing.")
+                    Text("If it were done when 'tis done, then 'twere well / It were done quickly: if the assassination / Could trammel up the consequence, and catch / With his surcease success; that but this blow / Might be the be-all and the end-all here... But in these cases / We still have judgment here; that we but teach / Bloody instructions, which, being taught, return / To plague the inventor...")
                         .font(.system(size: 13, weight: .medium, design: .serif))
                         .foregroundStyle(Color(hex: "E9C46A").opacity(0.85))
                         .italic()
                         .lineSpacing(4)
 
                     // 中文翻译
-                    Text("『明天，明天，再一个明天，一天接着一天地蹑步前进，直到最后一秒钟的时间……人生不过是一个行走的影子，一个在舞台上指手划脚的拙劣伶人，登场片刻，便在无声无息中悄然退下；它是一个愚人所讲的故事，充满着喧哗和骚动，却找不到一点意义。』")
+                    Text("『如果干了之后就算干完了，那么最好快点干；如果这次刺杀能把后果全给拴住，伴随着他的死带来成功；如果这一击就能成为一切的终结……然而在这类事情上，我们在此世便要受到审判；我们所教授的流血指令，一旦被学去，终将返回来折磨发明者自己。』")
                         .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                         .lineSpacing(3.5)
@@ -287,7 +283,7 @@ private struct VersionEpigraph: View {
 
                         Spacer()
 
-                        Text(isExpanded ? "收起档案" : "阅读档案")
+                        Text(isExpanded ? "收起戏剧背景与考据" : "阅读戏剧背景与考据")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(Color(hex: "E9C46A"))
 
@@ -313,14 +309,29 @@ private struct VersionEpigraph: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Divider().background(Color(hex: "E9C46A").opacity(0.1))
 
-                    Text("【文学与哲学背景档案】")
+                    Text("【戏剧情节背景与前后剧情脉络】")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "E9C46A"))
 
-                    Text("这段著名的独白出自莎士比亚的四大悲剧之一《麦克白》（第五幕第五场）。当麦克白在重重围困中听闻妻子死讯，面对终将覆灭的命运与双手沾满的鲜血，他陷入了极度的虚无主义，对时间的无情流逝与人生的荒诞本质发出了这声绝望的感叹。将如此深沉的悲剧独白置于本次更新的注脚，并非出于悲观，而是一种对数字生命与技术演进的反思：当我们在系统中不断修补、堆砌复杂的逻辑与功能，试图对抗程序的无序时，那些喧哗与骚动最终是为了回归一种“意义”。我们重构底层启动机制，优化多屏交互与档案展示，正是为了在这如同“行走的影子”般瞬息万变的比特世界中，为您剥离毫无意义的喧嚣，留下真正优雅、纯粹且触手可及的秩序。")
-                        .font(.system(size: 12))
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("• 前因（女巫预言与弑君诱惑）：在第一幕第 1~3 场中，战功赫赫的麦克白在荒野遭遇三位女巫预言他将成为考特爵士并终将登基为王。预言应验后，苏格兰国王邓肯亲自下榻麦克白的城堡。麦克白将预言写信告知妻子，果敢狠辣的麦克白夫人极力劝诱他趁国王过夜时将其刺杀。")
+                        
+                        Text("• 本场现场（宴会独白与内心交战）：在第一幕第 7 场中，大厅正举办欢庆晚宴。麦克白中途离席躲入偏厅阴影中，陷入剧烈的道德煎熬。他深知邓肯不仅是君主更是客人，且爱民如子，弑君不仅违背天理，更告诫自己『流血的指令终将折磨发明者』。他一度动摇，对赶来的妻子说：『我们不要干这件事了！』")
+
+                        Text("• 后果（夫人逼迫与崩溃毁灭）：麦克白夫人用极其冷酷的言语质问其男子气概，并提出灌醉侍卫、嫁祸于人的周密计划。麦克白最终被说服，深夜刺杀了邓肯。但刺杀完成后，麦克白即刻陷入永无止境的惊恐幻听（『麦克白杀死了睡眠！』）与狂躁疑虑，自此踏上狂暴专制与身死国灭的悲剧毁灭之路。")
+                    }
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(3.5)
+
+                    Text("【冷门历史考据与系统架构隐喻】")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color(hex: "E9C46A"))
+
+                    Text("1606 年《麦克白》首演前夕，英国爆发了震撼朝野的『火药阴谋』（Gunpowder Plot）。莎士比亚借麦克白独白探讨弑君因果，实则暗指耶稣会教士亨利·加奈特在审判中使用的『模棱两可论』（Equivocation）。『流血的指令终将折磨发明者』在现代软件架构中有着绝妙的隐喻：试图通过特权命令（如 sudo pmset）绕过操作系统底层规范的『快捷手段』，就像弑君篡位一样，最终都会像回旋镖一样生成难以根除的系统副作用与开机电源紊乱。只有回归优雅与原生规范，才能彻底摆脱这层因果反噬。")
+                        .font(.system(size: 11))
                         .foregroundStyle(.secondary)
-                        .lineSpacing(4)
+                        .lineSpacing(3.5)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 14)

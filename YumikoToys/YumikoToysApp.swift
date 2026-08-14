@@ -166,9 +166,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     /// 检测是否为开机自启动
     private nonisolated var launchedAsLogInItem: Bool {
-        // 1. 命令行参数检测（SMAppService / LaunchAtLogin 自动启动触发特征）
+        // 1. 命令行参数检测（Plist / LaunchAgent / SMAppService 自动启动触发特征）
         let args = ProcessInfo.processInfo.arguments
-        if args.contains("-RegisterForSystemEvents") ||
+        if args.contains("--autostart") ||
+           args.contains("-autostart") ||
+           args.contains("-RegisterForSystemEvents") ||
            args.contains("--launched-at-login") ||
            args.contains("-launchedAtLogin") ||
            args.contains("LaunchAtLogin") {
@@ -181,12 +183,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return true
         }
         
-        // 3. 现代 macOS Login Item (SMAppService) 检测：父进程为 launchd (PID 1)
-        if getppid() == 1 {
-            return true
-        }
-        
-        // 4. 传统 Apple Event 检测
+        // 3. 传统 Apple Event 检测
         if let event = NSAppleEventManager.shared().currentAppleEvent {
             let isOapp = event.eventClass == 0x61657674 && event.eventID == 0x6f617070
             if isOapp, let propData = event.paramDescriptor(forKeyword: 0x70727074) {

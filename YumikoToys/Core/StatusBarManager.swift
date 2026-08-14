@@ -716,7 +716,7 @@ struct EmojiRainView: View {
     var body: some View {
         GeometryReader { geo in
             if !particles.isEmpty {
-                TimelineView(.animation(minimumInterval: 0.016)) { context in
+                TimelineView(.animation(minimumInterval: 0.033)) { context in
                     let elapsed = context.date.timeIntervalSince(startDate)
                     let effectType: SpecialEffectType = {
                         if AnimeThemeService.shared.isEnabled {
@@ -731,6 +731,9 @@ struct EmojiRainView: View {
                     }()
                     
                     Canvas { canvasContext, size in
+                        // 高性能文本解析结果缓存表，避免在粒子循环中重复解析布局
+                        var textCache: [String: GraphicsContext.ResolvedText] = [:]
+
                         for p in particles {
                             var currentX: CGFloat = 0
                             var currentY: CGFloat = 0
@@ -860,26 +863,32 @@ struct EmojiRainView: View {
                                 particleContext.opacity = opacity
                                 
                                 let resolved: GraphicsContext.ResolvedText
-                                if effectType == .matrix {
-                                    resolved = canvasContext.resolve(
-                                        Text(currentEmoji)
-                                            .font(.system(size: 26 * currentScale, weight: .bold, design: .monospaced))
-                                            .foregroundColor(Color(red: 0.0, green: 0.95, blue: 0.15))
-                                    )
-                                } else if effectType == .halo {
-                                    resolved = canvasContext.resolve(
-                                        Text(currentEmoji)
-                                            .font(.system(size: 30 * currentScale))
-                                            .foregroundColor(Color(red: 1.0, green: 0.88, blue: 0.2))
-                                    )
+                                if let cached = textCache[currentEmoji] {
+                                    resolved = cached
                                 } else {
-                                    resolved = canvasContext.resolve(
-                                        Text(currentEmoji)
-                                            .font(.system(size: 32 * currentScale))
-                                    )
+                                    if effectType == .matrix {
+                                        resolved = canvasContext.resolve(
+                                            Text(currentEmoji)
+                                                .font(.system(size: 26, weight: .bold, design: .monospaced))
+                                                .foregroundColor(Color(red: 0.0, green: 0.95, blue: 0.15))
+                                        )
+                                    } else if effectType == .halo {
+                                        resolved = canvasContext.resolve(
+                                            Text(currentEmoji)
+                                                .font(.system(size: 30))
+                                                .foregroundColor(Color(red: 1.0, green: 0.88, blue: 0.2))
+                                        )
+                                    } else {
+                                        resolved = canvasContext.resolve(
+                                            Text(currentEmoji)
+                                                .font(.system(size: 32))
+                                        )
+                                    }
+                                    textCache[currentEmoji] = resolved
                                 }
                                 
                                 particleContext.translateBy(x: currentX, y: currentY)
+                                particleContext.scaleBy(x: currentScale, y: currentScale)
                                 particleContext.rotate(by: Angle(degrees: currentRotation))
                                 particleContext.draw(resolved, at: .zero)
                             }
@@ -1030,8 +1039,8 @@ struct StatusBarButtonView: View {
     var body: some View {
         HStack(spacing: 5) {
             if let pet = petName {
-                SpriteKitPetIconView(petName: pet, size: 18)
-                    .frame(width: 18, height: 18)
+                SpriteKitPetIconView(petName: pet, width: 30, height: 18)
+                    .frame(width: 30, height: 18)
             } else if let img = currentImage {
                 Image(nsImage: img)
                     .resizable()
