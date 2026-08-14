@@ -85,7 +85,7 @@ struct AboutView: View {
                         CreditsRow(
                             title: "The Patron of New Marvels",
                             subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)",
-                            name: "@🐰可可",
+                            name: "@🐰兔可可",
                             tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”"
                         )
                         
