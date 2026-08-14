@@ -102,6 +102,9 @@ struct ChangelogView: View {
 // MARK: - 代号副标题 (18-20世纪国外冷门电影 × 真实罕见兔种)
 
 private struct CodenameSubtitle: View {
+    @State private var showInfoPopover = false
+    @State private var isInfoBtnHovered = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
 
@@ -124,9 +127,85 @@ private struct CodenameSubtitle: View {
 
             // 简短出处与代号解构
             VStack(alignment: .leading, spacing: 3) {
-                Text("🎬  The Phantom Carriage & Silver Fox 战术代号")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color(hex: "E9C46A"))
+                HStack(spacing: 6) {
+                    Text("🎬  The Phantom Carriage & Silver Fox 战术代号")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color(hex: "E9C46A"))
+
+                    // (i) 按钮用于解释 1921 默片与罕见兔种的起源故事
+                    Button(action: {
+                        showInfoPopover.toggle()
+                    }) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(
+                                isInfoBtnHovered || showInfoPopover
+                                    ? Color(hex: "E9C46A")
+                                    : Color(hex: "E9C46A").opacity(0.4)
+                            )
+                            .scaleEffect(isInfoBtnHovered ? 1.15 : 1.0)
+                    }
+                    .buttonStyle(.plain)
+                    .help("点击解构 1921 默片名作与罕见兔种起源故事")
+                    .onHover { isInfoBtnHovered = $0 }
+                    .popover(isPresented: $showInfoPopover, arrowEdge: .top) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            // Header
+                            HStack(spacing: 6) {
+                                Image(systemName: "film.stack.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color(hex: "E9C46A"))
+
+                                Text("战术代号起源与文化故事考据")
+                                    .font(.system(size: 12.5, weight: .bold))
+                                    .foregroundStyle(.primary)
+                            }
+
+                            Divider()
+
+                            // 1. 1921 瑞典默片《幻影马车》
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "film")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(Color(hex: "E9C46A"))
+                                    Text("🎬 1921 瑞典默片《幻影马车》(The Phantom Carriage)")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(Color(hex: "E9C46A"))
+                                }
+
+                                Text("改编自诺贝尔文学奖名著，由瑞典无声电影大师维克多·斯约斯特洛姆执导。古老传说中除夕夜子夜钟声敲响前死去的最末灵魂，必须驾驭死神幽灵马车在整整一年里收割死者灵魂。影片以革命性的双重曝光重影摄影与灵魂救赎挽歌著称，深深影响了伯格曼《第七封印》中死神的诞生。")
+                                    .font(.system(size: 10.5))
+                                    .foregroundStyle(.secondary)
+                                    .lineSpacing(3)
+                            }
+                            .padding(8)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
+
+                            // 2. 1920 美洲银狐兔
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "pawprint.fill")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(Color(hex: "F4A261"))
+                                    Text("🐰 1920 美洲银狐兔(Silver Fox Rabbit)")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(Color(hex: "F4A261"))
+                                }
+
+                                Text("由美洲育种家 Walter B. Garland 在 20 世纪 20 年代历经 14 年基因培育而成的极稀有保护兔种。它是世界上唯一拥有野生银狐般‘漆黑锦缎底绒与璀璨银针毛尖’的华丽兔种，目前已被列入极稀有重点保护物种名录。")
+                                    .font(.system(size: 10.5))
+                                    .foregroundStyle(.secondary)
+                                    .lineSpacing(3)
+                            }
+                            .padding(8)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.04)))
+                        }
+                        .padding(14)
+                        .frame(width: 295)
+                    }
+                }
+
                 Text("“天色渐沉，乌鸦归林。在暗夜与幻影交织的沉寂阴影中，银狐般的敏锐守护终将捍卫代码城邦。”")
                     .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
