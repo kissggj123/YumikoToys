@@ -110,7 +110,7 @@ private struct CodenameSubtitle: View {
                 Text("◈")
                     .font(.system(size: 9, weight: .thin))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.6))
-                Text("代号规则：18-20世纪国外冷门电影 × 真实罕见兔种")
+                Text("罗德岛战术协议 · 静夜因果与守护秘语")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.75))
                     .tracking(0.5)
@@ -124,10 +124,10 @@ private struct CodenameSubtitle: View {
 
             // 简短出处与代号解构
             VStack(alignment: .leading, spacing: 3) {
-                Text("🎬  The Phantom Carriage & Silver Fox 代号解构")
+                Text("🎬  The Phantom Carriage & Silver Fox 战术代号")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(hex: "E9C46A"))
-                Text("• 电影出处：1921 年瑞典经典默片名作《幻影马车》（The Phantom Carriage / Victor Sjöström 执导，讲述除夕夜灵魂因果与救赎的奇幻黑白先驱）\n• 兔种出处：美洲银狐兔（Silver Fox Rabbit，诞生于 20 世纪 20 年代、拥有漆黑锦缎底色与银针毛尖的极稀有保护兔种）")
+                Text("“天色渐沉，乌鸦归林。在暗夜与幻影交织的沉寂阴影中，银狐般的敏锐守护终将捍卫代码城邦。”")
                     .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
                     .lineSpacing(3)
