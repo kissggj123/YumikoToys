@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.7 - Shakespearean Macbeth Allusion Popovers, Vector Info Buttons & Cute Long Screenshot Exporter）
+//  关于页面视图（v4.5.7 - Shakespearean Macbeth Allusion Popovers, Vector Info Buttons & Classic Pink Icon Legend）
 //
 
 import SwiftUI
@@ -15,6 +15,23 @@ struct AboutView: View {
     @State private var showExportMenu = false
     @State private var showToast = false
     @State private var toastMessage = ""
+
+    private var themeGradientColors: [Color] {
+        if AnimeThemeService.shared.isEnabled {
+            return AnimeThemeService.shared.gradient()
+        }
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.mainWindowThemeColor
+        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
+    }
+
+    private var primaryColor: Color {
+        themeGradientColors.first ?? Color(hex: "FF6B9D")
+    }
+
+    private var secondaryColor: Color {
+        themeGradientColors.count > 1 ? themeGradientColors[1] : Color(hex: "C44FE2")
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -30,7 +47,7 @@ struct AboutView: View {
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                                        colors: [primaryColor, secondaryColor],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
@@ -232,7 +249,7 @@ struct AboutView: View {
             if showToast {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color(hex: "FF6B9D"))
+                        .foregroundStyle(primaryColor)
                     Text(toastMessage)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.primary)
@@ -245,7 +262,7 @@ struct AboutView: View {
                         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 4)
                         .overlay(
                             Capsule()
-                                .stroke(Color(hex: "FF6B9D").opacity(0.3), lineWidth: 1)
+                                .stroke(primaryColor.opacity(0.35), lineWidth: 1)
                         )
                 )
                 .padding(.bottom, 20)
@@ -258,8 +275,8 @@ struct AboutView: View {
                 Color(nsColor: .windowBackgroundColor)
                 EllipticalGradient(
                     stops: [
-                        .init(color: Color(hex: "FF6B9D").opacity(0.08), location: 0.0),
-                        .init(color: Color(hex: "C44FE2").opacity(0.04), location: 0.5),
+                        .init(color: primaryColor.opacity(0.08), location: 0.0),
+                        .init(color: secondaryColor.opacity(0.04), location: 0.5),
                         .init(color: .clear, location: 0.85)
                     ],
                     center: .top,
@@ -285,8 +302,8 @@ struct AboutView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(hex: "FF6B9D").opacity(0.2),
-                                        Color(hex: "C44FE2").opacity(0.1)
+                                        primaryColor.opacity(0.25),
+                                        secondaryColor.opacity(0.15)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -299,14 +316,14 @@ struct AboutView: View {
                         RoundedRectangle(cornerRadius: 24)
                             .fill(
                                 LinearGradient(
-                                    colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                                    colors: [primaryColor, secondaryColor],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
                             .frame(width: 96, height: 96)
                             .shadow(
-                                color: Color(hex: "FF6B9D").opacity(isIconHovered ? 0.5 : 0.3),
+                                color: primaryColor.opacity(isIconHovered ? 0.5 : 0.3),
                                 radius: isIconHovered ? 20 : 10,
                                 x: 0,
                                 y: isIconHovered ? 8 : 4
@@ -339,7 +356,7 @@ struct AboutView: View {
                                     Capsule()
                                         .fill(
                                             LinearGradient(
-                                                colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                                                colors: [primaryColor, secondaryColor],
                                                 startPoint: .leading,
                                                 endPoint: .trailing
                                             )
@@ -377,12 +394,12 @@ struct AboutView: View {
                         Capsule()
                             .fill(
                                 LinearGradient(
-                                    colors: [Color(hex: "FF6B9D"), Color(hex: "AF52DE")],
+                                    colors: [primaryColor, secondaryColor],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                            .shadow(color: Color(hex: "FF6B9D").opacity(0.3), radius: 6, x: 0, y: 2)
+                            .shadow(color: primaryColor.opacity(0.35), radius: 6, x: 0, y: 2)
                     )
                 }
                 .menuStyle(.borderlessButton)
@@ -395,7 +412,7 @@ struct AboutView: View {
     // MARK: - Screenshot Export Actions
     private func copyLongScreenshot() {
         if AboutImageExporter.copyLongScreenshotToClipboard() {
-            triggerToast("✨ 已成功复制《关于》1:1 萌系梦幻超长截图到剪贴板，可直接粘贴分享！")
+            triggerToast("✨ 已成功复制《关于》界面 1:1 萌系梦幻超长截图到剪贴板，可直接粘贴分享！")
         } else {
             triggerToast("导出长图失败，请稍后重试。")
         }
@@ -486,6 +503,9 @@ struct AboutImageExporter {
 
 private struct AboutExportableContentView: View {
     private var themeGradientColors: [Color] {
+        if AnimeThemeService.shared.isEnabled {
+            return AnimeThemeService.shared.gradient()
+        }
         let settings = DependencyContainer.shared.settingsService.settings
         let themeColor = settings.mainWindowThemeColor
         return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
@@ -611,7 +631,7 @@ private struct AboutExportableContentView: View {
                 }
             }
 
-            // 图标说明
+            // 图标说明 (使用经典粉色 UI 模拟器)
             AboutSectionCard(title: "✨ 图标对照与防休眠说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照", showInfoHint: false) {
                 VStack(spacing: 16) {
                     HStack(spacing: 16) {
@@ -943,6 +963,23 @@ private struct IconLegendCard: View {
 private struct AboutTextCard<Content: View>: View {
     let content: Content
 
+    private var themeGradientColors: [Color] {
+        if AnimeThemeService.shared.isEnabled {
+            return AnimeThemeService.shared.gradient()
+        }
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.mainWindowThemeColor
+        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
+    }
+
+    private var primaryColor: Color {
+        themeGradientColors.first ?? Color(hex: "FF6B9D")
+    }
+
+    private var secondaryColor: Color {
+        themeGradientColors.count > 1 ? themeGradientColors[1] : Color(hex: "C44FE2")
+    }
+
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
     }
@@ -956,8 +993,8 @@ private struct AboutTextCard<Content: View>: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(hex: "FF6B9D").opacity(0.06),
-                                Color(hex: "C44FE2").opacity(0.03)
+                                primaryColor.opacity(0.06),
+                                secondaryColor.opacity(0.03)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -968,8 +1005,8 @@ private struct AboutTextCard<Content: View>: View {
                             .stroke(
                                 LinearGradient(
                                     colors: [
-                                        Color(hex: "FF6B9D").opacity(0.3),
-                                        Color(hex: "C44FE2").opacity(0.15)
+                                        primaryColor.opacity(0.3),
+                                        secondaryColor.opacity(0.15)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -986,6 +1023,19 @@ private struct AboutSectionCard<Content: View>: View {
     let subtitle: String
     var showInfoHint: Bool = false
     let content: Content
+
+    private var themeGradientColors: [Color] {
+        if AnimeThemeService.shared.isEnabled {
+            return AnimeThemeService.shared.gradient()
+        }
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.mainWindowThemeColor
+        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
+    }
+
+    private var primaryColor: Color {
+        themeGradientColors.first ?? Color(hex: "FF6B9D")
+    }
 
     init(title: String, subtitle: String, showInfoHint: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
@@ -1011,17 +1061,17 @@ private struct AboutSectionCard<Content: View>: View {
                     HStack(spacing: 4) {
                         Image(systemName: "info.circle.fill")
                             .font(.system(size: 10))
-                            .foregroundStyle(Color(hex: "FF6B9D"))
+                            .foregroundStyle(primaryColor)
 
                         Text("点击 ⓘ 查阅典故")
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(Color(hex: "FF6B9D"))
+                            .foregroundStyle(primaryColor)
                     }
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
                     .background(
                         Capsule()
-                            .fill(Color(hex: "FF6B9D").opacity(0.1))
+                            .fill(primaryColor.opacity(0.1))
                     )
                 }
             }
@@ -1056,6 +1106,23 @@ private struct CreditsRow: View {
     @State private var showInfoPopover = false
     @State private var isInfoBtnHovered = false
 
+    private var themeGradientColors: [Color] {
+        if AnimeThemeService.shared.isEnabled {
+            return AnimeThemeService.shared.gradient()
+        }
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.mainWindowThemeColor
+        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
+    }
+
+    private var primaryColor: Color {
+        themeGradientColors.first ?? Color(hex: "FF6B9D")
+    }
+
+    private var secondaryColor: Color {
+        themeGradientColors.count > 1 ? themeGradientColors[1] : Color(hex: "C44FE2")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .center, spacing: 8) {
@@ -1063,7 +1130,7 @@ private struct CreditsRow: View {
                     .font(.system(size: 13.5, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color(hex: "5856D6"), Color(hex: "FF6B9D")],
+                            colors: [primaryColor, secondaryColor],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -1078,7 +1145,7 @@ private struct CreditsRow: View {
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(
                                 isInfoBtnHovered || showInfoPopover
-                                    ? Color(hex: "FF6B9D")
+                                    ? primaryColor
                                     : Color.primary.opacity(0.35)
                             )
                             .scaleEffect(isInfoBtnHovered ? 1.15 : 1.0)
@@ -1092,7 +1159,7 @@ private struct CreditsRow: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "book.pages.fill")
                                     .font(.system(size: 12))
-                                    .foregroundStyle(Color(hex: "FF6B9D"))
+                                    .foregroundStyle(primaryColor)
 
                                 Text("\(name) · 原著典故解构")
                                     .font(.system(size: 12.5, weight: .bold))
@@ -1106,7 +1173,7 @@ private struct CreditsRow: View {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("📖 莎士比亚原著出处")
                                         .font(.system(size: 10.5, weight: .bold))
-                                        .foregroundStyle(Color(hex: "C44FE2"))
+                                        .foregroundStyle(secondaryColor)
 
                                     Text(allusion)
                                         .font(.system(size: 11, design: .serif))
@@ -1123,7 +1190,7 @@ private struct CreditsRow: View {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("🗡️ 角色象征与深层解构")
                                         .font(.system(size: 10.5, weight: .bold))
-                                        .foregroundStyle(Color(hex: "FF6B9D"))
+                                        .foregroundStyle(primaryColor)
 
                                     Text(decoding)
                                         .font(.system(size: 11))
@@ -1132,7 +1199,7 @@ private struct CreditsRow: View {
                                         .lineSpacing(3)
                                 }
                                 .padding(8)
-                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.pink.opacity(0.04)))
+                                .background(RoundedRectangle(cornerRadius: 8).fill(primaryColor.opacity(0.06)))
                             }
                         }
                         .padding(14)
