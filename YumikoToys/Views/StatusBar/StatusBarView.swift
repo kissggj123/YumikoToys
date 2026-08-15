@@ -1370,6 +1370,39 @@ struct StatusBarView: View {
 
     private var themeToggleButton: some View {
         Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                showThemePicker.toggle()
+            }
+        }) {
+            HStack(spacing: 4) {
+                Image(systemName: themeColor.themeIcon)
+                    .font(.system(size: 10))
+                Circle()
+                    .fill(themeColor.animeOrAccent)
+                    .frame(width: 8, height: 8)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .medium))
+                    .rotationEffect(.degrees(showThemePicker ? 180 : 0))
+            }
+            .foregroundStyle(themeColor.animeOrAccent)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(themeColor.animeOrButton)
+            )
+            .overlay(
+                Capsule()
+                    .stroke(themeColor.animeOrBorder, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(isThemeBtnHovered ? 1.05 : 1.0)
+        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isThemeBtnHovered)
+        .onHover { isThemeBtnHovered = $0 }
+        .help("切换主题色")
+    }
+
     // MARK: - 底部主题色选择器
 
     private var themeColorPicker: some View {
