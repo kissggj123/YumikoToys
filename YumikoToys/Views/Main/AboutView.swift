@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - Premium Vector Orbital Particle Canvas & Theme-Tailored Exporter for ALL 20 Themes, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.8 - Ultra-Premium Frosted Glass Canvas & Unified Native macOS Layout, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
@@ -46,7 +46,7 @@ struct AboutThemeConfig {
                     watermarkTitle: "Made with 🐰 兔可可草莓奶油梦幻王权 ✨",
                     watermarkSubtitle: "© 2026 YumikoToys Lite · 软萌草莓王国独家长图卡片",
                     cardDecorationEmoji: "🍓",
-                    effectIcons: ["heart.fill", "sparkles", "suit.heart.fill", "star.fill", "crown.fill"],
+                    effectIcons: ["heart.fill", "sparkles", "suit.heart.fill", "crown.fill"],
                     backgroundGradientStops: [
                         .init(color: primary.opacity(0.12), location: 0.0),
                         .init(color: secondary.opacity(0.06), location: 0.5),
@@ -64,7 +64,7 @@ struct AboutThemeConfig {
                     watermarkTitle: "Made with 🍃 抹茶晨光与和风治愈守护 ✨",
                     watermarkSubtitle: "© 2026 YumikoToys Lite · 自然治愈森林专属长图卡片",
                     cardDecorationEmoji: "🌸",
-                    effectIcons: ["leaf.fill", "sparkles", "drop.fill", "tree.fill", "leaf.arrow.triangle.circlepath"],
+                    effectIcons: ["leaf.fill", "sparkles", "drop.fill", "tree.fill"],
                     backgroundGradientStops: [
                         .init(color: primary.opacity(0.12), location: 0.0),
                         .init(color: secondary.opacity(0.06), location: 0.5),
@@ -82,7 +82,7 @@ struct AboutThemeConfig {
                     watermarkTitle: "Made with ⚡️ 赛博量子防护与电光矩阵 ✨",
                     watermarkSubtitle: "© 2026 YumikoToys Lite · 赛博朋克电光专属长图卡片",
                     cardDecorationEmoji: "🔮",
-                    effectIcons: ["cpu.fill", "bolt.fill", "network", "shield.fill", "sparkles"],
+                    effectIcons: ["cpu.fill", "bolt.fill", "network", "shield.fill"],
                     backgroundGradientStops: [
                         .init(color: primary.opacity(0.15), location: 0.0),
                         .init(color: secondary.opacity(0.08), location: 0.5),
@@ -100,7 +100,7 @@ struct AboutThemeConfig {
                     watermarkTitle: "Made with 🌇 新海诚暮光霞光与云朵守护 ✨",
                     watermarkSubtitle: "© 2026 YumikoToys Lite · 电影级漫彩电影专属长图卡片",
                     cardDecorationEmoji: "✨",
-                    effectIcons: ["sun.max.fill", "cloud.sun.fill", "sparkles", "star.fill", "sunset.fill"],
+                    effectIcons: ["sun.max.fill", "cloud.sun.fill", "sparkles", "sunset.fill"],
                     backgroundGradientStops: [
                         .init(color: primary.opacity(0.12), location: 0.0),
                         .init(color: secondary.opacity(0.06), location: 0.5),
@@ -135,7 +135,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌙 极夜月光与不休眠夜幕 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 极夜深色经典专属长图卡片",
                 cardDecorationEmoji: "🌙",
-                effectIcons: ["moon.stars.fill", "sparkles", "star.fill", "moon.fill", "ellipsis.circle.fill"],
+                effectIcons: ["moon.stars.fill", "sparkles", "star.fill", "moon.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .pink:
@@ -149,7 +149,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 💖 兔可可草莓甜心爱意守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 甜心草莓粉专属长图卡片",
                 cardDecorationEmoji: "💖",
-                effectIcons: ["heart.fill", "sparkles", "suit.heart.fill", "heart.circle.fill", "star.fill"],
+                effectIcons: ["heart.fill", "sparkles", "suit.heart.fill", "star.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .lavender:
@@ -163,7 +163,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🔮 魔法紫罗兰与星辉秘灵守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 梦幻薰衣草紫专属长图卡片",
                 cardDecorationEmoji: "🔮",
-                effectIcons: ["sparkles", "rhombus.fill", "star.fill", "wand.and.stars", "moon.fill"],
+                effectIcons: ["sparkles", "rhombus.fill", "star.fill", "wand.and.stars"],
                 backgroundGradientStops: defaultStops
             )
         case .mint:
@@ -177,7 +177,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🍃 薄荷晨露与清爽爽朗守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 清新薄荷绿专属长图卡片",
                 cardDecorationEmoji: "🌱",
-                effectIcons: ["leaf.fill", "drop.fill", "wind", "sparkles", "bubbles.and.sparkles.fill"],
+                effectIcons: ["leaf.fill", "drop.fill", "wind", "sparkles"],
                 backgroundGradientStops: defaultStops
             )
         case .ocean:
@@ -191,7 +191,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌊 深海浪花与大鲸歌唱守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 蔚蓝海洋专属长图卡片",
                 cardDecorationEmoji: "🐋",
-                effectIcons: ["water.waves", "drop.fill", "sparkles", "circle.circle", "wave.3.forward"],
+                effectIcons: ["water.waves", "drop.fill", "sparkles", "wave.3.forward"],
                 backgroundGradientStops: defaultStops
             )
         case .sunset:
@@ -205,7 +205,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌇 温暖晚霞与落日余晖守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 金色日落专属长图卡片",
                 cardDecorationEmoji: "🌅",
-                effectIcons: ["sun.max.fill", "sparkles", "sun.horizon.fill", "star.fill", "rays"],
+                effectIcons: ["sun.max.fill", "sparkles", "sun.horizon.fill", "rays"],
                 backgroundGradientStops: defaultStops
             )
         case .pixel:
@@ -219,7 +219,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🎮 8-Bit 像素关卡防休眠守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 复古像素街机专属长图卡片",
                 cardDecorationEmoji: "👾",
-                effectIcons: ["gamecontroller.fill", "square.grid.2x2.fill", "bolt.fill", "star.fill", "cpu.fill"],
+                effectIcons: ["gamecontroller.fill", "square.grid.2x2.fill", "bolt.fill", "cpu.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .sakura:
@@ -233,7 +233,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌸 浪漫樱花雨与和风祈愿守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 浪漫樱花粉专属长图卡片",
                 cardDecorationEmoji: "🌸",
-                effectIcons: ["tree.fill", "leaf.fill", "sparkles", "heart.fill", "star.fill"],
+                effectIcons: ["tree.fill", "leaf.fill", "sparkles", "heart.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .deepSea:
@@ -247,7 +247,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🐚 深海水母荧光与宁静守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 深海静谧专属长图卡片",
                 cardDecorationEmoji: "🐚",
-                effectIcons: ["fish.fill", "drop.fill", "bubbles.and.sparkles.fill", "sparkles", "water.waves"],
+                effectIcons: ["fish.fill", "drop.fill", "sparkles", "water.waves"],
                 backgroundGradientStops: defaultStops
             )
         case .forest:
@@ -261,7 +261,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌲 森林芬多精与清晨光斑守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 翠绿森林专属长图卡片",
                 cardDecorationEmoji: "🌲",
-                effectIcons: ["tent.fill", "tree.fill", "leaf.fill", "sparkles", "sun.max.fill"],
+                effectIcons: ["tent.fill", "tree.fill", "leaf.fill", "sparkles"],
                 backgroundGradientStops: defaultStops
             )
         case .amber:
@@ -275,7 +275,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🍯 蜂蜜琥珀与暖阳壁炉守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 暖阳琥珀专属长图卡片",
                 cardDecorationEmoji: "🍯",
-                effectIcons: ["flame.fill", "sparkles", "cup.and.saucer.fill", "sun.max.fill", "star.fill"],
+                effectIcons: ["flame.fill", "sparkles", "cup.and.saucer.fill", "sun.max.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .crimson:
@@ -289,7 +289,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🔥 激情赤焰与永恒燃烧守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 热烈赤焰专属长图卡片",
                 cardDecorationEmoji: "🔥",
-                effectIcons: ["bolt.fill", "flame.fill", "sparkles", "heart.fill", "star.fill"],
+                effectIcons: ["bolt.fill", "flame.fill", "sparkles", "star.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .arctic:
@@ -303,7 +303,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with ❄️ 极地冰晶与绚彩极光守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 极地冰雪专属长图卡片",
                 cardDecorationEmoji: "❄️",
-                effectIcons: ["snowflake", "sparkles", "drop.fill", "star.fill", "crown.fill"],
+                effectIcons: ["snowflake", "sparkles", "drop.fill", "crown.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .roseGold:
@@ -317,7 +317,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 👑 玫瑞金王冠与皇家荣耀守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 高贵玫金专属长图卡片",
                 cardDecorationEmoji: "👑",
-                effectIcons: ["crown.fill", "diamond.fill", "sparkles", "star.fill", "heart.fill"],
+                effectIcons: ["crown.fill", "diamond.fill", "sparkles", "heart.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .charcoal:
@@ -331,7 +331,7 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🖤 极简炭墨与水墨静谧守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 极简炭墨专属长图卡片",
                 cardDecorationEmoji: "🖤",
-                effectIcons: ["circle.fill", "pencil.tip", "sparkles", "moon.fill", "star.fill"],
+                effectIcons: ["circle.fill", "pencil.tip", "sparkles", "moon.fill"],
                 backgroundGradientStops: defaultStops
             )
         case .custom:
@@ -346,14 +346,14 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🎨 灵感调色盘与个性专属守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · \(customName)专属长图卡片",
                 cardDecorationEmoji: "🎨",
-                effectIcons: ["paintpalette.fill", "sparkles", "star.fill", "diamond.fill", "wand.and.stars"],
+                effectIcons: ["paintpalette.fill", "sparkles", "star.fill", "wand.and.stars"],
                 backgroundGradientStops: defaultStops
             )
         }
     }
 }
 
-// MARK: - 高阶矢量轨域交互特效 (HeroThemeEffectView)
+// MARK: - 高阶液体毛玻璃轨域交互特效 (HeroThemeEffectView)
 
 private struct HeroThemeEffectView: View {
     let themeConfig: AboutThemeConfig
@@ -362,77 +362,55 @@ private struct HeroThemeEffectView: View {
 
     var body: some View {
         ZStack {
-            // 1. 动态双层渐变发光星云背影 Halo
+            // 1. 柔和的星云液体发光 Halo (Soft Radial Light Aura)
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            themeConfig.primaryColor.opacity(isHovered ? 0.35 : 0.18),
-                            themeConfig.secondaryColor.opacity(isHovered ? 0.2 : 0.08),
+                            themeConfig.primaryColor.opacity(isHovered ? 0.38 : 0.22),
+                            themeConfig.secondaryColor.opacity(isHovered ? 0.22 : 0.10),
                             .clear
                         ],
                         center: .center,
-                        startRadius: 20,
-                        endRadius: isHovered ? 88 : 74
+                        startRadius: 15,
+                        endRadius: isHovered ? 95 : 80
                     )
                 )
-                .frame(width: 175, height: 175)
-                .scaleEffect(isHovered ? 1.12 : 1.0)
-                .animation(.spring(response: 0.4, dampingFraction: 0.65), value: isHovered)
+                .frame(width: 190, height: 190)
+                .blur(radius: isHovered ? 12 : 8)
+                .scaleEffect(isHovered ? 1.1 : 1.0)
+                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isHovered)
 
-            // 2. 双层矢量虚线轨迹轨域环 (Concentric Vector Orbit Rings)
-            Circle()
-                .stroke(
-                    LinearGradient(
-                        colors: [themeConfig.primaryColor.opacity(0.55), themeConfig.secondaryColor.opacity(0.2)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    style: StrokeStyle(lineWidth: 1.4, dash: [4, 6])
-                )
-                .frame(width: 144, height: 144)
-                .rotationEffect(.degrees(rotationAngle))
-
-            Circle()
-                .stroke(
-                    LinearGradient(
-                        colors: [themeConfig.secondaryColor.opacity(0.45), themeConfig.primaryColor.opacity(0.15)],
-                        startPoint: .bottomLeading,
-                        endPoint: .topTrailing
-                    ),
-                    style: StrokeStyle(lineWidth: 1.0, dash: [2, 4])
-                )
-                .frame(width: 126, height: 126)
-                .rotationEffect(.degrees(-rotationAngle * 0.7))
-
-            // 3. 矢量 SF Symbol 悬浮徽章轨域环
-            ForEach(0..<themeConfig.effectIcons.count, id: \.self) { index in
+            // 2. 极简毛玻璃悬浮徽章轨域 (Fluid Frosted Glass Orbiting Orbs)
+            ForEach(0..<min(themeConfig.effectIcons.count, 4), id: \.self) { index in
                 let iconName = themeConfig.effectIcons[index]
-                let radius: CGFloat = isHovered ? 70 : 60
-                let angleRad = Double(index) * (2.0 * .pi / Double(themeConfig.effectIcons.count)) + rotationAngle * .pi / 180.0
+                let radius: CGFloat = isHovered ? 72 : 62
+                let angleRad = Double(index) * (2.0 * .pi / 4.0) + rotationAngle * .pi / 180.0
                 let x = CGFloat(cos(angleRad)) * radius
                 let y = CGFloat(sin(angleRad)) * radius
 
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    themeConfig.primaryColor.opacity(0.25),
-                                    themeConfig.secondaryColor.opacity(0.15)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: isHovered ? 26 : 20, height: isHovered ? 26 : 20)
+                        .fill(.thinMaterial)
+                        .frame(width: isHovered ? 28 : 22, height: isHovered ? 28 : 22)
+                        .shadow(color: themeConfig.primaryColor.opacity(isHovered ? 0.35 : 0.15), radius: isHovered ? 8 : 4, x: 0, y: 2)
                         .overlay(
                             Circle()
-                                .stroke(themeConfig.primaryColor.opacity(0.4), lineWidth: 0.8)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            themeConfig.primaryColor.opacity(0.6),
+                                            themeConfig.secondaryColor.opacity(0.3)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
                         )
 
                     Image(systemName: iconName)
-                        .font(.system(size: isHovered ? 12 : 9.5, weight: .bold))
+                        .font(.system(size: isHovered ? 13 : 10, weight: .bold))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
@@ -441,9 +419,8 @@ private struct HeroThemeEffectView: View {
                             )
                         )
                 }
-                .shadow(color: themeConfig.primaryColor.opacity(isHovered ? 0.5 : 0.25), radius: isHovered ? 8 : 3, x: 0, y: 1.5)
                 .offset(x: x, y: y)
-                .scaleEffect(isHovered ? 1.18 : 0.92)
+                .scaleEffect(isHovered ? 1.15 : 0.95)
                 .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isHovered)
             }
         }
@@ -523,7 +500,7 @@ struct AboutView: View {
                                 name: "@🍊蜜柑工具人",
                                 tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”",
                                 originalAllusion: "“《麦克白》第一幕第二场：‘Brave Macbeth — well he deserves that name!’（‘勇敢的麦克白——他当得起这个称号！’）”",
-                                literaryDecoding: "麦克白身披重铠，执掌铁血宝剑。作为代码高塔的伟大工匠，日夜披荆斩棘斩尽千百 Bug，以无畏魄力捍卫程序城邦！"
+                                literaryDecoding: "麦克白身披重铠，执掌铁血宝剑。作为代码高塔的伟大工匠，日夜披棘斩尽千百 Bug，以无畏魄力捍卫程序城邦！"
                             )
                             CreditsRow(
                                 title: "The Limner of the Sigil",
@@ -715,7 +692,7 @@ struct AboutView: View {
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 isBreathingDotPulse = true
             }
-            withAnimation(.linear(duration: 10.0).repeatForever(autoreverses: false)) {
+            withAnimation(.linear(duration: 12.0).repeatForever(autoreverses: false)) {
                 particlePulseAngle = 360
             }
         }
@@ -746,9 +723,9 @@ struct AboutView: View {
                             )
                     )
 
-                    // Hero 动态交互图标与主题高阶矢量轨域特效
+                    // Hero 动态交互图标与主题高阶毛玻璃轨域特效
                     ZStack {
-                        // 高阶矢量轨域特效视图 (SF Symbol + Vector Rings)
+                        // 高阶毛玻璃轨域特效视图 (SF Symbol + Frosted Glass Orbs)
                         HeroThemeEffectView(
                             themeConfig: themeConfig,
                             isHovered: isIconHovered,
@@ -1445,7 +1422,7 @@ private struct YumikoPopoverMockupView: View {
     }
 }
 
-// MARK: - 图标说明展示卡片 (IconLegendCard - 8342803 1:1 原版)
+// MARK: - 图标说明展示卡片 (IconLegendCard - 8342803 1:1 原版 Native Glass 极致优雅)
 
 private struct IconLegendCard: View {
     let title: String
@@ -1464,12 +1441,12 @@ private struct IconLegendCard: View {
                 HStack(spacing: 5) {
                     Text(title)
                         .font(.system(size: 12.5, weight: .bold))
-                        .foregroundStyle(isActive ? Color(hex: "FF6B9D") : .primary)
+                        .foregroundStyle(isActive ? Color(hex: "2563EB") : .primary)
                         .lineLimit(1)
 
                     if isActive {
                         Circle()
-                            .fill(Color(hex: "00F5D4"))
+                            .fill(Color(hex: "2563EB"))
                             .frame(width: 6, height: 6)
                             .scaleEffect(isPulsing ? 1.3 : 1.0)
                     }
@@ -1485,19 +1462,26 @@ private struct IconLegendCard: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(isActive ? Color(hex: "FF6B9D").opacity(0.08) : Color.primary.opacity(0.03))
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14)
+                    RoundedRectangle(cornerRadius: 16)
                         .stroke(
-                            isActive
-                                ? LinearGradient(colors: [Color(hex: "FF6B9D").opacity(0.4), Color(hex: "00F5D4").opacity(0.4)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                : LinearGradient(colors: [Color.primary.opacity(0.1), Color.primary.opacity(0.03)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            isHovered
+                                ? Color.primary.opacity(0.18)
+                                : Color.primary.opacity(0.06),
                             lineWidth: 1
                         )
                 )
+                .shadow(
+                    color: .black.opacity(isHovered ? 0.08 : 0.03),
+                    radius: isHovered ? 10 : 4,
+                    x: 0,
+                    y: isHovered ? 3 : 1
+                )
         )
-        .clipped()
+        .onHover { isHovered = $0 }
+        .animation(.easeInOut(duration: 0.2), value: isHovered)
     }
 }
 
