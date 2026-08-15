@@ -2,14 +2,14 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - Ultra-Precision Twin Symmetrical Popover Mockups & Pure Apple HIG Minimalist Hero Aura, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.8 - Ultra-Precision 3D Interactive Parallax & Pure Physics Easter Egg Engine, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-// MARK: - 全主题自适应配置与矢量特效数据 (AboutThemeConfig)
+// MARK: - 全主题自适应配置 (AboutThemeConfig)
 
 @MainActor
 struct AboutThemeConfig {
@@ -332,36 +332,6 @@ struct AboutThemeConfig {
     }
 }
 
-// MARK: - 纯净星云液体发光 Halo 视图 (HeroThemeEffectView - Apple HIG 极简流光)
-
-private struct HeroThemeEffectView: View {
-    let themeConfig: AboutThemeConfig
-    let isHovered: Bool
-
-    var body: some View {
-        ZStack {
-            // 纯净星云液体发光 Halo (Soft Radial Light Aura - 零冗余浮空图标)
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            themeConfig.primaryColor.opacity(isHovered ? 0.38 : 0.22),
-                            themeConfig.secondaryColor.opacity(isHovered ? 0.22 : 0.10),
-                            .clear
-                        ],
-                        center: .center,
-                        startRadius: 15,
-                        endRadius: isHovered ? 95 : 80
-                    )
-                )
-                .frame(width: 190, height: 190)
-                .blur(radius: isHovered ? 12 : 8)
-                .scaleEffect(isHovered ? 1.1 : 1.0)
-                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isHovered)
-        }
-    }
-}
-
 // MARK: - 主视图 (AboutView)
 
 struct AboutView: View {
@@ -369,6 +339,22 @@ struct AboutView: View {
     @State private var isBreathingDotPulse = false
     @State private var showToast = false
     @State private var toastMessage = ""
+
+    // 3D 物理倾斜与彩蛋状态 Engine
+    @State private var tiltX: Double = 0
+    @State private var tiltY: Double = 0
+    @State private var isSpecularActive = false
+    @State private var rippleScale: CGFloat = 0.3
+    @State private var rippleOpacity: Double = 0
+    @State private var iconFlipAngle: Double = 0
+    @State private var supernovaScale: CGFloat = 1.0
+    @State private var supernovaOpacity: Double = 0
+    @State private var isHeartbeatActive = false
+    @State private var heartbeatScale: CGFloat = 1.0
+
+    // 点击彩蛋计数与计时器
+    @State private var tapCount = 0
+    @State private var lastTapTime = Date()
 
     private var themeConfig: AboutThemeConfig {
         AboutThemeConfig.current()
@@ -630,7 +616,7 @@ struct AboutView: View {
         }
     }
 
-    // MARK: - Hero Icon Header & Pure Apple Minimalist Light Aura
+    // MARK: - Hero Icon Header & 3D Interactive Parallax Physics Engine
     private var appHeroHeader: some View {
         VStack(spacing: 14) {
             ZStack(alignment: .topTrailing) {
@@ -655,14 +641,36 @@ struct AboutView: View {
                             )
                     )
 
-                    // Hero 动态交互图标与极简流光 Halo
+                    // Hero 动态 3D 物理倾斜与纯质感彩蛋 Icon 容器
                     ZStack {
-                        // 纯净星云液体发光 Halo (Zero Floating Icons)
-                        HeroThemeEffectView(
-                            themeConfig: themeConfig,
-                            isHovered: isIconHovered
-                        )
+                        // 1. 纯质感极光星云超新星扩张 (Supernova Lightburst Aura)
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [
+                                        themeConfig.primaryColor.opacity(isIconHovered ? 0.45 : 0.22),
+                                        themeConfig.secondaryColor.opacity(isIconHovered ? 0.25 : 0.08),
+                                        .clear
+                                    ],
+                                    center: .center,
+                                    startRadius: 10,
+                                    endRadius: isIconHovered ? 100 : 75
+                                )
+                            )
+                            .frame(width: 200, height: 200)
+                            .blur(radius: isIconHovered ? 14 : 8)
+                            .scaleEffect(supernovaScale * (isIconHovered ? 1.08 : 1.0))
+                            .opacity(supernovaOpacity > 0 ? supernovaOpacity : 1.0)
+                            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isIconHovered)
 
+                        // 2. 触控水波纹能量冲击圈 (Liquid Wave Ripple Impact)
+                        Circle()
+                            .stroke(themeConfig.primaryColor, lineWidth: 2)
+                            .frame(width: 110, height: 110)
+                            .scaleEffect(rippleScale)
+                            .opacity(rippleOpacity)
+
+                        // 3. 3D 悬浮外层玻璃框
                         RoundedRectangle(cornerRadius: 28)
                             .fill(
                                 LinearGradient(
@@ -677,38 +685,77 @@ struct AboutView: View {
                             .frame(width: 112, height: 112)
                             .scaleEffect(isIconHovered ? 1.08 : 1.0)
                             .rotationEffect(.degrees(isIconHovered ? 4 : 0))
-                            .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isIconHovered)
 
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(
-                                LinearGradient(
-                                    colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
+                        // 4. 3D 主 App 图标容器 (支持 3D 倾斜、玻璃镜面高光与 360° 翻转彩蛋)
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 24)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
                                 )
-                            )
-                            .frame(width: 96, height: 96)
-                            .shadow(
-                                color: themeConfig.primaryColor.opacity(isIconHovered ? 0.55 : 0.3),
-                                radius: isIconHovered ? 22 : 10,
-                                x: 0,
-                                y: isIconHovered ? 8 : 4
-                            )
+                                .frame(width: 96, height: 96)
+                                .shadow(
+                                    color: themeConfig.primaryColor.opacity(isIconHovered ? 0.6 : 0.3),
+                                    radius: isIconHovered ? 24 : 10,
+                                    x: 0,
+                                    y: isIconHovered ? 10 : 4
+                                )
 
-                        if let customImage = NSImage(named: "YumikoToys") {
-                            Image(nsImage: customImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 60, height: 60)
-                                .scaleEffect(isIconHovered ? 1.05 : 1.0)
-                        } else {
-                            Image(systemName: "rabbit.fill")
-                                .font(.system(size: 42, weight: .medium))
-                                .foregroundStyle(.white)
-                                .scaleEffect(isIconHovered ? 1.08 : 1.0)
+                            // 液体镜面高光 Sweeping Light Beam
+                            RoundedRectangle(cornerRadius: 24)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            .white.opacity(0.0),
+                                            .white.opacity(isSpecularActive ? 0.35 : (isIconHovered ? 0.2 : 0.08)),
+                                            .white.opacity(0.0)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 96, height: 96)
+
+                            if let customImage = NSImage(named: "YumikoToys") {
+                                Image(nsImage: customImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 60, height: 60)
+                                    .scaleEffect(isIconHovered ? 1.05 : 1.0)
+                            } else {
+                                Image(systemName: "rabbit.fill")
+                                    .font(.system(size: 42, weight: .medium))
+                                    .foregroundStyle(.white)
+                                    .scaleEffect(isIconHovered ? 1.08 : 1.0)
+                            }
+                        }
+                        .scaleEffect(heartbeatScale)
+                        .rotation3DEffect(.degrees(iconFlipAngle), axis: (x: 0, y: 1, z: 0))
+                        .rotation3DEffect(.degrees(tiltX), axis: (x: 0, y: 1, z: 0))
+                        .rotation3DEffect(.degrees(-tiltY), axis: (x: 1, y: 0, z: 0))
+                        .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isIconHovered)
+                    }
+                    .contentShape(Rectangle())
+                    .onHover { isHovered in
+                        isIconHovered = isHovered
+                        if !isHovered {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                tiltX = 0
+                                tiltY = 0
+                            }
                         }
                     }
-                    .onHover { isIconHovered = $0 }
+                    .onTapGesture {
+                        handleIconTapInteraction()
+                    }
+                    .simultaneousGesture(
+                        LongPressGesture(minimumDuration: 1.2).onEnded { _ in
+                            handleIconLongPressInteraction()
+                        }
+                    )
 
                     VStack(spacing: 6) {
                         Text(AppConfig.appName)
@@ -773,6 +820,82 @@ struct AboutView: View {
                 .menuStyle(.borderlessButton)
                 .help("生成并分享【\(themeConfig.themeName)】专属定制的长图卡片")
                 .padding(.top, 4)
+            }
+        }
+    }
+
+    // MARK: - 交互与彩蛋触发 Logic (Zero Floating Symbols!)
+    private func handleIconTapInteraction() {
+        // 1. 触发触控液体水波纹能量冲击 (Liquid Ripple)
+        rippleScale = 0.3
+        rippleOpacity = 0.85
+        withAnimation(.easeOut(duration: 0.6)) {
+            rippleScale = 2.2
+            rippleOpacity = 0
+        }
+
+        // 2. 镜面高光闪烁 Sweep
+        isSpecularActive = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            isSpecularActive = false
+        }
+
+        // 3. 连击检测 (Double-tap & Triple-tap Easter Eggs)
+        let now = Date()
+        if now.timeIntervalSince(lastTapTime) < 0.45 {
+            tapCount += 1
+        } else {
+            tapCount = 1
+        }
+        lastTapTime = now
+
+        if tapCount == 2 {
+            // 彩蛋 1: 360° 3D 陀螺翻转
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
+                iconFlipAngle += 360
+            }
+        } else if tapCount == 3 {
+            // 彩蛋 2: 超新星极光风暴冲击波
+            supernovaScale = 1.0
+            supernovaOpacity = 1.0
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                supernovaScale = 3.2
+                supernovaOpacity = 0.0
+            }
+            triggerToast("✨ 触发隐藏彩蛋：已开启【极光星云超新星】质感脉冲！")
+            tapCount = 0
+        }
+    }
+
+    private func handleIconLongPressInteraction() {
+        // 彩蛋 3: 开启/关闭【兔可可魔晶心跳】物理律动
+        isHeartbeatActive.toggle()
+        if isHeartbeatActive {
+            triggerToast("💖 触发隐藏彩蛋：已激活【兔可可魔晶心跳】律动模式！")
+            startHeartbeatLoop()
+        } else {
+            triggerToast("✨ 已恢复静谧守候模式")
+        }
+    }
+
+    private func startHeartbeatLoop() {
+        guard isHeartbeatActive else { return }
+        withAnimation(.easeInOut(duration: 0.35)) {
+            heartbeatScale = 1.15
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.38) {
+            withAnimation(.easeInOut(duration: 0.35)) {
+                heartbeatScale = 0.98
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.38) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    heartbeatScale = 1.0
+                }
+                if isHeartbeatActive {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        startHeartbeatLoop()
+                    }
+                }
             }
         }
     }
@@ -1182,7 +1305,7 @@ private struct StaticCreditsRow: View {
     }
 }
 
-// MARK: - 高精 1:1 状态栏菜单面板矢量 UI 模拟器 (YumikoPopoverMockupView - 8342803 1:1 原版 像素精准双生等高)
+// MARK: - 高精 1:1 状态栏菜单面板矢量 UI 模拟器 (YumikoPopoverMockupView)
 
 private struct YumikoPopoverMockupView: View {
     let isActive: Bool
