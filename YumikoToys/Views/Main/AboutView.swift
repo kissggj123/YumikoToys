@@ -2,35 +2,149 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.7 - Shakespearean Macbeth Allusion Popovers, Vector Info Buttons & Classic Pink Icon Legend）
+//  关于页面视图（v4.5.7 - Theme-Tailored Cute Exporter, Interactive Particle Effects & Icon Legend exact from 8342803）
 //
 
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
+// MARK: - 主题自适应配置与萌系特效数据 (AboutThemeConfig)
+
+struct AboutThemeConfig {
+    let themeName: String
+    let themeIcon: String
+    let primaryColor: Color
+    let secondaryColor: Color
+    let cuteBannerBadge: String
+    let cuteBannerSub: String
+    let watermarkTitle: String
+    let watermarkSubtitle: String
+    let cardDecorationEmoji: String
+    let particleEmojis: [String]
+    let backgroundGradientStops: [Gradient.Stop]
+
+    static func current() -> AboutThemeConfig {
+        if AnimeThemeService.shared.isEnabled {
+            let style = AnimeThemeService.shared.style
+            let gradient = AnimeThemeService.shared.gradient()
+            let primary = gradient.first ?? Color(hex: "FF6B9D")
+            let secondary = gradient.count > 1 ? gradient[1] : Color(hex: "C44FE2")
+
+            switch style {
+            case .kawaii:
+                return AboutThemeConfig(
+                    themeName: "草莓软萌风",
+                    themeIcon: "heart.fill",
+                    primaryColor: primary,
+                    secondaryColor: secondary,
+                    cuteBannerBadge: "🍓 草莓软萌 · 兔可可草莓奶油限定卡片 💖",
+                    cuteBannerSub: "“草莓奶油蛋糕与萌兔王权魔法守护”",
+                    watermarkTitle: "Made with 🐰 兔可可草莓奶油软萌守护 ✨",
+                    watermarkSubtitle: "© 2026 YumikoToys Lite · 软萌草莓王国独家长图卡片",
+                    cardDecorationEmoji: "🍓",
+                    particleEmojis: ["💖", "🌸", "🍓", "✨", "🎀"],
+                    backgroundGradientStops: [
+                        .init(color: primary.opacity(0.12), location: 0.0),
+                        .init(color: secondary.opacity(0.06), location: 0.5),
+                        .init(color: .clear, location: 0.85)
+                    ]
+                )
+            case .healing:
+                return AboutThemeConfig(
+                    themeName: "日系治愈风",
+                    themeIcon: "leaf.fill",
+                    primaryColor: primary,
+                    secondaryColor: secondary,
+                    cuteBannerBadge: "🍃 抹茶晨光 · 自然温感治愈卡片 🌸",
+                    cuteBannerSub: "“抹茶森林和风与清爽微风漫游”",
+                    watermarkTitle: "Made with 🍃 抹茶森林与晨光甘霖守护 ✨",
+                    watermarkSubtitle: "© 2026 YumikoToys Lite · 自然治愈森林专属长图卡片",
+                    cardDecorationEmoji: "🌸",
+                    particleEmojis: ["🍃", "🌸", "🍵", "✨", "🌱"],
+                    backgroundGradientStops: [
+                        .init(color: primary.opacity(0.12), location: 0.0),
+                        .init(color: secondary.opacity(0.06), location: 0.5),
+                        .init(color: .clear, location: 0.85)
+                    ]
+                )
+            case .cyber:
+                return AboutThemeConfig(
+                    themeName: "赛博二次元",
+                    themeIcon: "cpu.fill",
+                    primaryColor: primary,
+                    secondaryColor: secondary,
+                    cuteBannerBadge: "⚡️ 霓虹电光蓝 · 赛博二次元卡片 🌐",
+                    cuteBannerSub: "“量子防休眠力场与深空高科技矩阵”",
+                    watermarkTitle: "Made with ⚡️ 罗德岛赛博量子防护阵列 ✨",
+                    watermarkSubtitle: "© 2026 YumikoToys Lite · 赛博朋克电光专属长图卡片",
+                    cardDecorationEmoji: "🔮",
+                    particleEmojis: ["⚡️", "🌐", "🔮", "✨", "🤖"],
+                    backgroundGradientStops: [
+                        .init(color: primary.opacity(0.15), location: 0.0),
+                        .init(color: secondary.opacity(0.08), location: 0.5),
+                        .init(color: .clear, location: 0.85)
+                    ]
+                )
+            case .makoto:
+                return AboutThemeConfig(
+                    themeName: "新海诚漫彩风",
+                    themeIcon: "cloud.sun.fill",
+                    primaryColor: primary,
+                    secondaryColor: secondary,
+                    cuteBannerBadge: "🌇 暮光晴空 · 新海诚漫彩限定卡片 ☁️",
+                    cuteBannerSub: "“蔚蓝晴空与落日玫瑰漫彩光影”",
+                    watermarkTitle: "Made with 🌇 新海诚暮光霞光与云朵守护 ✨",
+                    watermarkSubtitle: "© 2026 YumikoToys Lite · 电影级漫彩电影专属长图卡片",
+                    cardDecorationEmoji: "✨",
+                    particleEmojis: ["🌇", "☁️", "✨", "💫", "🌅"],
+                    backgroundGradientStops: [
+                        .init(color: primary.opacity(0.12), location: 0.0),
+                        .init(color: secondary.opacity(0.06), location: 0.5),
+                        .init(color: .clear, location: 0.85)
+                    ]
+                )
+            }
+        }
+
+        // 标准/经典主题模式
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.mainWindowThemeColor
+        let gradient = themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
+        let primary = gradient.first ?? Color(hex: "FF6B9D")
+        let secondary = gradient.count > 1 ? gradient[1] : Color(hex: "C44FE2")
+
+        return AboutThemeConfig(
+            themeName: "经典兔可可粉晶",
+            themeIcon: "sparkles",
+            primaryColor: primary,
+            secondaryColor: secondary,
+            cuteBannerBadge: "🐰 YumikoToys · 专属梦幻纪念长图卡片 ✨",
+            cuteBannerSub: "“粉色魔晶王权与防休眠守护”",
+            watermarkTitle: "Made with 🐰 兔可可皇后魔法守护 ✨",
+            watermarkSubtitle: "© 2026 YumikoToys Lite · 罗德岛不休眠协议 · 纪念长图卡片",
+            cardDecorationEmoji: "🐰",
+            particleEmojis: ["🐰", "✨", "💖", "🥕", "🌸"],
+            backgroundGradientStops: [
+                .init(color: primary.opacity(0.1), location: 0.0),
+                .init(color: secondary.opacity(0.05), location: 0.5),
+                .init(color: .clear, location: 0.85)
+            ]
+        )
+    }
+}
+
+// MARK: - 主视图 (AboutView)
+
 struct AboutView: View {
     @State private var isIconHovered = false
     @State private var isBreathingDotPulse = false
-    @State private var showExportMenu = false
     @State private var showToast = false
     @State private var toastMessage = ""
+    @State private var particlePulseAngle: Double = 0
 
-    private var themeGradientColors: [Color] {
-        if AnimeThemeService.shared.isEnabled {
-            return AnimeThemeService.shared.gradient()
-        }
-        let settings = DependencyContainer.shared.settingsService.settings
-        let themeColor = settings.mainWindowThemeColor
-        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
-    }
-
-    private var primaryColor: Color {
-        themeGradientColors.first ?? Color(hex: "FF6B9D")
-    }
-
-    private var secondaryColor: Color {
-        themeGradientColors.count > 1 ? themeGradientColors[1] : Color(hex: "C44FE2")
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
     }
 
     var body: some View {
@@ -47,7 +161,7 @@ struct AboutView: View {
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [primaryColor, secondaryColor],
+                                        colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
@@ -61,7 +175,7 @@ struct AboutView: View {
                         }
                     }
 
-                    // MARK: - 图标说明 (Icon Legend)
+                    // MARK: - 图标说明 (Icon Legend - 8342803 经典原版 1:1 完整复刻)
                     AboutSectionCard(title: "图标说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照") {
                         VStack(spacing: 16) {
                             HStack(spacing: 16) {
@@ -249,7 +363,7 @@ struct AboutView: View {
             if showToast {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(primaryColor)
+                        .foregroundStyle(themeConfig.primaryColor)
                     Text(toastMessage)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.primary)
@@ -262,7 +376,7 @@ struct AboutView: View {
                         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 4)
                         .overlay(
                             Capsule()
-                                .stroke(primaryColor.opacity(0.35), lineWidth: 1)
+                                .stroke(themeConfig.primaryColor.opacity(0.35), lineWidth: 1)
                         )
                 )
                 .padding(.bottom, 20)
@@ -274,11 +388,7 @@ struct AboutView: View {
             ZStack {
                 Color(nsColor: .windowBackgroundColor)
                 EllipticalGradient(
-                    stops: [
-                        .init(color: primaryColor.opacity(0.08), location: 0.0),
-                        .init(color: secondaryColor.opacity(0.04), location: 0.5),
-                        .init(color: .clear, location: 0.85)
-                    ],
+                    stops: themeConfig.backgroundGradientStops,
                     center: .top,
                     startRadiusFraction: 0,
                     endRadiusFraction: 0.95
@@ -289,42 +399,80 @@ struct AboutView: View {
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 isBreathingDotPulse = true
             }
+            withAnimation(.linear(duration: 8.0).repeatForever(autoreverses: false)) {
+                particlePulseAngle = 360
+            }
         }
     }
 
-    // MARK: - Hero Icon Header & Export Action Bar
+    // MARK: - Hero Icon Header & Theme-Specific Interactive Effects
     private var appHeroHeader: some View {
         VStack(spacing: 14) {
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 14) {
+                    // 顶栏专属主题模式胶囊 Indicator
+                    HStack(spacing: 5) {
+                        Image(systemName: themeConfig.themeIcon)
+                            .font(.system(size: 10))
+                            .foregroundStyle(themeConfig.primaryColor)
+                        Text(themeConfig.themeName)
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundStyle(themeConfig.primaryColor)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3.5)
+                    .background(
+                        Capsule()
+                            .fill(themeConfig.primaryColor.opacity(0.12))
+                            .overlay(
+                                Capsule()
+                                    .stroke(themeConfig.primaryColor.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+
+                    // Hero 动态交互图标与主题特效粒子
                     ZStack {
+                        // 动态灵动粒子微特效环
+                        ForEach(0..<themeConfig.particleEmojis.count, id: \.self) { index in
+                            Text(themeConfig.particleEmojis[index])
+                                .font(.system(size: isIconHovered ? 15 : 12))
+                                .offset(
+                                    x: cos(Double(index) * (2 * .pi / Double(themeConfig.particleEmojis.count)) + particlePulseAngle * .pi / 180) * (isIconHovered ? 68 : 58),
+                                    y: sin(Double(index) * (2 * .pi / Double(themeConfig.particleEmojis.count)) + particlePulseAngle * .pi / 180) * (isIconHovered ? 68 : 58)
+                                )
+                                .opacity(isIconHovered ? 0.9 : 0.45)
+                                .scaleEffect(isIconHovered ? 1.2 : 0.85)
+                                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isIconHovered)
+                        }
+
                         RoundedRectangle(cornerRadius: 28)
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        primaryColor.opacity(0.25),
-                                        secondaryColor.opacity(0.15)
+                                        themeConfig.primaryColor.opacity(0.25),
+                                        themeConfig.secondaryColor.opacity(0.15)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
                             .frame(width: 112, height: 112)
-                            .scaleEffect(isIconHovered ? 1.06 : 1.0)
+                            .scaleEffect(isIconHovered ? 1.08 : 1.0)
+                            .rotationEffect(.degrees(isIconHovered ? 4 : 0))
                             .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isIconHovered)
 
                         RoundedRectangle(cornerRadius: 24)
                             .fill(
                                 LinearGradient(
-                                    colors: [primaryColor, secondaryColor],
+                                    colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
                             .frame(width: 96, height: 96)
                             .shadow(
-                                color: primaryColor.opacity(isIconHovered ? 0.5 : 0.3),
-                                radius: isIconHovered ? 20 : 10,
+                                color: themeConfig.primaryColor.opacity(isIconHovered ? 0.55 : 0.3),
+                                radius: isIconHovered ? 22 : 10,
                                 x: 0,
                                 y: isIconHovered ? 8 : 4
                             )
@@ -334,10 +482,12 @@ struct AboutView: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 60, height: 60)
+                                .scaleEffect(isIconHovered ? 1.05 : 1.0)
                         } else {
                             Image(systemName: "rabbit.fill")
                                 .font(.system(size: 42, weight: .medium))
                                 .foregroundStyle(.white)
+                                .scaleEffect(isIconHovered ? 1.08 : 1.0)
                         }
                     }
                     .onHover { isIconHovered = $0 }
@@ -356,7 +506,7 @@ struct AboutView: View {
                                     Capsule()
                                         .fill(
                                             LinearGradient(
-                                                colors: [primaryColor, secondaryColor],
+                                                colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                                                 startPoint: .leading,
                                                 endPoint: .trailing
                                             )
@@ -371,14 +521,14 @@ struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                // 导出/分享长图按钮
+                // 导出/分享专属长图按钮
                 Menu {
                     Button(action: copyLongScreenshot) {
-                        Label("复制关于界面梦幻长图 (剪贴板)", systemImage: "doc.on.doc.fill")
+                        Label("复制【\(themeConfig.themeName)】专属长图 (剪贴板)", systemImage: "doc.on.doc.fill")
                     }
 
                     Button(action: saveLongScreenshot) {
-                        Label("保存长图为文件 (.png)", systemImage: "square.and.arrow.down.fill")
+                        Label("保存【\(themeConfig.themeName)】长图为文件 (.png)", systemImage: "square.and.arrow.down.fill")
                     }
                 } label: {
                     HStack(spacing: 5) {
@@ -394,16 +544,16 @@ struct AboutView: View {
                         Capsule()
                             .fill(
                                 LinearGradient(
-                                    colors: [primaryColor, secondaryColor],
+                                    colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                            .shadow(color: primaryColor.opacity(0.35), radius: 6, x: 0, y: 2)
+                            .shadow(color: themeConfig.primaryColor.opacity(0.35), radius: 6, x: 0, y: 2)
                     )
                 }
                 .menuStyle(.borderlessButton)
-                .help("生成并分享关于界面的萌系梦幻超长截图")
+                .help("生成并分享【\(themeConfig.themeName)】专属定制的长图卡片")
                 .padding(.top, 4)
             }
         }
@@ -412,7 +562,7 @@ struct AboutView: View {
     // MARK: - Screenshot Export Actions
     private func copyLongScreenshot() {
         if AboutImageExporter.copyLongScreenshotToClipboard() {
-            triggerToast("✨ 已成功复制《关于》界面 1:1 萌系梦幻超长截图到剪贴板，可直接粘贴分享！")
+            triggerToast("✨ 已成功复制【\(themeConfig.themeName)】专属定制长图到剪贴板！")
         } else {
             triggerToast("导出长图失败，请稍后重试。")
         }
@@ -421,7 +571,7 @@ struct AboutView: View {
     private func saveLongScreenshot() {
         AboutImageExporter.saveLongScreenshotToFile { success in
             if success {
-                triggerToast("💾 已成功将《关于》萌系梦幻长图保存为 PNG 文件！")
+                triggerToast("💾 已成功保存【\(themeConfig.themeName)】专属长图 PNG 文件！")
             }
         }
     }
@@ -470,6 +620,7 @@ struct AboutImageExporter {
     }
 
     static func saveLongScreenshotToFile(completion: @escaping (Bool) -> Void) {
+        let themeConfig = AboutThemeConfig.current()
         guard let image = generateLongScreenshot(),
               let tiffData = image.tiffRepresentation,
               let bitmapRep = NSBitmapImageRep(data: tiffData),
@@ -480,9 +631,9 @@ struct AboutImageExporter {
 
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
-        savePanel.nameFieldStringValue = "YumikoToys_About_\(AppConfig.version).png"
-        savePanel.title = "保存关于界面萌系梦幻超长图片"
-        savePanel.message = "选择保存 YumikoToys 关于界面萌系长图的路径"
+        savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(AppConfig.version).png"
+        savePanel.title = "保存【\(themeConfig.themeName)】专属定制长图"
+        savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】精美长图的路径"
 
         savePanel.begin { result in
             if result == .OK, let url = savePanel.url {
@@ -499,59 +650,53 @@ struct AboutImageExporter {
     }
 }
 
-// MARK: - 萌系主题自适应长截图模版容器 (AboutExportableContentView)
+// MARK: - 主题专属自适应长截图模版容器 (AboutExportableContentView)
 
 private struct AboutExportableContentView: View {
-    private var themeGradientColors: [Color] {
-        if AnimeThemeService.shared.isEnabled {
-            return AnimeThemeService.shared.gradient()
-        }
-        let settings = DependencyContainer.shared.settingsService.settings
-        let themeColor = settings.mainWindowThemeColor
-        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
-    }
-
-    private var primaryColor: Color {
-        themeGradientColors.first ?? Color(hex: "FF6B9D")
-    }
-
-    private var secondaryColor: Color {
-        themeGradientColors.count > 1 ? themeGradientColors[1] : Color(hex: "C44FE2")
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
     }
 
     var body: some View {
         VStack(spacing: 26) {
-            // 顶栏萌系装饰卡片 (Cute Banner)
-            HStack(spacing: 6) {
-                Text("🐰")
-                    .font(.system(size: 14))
-                Text("YumikoToys · 专属梦幻纪念长图卡片")
-                    .font(.system(size: 11.5, weight: .bold))
-                    .foregroundStyle(primaryColor)
-                Text("✨")
-                    .font(.system(size: 12))
+            // 顶栏主题专属萌系 Banner
+            VStack(spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(themeConfig.cardDecorationEmoji)
+                        .font(.system(size: 14))
+                    Text(themeConfig.cuteBannerBadge)
+                        .font(.system(size: 11.5, weight: .bold))
+                        .foregroundStyle(themeConfig.primaryColor)
+                    Text("✨")
+                        .font(.system(size: 12))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(themeConfig.primaryColor.opacity(0.12))
+                        .overlay(
+                            Capsule()
+                                .stroke(themeConfig.primaryColor.opacity(0.35), lineWidth: 1)
+                        )
+                )
+
+                Text(themeConfig.cuteBannerSub)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                    .italic()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(primaryColor.opacity(0.12))
-                    .overlay(
-                        Capsule()
-                            .stroke(primaryColor.opacity(0.35), lineWidth: 1)
-                    )
-            )
             .padding(.top, 8)
 
-            // App Hero Icon Header (萌系静态无按钮版)
+            // App Hero Icon Header (静态无按钮主题限定版)
             VStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 32)
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    primaryColor.opacity(0.25),
-                                    secondaryColor.opacity(0.15)
+                                    themeConfig.primaryColor.opacity(0.25),
+                                    themeConfig.secondaryColor.opacity(0.15)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -562,13 +707,13 @@ private struct AboutExportableContentView: View {
                     RoundedRectangle(cornerRadius: 26)
                         .fill(
                             LinearGradient(
-                                colors: [primaryColor, secondaryColor],
+                                colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 98, height: 98)
-                        .shadow(color: primaryColor.opacity(0.4), radius: 14, x: 0, y: 6)
+                        .shadow(color: themeConfig.primaryColor.opacity(0.4), radius: 14, x: 0, y: 6)
 
                     if let customImage = NSImage(named: "YumikoToys") {
                         Image(nsImage: customImage)
@@ -596,7 +741,7 @@ private struct AboutExportableContentView: View {
                                 Capsule()
                                     .fill(
                                         LinearGradient(
-                                            colors: [primaryColor, secondaryColor],
+                                            colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
@@ -617,7 +762,7 @@ private struct AboutExportableContentView: View {
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [primaryColor, secondaryColor],
+                                colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -631,8 +776,8 @@ private struct AboutExportableContentView: View {
                 }
             }
 
-            // 图标说明 (使用经典粉色 UI 模拟器)
-            AboutSectionCard(title: "✨ 图标对照与防休眠说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照", showInfoHint: false) {
+            // 图标说明 (8342803 经典 1:1 原版)
+            AboutSectionCard(title: "图标说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照") {
                 VStack(spacing: 16) {
                     HStack(spacing: 16) {
                         IconLegendCard(
@@ -653,76 +798,76 @@ private struct AboutExportableContentView: View {
             }
 
             // Dramatis Personae
-            AboutSectionCard(title: "🎭 Dramatis Personae 功勋名录", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”", showInfoHint: false) {
+            AboutSectionCard(title: "🎭 Dramatis Personae 功勋名录", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”") {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Grand Artificer", subtitle: "伟大之工匠 (Macbeth / Lord of the Anvil)", name: "@🍊蜜柑工具人", tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
-                    StaticCreditsRow(title: "The Limner of the Sigil", subtitle: "徽记描绘者 (Lady Macbeth / Sovereign of Sorcery)", name: "@会拧头的ruarua怪", tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
-                    StaticCreditsRow(title: "The Muse of Whimsy", subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)", name: "@cici", tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
-                    StaticCreditsRow(title: "The Patron of New Marvels", subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)", name: "@🐰兔可可", tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Grand Artificer", subtitle: "伟大之工匠 (Macbeth / Lord of the Anvil)", name: "@🍊蜜柑工具人", tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Limner of the Sigil", subtitle: "徽记描绘者 (Lady Macbeth / Sovereign of Sorcery)", name: "@会拧头的ruarua怪", tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Muse of Whimsy", subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)", name: "@cici", tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Patron of New Marvels", subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)", name: "@🐰兔可可", tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
                 }
             }
 
             // The Sacred Fellowship of Soulmates
-            AboutSectionCard(title: "💖 The Sacred Fellowship of Soulmates 挚友同心", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”", showInfoHint: false) {
+            AboutSectionCard(title: "💖 The Sacred Fellowship of Soulmates 挚友同心", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”") {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Enchantress of Mist & Song", subtitle: "雾霭与歌咏之灵 (Puck / Ophelia)", name: "@烟烟", tagline: "“如《仲夏夜之梦》薄雾凝霜之灵，赋万物以飘逸诗意。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
-                    StaticCreditsRow(title: "The Sovereign of Eternal Starlight", subtitle: "永恒星芒之女王 (Titania / Portia)", name: "@ching_1222", tagline: "“如《第十二夜》璀璨星辰，以优雅与睿智光照剧场。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
-                    StaticCreditsRow(title: "The Guardian of Enchanted Realm", subtitle: "幻境奇迹之守护者 (Miranda / Beatrice)", name: "@邱", tagline: "“如《暴风雨》奇迹女神 Miranda，赐予作品纯真神圣之守护。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Enchantress of Mist & Song", subtitle: "雾霭与歌咏之灵 (Puck / Ophelia)", name: "@烟烟", tagline: "“如《仲夏夜之梦》薄雾凝霜之灵，赋万物以飘逸诗意。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Sovereign of Eternal Starlight", subtitle: "永恒星芒之女王 (Titania / Portia)", name: "@ching_1222", tagline: "“如《第十二夜》璀璨星辰，以优雅与睿智光照剧场。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Guardian of Enchanted Realm", subtitle: "幻境奇迹之守护者 (Miranda / Beatrice)", name: "@邱", tagline: "“如《暴风雨》奇迹女神 Miranda，赐予作品纯真神圣之守护。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
                 }
             }
 
             // Architects of Pet Playground
-            AboutSectionCard(title: "🐾 Architects of Pet Playground 爬爬乐创作者", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”", showInfoHint: false) {
+            AboutSectionCard(title: "🐾 Architects of Pet Playground 爬爬乐创作者", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”") {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Agile Enchantress of Walls", subtitle: "绝壁与灵动之仙子 (Puck / Peaseblossom)", name: "@氢氧化猫猫", tagline: "“如《仲夏夜之梦》绝壁上翩跹之仙子，以轻灵极彩之姿赋桌宠以生机。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
-                    StaticCreditsRow(title: "The Lord Warden of Gravity", subtitle: "极地与重力之勋爵 (Prospero / Gonzalo)", name: "@北冥有地瓜", tagline: "“如《暴风雨》掌控重力与天法之勋爵，筑坚实锚点庇佑桌宠安然攀行。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Agile Enchantress of Walls", subtitle: "绝壁与灵动之仙子 (Puck / Peaseblossom)", name: "@氢氧化猫猫", tagline: "“如《仲夏夜之梦》绝壁上翩跹之仙子，以轻灵极彩之姿赋桌宠以生机。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Lord Warden of Gravity", subtitle: "极地与重力之勋爵 (Prospero / Gonzalo)", name: "@北冥有地瓜", tagline: "“如《暴风雨》掌控重力与天法之勋爵，筑坚实锚点庇佑桌宠安然攀行。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
                 }
             }
 
             // A Note of Gratitude Most Profound
-            AboutSectionCard(title: "🌸 A Note of Gratitude Most Profound 深情致谢", subtitle: "“汝等之光，亦使此剧增辉”", showInfoHint: false) {
+            AboutSectionCard(title: "🌸 A Note of Gratitude Most Profound 深情致谢", subtitle: "“汝等之光，亦使此剧增辉”") {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("吾辈亦向此众友献上敬意：")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
 
-                    StaticCreditsRow(title: "The Muse of Celestial Grace", subtitle: "晨星与真情之缪斯 (Cordelia / Rosalind)", name: "@saya.ka", tagline: "“如天际璀璨之晨星，以温润真情与无声之光照拂众生。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
-                    StaticCreditsRow(title: "The Spirit of Woodland Harmony", subtitle: "绿林与颂歌之精灵 (Celia / Ophelia)", name: "@sayu", tagline: "“林间和煦之微风，赋予剧场欢快和谐之韵律与治愈之力。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
-                    StaticCreditsRow(title: "The Guardian of Serene Moonlight", subtitle: "宁静月光之守护者 (Juliet / Viola)", name: "@さおり", tagline: "“宁静月光之守护者，以纯真与柔情照亮凡间，使全剧平添温情。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Muse of Celestial Grace", subtitle: "晨星与真情之缪斯 (Cordelia / Rosalind)", name: "@saya.ka", tagline: "“如天际璀璨之晨星，以温润真情与无声之光照拂众生。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Spirit of Woodland Harmony", subtitle: "绿林与颂歌之精灵 (Celia / Ophelia)", name: "@sayu", tagline: "“林间和煦之微风，赋予剧场欢快和谐之韵律与治愈之力。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Guardian of Serene Moonlight", subtitle: "宁静月光之守护者 (Juliet / Viola)", name: "@さおり", tagline: "“宁静月光之守护者，以纯真与柔情照亮凡间，使全剧平添温情。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
                 }
             }
 
             // A Wyrd Messenger
-            AboutSectionCard(title: "🔮 A Wyrd Messenger 命运信使", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”", showInfoHint: false) {
+            AboutSectionCard(title: "🔮 A Wyrd Messenger 命运信使", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”") {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("如荒野上之回响，自迷雾中而来，其低语之建言，足以扭转吾辈大业之航向者，乃")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)
 
-                    StaticCreditsRow(title: "The Prophet of Wyrd Echoes", subtitle: "荒野神谕与命运信使 (Ariel / Hecate)", name: "@小汐shio", tagline: "“自迷雾破空而来，其金石低语建言扭转全剧浩瀚航程！”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Prophet of Wyrd Echoes", subtitle: "荒野神谕与命运信使 (Ariel / Hecate)", name: "@小汐shio", tagline: "“自迷雾破空而来，其金石低语建言扭转全剧浩瀚航程！”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
                 }
             }
 
-            // 萌系水滴封印与专属底部水印
+            // 萌系水滴封印与专属主题水印
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
-                        .foregroundStyle(primaryColor)
-                    Text("Made with 🐰 兔可可皇后魔法守护")
+                        .foregroundStyle(themeConfig.primaryColor)
+                    Text(themeConfig.watermarkTitle)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [primaryColor, secondaryColor],
+                                colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                     Image(systemName: "sparkles")
-                        .foregroundStyle(secondaryColor)
+                        .foregroundStyle(themeConfig.secondaryColor)
                 }
 
-                Text("© 2026 YumikoToys Lite · 罗德岛不休眠协议 · 莎士比亚悲剧史诗纪念卡片")
+                Text(themeConfig.watermarkSubtitle)
                     .font(.system(size: 10.5, weight: .medium, design: .monospaced))
                     .foregroundStyle(.tertiary)
             }
@@ -730,12 +875,12 @@ private struct AboutExportableContentView: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(primaryColor.opacity(0.06))
+                    .fill(themeConfig.primaryColor.opacity(0.06))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(
                                 LinearGradient(
-                                    colors: [primaryColor.opacity(0.3), secondaryColor.opacity(0.18)],
+                                    colors: [themeConfig.primaryColor.opacity(0.3), themeConfig.secondaryColor.opacity(0.18)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 ),
@@ -750,11 +895,7 @@ private struct AboutExportableContentView: View {
             ZStack {
                 Color(nsColor: .windowBackgroundColor)
                 EllipticalGradient(
-                    stops: [
-                        .init(color: primaryColor.opacity(0.1), location: 0.0),
-                        .init(color: secondaryColor.opacity(0.05), location: 0.5),
-                        .init(color: .clear, location: 0.85)
-                    ],
+                    stops: themeConfig.backgroundGradientStops,
                     center: .top,
                     startRadiusFraction: 0,
                     endRadiusFraction: 0.95
@@ -766,7 +907,7 @@ private struct AboutExportableContentView: View {
             RoundedRectangle(cornerRadius: 24)
                 .stroke(
                     LinearGradient(
-                        colors: [primaryColor.opacity(0.4), secondaryColor.opacity(0.2)],
+                        colors: [themeConfig.primaryColor.opacity(0.4), themeConfig.secondaryColor.opacity(0.2)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -822,7 +963,7 @@ private struct StaticCreditsRow: View {
     }
 }
 
-// MARK: - 高精 1:1 状态栏菜单面板矢量 UI 模拟器 (YumikoPopoverMockupView)
+// MARK: - 高精 1:1 状态栏菜单面板矢量 UI 模拟器 (YumikoPopoverMockupView - 8342803 1:1 原版)
 
 private struct YumikoPopoverMockupView: View {
     let isActive: Bool
@@ -831,7 +972,7 @@ private struct YumikoPopoverMockupView: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             VStack(spacing: 8) {
-                // 1. 顶部 Header
+                // 1. 顶部 Header (Icon + App Title + Version + Pill + Breathing Dot)
                 HStack {
                     HStack(spacing: 6) {
                         ZStack {
@@ -851,69 +992,150 @@ private struct YumikoPopoverMockupView: View {
 
                     Spacer()
 
+                    // 右侧功能 Pill (✨ 🔵 ▾) + 防休眠呼吸指示点 (•)
                     HStack(spacing: 6) {
                         HStack(spacing: 3) {
                             Text("✨").font(.system(size: 7))
                             Circle().fill(Color.blue).frame(width: 5, height: 5)
                             Text("▾").font(.system(size: 7)).foregroundStyle(.blue)
                         }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2.5)
                         .background(Capsule().fill(Color.blue.opacity(0.12)))
 
-                        ZStack {
-                            Circle().fill(Color.primary.opacity(0.06)).frame(width: 20, height: 20)
-                            Image(systemName: "sparkles").font(.system(size: 9)).foregroundStyle(Color(hex: "FF6B9D"))
-                        }
+                        // 防休眠呼吸指示点（开启时在 Header 右侧精准亮起）
+                        if isActive {
+                            ZStack {
+                                Circle()
+                                    .stroke(Color(hex: "2563EB").opacity(0.6), lineWidth: 1.2)
+                                    .scaleEffect(isPulsing ? 1.6 : 1.0)
+                                    .opacity(isPulsing ? 0.0 : 0.8)
 
-                        ZStack {
-                            Circle().fill(Color.primary.opacity(0.06)).frame(width: 20, height: 20)
-                            Image(systemName: "gearshape").font(.system(size: 9)).foregroundStyle(.secondary)
+                                Circle()
+                                    .fill(Color(hex: "2563EB"))
+                                    .frame(width: 6.5, height: 6.5)
+                                    .shadow(color: Color(hex: "2563EB"), radius: isPulsing ? 3 : 1)
+                            }
+                            .frame(width: 14, height: 14)
                         }
                     }
                 }
-                .padding(.horizontal, 10)
-                .padding(.top, 8)
 
-                // 2. 模式说明
+                Divider().opacity(0.4)
+
+                // 2. 导航 Tab 按钮组 (纪念日 / 插件 / 截图)
+                HStack(spacing: 6) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "calendar").font(.system(size: 8))
+                        Text("纪念日").font(.system(size: 8.5, weight: .bold))
+                    }
+                    .padding(.horizontal, 7).padding(.vertical, 3)
+                    .background(Capsule().fill(Color(hex: "2563EB")))
+                    .foregroundStyle(.white)
+
+                    HStack(spacing: 3) {
+                        Image(systemName: "puzzlepiece.fill").font(.system(size: 8))
+                        Text("插件").font(.system(size: 8.5, weight: .semibold))
+                    }
+                    .padding(.horizontal, 7).padding(.vertical, 3)
+                    .background(Capsule().fill(Color.primary.opacity(0.06)))
+
+                    HStack(spacing: 3) {
+                        Image(systemName: "camera.viewfinder").font(.system(size: 8))
+                        Text("截图").font(.system(size: 8.5, weight: .semibold))
+                    }
+                    .padding(.horizontal, 7).padding(.vertical, 3)
+                    .background(Capsule().fill(Color.primary.opacity(0.06)))
+                }
+
+                // 3. 兔可可 886.035天 计时卡片
+                VStack(spacing: 4) {
+                    HStack {
+                        HStack(spacing: 3) {
+                            Circle().fill(Color.pink.opacity(0.2)).frame(width: 12, height: 12)
+                                .overlay(Image(systemName: "rabbit.fill").font(.system(size: 7)).foregroundStyle(Color(hex: "FF6B9D")))
+                            Text("兔可可").font(.system(size: 9.5, weight: .bold))
+                        }
+                        Spacer()
+                    }
+
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("886.035")
+                            .font(.system(size: 17, weight: .black, design: .rounded))
+                            .foregroundStyle(Color(hex: "2563EB"))
+                        Text("天")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                    }
+
+                    HStack(spacing: 12) {
+                        Text("下一个100天").font(.system(size: 7.5)).foregroundStyle(.secondary)
+                        Spacer()
+                        Text("2026-08-29").font(.system(size: 7.5)).foregroundStyle(.tertiary)
+                        Text("(第9个)").font(.system(size: 7.5, weight: .bold)).foregroundStyle(Color(hex: "2563EB"))
+                    }
+                }
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.pink.opacity(0.02))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.pink.opacity(0.25), lineWidth: 0.8)
+                        )
+                )
+
+                // 4. 不休眠模式 Toggle 交互卡片
                 HStack {
-                    Text(isActive ? "防休眠保护进行中" : "常规运行模式")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(isActive ? Color(hex: "FF6B9D") : .secondary)
+                    HStack(spacing: 6) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 5).fill(isActive ? Color.blue.opacity(0.15) : Color.primary.opacity(0.05)).frame(width: 18, height: 18)
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 9))
+                                .foregroundStyle(isActive ? Color(hex: "2563EB") : .gray)
+                        }
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("不休眠模式").font(.system(size: 9.5, weight: .bold))
+                            Text(isActive ? "已开启" : "已关闭")
+                                .font(.system(size: 8))
+                                .foregroundStyle(isActive ? Color(hex: "2563EB") : .secondary)
+                        }
+                    }
 
                     Spacer()
 
-                    Text(isActive ? "物理阻止关屏与唤醒" : "遵循系统默认休眠设定")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.tertiary)
+                    // iOS 风格 Switch
+                    Capsule()
+                        .fill(isActive ? Color(hex: "2563EB") : Color.gray.opacity(0.3))
+                        .frame(width: 26, height: 14)
+                        .overlay(
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 11, height: 11)
+                                .shadow(color: .black.opacity(0.15), radius: 1)
+                                .offset(x: isActive ? 5.5 : -5.5)
+                        )
                 }
-                .padding(.horizontal, 10)
-                .padding(.bottom, 6)
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(isActive ? Color.blue.opacity(0.08) : Color.primary.opacity(0.03))
+                )
             }
+            .padding(10)
             .background(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 14)
                     .fill(Color(nsColor: .windowBackgroundColor))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.primary.opacity(0.1), lineWidth: 1)
-                    )
+                    .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
             )
-
-            // 3. 脉冲呼吸点 (在 Header 右上角)
-            if isActive {
-                Circle()
-                    .fill(Color(hex: "FF6B9D"))
-                    .frame(width: 7, height: 7)
-                    .scaleEffect(isPulsing ? 1.3 : 0.85)
-                    .opacity(isPulsing ? 1.0 : 0.45)
-                    .offset(x: -6, y: 6)
-                    .shadow(color: Color(hex: "FF6B9D").opacity(0.6), radius: isPulsing ? 4 : 1, x: 0, y: 0)
-            }
         }
+        .clipped()
     }
 }
 
-// MARK: - 图标对照说明卡片
+// MARK: - 图标说明展示卡片 (IconLegendCard - 8342803 1:1 原版)
 
 private struct IconLegendCard: View {
     let title: String
@@ -921,40 +1143,51 @@ private struct IconLegendCard: View {
     let isActive: Bool
     let isPulsing: Bool
 
+    @State private var isHovered = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
+            // 高精 1:1 状态栏菜单面板模拟器 (Simulated Popover Window Mockup)
             YumikoPopoverMockupView(isActive: isActive, isPulsing: isPulsing)
 
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(isActive ? Color(hex: "FF6B9D") : Color.gray.opacity(0.4))
-                        .frame(width: 6, height: 6)
-
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 5) {
                     Text(title)
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 12.5, weight: .bold))
                         .foregroundStyle(isActive ? Color(hex: "FF6B9D") : .primary)
+                        .lineLimit(1)
+
+                    if isActive {
+                        Circle()
+                            .fill(Color(hex: "00F5D4"))
+                            .frame(width: 6, height: 6)
+                            .scaleEffect(isPulsing ? 1.3 : 1.0)
+                    }
                 }
 
                 Text(description)
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
-                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
             }
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.primary.opacity(0.03))
+            RoundedRectangle(cornerRadius: 14)
+                .fill(isActive ? Color(hex: "FF6B9D").opacity(0.08) : Color.primary.opacity(0.03))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 14)
                         .stroke(
-                            isActive ? Color(hex: "FF6B9D").opacity(0.3) : Color.primary.opacity(0.06),
+                            isActive
+                                ? LinearGradient(colors: [Color(hex: "FF6B9D").opacity(0.4), Color(hex: "00F5D4").opacity(0.4)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                : LinearGradient(colors: [Color.primary.opacity(0.1), Color.primary.opacity(0.03)], startPoint: .topLeading, endPoint: .bottomTrailing),
                             lineWidth: 1
                         )
                 )
         )
+        .clipped()
     }
 }
 
@@ -963,21 +1196,8 @@ private struct IconLegendCard: View {
 private struct AboutTextCard<Content: View>: View {
     let content: Content
 
-    private var themeGradientColors: [Color] {
-        if AnimeThemeService.shared.isEnabled {
-            return AnimeThemeService.shared.gradient()
-        }
-        let settings = DependencyContainer.shared.settingsService.settings
-        let themeColor = settings.mainWindowThemeColor
-        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
-    }
-
-    private var primaryColor: Color {
-        themeGradientColors.first ?? Color(hex: "FF6B9D")
-    }
-
-    private var secondaryColor: Color {
-        themeGradientColors.count > 1 ? themeGradientColors[1] : Color(hex: "C44FE2")
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
     }
 
     init(@ViewBuilder content: () -> Content) {
@@ -993,8 +1213,8 @@ private struct AboutTextCard<Content: View>: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                primaryColor.opacity(0.06),
-                                secondaryColor.opacity(0.03)
+                                themeConfig.primaryColor.opacity(0.06),
+                                themeConfig.secondaryColor.opacity(0.03)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -1005,8 +1225,8 @@ private struct AboutTextCard<Content: View>: View {
                             .stroke(
                                 LinearGradient(
                                     colors: [
-                                        primaryColor.opacity(0.3),
-                                        secondaryColor.opacity(0.15)
+                                        themeConfig.primaryColor.opacity(0.3),
+                                        themeConfig.secondaryColor.opacity(0.15)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -1023,18 +1243,10 @@ private struct AboutSectionCard<Content: View>: View {
     let subtitle: String
     var showInfoHint: Bool = false
     let content: Content
+    @State private var isHovered = false
 
-    private var themeGradientColors: [Color] {
-        if AnimeThemeService.shared.isEnabled {
-            return AnimeThemeService.shared.gradient()
-        }
-        let settings = DependencyContainer.shared.settingsService.settings
-        let themeColor = settings.mainWindowThemeColor
-        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
-    }
-
-    private var primaryColor: Color {
-        themeGradientColors.first ?? Color(hex: "FF6B9D")
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
     }
 
     init(title: String, subtitle: String, showInfoHint: Bool = false, @ViewBuilder content: () -> Content) {
@@ -1061,17 +1273,17 @@ private struct AboutSectionCard<Content: View>: View {
                     HStack(spacing: 4) {
                         Image(systemName: "info.circle.fill")
                             .font(.system(size: 10))
-                            .foregroundStyle(primaryColor)
+                            .foregroundStyle(themeConfig.primaryColor)
 
                         Text("点击 ⓘ 查阅典故")
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(primaryColor)
+                            .foregroundStyle(themeConfig.primaryColor)
                     }
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
                     .background(
                         Capsule()
-                            .fill(primaryColor.opacity(0.1))
+                            .fill(themeConfig.primaryColor.opacity(0.1))
                     )
                 }
             }
@@ -1086,9 +1298,20 @@ private struct AboutSectionCard<Content: View>: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                        .stroke(
+                            isHovered ? themeConfig.primaryColor.opacity(0.3) : Color.primary.opacity(0.08),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(
+                    color: isHovered ? themeConfig.primaryColor.opacity(0.12) : .clear,
+                    radius: 8,
+                    x: 0,
+                    y: 2
                 )
         )
+        .onHover { isHovered = $0 }
+        .animation(.easeInOut(duration: 0.2), value: isHovered)
     }
 }
 
@@ -1106,21 +1329,8 @@ private struct CreditsRow: View {
     @State private var showInfoPopover = false
     @State private var isInfoBtnHovered = false
 
-    private var themeGradientColors: [Color] {
-        if AnimeThemeService.shared.isEnabled {
-            return AnimeThemeService.shared.gradient()
-        }
-        let settings = DependencyContainer.shared.settingsService.settings
-        let themeColor = settings.mainWindowThemeColor
-        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
-    }
-
-    private var primaryColor: Color {
-        themeGradientColors.first ?? Color(hex: "FF6B9D")
-    }
-
-    private var secondaryColor: Color {
-        themeGradientColors.count > 1 ? themeGradientColors[1] : Color(hex: "C44FE2")
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
     }
 
     var body: some View {
@@ -1130,7 +1340,7 @@ private struct CreditsRow: View {
                     .font(.system(size: 13.5, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [primaryColor, secondaryColor],
+                            colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -1145,7 +1355,7 @@ private struct CreditsRow: View {
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(
                                 isInfoBtnHovered || showInfoPopover
-                                    ? primaryColor
+                                    ? themeConfig.primaryColor
                                     : Color.primary.opacity(0.35)
                             )
                             .scaleEffect(isInfoBtnHovered ? 1.15 : 1.0)
@@ -1159,7 +1369,7 @@ private struct CreditsRow: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "book.pages.fill")
                                     .font(.system(size: 12))
-                                    .foregroundStyle(primaryColor)
+                                    .foregroundStyle(themeConfig.primaryColor)
 
                                 Text("\(name) · 原著典故解构")
                                     .font(.system(size: 12.5, weight: .bold))
@@ -1173,7 +1383,7 @@ private struct CreditsRow: View {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("📖 莎士比亚原著出处")
                                         .font(.system(size: 10.5, weight: .bold))
-                                        .foregroundStyle(secondaryColor)
+                                        .foregroundStyle(themeConfig.secondaryColor)
 
                                     Text(allusion)
                                         .font(.system(size: 11, design: .serif))
@@ -1185,12 +1395,12 @@ private struct CreditsRow: View {
                                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
                             }
 
-                            // 文学深层解读
+                            // 文学深层解构
                             if let decoding = literaryDecoding {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("🗡️ 角色象征与深层解构")
                                         .font(.system(size: 10.5, weight: .bold))
-                                        .foregroundStyle(primaryColor)
+                                        .foregroundStyle(themeConfig.primaryColor)
 
                                     Text(decoding)
                                         .font(.system(size: 11))
@@ -1199,7 +1409,7 @@ private struct CreditsRow: View {
                                         .lineSpacing(3)
                                 }
                                 .padding(8)
-                                .background(RoundedRectangle(cornerRadius: 8).fill(primaryColor.opacity(0.06)))
+                                .background(RoundedRectangle(cornerRadius: 8).fill(themeConfig.primaryColor.opacity(0.06)))
                             }
                         }
                         .padding(14)
