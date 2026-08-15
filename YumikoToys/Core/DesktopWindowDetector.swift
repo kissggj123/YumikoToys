@@ -167,8 +167,8 @@ final class DesktopWindowDetector: ObservableObject {
         updateDockInfo()
         scanWindows()
 
-        // 150ms 超低延时全屏/多显示器几何采样
-        timer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
+        // 250ms 高效全屏/多显示器几何采样 (低 CPU 占用优化)
+        timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateDockInfo()
                 self?.scanWindows()
@@ -207,10 +207,9 @@ final class DesktopWindowDetector: ObservableObject {
         }
         let visibleFrame = screen.visibleFrame
         let dockHeight = visibleFrame.origin.y
-        if dockHeight > 0 {
-            dockTopY = dockHeight
-        } else {
-            dockTopY = 80.0
+        let newDockTopY = dockHeight > 0 ? dockHeight : 80.0
+        if abs(dockTopY - newDockTopY) > 1.0 {
+            dockTopY = newDockTopY
         }
     }
 
@@ -303,6 +302,9 @@ final class DesktopWindowDetector: ObservableObject {
             results.append(obstacle)
         }
 
-        self.mainWindows = results
+        // 仅在窗口分布改变时触发 @Published，极大节省 CPU 占用
+        if self.mainWindows != results {
+            self.mainWindows = results
+        }
     }
 }

@@ -172,9 +172,11 @@ final class PreventSleepService: PreventSleepServiceProtocol {
 
                     Task { @MainActor [weak self] in
                         guard let self = self else { return }
-                        self.activeAssertionOwner = foundOwner
-                        self.activeAssertionType = foundType
-                        self.activeAssertionOwnerSubject.send(foundOwner)
+                        if self.activeAssertionOwner != foundOwner || self.activeAssertionType != foundType {
+                            self.activeAssertionOwner = foundOwner
+                            self.activeAssertionType = foundType
+                            self.activeAssertionOwnerSubject.send(foundOwner)
+                        }
                     }
                 }
             } catch {

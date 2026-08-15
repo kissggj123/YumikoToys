@@ -52,7 +52,10 @@ final class PetPerformanceMonitor: ObservableObject {
             }
         }
         if kerr == KERN_SUCCESS {
-            memoryUsageMB = Double(info.resident_size) / (1024.0 * 1024.0)
+            let newMem = Double(info.resident_size) / (1024.0 * 1024.0)
+            if abs(memoryUsageMB - newMem) >= 0.5 {
+                memoryUsageMB = newMem
+            }
         }
 
         // 2. CPU 使用率 (Mach Thread Times Info Delta)
@@ -88,8 +91,10 @@ final class PetPerformanceMonitor: ObservableObject {
                 let userDelta = Double(totalUser - lastUserTime) / 1_000_000.0
                 let systemDelta = Double(totalSystem - lastSystemTime) / 1_000_000.0
                 let totalCpuSeconds = userDelta + systemDelta
-                let rawCpu = (totalCpuSeconds / timeDelta) * 100.0
-                cpuUsage = max(0.0, rawCpu)
+                let rawCpu = max(0.0, (totalCpuSeconds / timeDelta) * 100.0)
+                if abs(cpuUsage - rawCpu) >= 0.2 {
+                    cpuUsage = rawCpu
+                }
             }
             lastUserTime = totalUser
             lastSystemTime = totalSystem

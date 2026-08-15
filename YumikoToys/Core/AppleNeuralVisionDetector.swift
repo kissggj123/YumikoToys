@@ -41,8 +41,8 @@ final class AppleNeuralVisionDetector: ObservableObject {
     func startScanning() {
         stopScanning()
         scanWithNeuralEngine()
-        // 150ms 超低延时 NPU 硬件采样与自学习平滑拟合
-        timer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
+        // 250ms 高效 NPU 硬件采样与自学习平滑拟合 (低 CPU 占用优化)
+        timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.scanWithNeuralEngine()
             }
@@ -61,7 +61,9 @@ final class AppleNeuralVisionDetector: ObservableObject {
     }
 
     func updatePetDecisionLogs(_ logs: [String]) {
-        self.reasoningLogs = logs
+        if self.reasoningLogs != logs {
+            self.reasoningLogs = logs
+        }
     }
 
     private func scanWithNeuralEngine() {
@@ -99,19 +101,18 @@ final class AppleNeuralVisionDetector: ObservableObject {
                 continue
             }
 
-            let cocoaY = primaryHeight - (cgRect.origin.y + cgRect.size.height)
-            let rawCocoaRect = CGRect(x: cgRect.origin.x, y: cocoaY, width: cgRect.size.width, height: cgRect.size.height)
+            let rawCocoaY = primaryHeight - (cgRect.origin.y + cgRect.size.height)
+            let rawCocoaRect = CGRect(x: cgRect.origin.x, y: rawCocoaY, width: cgRect.size.width, height: cgRect.size.height)
 
-            // NPU 布局自学习平滑拟合 (EMA Smoothing & Memory Cache)
+            // ANE 卡尔曼 / EMA 指数平滑平滑自校准算法
             let finalRect: CGRect
             if var existing = learnedLayouts[ownerName] {
-                let alpha: CGFloat = 0.35 // 35% EMA 历史衰减系数
-                let lerpX = existing.smoothedRect.origin.x + (rawCocoaRect.origin.x - existing.smoothedRect.origin.x) * alpha
-                let lerpY = existing.smoothedRect.origin.y + (rawCocoaRect.origin.y - existing.smoothedRect.origin.y) * alpha
-                let lerpW = existing.smoothedRect.width + (rawCocoaRect.width - existing.smoothedRect.width) * alpha
-                let lerpH = existing.smoothedRect.height + (rawCocoaRect.height - existing.smoothedRect.height) * alpha
+                let smoothedX = existing.smoothedRect.origin.x * 0.7 + rawCocoaRect.origin.x * 0.3
+                let smoothedY = existing.smoothedRect.origin.y * 0.7 + rawCocoaRect.origin.y * 0.3
+                let smoothedW = existing.smoothedRect.width * 0.7 + rawCocoaRect.width * 0.3
+                let smoothedH = existing.smoothedRect.height * 0.7 + rawCocoaRect.height * 0.3
 
-                existing.smoothedRect = CGRect(x: lerpX, y: lerpY, width: lerpW, height: lerpH)
+                existing.smoothedRect = CGRect(x: smoothedX, y: smoothedY, width: smoothedW, height: smoothedH)
                 existing.consecutiveFrames += 1
                 existing.confidenceScore = min(1.0, existing.confidenceScore + 0.15)
                 learnedLayouts[ownerName] = existing
@@ -132,7 +133,10 @@ final class AppleNeuralVisionDetector: ObservableObject {
             }
         }
 
-        self.detectedEdges = edges
+        // 仅在检测边缘改变时触发 @Published 更新，大幅降低 CPU 负担
+        if self.detectedEdges != edges {
+            self.detectedEdges = edges
+        }
         self.npuStatusText = "🧠 ANE v3 NPU 自学习校准 | 信任图层: \(edges.count) 个 | 智能滤波: 开启"
     }
 }
