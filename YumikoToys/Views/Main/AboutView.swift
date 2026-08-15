@@ -1466,17 +1466,10 @@ private struct AboutSectionCard<Content: View>: View {
         AboutThemeConfig.current()
     }
 
-    init(title: String, subtitle: String, showInfoHint: Bool, @ViewBuilder content: () -> Content) {
+    init(title: String, subtitle: String, showInfoHint: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
         self.subtitle = subtitle
         self.showInfoHint = showInfoHint
-        self.content = content()
-    }
-
-    init(title: String, subtitle: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.subtitle = subtitle
-        self.showInfoHint = false
         self.content = content()
     }
 
