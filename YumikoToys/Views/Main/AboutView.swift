@@ -2,12 +2,28 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - Ultra-Precision 3D Interactive Parallax & Pure Physics Easter Egg Engine, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.8 - Share Long Screenshot Day/Night Mode Exporter with Persistent Memory, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
+
+// MARK: - 分享长图模式枚举 (Day / Night)
+
+enum ShareExportMode: String, CaseIterable, Identifiable {
+    case day = "day"
+    case night = "night"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .day: return "☀️ 日间浅色卡片"
+        case .night: return "🌙 夜间深色卡片"
+        }
+    }
+}
 
 // MARK: - 全主题自适应配置 (AboutThemeConfig)
 
@@ -339,6 +355,12 @@ struct AboutView: View {
     @State private var isBreathingDotPulse = false
     @State private var showToast = false
     @State private var toastMessage = ""
+
+    // 分享导出日间/夜间模式 (持久化记忆 UserDefaults)
+    @AppStorage("aboutShareExportMode") private var exportModeRaw: String = ShareExportMode.day.rawValue
+    private var exportMode: ShareExportMode {
+        ShareExportMode(rawValue: exportModeRaw) ?? .day
+    }
 
     // 3D 物理倾斜与彩蛋状态 Engine
     @State private var tiltX: Double = 0
@@ -786,20 +808,43 @@ struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                // 导出/分享专属长图按钮
+                // 导出/分享专属长图按钮与模式勾选菜单 (日间/夜间模式 + 默认记忆)
                 Menu {
                     Button(action: copyLongScreenshot) {
-                        Label("复制【\(themeConfig.themeName)】专属长图 (剪贴板)", systemImage: "doc.on.doc.fill")
+                        Label("复制【\(themeConfig.themeName)】专属长图 (\(exportMode == .day ? "☀️日间" : "🌙夜间"))", systemImage: "doc.on.doc.fill")
                     }
 
                     Button(action: saveLongScreenshot) {
-                        Label("保存【\(themeConfig.themeName)】长图为文件 (.png)", systemImage: "square.and.arrow.down.fill")
+                        Label("保存【\(themeConfig.themeName)】长图文件 (.png)", systemImage: "square.and.arrow.down.fill")
+                    }
+
+                    Divider()
+
+                    // 长图模式记忆勾选菜单
+                    Menu("导出模式选择 (已自动勾选记忆)") {
+                        Button(action: { exportModeRaw = ShareExportMode.day.rawValue }) {
+                            HStack {
+                                Text("☀️ 日间浅色模式")
+                                if exportMode == .day {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+
+                        Button(action: { exportModeRaw = ShareExportMode.night.rawValue }) {
+                            HStack {
+                                Text("🌙 夜间深色模式")
+                                if exportMode == .night {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
                     }
                 } label: {
                     HStack(spacing: 5) {
                         Image(systemName: "photo.badge.plus.fill")
                             .font(.system(size: 11, weight: .bold))
-                        Text("分享长图")
+                        Text("分享长图 (\(exportMode == .day ? "日间" : "夜间"))")
                             .font(.system(size: 11, weight: .bold))
                     }
                     .foregroundStyle(.white)
@@ -818,7 +863,7 @@ struct AboutView: View {
                     )
                 }
                 .menuStyle(.borderlessButton)
-                .help("生成并分享【\(themeConfig.themeName)】专属定制的长图卡片")
+                .help("生成并分享【\(themeConfig.themeName)】专属定制长图 (\(exportMode.title))")
                 .padding(.top, 4)
             }
         }
@@ -826,7 +871,6 @@ struct AboutView: View {
 
     // MARK: - 交互与彩蛋触发 Logic (Zero Floating Symbols!)
     private func handleIconTapInteraction() {
-        // 1. 触发触控液体水波纹能量冲击 (Liquid Ripple)
         rippleScale = 0.3
         rippleOpacity = 0.85
         withAnimation(.easeOut(duration: 0.6)) {
@@ -834,13 +878,11 @@ struct AboutView: View {
             rippleOpacity = 0
         }
 
-        // 2. 镜面高光闪烁 Sweep
         isSpecularActive = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             isSpecularActive = false
         }
 
-        // 3. 连击检测 (Double-tap & Triple-tap Easter Eggs)
         let now = Date()
         if now.timeIntervalSince(lastTapTime) < 0.45 {
             tapCount += 1
@@ -850,12 +892,10 @@ struct AboutView: View {
         lastTapTime = now
 
         if tapCount == 2 {
-            // 彩蛋 1: 360° 3D 陀螺翻转
             withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
                 iconFlipAngle += 360
             }
         } else if tapCount == 3 {
-            // 彩蛋 2: 超新星极光风暴冲击波
             supernovaScale = 1.0
             supernovaOpacity = 1.0
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
@@ -868,7 +908,6 @@ struct AboutView: View {
     }
 
     private func handleIconLongPressInteraction() {
-        // 彩蛋 3: 开启/关闭【兔可可魔晶心跳】物理律动
         isHeartbeatActive.toggle()
         if isHeartbeatActive {
             triggerToast("💖 触发隐藏彩蛋：已激活【兔可可魔晶心跳】律动模式！")
@@ -902,17 +941,17 @@ struct AboutView: View {
 
     // MARK: - Screenshot Export Actions
     private func copyLongScreenshot() {
-        if AboutImageExporter.copyLongScreenshotToClipboard() {
-            triggerToast("✨ 已成功复制【\(themeConfig.themeName)】专属定制长图到剪贴板！")
+        if AboutImageExporter.copyLongScreenshotToClipboard(mode: exportMode) {
+            triggerToast("✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")长图到剪贴板！")
         } else {
             triggerToast("导出长图失败，请稍后重试。")
         }
     }
 
     private func saveLongScreenshot() {
-        AboutImageExporter.saveLongScreenshotToFile { success in
+        AboutImageExporter.saveLongScreenshotToFile(mode: exportMode) { success in
             if success {
-                triggerToast("💾 已成功保存【\(themeConfig.themeName)】专属长图 PNG 文件！")
+                triggerToast("💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")长图 PNG 文件！")
             }
         }
     }
@@ -930,12 +969,12 @@ struct AboutView: View {
     }
 }
 
-// MARK: - 离线高清长图导出渲染器 (AboutImageExporter)
+// MARK: - 离线高清长图导出渲染器 (AboutImageExporter - 支持日间/夜间模式)
 
 @MainActor
 struct AboutImageExporter {
-    static func generateLongScreenshot(width: CGFloat = 720) -> NSImage? {
-        let exportContentView = AboutExportableContentView()
+    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720) -> NSImage? {
+        let exportContentView = AboutExportableContentView(mode: mode)
             .frame(width: width)
 
         let hostingView = NSHostingView(rootView: exportContentView)
@@ -953,16 +992,16 @@ struct AboutImageExporter {
         return image
     }
 
-    static func copyLongScreenshotToClipboard() -> Bool {
-        guard let image = generateLongScreenshot() else { return false }
+    static func copyLongScreenshotToClipboard(mode: ShareExportMode = .day) -> Bool {
+        guard let image = generateLongScreenshot(mode: mode) else { return false }
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         return pasteboard.writeObjects([image])
     }
 
-    static func saveLongScreenshotToFile(completion: @escaping (Bool) -> Void) {
+    static func saveLongScreenshotToFile(mode: ShareExportMode = .day, completion: @escaping (Bool) -> Void) {
         let themeConfig = AboutThemeConfig.current()
-        guard let image = generateLongScreenshot(),
+        guard let image = generateLongScreenshot(mode: mode),
               let tiffData = image.tiffRepresentation,
               let bitmapRep = NSBitmapImageRep(data: tiffData),
               let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
@@ -970,10 +1009,11 @@ struct AboutImageExporter {
             return
         }
 
+        let modeSuffix = mode == .day ? "Day" : "Night"
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
-        savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(AppConfig.version).png"
-        savePanel.title = "保存【\(themeConfig.themeName)】专属定制长图"
+        savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(modeSuffix)_\(AppConfig.version).png"
+        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")长图"
         savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】精美长图的路径"
 
         savePanel.begin { result in
@@ -991,11 +1031,17 @@ struct AboutImageExporter {
     }
 }
 
-// MARK: - 主题专属自适应长截图模版容器 (AboutExportableContentView)
+// MARK: - 主题专属自适应长截图模版容器 (AboutExportableContentView - 兼容日间与夜间模式)
 
 private struct AboutExportableContentView: View {
+    let mode: ShareExportMode
+
     private var themeConfig: AboutThemeConfig {
         AboutThemeConfig.current()
+    }
+
+    var isNight: Bool {
+        mode == .night
     }
 
     var body: some View {
@@ -1015,16 +1061,16 @@ private struct AboutExportableContentView: View {
                 .padding(.vertical, 6)
                 .background(
                     Capsule()
-                        .fill(themeConfig.primaryColor.opacity(0.12))
+                        .fill(themeConfig.primaryColor.opacity(isNight ? 0.22 : 0.12))
                         .overlay(
                             Capsule()
-                                .stroke(themeConfig.primaryColor.opacity(0.35), lineWidth: 1)
+                                .stroke(themeConfig.primaryColor.opacity(isNight ? 0.5 : 0.35), lineWidth: 1)
                         )
                 )
 
                 Text(themeConfig.cuteBannerSub)
                     .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(isNight ? Color.white.opacity(0.6) : Color.black.opacity(0.4))
                     .italic()
             }
             .padding(.top, 8)
@@ -1036,8 +1082,8 @@ private struct AboutExportableContentView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    themeConfig.primaryColor.opacity(0.25),
-                                    themeConfig.secondaryColor.opacity(0.15)
+                                    themeConfig.primaryColor.opacity(isNight ? 0.35 : 0.25),
+                                    themeConfig.secondaryColor.opacity(isNight ? 0.22 : 0.15)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -1054,7 +1100,7 @@ private struct AboutExportableContentView: View {
                             )
                         )
                         .frame(width: 98, height: 98)
-                        .shadow(color: themeConfig.primaryColor.opacity(0.4), radius: 14, x: 0, y: 6)
+                        .shadow(color: themeConfig.primaryColor.opacity(isNight ? 0.6 : 0.4), radius: 14, x: 0, y: 6)
 
                     if let customImage = NSImage(named: "YumikoToys") {
                         Image(nsImage: customImage)
@@ -1071,6 +1117,7 @@ private struct AboutExportableContentView: View {
                 VStack(spacing: 6) {
                     Text(AppConfig.appName)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
 
                     HStack(spacing: 6) {
                         Text("v\(AppConfig.version)")
@@ -1091,13 +1138,13 @@ private struct AboutExportableContentView: View {
 
                         Text("Build \(AppConfig.buildNumber)")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
                     }
                 }
             }
 
             // 主描述
-            AboutTextCard {
+            ExportTextCard(isNight: isNight) {
                 VStack(spacing: 12) {
                     Text("⚔️ “睡眠已死，麦克白杀死了睡眠！”")
                         .font(.system(size: 15, weight: .bold))
@@ -1111,28 +1158,30 @@ private struct AboutExportableContentView: View {
 
                     Text("“不眠之钟声已然响彻，纵使天地合闭、MacBook 暗无天日，此神器亦如永不熄灭之圣血符文！搭载 YumikoToys 🐰兔可可皇后之粉色魔晶王权，禁绝万物休眠，使 AI 炼金阵与后台劳作永无止境！”")
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isNight ? Color.white.opacity(0.8) : Color(hex: "424245"))
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
                 }
             }
 
-            // 图标说明 (8342803 经典 1:1 原版 双生精准等高卡片)
-            AboutSectionCard(title: "图标说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照") {
+            // 图标说明 (双生精准等高卡片)
+            ExportSectionCard(title: "图标说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照", isNight: isNight) {
                 HStack(alignment: .top, spacing: 16) {
-                    IconLegendCard(
+                    ExportIconLegendCard(
                         title: "常规模式 (防休眠关闭)",
                         description: "未开启防休眠，状态栏菜单面板右上角无指示点",
                         isActive: false,
-                        isPulsing: false
+                        isPulsing: false,
+                        isNight: isNight
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                    IconLegendCard(
+                    ExportIconLegendCard(
                         title: "不休眠模式 (防休眠开启)",
                         description: "开启不休眠后，状态栏菜单面板右上角亮起柔和呼吸点",
                         isActive: true,
-                        isPulsing: true
+                        isPulsing: true,
+                        isNight: isNight
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -1140,54 +1189,54 @@ private struct AboutExportableContentView: View {
             }
 
             // Dramatis Personae
-            AboutSectionCard(title: "🎭 Dramatis Personae 功勋名录", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”") {
+            ExportSectionCard(title: "🎭 Dramatis Personae 功勋名录", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”", isNight: isNight) {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Grand Artificer", subtitle: "伟大之工匠 (Macbeth / Lord of the Anvil)", name: "@🍊蜜柑工具人", tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
-                    StaticCreditsRow(title: "The Limner of the Sigil", subtitle: "徽记描绘者 (Lady Macbeth / Sovereign of Sorcery)", name: "@会拧头的ruarua怪", tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
-                    StaticCreditsRow(title: "The Muse of Whimsy", subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)", name: "@cici", tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
-                    StaticCreditsRow(title: "The Patron of New Marvels", subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)", name: "@🐰兔可可", tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Grand Artificer", subtitle: "伟大之工匠 (Macbeth / Lord of the Anvil)", name: "@🍊蜜柑工具人", tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                    StaticCreditsRow(title: "The Limner of the Sigil", subtitle: "徽记描绘者 (Lady Macbeth / Sovereign of Sorcery)", name: "@会拧头的ruarua怪", tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                    StaticCreditsRow(title: "The Muse of Whimsy", subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)", name: "@cici", tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                    StaticCreditsRow(title: "The Patron of New Marvels", subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)", name: "@🐰兔可可", tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
                 }
             }
 
             // The Sacred Fellowship of Soulmates
-            AboutSectionCard(title: "💖 The Sacred Fellowship of Soulmates 挚友同心", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”") {
+            ExportSectionCard(title: "💖 The Sacred Fellowship of Soulmates 挚友同心", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”", isNight: isNight) {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Enchantress of Mist & Song", subtitle: "雾霭与歌咏之灵 (Puck / Ophelia)", name: "@烟烟", tagline: "“如《仲夏夜之梦》薄雾凝霜之灵，赋万物以飘逸诗意。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
-                    StaticCreditsRow(title: "The Sovereign of Eternal Starlight", subtitle: "永恒星芒之女王 (Titania / Portia)", name: "@ching_1222", tagline: "“如《第十二夜》璀璨星辰，以优雅与睿智光照剧场。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
-                    StaticCreditsRow(title: "The Guardian of Enchanted Realm", subtitle: "幻境奇迹之守护者 (Miranda / Beatrice)", name: "@邱", tagline: "“如《暴风雨》奇迹女神 Miranda，赐予作品纯真神圣之守护。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Enchantress of Mist & Song", subtitle: "雾霭与歌咏之灵 (Puck / Ophelia)", name: "@烟烟", tagline: "“如《仲夏夜之梦》薄雾凝霜之灵，赋万物以飘逸诗意。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                    StaticCreditsRow(title: "The Sovereign of Eternal Starlight", subtitle: "永恒星芒之女王 (Titania / Portia)", name: "@ching_1222", tagline: "“如《第十二夜》璀璨星辰，以优雅与睿智光照剧场。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                    StaticCreditsRow(title: "The Guardian of Enchanted Realm", subtitle: "幻境奇迹之守护者 (Miranda / Beatrice)", name: "@邱", tagline: "“如《暴风雨》奇迹女神 Miranda，赐予作品纯真神圣之守护。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
                 }
             }
 
             // Architects of Pet Playground
-            AboutSectionCard(title: "🐾 Architects of Pet Playground 爬爬乐创作者", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”") {
+            ExportSectionCard(title: "🐾 Architects of Pet Playground 爬爬乐创作者", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”", isNight: isNight) {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Agile Enchantress of Walls", subtitle: "绝壁与灵动之仙子 (Puck / Peaseblossom)", name: "@氢氧化猫猫", tagline: "“如《仲夏夜之梦》绝壁上翩跹之仙子，以轻灵极彩之姿赋桌宠以生机。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
-                    StaticCreditsRow(title: "The Lord Warden of Gravity", subtitle: "极地与重力之勋爵 (Prospero / Gonzalo)", name: "@北冥有地瓜", tagline: "“如《暴风雨》掌控重力与天法之勋爵，筑坚实锚点庇佑桌宠安然攀行。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Agile Enchantress of Walls", subtitle: "绝壁与灵动之仙子 (Puck / Peaseblossom)", name: "@氢氧化猫猫", tagline: "“如《仲夏夜之梦》绝壁上翩跹之仙子，以轻灵极彩之姿赋桌宠以生机。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                    StaticCreditsRow(title: "The Lord Warden of Gravity", subtitle: "极地与重力之勋爵 (Prospero / Gonzalo)", name: "@北冥有地瓜", tagline: "“如《暴风雨》掌控重力与天法之勋爵，筑坚实锚点庇佑桌宠安然攀行。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
                 }
             }
 
             // A Note of Gratitude Most Profound
-            AboutSectionCard(title: "🌸 A Note of Gratitude Most Profound 深情致谢", subtitle: "“汝等之光，亦使此剧增辉”") {
+            ExportSectionCard(title: "🌸 A Note of Gratitude Most Profound 深情致谢", subtitle: "“汝等之光，亦使此剧增辉”", isNight: isNight) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("吾辈亦向此众友献上敬意：")
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isNight ? Color.white.opacity(0.6) : Color.black.opacity(0.45))
 
-                    StaticCreditsRow(title: "The Muse of Celestial Grace", subtitle: "晨星与真情之缪斯 (Cordelia / Rosalind)", name: "@saya.ka", tagline: "“如天际璀璨之晨星，以温润真情与无声之光照拂众生。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
-                    StaticCreditsRow(title: "The Spirit of Woodland Harmony", subtitle: "绿林与颂歌之精灵 (Celia / Ophelia)", name: "@sayu", tagline: "“林间和煦之微风，赋予剧场欢快和谐之韵律与治愈之力。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
-                    StaticCreditsRow(title: "The Guardian of Serene Moonlight", subtitle: "宁静月光之守护者 (Juliet / Viola)", name: "@さおり", tagline: "“宁静月光之守护者，以纯真与柔情照亮凡间，使全剧平添温情。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Muse of Celestial Grace", subtitle: "晨星与真情之缪斯 (Cordelia / Rosalind)", name: "@saya.ka", tagline: "“如天际璀璨之晨星，以温润真情与无声之光照拂众生。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                    StaticCreditsRow(title: "The Spirit of Woodland Harmony", subtitle: "绿林与颂歌之精灵 (Celia / Ophelia)", name: "@sayu", tagline: "“林间和煦之微风，赋予剧场欢快和谐之韵律与治愈之力。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                    StaticCreditsRow(title: "The Guardian of Serene Moonlight", subtitle: "宁静月光之守护者 (Juliet / Viola)", name: "@さおり", tagline: "“宁静月光之守护者，以纯真与柔情照亮凡间，使全剧平添温情。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
                 }
             }
 
             // A Wyrd Messenger
-            AboutSectionCard(title: "🔮 A Wyrd Messenger 命运信使", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”") {
+            ExportSectionCard(title: "🔮 A Wyrd Messenger 命运信使", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”", isNight: isNight) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("如荒野上之回响，自迷雾中而来，其低语之建言，足以扭转吾辈大业之航向者，乃")
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isNight ? Color.white.opacity(0.6) : Color.black.opacity(0.45))
                         .lineSpacing(4)
 
-                    StaticCreditsRow(title: "The Prophet of Wyrd Echoes", subtitle: "荒野神谕与命运信使 (Ariel / Hecate)", name: "@小汐shio", tagline: "“自迷雾破空而来，其金石低语建言扭转全剧浩瀚航程！”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor)
+                    StaticCreditsRow(title: "The Prophet of Wyrd Echoes", subtitle: "荒野神谕与命运信使 (Ariel / Hecate)", name: "@小汐shio", tagline: "“自迷雾破空而来，其金石低语建言扭转全剧浩瀚航程！”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
                 }
             }
 
@@ -1209,20 +1258,20 @@ private struct AboutExportableContentView: View {
                         .foregroundStyle(themeConfig.secondaryColor)
                 }
 
-                Text(themeConfig.watermarkSubtitle)
+                Text("\(themeConfig.watermarkSubtitle) • \(isNight ? "🌙夜间模式" : "☀️日间模式")")
                     .font(.system(size: 10.5, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(themeConfig.primaryColor.opacity(0.06))
+                    .fill(themeConfig.primaryColor.opacity(isNight ? 0.15 : 0.06))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(
                                 LinearGradient(
-                                    colors: [themeConfig.primaryColor.opacity(0.3), themeConfig.secondaryColor.opacity(0.18)],
+                                    colors: [themeConfig.primaryColor.opacity(0.4), themeConfig.secondaryColor.opacity(0.2)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 ),
@@ -1235,13 +1284,31 @@ private struct AboutExportableContentView: View {
         .padding(32)
         .background(
             ZStack {
-                Color(nsColor: .windowBackgroundColor)
-                EllipticalGradient(
-                    stops: themeConfig.backgroundGradientStops,
-                    center: .top,
-                    startRadiusFraction: 0,
-                    endRadiusFraction: 0.95
-                )
+                if isNight {
+                    Color(hex: "0D0E15")
+                    EllipticalGradient(
+                        stops: [
+                            .init(color: themeConfig.primaryColor.opacity(0.22), location: 0.0),
+                            .init(color: themeConfig.secondaryColor.opacity(0.12), location: 0.5),
+                            .init(color: .clear, location: 0.88)
+                        ],
+                        center: .top,
+                        startRadiusFraction: 0,
+                        endRadiusFraction: 0.95
+                    )
+                } else {
+                    Color(hex: "F8F9FD")
+                    EllipticalGradient(
+                        stops: [
+                            .init(color: themeConfig.primaryColor.opacity(0.12), location: 0.0),
+                            .init(color: themeConfig.secondaryColor.opacity(0.06), location: 0.5),
+                            .init(color: .clear, location: 0.85)
+                        ],
+                        center: .top,
+                        startRadiusFraction: 0,
+                        endRadiusFraction: 0.95
+                    )
+                }
             }
         )
         .clipShape(RoundedRectangle(cornerRadius: 24))
@@ -1249,7 +1316,7 @@ private struct AboutExportableContentView: View {
             RoundedRectangle(cornerRadius: 24)
                 .stroke(
                     LinearGradient(
-                        colors: [themeConfig.primaryColor.opacity(0.4), themeConfig.secondaryColor.opacity(0.2)],
+                        colors: [themeConfig.primaryColor.opacity(isNight ? 0.5 : 0.35), themeConfig.secondaryColor.opacity(isNight ? 0.3 : 0.18)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -1259,7 +1326,150 @@ private struct AboutExportableContentView: View {
     }
 }
 
-// MARK: - 长截图萌系静态行 (StaticCreditsRow)
+// MARK: - 长截图 Mode-Aware Card Containers
+
+private struct ExportTextCard<Content: View>: View {
+    let isNight: Bool
+    let content: Content
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
+    init(isNight: Bool, @ViewBuilder content: () -> Content) {
+        self.isNight = isNight
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .padding(16)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(isNight ? Color(hex: "181A26").opacity(0.9) : Color.white.opacity(0.85))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(
+                                isNight
+                                    ? themeConfig.primaryColor.opacity(0.35)
+                                    : themeConfig.primaryColor.opacity(0.2),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: .black.opacity(isNight ? 0.2 : 0.04), radius: 8, x: 0, y: 2)
+            )
+    }
+}
+
+private struct ExportSectionCard<Content: View>: View {
+    let title: String
+    let subtitle: String
+    let isNight: Bool
+    let content: Content
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
+    init(title: String, subtitle: String, isNight: Bool, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.subtitle = subtitle
+        self.isNight = isNight
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
+
+                Text(subtitle)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
+
+                Spacer()
+            }
+
+            Divider().opacity(isNight ? 0.2 : 0.6)
+
+            content
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(isNight ? Color(hex: "181A26").opacity(0.95) : Color.white.opacity(0.9))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(
+                            isNight ? themeConfig.primaryColor.opacity(0.25) : Color.black.opacity(0.06),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: .black.opacity(isNight ? 0.25 : 0.04), radius: 8, x: 0, y: 2)
+        )
+    }
+}
+
+private struct ExportIconLegendCard: View {
+    let title: String
+    let description: String
+    let isActive: Bool
+    let isPulsing: Bool
+    let isNight: Bool
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            YumikoPopoverMockupView(isActive: isActive, isPulsing: isPulsing)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 5) {
+                    Text(title)
+                        .font(.system(size: 12.5, weight: .bold))
+                        .foregroundStyle(isActive ? themeConfig.primaryColor : (isNight ? .white : Color(hex: "1D1D1F")))
+                        .lineLimit(1)
+
+                    ZStack {
+                        if isActive {
+                            Circle()
+                                .fill(themeConfig.primaryColor)
+                                .frame(width: 6, height: 6)
+                                .scaleEffect(isPulsing ? 1.3 : 1.0)
+                        }
+                    }
+                    .frame(width: 6, height: 6)
+                }
+
+                Text(description)
+                    .font(.system(size: 11))
+                    .foregroundStyle(isNight ? Color.white.opacity(0.65) : Color.black.opacity(0.5))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
+            }
+            .frame(maxHeight: .infinity, alignment: .topLeading)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isNight ? Color(hex: "222534").opacity(0.9) : Color(hex: "F3F4F8"))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            isActive ? themeConfig.primaryColor.opacity(isNight ? 0.4 : 0.3) : Color.primary.opacity(0.06),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: .black.opacity(isNight ? 0.2 : 0.03), radius: 4, x: 0, y: 1)
+        )
+    }
+}
 
 private struct StaticCreditsRow: View {
     let title: String
@@ -1268,6 +1478,7 @@ private struct StaticCreditsRow: View {
     var tagline: String? = nil
     var primaryColor: Color = Color(hex: "FF6B9D")
     var secondaryColor: Color = Color(hex: "C44FE2")
+    var isNight: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -1284,19 +1495,19 @@ private struct StaticCreditsRow: View {
 
                 Text(subtitle)
                     .font(.system(size: 11.5))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(isNight ? Color.white.opacity(0.45) : Color.black.opacity(0.35))
                     .italic()
             }
 
             HStack(alignment: .center, spacing: 6) {
                 Text(name)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
 
                 if let tagline = tagline {
                     Text(tagline)
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isNight ? Color.white.opacity(0.7) : Color(hex: "515154"))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
