@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - Ultra-Precision 20-Theme Tailored Dual-Mode Long Screenshot Exporter Engine, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.8 - Ultra-Precision 20-Theme Tailored Dual-Mode Long Screenshot Exporter Engine & Mode-Adapted Popover Mockups, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
@@ -1229,7 +1229,7 @@ private struct AboutExportableContentView: View {
                 }
             }
 
-            // 图标说明 (双生精准等高卡片)
+            // 图标说明 (双生精准等高卡片 - 完全适配日间/夜间模式与主题调色板)
             ExportSectionCard(title: "图标说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照", isNight: isNight) {
                 HStack(alignment: .top, spacing: 16) {
                     ExportIconLegendCard(
@@ -1494,7 +1494,8 @@ private struct ExportIconLegendCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            YumikoPopoverMockupView(isActive: isActive, isPulsing: isPulsing)
+            // 高精 1:1 状态栏菜单面板模拟器 (传递 isNight 进行全动态暗色/亮色模式深度适配)
+            YumikoPopoverMockupView(isActive: isActive, isPulsing: isPulsing, isNight: isNight)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 5) {
@@ -1584,11 +1585,12 @@ private struct StaticCreditsRow: View {
     }
 }
 
-// MARK: - 高精 1:1 状态栏菜单面板矢量 UI 模拟器 (YumikoPopoverMockupView)
+// MARK: - 高精 1:1 状态栏菜单面板矢量 UI 模拟器 (YumikoPopoverMockupView - 完全适配日间与夜间长图模式)
 
 private struct YumikoPopoverMockupView: View {
     let isActive: Bool
     let isPulsing: Bool
+    var isNight: Bool = false
 
     private var themeConfig: AboutThemeConfig {
         AboutThemeConfig.current()
@@ -1619,16 +1621,17 @@ private struct YumikoPopoverMockupView: View {
                         HStack(spacing: 3) {
                             Text("YumikoToys")
                                 .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
                             Image(systemName: "carrot.fill")
                                 .font(.system(size: 8))
                                 .foregroundStyle(.orange)
                             Text("▾")
                                 .font(.system(size: 8))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
                         }
                         Text("v\(AppConfig.version)")
                             .font(.system(size: 8, weight: .medium, design: .monospaced))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(isNight ? Color.white.opacity(0.45) : Color.black.opacity(0.4))
                     }
                 }
 
@@ -1647,7 +1650,7 @@ private struct YumikoPopoverMockupView: View {
                     }
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2.5)
-                    .background(Capsule().fill(themeConfig.primaryColor.opacity(0.12)))
+                    .background(Capsule().fill(themeConfig.primaryColor.opacity(isNight ? 0.2 : 0.12)))
 
                     // 预留 14x14 框体，确保开启/关闭两张 Mockup 卡片绝对同高同宽
                     ZStack {
@@ -1667,7 +1670,7 @@ private struct YumikoPopoverMockupView: View {
                 }
             }
 
-            Divider().opacity(0.4)
+            Divider().opacity(isNight ? 0.25 : 0.4)
 
             // 2. 导航 Tab 按钮组 (纪念日 / 插件 / 截图)
             HStack(spacing: 6) {
@@ -1693,14 +1696,16 @@ private struct YumikoPopoverMockupView: View {
                     Text("插件").font(.system(size: 8.5, weight: .semibold))
                 }
                 .padding(.horizontal, 7).padding(.vertical, 3)
-                .background(Capsule().fill(Color.primary.opacity(0.06)))
+                .background(Capsule().fill(isNight ? Color.white.opacity(0.08) : Color.black.opacity(0.06)))
+                .foregroundStyle(isNight ? Color.white.opacity(0.7) : Color.black.opacity(0.6))
 
                 HStack(spacing: 3) {
                     Image(systemName: "camera.viewfinder").font(.system(size: 8))
                     Text("截图").font(.system(size: 8.5, weight: .semibold))
                 }
                 .padding(.horizontal, 7).padding(.vertical, 3)
-                .background(Capsule().fill(Color.primary.opacity(0.06)))
+                .background(Capsule().fill(isNight ? Color.white.opacity(0.08) : Color.black.opacity(0.06)))
+                .foregroundStyle(isNight ? Color.white.opacity(0.7) : Color.black.opacity(0.6))
             }
 
             // 3. 兔可可 886.035天 计时卡片
@@ -1709,7 +1714,9 @@ private struct YumikoPopoverMockupView: View {
                     HStack(spacing: 3) {
                         Circle().fill(themeConfig.primaryColor.opacity(0.2)).frame(width: 12, height: 12)
                             .overlay(Image(systemName: "rabbit.fill").font(.system(size: 7)).foregroundStyle(themeConfig.primaryColor))
-                        Text("兔可可").font(.system(size: 9.5, weight: .bold))
+                        Text("兔可可")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
                     }
                     Spacer()
                 }
@@ -1726,21 +1733,27 @@ private struct YumikoPopoverMockupView: View {
                         )
                     Text("天")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
                     Spacer()
                 }
 
                 HStack(spacing: 12) {
-                    Text("下一个100天").font(.system(size: 7.5)).foregroundStyle(.secondary)
+                    Text("下一个100天")
+                        .font(.system(size: 7.5))
+                        .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
                     Spacer()
-                    Text("2026-08-29").font(.system(size: 7.5)).foregroundStyle(.tertiary)
-                    Text("(第9个)").font(.system(size: 7.5, weight: .bold)).foregroundStyle(themeConfig.primaryColor)
+                    Text("2026-08-29")
+                        .font(.system(size: 7.5))
+                        .foregroundStyle(isNight ? Color.white.opacity(0.35) : Color.black.opacity(0.3))
+                    Text("(第9个)")
+                        .font(.system(size: 7.5, weight: .bold))
+                        .foregroundStyle(themeConfig.primaryColor)
                 }
             }
             .padding(8)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(themeConfig.primaryColor.opacity(0.03))
+                    .fill(themeConfig.primaryColor.opacity(isNight ? 0.08 : 0.03))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(themeConfig.primaryColor.opacity(0.2), lineWidth: 0.8)
@@ -1752,19 +1765,21 @@ private struct YumikoPopoverMockupView: View {
                 HStack(spacing: 6) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 5)
-                            .fill(isActive ? themeConfig.primaryColor.opacity(0.15) : Color.primary.opacity(0.05))
+                            .fill(isActive ? themeConfig.primaryColor.opacity(0.15) : (isNight ? Color.white.opacity(0.08) : Color.black.opacity(0.05)))
                             .frame(width: 18, height: 18)
 
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 9))
-                            .foregroundStyle(isActive ? themeConfig.primaryColor : .gray)
+                            .foregroundStyle(isActive ? themeConfig.primaryColor : (isNight ? Color.white.opacity(0.4) : Color.gray))
                     }
 
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("不休眠模式").font(.system(size: 9.5, weight: .bold))
+                        Text("不休眠模式")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
                         Text(isActive ? "已开启" : "已关闭")
                             .font(.system(size: 8))
-                            .foregroundStyle(isActive ? themeConfig.primaryColor : .secondary)
+                            .foregroundStyle(isActive ? themeConfig.primaryColor : (isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4)))
                     }
                 }
 
@@ -1785,14 +1800,18 @@ private struct YumikoPopoverMockupView: View {
             .padding(8)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(isActive ? themeConfig.primaryColor.opacity(0.08) : Color.primary.opacity(0.03))
+                    .fill(isActive ? themeConfig.primaryColor.opacity(isNight ? 0.16 : 0.08) : (isNight ? Color.white.opacity(0.05) : Color.black.opacity(0.03)))
             )
         }
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(nsColor: .windowBackgroundColor))
-                .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+                .fill(isNight ? Color(hex: "1C1E2A") : Color(hex: "FFFFFF"))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(isNight ? themeConfig.primaryColor.opacity(0.25) : Color.black.opacity(0.06), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(isNight ? 0.25 : 0.08), radius: 6, x: 0, y: 3)
         )
     }
 }
