@@ -124,6 +124,26 @@ struct AboutView: View {
                             originalAllusion: "“《暴风雨》：‘O wonder! How many goodly creatures are there here! How beauteous mankind is!’（‘啊，奇迹！’）”",
                             literaryDecoding: "幻境奇迹之守护者，如《暴风雨》奇迹女神 Miranda，赐予作品最纯真神圣之守护。"
                         )
+
+                        Divider().padding(.vertical, 4)
+
+                        // 爬爬乐桌宠物理与攀爬特别贡献
+                        CreditsRow(
+                            title: "The Agile Enchantress of Walls",
+                            subtitle: "绝壁与灵动之仙子 (Puck / Peaseblossom)",
+                            name: "@氢氧化猫猫",
+                            tagline: "“如《仲夏夜之梦》绝壁上翩跹之仙子，以轻灵极彩之姿赋桌宠以生机。”",
+                            originalAllusion: "“《仲夏夜之梦》第二幕第一场：‘I do wander everywhere, Swifter than the moon's sphere... I am that merry wanderer of the night.’（‘我四处游荡，比月亮飞得更快……我是黑夜里快乐的流浪仙子。’）”",
+                            literaryDecoding: "绝壁与灵动之仙子，如《仲夏夜之梦》四处游荡攀跃的仙子 Puck。为爬爬乐桌宠注入灵敏跳跃物理与攀爬灵魂，使桌宠干员在屏幕绝壁间自由穿梭！"
+                        )
+                        CreditsRow(
+                            title: "The Lord Warden of Gravity",
+                            subtitle: "极地与重力之勋爵 (Prospero / Gonzalo)",
+                            name: "@北冥有地瓜",
+                            tagline: "“如《暴风雨》掌控重力与天法之勋爵，筑坚实锚点庇佑桌宠安然攀行。”",
+                            originalAllusion: "“《暴风雨》第一幕第二场：‘I come to answer thy best pleasure; be it to fly, to swim, to dive into the fire, to ride on the curl'd clouds...’（‘我应你之召而来，执掌风暴，掌控重力极地。’）”",
+                            literaryDecoding: "重力与极地之勋爵，如《暴风雨》掌控大地与元素天法的领主。为爬爬乐建立坚实边界碰撞与重力锚点，确保桌宠在 Mac 屏幕四周平稳攀行、安然落脚！"
+                        )
                     }
                 }
 
