@@ -1069,7 +1069,7 @@ struct AboutImageExporter {
         bitmapRep.size = fittingSize // 保持 720pt 逻辑点尺寸，但包含 2x 像素采样！
 
         NSGraphicsContext.saveGraphicsState()
-        guard let context = NSGraphicsContext(bitmapRep: bitmapRep) else {
+        guard let context = NSGraphicsContext(bitmapImageRep: bitmapRep) else {
             NSGraphicsContext.restoreGraphicsState()
             return nil
         }
