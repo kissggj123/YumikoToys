@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 
 // MARK: - 全主题自适应配置与萌系特效数据 (AboutThemeConfig)
 
+@MainActor
 struct AboutThemeConfig {
     let themeName: String
     let themeIcon: String
@@ -24,10 +25,11 @@ struct AboutThemeConfig {
     let particleEmojis: [String]
     let backgroundGradientStops: [Gradient.Stop]
 
+    @MainActor
     static func current() -> AboutThemeConfig {
         // 1. 二次元主题模式开启时优先使用 4 款二次元配色
         if AnimeThemeService.shared.isEnabled {
-            let style = AnimeThemeService.shared.style
+            let style = AnimeThemeService.shared.currentStyle
             let gradient = AnimeThemeService.shared.gradient()
             let primary = gradient.first ?? Color(hex: "FF6B9D")
             let secondary = gradient.count > 1 ? gradient[1] : Color(hex: "C44FE2")
@@ -653,10 +655,7 @@ struct AboutView: View {
                         ForEach(0..<themeConfig.particleEmojis.count, id: \.self) { index in
                             Text(themeConfig.particleEmojis[index])
                                 .font(.system(size: isIconHovered ? 15 : 12))
-                                .offset(
-                                    x: cos(Double(index) * (2 * .pi / Double(themeConfig.particleEmojis.count)) + particlePulseAngle * .pi / 180) * (isIconHovered ? 68 : 58),
-                                    y: sin(Double(index) * (2 * .pi / Double(themeConfig.particleEmojis.count)) + particlePulseAngle * .pi / 180) * (isIconHovered ? 68 : 58)
-                                )
+                                .offset(particleOffset(index: index, count: themeConfig.particleEmojis.count, radius: isIconHovered ? 68 : 58))
                                 .opacity(isIconHovered ? 0.9 : 0.45)
                                 .scaleEffect(isIconHovered ? 1.2 : 0.85)
                                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isIconHovered)
@@ -774,6 +773,14 @@ struct AboutView: View {
                 .padding(.top, 4)
             }
         }
+    }
+
+    private func particleOffset(index: Int, count: Int, radius: CGFloat) -> CGSize {
+        guard count > 0 else { return .zero }
+        let angleRad = Double(index) * (2.0 * .pi / Double(count)) + particlePulseAngle * .pi / 180.0
+        let x = CGFloat(cos(angleRad)) * radius
+        let y = CGFloat(sin(angleRad)) * radius
+        return CGSize(width: x, height: y)
     }
 
     // MARK: - Screenshot Export Actions
