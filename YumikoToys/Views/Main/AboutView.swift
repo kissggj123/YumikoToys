@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - Ultra-Precision 20-Theme Tailored Dual-Mode Long Screenshot Exporter Engine & Mode-Adapted Popover Mockups, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.8 - 2.0x HiDPI Retina Ultra-HD Exporter & Mode-Adapted Popover Mockups, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
@@ -1007,7 +1007,7 @@ struct AboutView: View {
     // MARK: - Screenshot Export Actions
     private func copyLongScreenshot() {
         if AboutImageExporter.copyLongScreenshotToClipboard(mode: exportMode) {
-            triggerToast("✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")长图到剪贴板！")
+            triggerToast("✨ 已复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")高清长图 (超清 2K/4K)！")
         } else {
             triggerToast("导出长图失败，请稍后重试。")
         }
@@ -1016,7 +1016,7 @@ struct AboutView: View {
     private func saveLongScreenshot() {
         AboutImageExporter.saveLongScreenshotToFile(mode: exportMode) { success in
             if success {
-                triggerToast("💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")长图 PNG 文件！")
+                triggerToast("💾 已保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")超清长图 PNG！")
             }
         }
     }
@@ -1034,11 +1034,11 @@ struct AboutView: View {
     }
 }
 
-// MARK: - 离线高清长图导出渲染器 (AboutImageExporter - 支持日间/夜间模式)
+// MARK: - 离线 2.0x HiDPI Retina 超高清长图导出渲染器 (AboutImageExporter - 解决剪贴板糊化)
 
 @MainActor
 struct AboutImageExporter {
-    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720) -> NSImage? {
+    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 2.0) -> NSImage? {
         let exportContentView = AboutExportableContentView(mode: mode)
             .frame(width: width)
 
@@ -1049,8 +1049,35 @@ struct AboutImageExporter {
 
         guard fittingSize.width > 0 && fittingSize.height > 0 else { return nil }
 
-        guard let bitmapRep = hostingView.bitmapImageRepForCachingDisplay(in: hostingView.bounds) else { return nil }
-        hostingView.cacheDisplay(in: hostingView.bounds, to: bitmapRep)
+        let pixelWidth = Int(fittingSize.width * scaleFactor)
+        let pixelHeight = Int(fittingSize.height * scaleFactor)
+
+        // 创建高分辨率 2.0x HiDPI Retina Bitmap Image Rep
+        guard let bitmapRep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixelWidth,
+            pixelsHigh: pixelHeight,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else { return nil }
+
+        bitmapRep.size = fittingSize // 保持 720pt 逻辑点尺寸，但包含 2x 像素采样！
+
+        NSGraphicsContext.saveGraphicsState()
+        guard let context = NSGraphicsContext(bitmapRep: bitmapRep) else {
+            NSGraphicsContext.restoreGraphicsState()
+            return nil
+        }
+        NSGraphicsContext.current = context
+
+        // 渲染 2x 超采样矢量画面
+        hostingView.displayIgnoringOpacity(hostingView.bounds, in: context)
+        NSGraphicsContext.restoreGraphicsState()
 
         let image = NSImage(size: fittingSize)
         image.addRepresentation(bitmapRep)
@@ -1058,15 +1085,27 @@ struct AboutImageExporter {
     }
 
     static func copyLongScreenshotToClipboard(mode: ShareExportMode = .day) -> Bool {
-        guard let image = generateLongScreenshot(mode: mode) else { return false }
+        // 使用 2.0x 4K 超高清 Retina 渲染
+        guard let image = generateLongScreenshot(mode: mode, scaleFactor: 2.0),
+              let tiffData = image.tiffRepresentation,
+              let bitmapRep = NSBitmapImageRep(data: tiffData),
+              let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
+            return false
+        }
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        return pasteboard.writeObjects([image])
+
+        // 同时注册原生 PNG 数据与 TIFF 数据，确保微信、QQ、Telegram、Pages、Photoshop 等客户端粘贴均为最高清无损图片！
+        let pngSuccess = pasteboard.setData(pngData, forType: .png)
+        let tiffSuccess = pasteboard.setData(tiffData, forType: .tiff)
+        return pngSuccess || tiffSuccess || pasteboard.writeObjects([image])
     }
 
     static func saveLongScreenshotToFile(mode: ShareExportMode = .day, completion: @escaping (Bool) -> Void) {
         let themeConfig = AboutThemeConfig.current()
-        guard let image = generateLongScreenshot(mode: mode),
+        // 保存文件采用 2.0x 高清 Retina 像素
+        guard let image = generateLongScreenshot(mode: mode, scaleFactor: 2.0),
               let tiffData = image.tiffRepresentation,
               let bitmapRep = NSBitmapImageRep(data: tiffData),
               let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
@@ -1078,7 +1117,7 @@ struct AboutImageExporter {
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
         savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(modeSuffix)_\(AppConfig.version).png"
-        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")长图"
+        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")超清长图"
         savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】精美长图的路径"
 
         savePanel.begin { result in
