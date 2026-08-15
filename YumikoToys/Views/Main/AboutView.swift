@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - Ultra-Premium Frosted Glass Canvas & Unified Native macOS Layout, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.8 - Ultra-Precision Twin Symmetrical Popover Mockups & Theme-Aware Glass Cards, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
@@ -468,27 +468,28 @@ struct AboutView: View {
                         }
                     }
 
-                    // MARK: - 图标说明 (Icon Legend - 8342803 经典原版 1:1 完整复刻)
+                    // MARK: - 图标说明 (Icon Legend - 8342803 经典原版 1:1 精准像素双生卡片)
                     AboutSectionCard(title: "图标说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照") {
-                        VStack(spacing: 16) {
-                            HStack(spacing: 16) {
-                                // 关闭状态预览
-                                IconLegendCard(
-                                    title: "常规模式 (防休眠关闭)",
-                                    description: "未开启防休眠，状态栏菜单面板右上角无指示点",
-                                    isActive: false,
-                                    isPulsing: false
-                                )
+                        HStack(alignment: .top, spacing: 16) {
+                            // 关闭状态预览
+                            IconLegendCard(
+                                title: "常规模式 (防休眠关闭)",
+                                description: "未开启防休眠，状态栏菜单面板右上角无指示点",
+                                isActive: false,
+                                isPulsing: false
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                                // 开启状态预览
-                                IconLegendCard(
-                                    title: "不休眠模式 (防休眠开启)",
-                                    description: "开启不休眠后，状态栏菜单面板右上角亮起柔和呼吸点",
-                                    isActive: true,
-                                    isPulsing: isBreathingDotPulse
-                                )
-                            }
+                            // 开启状态预览
+                            IconLegendCard(
+                                title: "不休眠模式 (防休眠开启)",
+                                description: "开启不休眠后，状态栏菜单面板右上角亮起柔和呼吸点",
+                                isActive: true,
+                                isPulsing: isBreathingDotPulse
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
+                        .fixedSize(horizontal: false, vertical: true)
                     }
 
                     // MARK: - Dramatis Personae 功勋名录 (Macbeth Edition with Info Allusion Buttons)
@@ -1063,25 +1064,26 @@ private struct AboutExportableContentView: View {
                 }
             }
 
-            // 图标说明 (8342803 经典 1:1 原版)
+            // 图标说明 (8342803 经典 1:1 原版 双生精准等高卡片)
             AboutSectionCard(title: "图标说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照") {
-                VStack(spacing: 16) {
-                    HStack(spacing: 16) {
-                        IconLegendCard(
-                            title: "常规模式 (防休眠关闭)",
-                            description: "未开启防休眠，状态栏菜单面板右上角无指示点",
-                            isActive: false,
-                            isPulsing: false
-                        )
+                HStack(alignment: .top, spacing: 16) {
+                    IconLegendCard(
+                        title: "常规模式 (防休眠关闭)",
+                        description: "未开启防休眠，状态栏菜单面板右上角无指示点",
+                        isActive: false,
+                        isPulsing: false
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                        IconLegendCard(
-                            title: "不休眠模式 (防休眠开启)",
-                            description: "开启不休眠后，状态栏菜单面板右上角亮起柔和呼吸点",
-                            isActive: true,
-                            isPulsing: true
-                        )
-                    }
+                    IconLegendCard(
+                        title: "不休眠模式 (防休眠开启)",
+                        description: "开启不休眠后，状态栏菜单面板右上角亮起柔和呼吸点",
+                        isActive: true,
+                        isPulsing: true
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             // Dramatis Personae
@@ -1250,179 +1252,220 @@ private struct StaticCreditsRow: View {
     }
 }
 
-// MARK: - 高精 1:1 状态栏菜单面板矢量 UI 模拟器 (YumikoPopoverMockupView - 8342803 1:1 原版)
+// MARK: - 高精 1:1 状态栏菜单面板矢量 UI 模拟器 (YumikoPopoverMockupView - 8342803 1:1 原版 像素像素双生等高)
 
 private struct YumikoPopoverMockupView: View {
     let isActive: Bool
     let isPulsing: Bool
 
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(spacing: 8) {
-                // 1. 顶部 Header (Icon + App Title + Version + Pill + Breathing Dot)
-                HStack {
-                    HStack(spacing: 6) {
-                        ZStack {
-                            Circle().fill(LinearGradient(colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 22, height: 22)
-                            Image(systemName: "rabbit.fill").font(.system(size: 11)).foregroundStyle(.white)
-                        }
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
 
-                        VStack(alignment: .leading, spacing: 1) {
-                            HStack(spacing: 3) {
-                                Text("YumikoToys").font(.system(size: 11, weight: .bold))
-                                Image(systemName: "carrot.fill").font(.system(size: 8)).foregroundStyle(.orange)
-                                Text("▾").font(.system(size: 8)).foregroundStyle(.tertiary)
-                            }
-                            Text("v4.5.8").font(.system(size: 8, weight: .medium, design: .monospaced)).foregroundStyle(.tertiary)
-                        }
+    var body: some View {
+        VStack(spacing: 8) {
+            // 1. 顶部 Header (Icon + App Title + Version + Pill + Breathing Dot)
+            HStack {
+                HStack(spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 22, height: 22)
+
+                        Image(systemName: "rabbit.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white)
                     }
 
-                    Spacer()
-
-                    // 右侧功能 Pill (✨ 🔵 ▾) + 防休眠呼吸指示点 (•)
-                    HStack(spacing: 6) {
+                    VStack(alignment: .leading, spacing: 1) {
                         HStack(spacing: 3) {
-                            Text("✨").font(.system(size: 7))
-                            Circle().fill(Color.blue).frame(width: 5, height: 5)
-                            Text("▾").font(.system(size: 7)).foregroundStyle(.blue)
+                            Text("YumikoToys")
+                                .font(.system(size: 11, weight: .bold))
+                            Image(systemName: "carrot.fill")
+                                .font(.system(size: 8))
+                                .foregroundStyle(.orange)
+                            Text("▾")
+                                .font(.system(size: 8))
+                                .foregroundStyle(.tertiary)
                         }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2.5)
-                        .background(Capsule().fill(Color.blue.opacity(0.12)))
-
-                        // 防休眠呼吸指示点（开启时在 Header 右侧精准亮起）
-                        if isActive {
-                            ZStack {
-                                Circle()
-                                    .stroke(Color(hex: "2563EB").opacity(0.6), lineWidth: 1.2)
-                                    .scaleEffect(isPulsing ? 1.6 : 1.0)
-                                    .opacity(isPulsing ? 0.0 : 0.8)
-
-                                Circle()
-                                    .fill(Color(hex: "2563EB"))
-                                    .frame(width: 6.5, height: 6.5)
-                                    .shadow(color: Color(hex: "2563EB"), radius: isPulsing ? 3 : 1)
-                            }
-                            .frame(width: 14, height: 14)
-                        }
+                        Text("v\(AppConfig.version)")
+                            .font(.system(size: 8, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.tertiary)
                     }
                 }
 
-                Divider().opacity(0.4)
+                Spacer()
 
-                // 2. 导航 Tab 按钮组 (纪念日 / 插件 / 截图)
+                // 右侧功能 Pill (✨ 🔵 ▾) + 预留防休眠呼吸指示点 (• 预留 14x14 相同布局)
                 HStack(spacing: 6) {
                     HStack(spacing: 3) {
-                        Image(systemName: "calendar").font(.system(size: 8))
-                        Text("纪念日").font(.system(size: 8.5, weight: .bold))
+                        Text("✨").font(.system(size: 7))
+                        Circle()
+                            .fill(themeConfig.primaryColor)
+                            .frame(width: 5, height: 5)
+                        Text("▾")
+                            .font(.system(size: 7))
+                            .foregroundStyle(themeConfig.primaryColor)
                     }
-                    .padding(.horizontal, 7).padding(.vertical, 3)
-                    .background(Capsule().fill(Color(hex: "2563EB")))
-                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2.5)
+                    .background(Capsule().fill(themeConfig.primaryColor.opacity(0.12)))
 
-                    HStack(spacing: 3) {
-                        Image(systemName: "puzzlepiece.fill").font(.system(size: 8))
-                        Text("插件").font(.system(size: 8.5, weight: .semibold))
-                    }
-                    .padding(.horizontal, 7).padding(.vertical, 3)
-                    .background(Capsule().fill(Color.primary.opacity(0.06)))
-
-                    HStack(spacing: 3) {
-                        Image(systemName: "camera.viewfinder").font(.system(size: 8))
-                        Text("截图").font(.system(size: 8.5, weight: .semibold))
-                    }
-                    .padding(.horizontal, 7).padding(.vertical, 3)
-                    .background(Capsule().fill(Color.primary.opacity(0.06)))
-                }
-
-                // 3. 兔可可 886.035天 计时卡片
-                VStack(spacing: 4) {
-                    HStack {
-                        HStack(spacing: 3) {
-                            Circle().fill(Color.pink.opacity(0.2)).frame(width: 12, height: 12)
-                                .overlay(Image(systemName: "rabbit.fill").font(.system(size: 7)).foregroundStyle(Color(hex: "FF6B9D")))
-                            Text("兔可可").font(.system(size: 9.5, weight: .bold))
-                        }
-                        Spacer()
-                    }
-
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text("886.035")
-                            .font(.system(size: 17, weight: .black, design: .rounded))
-                            .foregroundStyle(Color(hex: "2563EB"))
-                        Text("天")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                    }
-
-                    HStack(spacing: 12) {
-                        Text("下一个100天").font(.system(size: 7.5)).foregroundStyle(.secondary)
-                        Spacer()
-                        Text("2026-08-29").font(.system(size: 7.5)).foregroundStyle(.tertiary)
-                        Text("(第9个)").font(.system(size: 7.5, weight: .bold)).foregroundStyle(Color(hex: "2563EB"))
-                    }
-                }
-                .padding(8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.pink.opacity(0.02))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.pink.opacity(0.25), lineWidth: 0.8)
-                        )
-                )
-
-                // 4. 不休眠模式 Toggle 交互卡片
-                HStack {
-                    HStack(spacing: 6) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 5).fill(isActive ? Color.blue.opacity(0.15) : Color.primary.opacity(0.05)).frame(width: 18, height: 18)
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 9))
-                                .foregroundStyle(isActive ? Color(hex: "2563EB") : .gray)
-                        }
-
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("不休眠模式").font(.system(size: 9.5, weight: .bold))
-                            Text(isActive ? "已开启" : "已关闭")
-                                .font(.system(size: 8))
-                                .foregroundStyle(isActive ? Color(hex: "2563EB") : .secondary)
-                        }
-                    }
-
-                    Spacer()
-
-                    // iOS 风格 Switch
-                    Capsule()
-                        .fill(isActive ? Color(hex: "2563EB") : Color.gray.opacity(0.3))
-                        .frame(width: 26, height: 14)
-                        .overlay(
+                    // 预留 14x14 框体，确保开启/关闭两张 Mockup 卡片绝对同高同宽
+                    ZStack {
+                        if isActive {
                             Circle()
-                                .fill(.white)
-                                .frame(width: 11, height: 11)
-                                .shadow(color: .black.opacity(0.15), radius: 1)
-                                .offset(x: isActive ? 5.5 : -5.5)
-                        )
+                                .stroke(themeConfig.primaryColor.opacity(0.6), lineWidth: 1.2)
+                                .scaleEffect(isPulsing ? 1.6 : 1.0)
+                                .opacity(isPulsing ? 0.0 : 0.8)
+
+                            Circle()
+                                .fill(themeConfig.primaryColor)
+                                .frame(width: 6.5, height: 6.5)
+                                .shadow(color: themeConfig.primaryColor, radius: isPulsing ? 3 : 1)
+                        }
+                    }
+                    .frame(width: 14, height: 14)
                 }
-                .padding(8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(isActive ? Color.blue.opacity(0.08) : Color.primary.opacity(0.03))
-                )
             }
-            .padding(10)
+
+            Divider().opacity(0.4)
+
+            // 2. 导航 Tab 按钮组 (纪念日 / 插件 / 截图)
+            HStack(spacing: 6) {
+                HStack(spacing: 3) {
+                    Image(systemName: "calendar").font(.system(size: 8))
+                    Text("纪念日").font(.system(size: 8.5, weight: .bold))
+                }
+                .padding(.horizontal, 7).padding(.vertical, 3)
+                .background(
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+                .foregroundStyle(.white)
+
+                HStack(spacing: 3) {
+                    Image(systemName: "puzzlepiece.fill").font(.system(size: 8))
+                    Text("插件").font(.system(size: 8.5, weight: .semibold))
+                }
+                .padding(.horizontal, 7).padding(.vertical, 3)
+                .background(Capsule().fill(Color.primary.opacity(0.06)))
+
+                HStack(spacing: 3) {
+                    Image(systemName: "camera.viewfinder").font(.system(size: 8))
+                    Text("截图").font(.system(size: 8.5, weight: .semibold))
+                }
+                .padding(.horizontal, 7).padding(.vertical, 3)
+                .background(Capsule().fill(Color.primary.opacity(0.06)))
+            }
+
+            // 3. 兔可可 886.035天 计时卡片
+            VStack(spacing: 4) {
+                HStack {
+                    HStack(spacing: 3) {
+                        Circle().fill(themeConfig.primaryColor.opacity(0.2)).frame(width: 12, height: 12)
+                            .overlay(Image(systemName: "rabbit.fill").font(.system(size: 7)).foregroundStyle(themeConfig.primaryColor))
+                        Text("兔可可").font(.system(size: 9.5, weight: .bold))
+                    }
+                    Spacer()
+                }
+
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("886.035")
+                        .font(.system(size: 17, weight: .black, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                    Text("天")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                }
+
+                HStack(spacing: 12) {
+                    Text("下一个100天").font(.system(size: 7.5)).foregroundStyle(.secondary)
+                    Spacer()
+                    Text("2026-08-29").font(.system(size: 7.5)).foregroundStyle(.tertiary)
+                    Text("(第9个)").font(.system(size: 7.5, weight: .bold)).foregroundStyle(themeConfig.primaryColor)
+                }
+            }
+            .padding(8)
             .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(nsColor: .windowBackgroundColor))
-                    .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(themeConfig.primaryColor.opacity(0.03))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(themeConfig.primaryColor.opacity(0.2), lineWidth: 0.8)
+                    )
+            )
+
+            // 4. 不休眠模式 Toggle 交互卡片
+            HStack {
+                HStack(spacing: 6) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(isActive ? themeConfig.primaryColor.opacity(0.15) : Color.primary.opacity(0.05))
+                            .frame(width: 18, height: 18)
+
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(isActive ? themeConfig.primaryColor : .gray)
+                    }
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("不休眠模式").font(.system(size: 9.5, weight: .bold))
+                        Text(isActive ? "已开启" : "已关闭")
+                            .font(.system(size: 8))
+                            .foregroundStyle(isActive ? themeConfig.primaryColor : .secondary)
+                    }
+                }
+
+                Spacer()
+
+                // iOS 风格 Switch
+                Capsule()
+                    .fill(isActive ? themeConfig.primaryColor : Color.gray.opacity(0.3))
+                    .frame(width: 26, height: 14)
+                    .overlay(
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 11, height: 11)
+                            .shadow(color: .black.opacity(0.15), radius: 1)
+                            .offset(x: isActive ? 5.5 : -5.5)
+                    )
+            }
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isActive ? themeConfig.primaryColor.opacity(0.08) : Color.primary.opacity(0.03))
             )
         }
-        .clipped()
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(nsColor: .windowBackgroundColor))
+                .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+        )
     }
 }
 
-// MARK: - 图标说明展示卡片 (IconLegendCard - 8342803 1:1 原版 Native Glass 极致优雅)
+// MARK: - 图标说明展示卡片 (IconLegendCard - 8342803 1:1 原版 像素精准对称双生卡片)
 
 private struct IconLegendCard: View {
     let title: String
@@ -1431,6 +1474,10 @@ private struct IconLegendCard: View {
     let isPulsing: Bool
 
     @State private var isHovered = false
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1441,15 +1488,18 @@ private struct IconLegendCard: View {
                 HStack(spacing: 5) {
                     Text(title)
                         .font(.system(size: 12.5, weight: .bold))
-                        .foregroundStyle(isActive ? Color(hex: "2563EB") : .primary)
+                        .foregroundStyle(isActive ? themeConfig.primaryColor : .primary)
                         .lineLimit(1)
 
-                    if isActive {
-                        Circle()
-                            .fill(Color(hex: "2563EB"))
-                            .frame(width: 6, height: 6)
-                            .scaleEffect(isPulsing ? 1.3 : 1.0)
+                    ZStack {
+                        if isActive {
+                            Circle()
+                                .fill(themeConfig.primaryColor)
+                                .frame(width: 6, height: 6)
+                                .scaleEffect(isPulsing ? 1.3 : 1.0)
+                        }
                     }
+                    .frame(width: 6, height: 6)
                 }
 
                 Text(description)
@@ -1458,9 +1508,10 @@ private struct IconLegendCard: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(2)
             }
+            .frame(maxHeight: .infinity, alignment: .topLeading)
         }
         .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(.ultraThinMaterial)
@@ -1468,7 +1519,7 @@ private struct IconLegendCard: View {
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(
                             isHovered
-                                ? Color.primary.opacity(0.18)
+                                ? themeConfig.primaryColor.opacity(0.25)
                                 : Color.primary.opacity(0.06),
                             lineWidth: 1
                         )
