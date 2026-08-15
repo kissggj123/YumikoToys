@@ -1241,7 +1241,7 @@ private struct AboutTextCard<Content: View>: View {
 private struct AboutSectionCard<Content: View>: View {
     let title: String
     let subtitle: String
-    var showInfoHint: Bool = false
+    var showInfoHint: Bool
     let content: Content
     @State private var isHovered = false
 
