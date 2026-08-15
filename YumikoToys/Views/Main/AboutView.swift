@@ -96,10 +96,12 @@ struct AboutView: View {
                             originalAllusion: "“《麦克白》第四幕第三场：‘A most miraculous work in this good king... Full of grace’（‘圣王天命，上天自会赐予祂神圣之力量与荣光。’）”",
                             literaryDecoding: "戴上粉色魔晶王冠，端坐于永恒王座。以无限爱心与魔法最高权威，庇佑万物免受黑暗休眠侵蚀。"
                         )
-                        
-                        Divider().padding(.vertical, 4)
-                        
-                        // 莎士比亚文学致谢代号
+                    }
+                }
+
+                // MARK: - 挚友同心三星辉 (The Sacred Fellowship of Soulmates)
+                AboutSectionCard(title: "The Sacred Fellowship of Soulmates", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”", showInfoHint: true) {
+                    VStack(alignment: .leading, spacing: 12) {
                         CreditsRow(
                             title: "The Enchantress of Mist & Song",
                             subtitle: "雾霭与歌咏之灵 (Puck / Ophelia)",
