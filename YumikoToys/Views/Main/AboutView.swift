@@ -83,7 +83,7 @@ struct AboutView: View {
                         CreditsRow(
                             title: "The Muse of Whimsy",
                             subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)",
-                            name: "@cici 的胡扯",
+                            name: "@cici",
                             tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”",
                             originalAllusion: "“《麦克白》第一幕第三场：‘Fair is foul, and foul is fair: Hover through the fog and filthy air.’（‘美即是恶，恶即是美；在迷雾中飞翔。’）”",
                             literaryDecoding: "荒野上的命运魔女，以颠覆常理的天才脑洞在大锅中沸腾翻滚，炼化出冲破思维禁锢的颠覆性灵感。"
@@ -124,10 +124,12 @@ struct AboutView: View {
                             originalAllusion: "“《暴风雨》：‘O wonder! How many goodly creatures are there here! How beauteous mankind is!’（‘啊，奇迹！’）”",
                             literaryDecoding: "幻境奇迹之守护者，如《暴风雨》奇迹女神 Miranda，赐予作品最纯真神圣之守护。"
                         )
+                    }
+                }
 
-                        Divider().padding(.vertical, 4)
-
-                        // 爬爬乐桌宠物理与攀爬特别贡献
+                // MARK: - 爬爬乐特别致谢 (Architects of Pet Playground)
+                AboutSectionCard(title: "Architects of Pet Playground", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”", showInfoHint: true) {
+                    VStack(alignment: .leading, spacing: 12) {
                         CreditsRow(
                             title: "The Agile Enchantress of Walls",
                             subtitle: "绝壁与灵动之仙子 (Puck / Peaseblossom)",
