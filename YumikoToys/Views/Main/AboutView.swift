@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - Share Long Screenshot Day/Night Mode Exporter with Persistent Memory, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.8 - Ultra-Precision 20-Theme Tailored Dual-Mode Long Screenshot Exporter Engine, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
@@ -25,7 +25,7 @@ enum ShareExportMode: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - 全主题自适应配置 (AboutThemeConfig)
+// MARK: - 全主题自适应配置 (AboutThemeConfig - 支持 20 款主题专属双模式长图调色盘)
 
 @MainActor
 struct AboutThemeConfig {
@@ -39,6 +39,11 @@ struct AboutThemeConfig {
     let watermarkSubtitle: String
     let cardDecorationEmoji: String
     let backgroundGradientStops: [Gradient.Stop]
+
+    // 主题专属日间/夜间长图画布 base palette
+    let exportDayCanvasBg: Color
+    let exportNightCanvasBg: Color
+    let exportCardBorderGlow: Color
 
     @MainActor
     static func current() -> AboutThemeConfig {
@@ -65,7 +70,10 @@ struct AboutThemeConfig {
                         .init(color: primary.opacity(0.12), location: 0.0),
                         .init(color: secondary.opacity(0.06), location: 0.5),
                         .init(color: .clear, location: 0.85)
-                    ]
+                    ],
+                    exportDayCanvasBg: Color(hex: "FFF0F5"),
+                    exportNightCanvasBg: Color(hex: "1B0B16"),
+                    exportCardBorderGlow: primary.opacity(0.4)
                 )
             case .healing:
                 return AboutThemeConfig(
@@ -82,7 +90,10 @@ struct AboutThemeConfig {
                         .init(color: primary.opacity(0.12), location: 0.0),
                         .init(color: secondary.opacity(0.06), location: 0.5),
                         .init(color: .clear, location: 0.85)
-                    ]
+                    ],
+                    exportDayCanvasBg: Color(hex: "F1F9F5"),
+                    exportNightCanvasBg: Color(hex: "091A13"),
+                    exportCardBorderGlow: primary.opacity(0.4)
                 )
             case .cyber:
                 return AboutThemeConfig(
@@ -99,7 +110,10 @@ struct AboutThemeConfig {
                         .init(color: primary.opacity(0.15), location: 0.0),
                         .init(color: secondary.opacity(0.08), location: 0.5),
                         .init(color: .clear, location: 0.85)
-                    ]
+                    ],
+                    exportDayCanvasBg: Color(hex: "F0F7FF"),
+                    exportNightCanvasBg: Color(hex: "070F1E"),
+                    exportCardBorderGlow: primary.opacity(0.45)
                 )
             case .makoto:
                 return AboutThemeConfig(
@@ -116,7 +130,10 @@ struct AboutThemeConfig {
                         .init(color: primary.opacity(0.12), location: 0.0),
                         .init(color: secondary.opacity(0.06), location: 0.5),
                         .init(color: .clear, location: 0.85)
-                    ]
+                    ],
+                    exportDayCanvasBg: Color(hex: "FFF6EE"),
+                    exportNightCanvasBg: Color(hex: "1C0E08"),
+                    exportCardBorderGlow: primary.opacity(0.4)
                 )
             }
         }
@@ -146,7 +163,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌙 极夜月光与不休眠夜幕 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 极夜深色经典专属长图卡片",
                 cardDecorationEmoji: "🌙",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "F4F4F7"),
+                exportNightCanvasBg: Color(hex: "0D0D12"),
+                exportCardBorderGlow: primary.opacity(0.35)
             )
         case .pink:
             return AboutThemeConfig(
@@ -159,7 +179,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 💖 兔可可草莓甜心爱意守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 甜心草莓粉专属长图卡片",
                 cardDecorationEmoji: "💖",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "FFF0F5"),
+                exportNightCanvasBg: Color(hex: "1B0A15"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .lavender:
             return AboutThemeConfig(
@@ -172,7 +195,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🔮 魔法紫罗兰与星辉秘灵守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 梦幻薰衣草紫专属长图卡片",
                 cardDecorationEmoji: "🔮",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "FAF0FE"),
+                exportNightCanvasBg: Color(hex: "16091E"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .mint:
             return AboutThemeConfig(
@@ -185,7 +211,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🍃 薄荷晨露与清爽爽朗守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 清新薄荷绿专属长图卡片",
                 cardDecorationEmoji: "🌱",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "F0FAF5"),
+                exportNightCanvasBg: Color(hex: "091A13"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .ocean:
             return AboutThemeConfig(
@@ -198,7 +227,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌊 深海浪花与大鲸歌唱守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 蔚蓝海洋专属长图卡片",
                 cardDecorationEmoji: "🐋",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "F0F8FF"),
+                exportNightCanvasBg: Color(hex: "071220"),
+                exportCardBorderGlow: primary.opacity(0.45)
             )
         case .sunset:
             return AboutThemeConfig(
@@ -211,7 +243,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌇 温暖晚霞与落日余晖守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 金色日落专属长图卡片",
                 cardDecorationEmoji: "🌅",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "FFF7EE"),
+                exportNightCanvasBg: Color(hex: "1B0E05"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .pixel:
             return AboutThemeConfig(
@@ -224,7 +259,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🎮 8-Bit 像素关卡防休眠守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 复古像素街机专属长图卡片",
                 cardDecorationEmoji: "👾",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "F6F0FF"),
+                exportNightCanvasBg: Color(hex: "150820"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .sakura:
             return AboutThemeConfig(
@@ -237,7 +275,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌸 浪漫樱花雨与和风祈愿守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 浪漫樱花粉专属长图卡片",
                 cardDecorationEmoji: "🌸",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "FFF2F8"),
+                exportNightCanvasBg: Color(hex: "1C0B17"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .deepSea:
             return AboutThemeConfig(
@@ -250,7 +291,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🐚 深海水母荧光与宁静守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 深海静谧专属长图卡片",
                 cardDecorationEmoji: "🐚",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "EEF7FF"),
+                exportNightCanvasBg: Color(hex: "05101A"),
+                exportCardBorderGlow: primary.opacity(0.45)
             )
         case .forest:
             return AboutThemeConfig(
@@ -263,7 +307,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🌲 森林芬多精与清晨光斑守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 翠绿森林专属长图卡片",
                 cardDecorationEmoji: "🌲",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "F1F9F3"),
+                exportNightCanvasBg: Color(hex: "0A1910"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .amber:
             return AboutThemeConfig(
@@ -276,7 +323,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🍯 蜂蜜琥珀与暖阳壁炉守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 暖阳琥珀专属长图卡片",
                 cardDecorationEmoji: "🍯",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "FFF8ED"),
+                exportNightCanvasBg: Color(hex: "1C1205"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .crimson:
             return AboutThemeConfig(
@@ -289,7 +339,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🔥 激情赤焰与永恒燃烧守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 热烈赤焰专属长图卡片",
                 cardDecorationEmoji: "🔥",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "FFF1F1"),
+                exportNightCanvasBg: Color(hex: "1C0708"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .arctic:
             return AboutThemeConfig(
@@ -302,7 +355,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with ❄️ 极地冰晶与绚彩极光守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 极地冰雪专属长图卡片",
                 cardDecorationEmoji: "❄️",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "F0FAFF"),
+                exportNightCanvasBg: Color(hex: "06151F"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .roseGold:
             return AboutThemeConfig(
@@ -315,7 +371,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 👑 玫瑞金王冠与皇家荣耀守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 高贵玫金专属长图卡片",
                 cardDecorationEmoji: "👑",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "FAF2F5"),
+                exportNightCanvasBg: Color(hex: "1B0D13"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         case .charcoal:
             return AboutThemeConfig(
@@ -328,7 +387,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🖤 极简炭墨与水墨静谧守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · 极简炭墨专属长图卡片",
                 cardDecorationEmoji: "🖤",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "F5F5F7"),
+                exportNightCanvasBg: Color(hex: "0F0F12"),
+                exportCardBorderGlow: primary.opacity(0.35)
             )
         case .custom:
             let customName = settings.activeColorSchemeName ?? "独家自定义"
@@ -342,7 +404,10 @@ struct AboutThemeConfig {
                 watermarkTitle: "Made with 🎨 灵感调色盘与个性专属守护 ✨",
                 watermarkSubtitle: "© 2026 YumikoToys Lite · \(customName)专属长图卡片",
                 cardDecorationEmoji: "🎨",
-                backgroundGradientStops: defaultStops
+                backgroundGradientStops: defaultStops,
+                exportDayCanvasBg: Color(hex: "FAFAFD"),
+                exportNightCanvasBg: Color(hex: "0D0D13"),
+                exportCardBorderGlow: primary.opacity(0.4)
             )
         }
     }
@@ -1031,7 +1096,7 @@ struct AboutImageExporter {
     }
 }
 
-// MARK: - 主题专属自适应长截图模版容器 (AboutExportableContentView - 兼容日间与夜间模式)
+// MARK: - 主题专属自适应长截图模版容器 (AboutExportableContentView - 20 款主题色高精定制)
 
 private struct AboutExportableContentView: View {
     let mode: ShareExportMode
@@ -1158,7 +1223,7 @@ private struct AboutExportableContentView: View {
 
                     Text("“不眠之钟声已然响彻，纵使天地合闭、MacBook 暗无天日，此神器亦如永不熄灭之圣血符文！搭载 YumikoToys 🐰兔可可皇后之粉色魔晶王权，禁绝万物休眠，使 AI 炼金阵与后台劳作永无止境！”")
                         .font(.system(size: 13))
-                        .foregroundStyle(isNight ? Color.white.opacity(0.8) : Color(hex: "424245"))
+                        .foregroundStyle(isNight ? Color.white.opacity(0.85) : Color(hex: "3A3A3C"))
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
                 }
@@ -1285,11 +1350,11 @@ private struct AboutExportableContentView: View {
         .background(
             ZStack {
                 if isNight {
-                    Color(hex: "0D0E15")
+                    themeConfig.exportNightCanvasBg
                     EllipticalGradient(
                         stops: [
-                            .init(color: themeConfig.primaryColor.opacity(0.22), location: 0.0),
-                            .init(color: themeConfig.secondaryColor.opacity(0.12), location: 0.5),
+                            .init(color: themeConfig.primaryColor.opacity(0.28), location: 0.0),
+                            .init(color: themeConfig.secondaryColor.opacity(0.15), location: 0.5),
                             .init(color: .clear, location: 0.88)
                         ],
                         center: .top,
@@ -1297,11 +1362,11 @@ private struct AboutExportableContentView: View {
                         endRadiusFraction: 0.95
                     )
                 } else {
-                    Color(hex: "F8F9FD")
+                    themeConfig.exportDayCanvasBg
                     EllipticalGradient(
                         stops: [
-                            .init(color: themeConfig.primaryColor.opacity(0.12), location: 0.0),
-                            .init(color: themeConfig.secondaryColor.opacity(0.06), location: 0.5),
+                            .init(color: themeConfig.primaryColor.opacity(0.15), location: 0.0),
+                            .init(color: themeConfig.secondaryColor.opacity(0.08), location: 0.5),
                             .init(color: .clear, location: 0.85)
                         ],
                         center: .top,
@@ -1316,7 +1381,10 @@ private struct AboutExportableContentView: View {
             RoundedRectangle(cornerRadius: 24)
                 .stroke(
                     LinearGradient(
-                        colors: [themeConfig.primaryColor.opacity(isNight ? 0.5 : 0.35), themeConfig.secondaryColor.opacity(isNight ? 0.3 : 0.18)],
+                        colors: [
+                            themeConfig.primaryColor.opacity(isNight ? 0.55 : 0.38),
+                            themeConfig.secondaryColor.opacity(isNight ? 0.35 : 0.2)
+                        ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -1347,17 +1415,17 @@ private struct ExportTextCard<Content: View>: View {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(isNight ? Color(hex: "181A26").opacity(0.9) : Color.white.opacity(0.85))
+                    .fill(isNight ? Color(hex: "181A26").opacity(0.9) : Color.white.opacity(0.88))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(
                                 isNight
-                                    ? themeConfig.primaryColor.opacity(0.35)
-                                    : themeConfig.primaryColor.opacity(0.2),
+                                    ? themeConfig.primaryColor.opacity(0.4)
+                                    : themeConfig.primaryColor.opacity(0.22),
                                 lineWidth: 1
                             )
                     )
-                    .shadow(color: .black.opacity(isNight ? 0.2 : 0.04), radius: 8, x: 0, y: 2)
+                    .shadow(color: themeConfig.primaryColor.opacity(isNight ? 0.15 : 0.05), radius: 8, x: 0, y: 2)
             )
     }
 }
@@ -1400,15 +1468,15 @@ private struct ExportSectionCard<Content: View>: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(isNight ? Color(hex: "181A26").opacity(0.95) : Color.white.opacity(0.9))
+                .fill(isNight ? Color(hex: "181A26").opacity(0.95) : Color.white.opacity(0.92))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
                         .stroke(
-                            isNight ? themeConfig.primaryColor.opacity(0.25) : Color.black.opacity(0.06),
+                            isNight ? themeConfig.exportCardBorderGlow : themeConfig.primaryColor.opacity(0.12),
                             lineWidth: 1
                         )
                 )
-                .shadow(color: .black.opacity(isNight ? 0.25 : 0.04), radius: 8, x: 0, y: 2)
+                .shadow(color: themeConfig.primaryColor.opacity(isNight ? 0.18 : 0.05), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -1462,7 +1530,7 @@ private struct ExportIconLegendCard: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(
-                            isActive ? themeConfig.primaryColor.opacity(isNight ? 0.4 : 0.3) : Color.primary.opacity(0.06),
+                            isActive ? themeConfig.primaryColor.opacity(isNight ? 0.45 : 0.3) : Color.primary.opacity(0.06),
                             lineWidth: 1
                         )
                 )
