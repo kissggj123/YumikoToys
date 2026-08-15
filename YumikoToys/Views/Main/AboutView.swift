@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.7 - Shakespearean Macbeth Allusion Popovers, Vector Info Buttons & Long Screenshot Exporter）
+//  关于页面视图（v4.5.7 - Shakespearean Macbeth Allusion Popovers, Vector Info Buttons & Cute Long Screenshot Exporter）
 //
 
 import SwiftUI
@@ -357,7 +357,7 @@ struct AboutView: View {
                 // 导出/分享长图按钮
                 Menu {
                     Button(action: copyLongScreenshot) {
-                        Label("复制关于界面长图 (剪贴板)", systemImage: "doc.on.doc.fill")
+                        Label("复制关于界面梦幻长图 (剪贴板)", systemImage: "doc.on.doc.fill")
                     }
 
                     Button(action: saveLongScreenshot) {
@@ -386,7 +386,7 @@ struct AboutView: View {
                     )
                 }
                 .menuStyle(.borderlessButton)
-                .help("生成并分享关于界面的超长精美长截图")
+                .help("生成并分享关于界面的萌系梦幻超长截图")
                 .padding(.top, 4)
             }
         }
@@ -395,7 +395,7 @@ struct AboutView: View {
     // MARK: - Screenshot Export Actions
     private func copyLongScreenshot() {
         if AboutImageExporter.copyLongScreenshotToClipboard() {
-            triggerToast("✨ 已成功复制《关于》界面 1:1 超长精美截图到剪贴板，可直接粘贴分享！")
+            triggerToast("✨ 已成功复制《关于》1:1 萌系梦幻超长截图到剪贴板，可直接粘贴分享！")
         } else {
             triggerToast("导出长图失败，请稍后重试。")
         }
@@ -404,7 +404,7 @@ struct AboutView: View {
     private func saveLongScreenshot() {
         AboutImageExporter.saveLongScreenshotToFile { success in
             if success {
-                triggerToast("💾 已成功将《关于》界面长图保存为 PNG 文件！")
+                triggerToast("💾 已成功将《关于》萌系梦幻长图保存为 PNG 文件！")
             }
         }
     }
@@ -426,26 +426,9 @@ struct AboutView: View {
 
 @MainActor
 struct AboutImageExporter {
-    static func generateLongScreenshot(width: CGFloat = 680) -> NSImage? {
+    static func generateLongScreenshot(width: CGFloat = 720) -> NSImage? {
         let exportContentView = AboutExportableContentView()
             .frame(width: width)
-            .padding(28)
-            .background(
-                ZStack {
-                    Color(nsColor: .windowBackgroundColor)
-                    EllipticalGradient(
-                        stops: [
-                            .init(color: Color(hex: "FF6B9D").opacity(0.08), location: 0.0),
-                            .init(color: Color(hex: "C44FE2").opacity(0.04), location: 0.5),
-                            .init(color: .clear, location: 0.85)
-                        ],
-                        center: .top,
-                        startRadiusFraction: 0,
-                        endRadiusFraction: 0.95
-                    )
-                }
-            )
-            .environment(\.colorScheme, .dark)
 
         let hostingView = NSHostingView(rootView: exportContentView)
         let fittingSize = hostingView.fittingSize
@@ -481,8 +464,8 @@ struct AboutImageExporter {
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
         savePanel.nameFieldStringValue = "YumikoToys_About_\(AppConfig.version).png"
-        savePanel.title = "保存关于界面超长精美图片"
-        savePanel.message = "选择保存 YumikoToys 关于界面长图的路径"
+        savePanel.title = "保存关于界面萌系梦幻超长图片"
+        savePanel.message = "选择保存 YumikoToys 关于界面萌系长图的路径"
 
         savePanel.begin { result in
             if result == .OK, let url = savePanel.url {
@@ -499,64 +482,101 @@ struct AboutImageExporter {
     }
 }
 
-// MARK: - 可被长截图完全渲染的纯内容容器 (AboutExportableContentView)
+// MARK: - 萌系主题自适应长截图模版容器 (AboutExportableContentView)
 
 private struct AboutExportableContentView: View {
+    private var themeGradientColors: [Color] {
+        let settings = DependencyContainer.shared.settingsService.settings
+        let themeColor = settings.mainWindowThemeColor
+        return themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
+    }
+
+    private var primaryColor: Color {
+        themeGradientColors.first ?? Color(hex: "FF6B9D")
+    }
+
+    private var secondaryColor: Color {
+        themeGradientColors.count > 1 ? themeGradientColors[1] : Color(hex: "C44FE2")
+    }
+
     var body: some View {
-        VStack(spacing: 24) {
-            // App Hero Icon Header (静态无按钮版)
+        VStack(spacing: 26) {
+            // 顶栏萌系装饰卡片 (Cute Banner)
+            HStack(spacing: 6) {
+                Text("🐰")
+                    .font(.system(size: 14))
+                Text("YumikoToys · 专属梦幻纪念长图卡片")
+                    .font(.system(size: 11.5, weight: .bold))
+                    .foregroundStyle(primaryColor)
+                Text("✨")
+                    .font(.system(size: 12))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(primaryColor.opacity(0.12))
+                    .overlay(
+                        Capsule()
+                            .stroke(primaryColor.opacity(0.35), lineWidth: 1)
+                    )
+            )
+            .padding(.top, 8)
+
+            // App Hero Icon Header (萌系静态无按钮版)
             VStack(spacing: 14) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 28)
+                    RoundedRectangle(cornerRadius: 32)
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(hex: "FF6B9D").opacity(0.2),
-                                    Color(hex: "C44FE2").opacity(0.1)
+                                    primaryColor.opacity(0.25),
+                                    secondaryColor.opacity(0.15)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 112, height: 112)
+                        .frame(width: 116, height: 116)
 
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(cornerRadius: 26)
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                                colors: [primaryColor, secondaryColor],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 96, height: 96)
+                        .frame(width: 98, height: 98)
+                        .shadow(color: primaryColor.opacity(0.4), radius: 14, x: 0, y: 6)
 
                     if let customImage = NSImage(named: "YumikoToys") {
                         Image(nsImage: customImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 60, height: 60)
+                            .frame(width: 62, height: 62)
                     } else {
                         Image(systemName: "rabbit.fill")
-                            .font(.system(size: 42, weight: .medium))
+                            .font(.system(size: 44, weight: .medium))
                             .foregroundStyle(.white)
                     }
                 }
 
                 VStack(spacing: 6) {
                     Text(AppConfig.appName)
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
 
                     HStack(spacing: 6) {
                         Text("v\(AppConfig.version)")
                             .font(.system(size: 11.5, weight: .semibold))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 3.5)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
                             .background(
                                 Capsule()
                                     .fill(
                                         LinearGradient(
-                                            colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                                            colors: [primaryColor, secondaryColor],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
@@ -577,7 +597,7 @@ private struct AboutExportableContentView: View {
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
+                                colors: [primaryColor, secondaryColor],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -592,7 +612,7 @@ private struct AboutExportableContentView: View {
             }
 
             // 图标说明
-            AboutSectionCard(title: "图标说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照") {
+            AboutSectionCard(title: "✨ 图标对照与防休眠说明", subtitle: "状态栏菜单面板与防休眠呼吸指示点对照", showInfoHint: false) {
                 VStack(spacing: 16) {
                     HStack(spacing: 16) {
                         IconLegendCard(
@@ -613,79 +633,138 @@ private struct AboutExportableContentView: View {
             }
 
             // Dramatis Personae
-            AboutSectionCard(title: "Dramatis Personae", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”", showInfoHint: false) {
+            AboutSectionCard(title: "🎭 Dramatis Personae 功勋名录", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”", showInfoHint: false) {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Grand Artificer", subtitle: "伟大之工匠 (Macbeth / Lord of the Anvil)", name: "@🍊蜜柑工具人", tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”")
-                    StaticCreditsRow(title: "The Limner of the Sigil", subtitle: "徽记描绘者 (Lady Macbeth / Sovereign of Sorcery)", name: "@会拧头的ruarua怪", tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”")
-                    StaticCreditsRow(title: "The Muse of Whimsy", subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)", name: "@cici", tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”")
-                    StaticCreditsRow(title: "The Patron of New Marvels", subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)", name: "@🐰兔可可", tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”")
+                    StaticCreditsRow(title: "The Grand Artificer", subtitle: "伟大之工匠 (Macbeth / Lord of the Anvil)", name: "@🍊蜜柑工具人", tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽千百 Bug，使代码高塔永不倒塌。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Limner of the Sigil", subtitle: "徽记描绘者 (Lady Macbeth / Sovereign of Sorcery)", name: "@会拧头的ruarua怪", tagline: "“洗不净手中极彩墨迹，以神笔抹去世间平庸，赐予界面华美绝伦之霓裳。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Muse of Whimsy", subtitle: "奇思之缪斯 (The Wyrd Sister / Prophet of Chaos)", name: "@cici", tagline: "“在三魔女沸腾的大锅中倒进奇妙遐想，炼化出颠覆凡世之灵感。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Patron of New Marvels", subtitle: "新奇赞助人 (High Queen / Sovereign of Realms)", name: "@🐰兔可可", tagline: "“戴上粉色魔晶之王冠，端坐于永恒王座，庇佑万物免受休眠迷雾侵蚀。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
                 }
             }
 
             // The Sacred Fellowship of Soulmates
-            AboutSectionCard(title: "The Sacred Fellowship of Soulmates", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”", showInfoHint: false) {
+            AboutSectionCard(title: "💖 The Sacred Fellowship of Soulmates 挚友同心", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”", showInfoHint: false) {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Enchantress of Mist & Song", subtitle: "雾霭与歌咏之灵 (Puck / Ophelia)", name: "@烟烟", tagline: "“如《仲夏夜之梦》薄雾凝霜之灵，赋万物以飘逸诗意。”")
-                    StaticCreditsRow(title: "The Sovereign of Eternal Starlight", subtitle: "永恒星芒之女王 (Titania / Portia)", name: "@ching_1222", tagline: "“如《第十二夜》璀璨星辰，以优雅与睿智光照剧场。”")
-                    StaticCreditsRow(title: "The Guardian of Enchanted Realm", subtitle: "幻境奇迹之守护者 (Miranda / Beatrice)", name: "@邱", tagline: "“如《暴风雨》奇迹女神 Miranda，赐予作品纯真神圣之守护。”")
+                    StaticCreditsRow(title: "The Enchantress of Mist & Song", subtitle: "雾霭与歌咏之灵 (Puck / Ophelia)", name: "@烟烟", tagline: "“如《仲夏夜之梦》薄雾凝霜之灵，赋万物以飘逸诗意。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Sovereign of Eternal Starlight", subtitle: "永恒星芒之女王 (Titania / Portia)", name: "@ching_1222", tagline: "“如《第十二夜》璀璨星辰，以优雅与睿智光照剧场。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Guardian of Enchanted Realm", subtitle: "幻境奇迹之守护者 (Miranda / Beatrice)", name: "@邱", tagline: "“如《暴风雨》奇迹女神 Miranda，赐予作品纯真神圣之守护。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
                 }
             }
 
             // Architects of Pet Playground
-            AboutSectionCard(title: "Architects of Pet Playground", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”", showInfoHint: false) {
+            AboutSectionCard(title: "🐾 Architects of Pet Playground 爬爬乐创作者", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”", showInfoHint: false) {
                 VStack(alignment: .leading, spacing: 12) {
-                    StaticCreditsRow(title: "The Agile Enchantress of Walls", subtitle: "绝壁与灵动之仙子 (Puck / Peaseblossom)", name: "@氢氧化猫猫", tagline: "“如《仲夏夜之梦》绝壁上翩跹之仙子，以轻灵极彩之姿赋桌宠以生机。”")
-                    StaticCreditsRow(title: "The Lord Warden of Gravity", subtitle: "极地与重力之勋爵 (Prospero / Gonzalo)", name: "@北冥有地瓜", tagline: "“如《暴风雨》掌控重力与天法之勋爵，筑坚实锚点庇佑桌宠安然攀行。”")
+                    StaticCreditsRow(title: "The Agile Enchantress of Walls", subtitle: "绝壁与灵动之仙子 (Puck / Peaseblossom)", name: "@氢氧化猫猫", tagline: "“如《仲夏夜之梦》绝壁上翩跹之仙子，以轻灵极彩之姿赋桌宠以生机。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Lord Warden of Gravity", subtitle: "极地与重力之勋爵 (Prospero / Gonzalo)", name: "@北冥有地瓜", tagline: "“如《暴风雨》掌控重力与天法之勋爵，筑坚实锚点庇佑桌宠安然攀行。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
                 }
             }
 
             // A Note of Gratitude Most Profound
-            AboutSectionCard(title: "A Note of Gratitude Most Profound", subtitle: "“汝等之光，亦使此剧增辉”", showInfoHint: false) {
+            AboutSectionCard(title: "🌸 A Note of Gratitude Most Profound 深情致谢", subtitle: "“汝等之光，亦使此剧增辉”", showInfoHint: false) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("吾辈亦向此众友献上敬意：")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
 
-                    StaticCreditsRow(title: "The Muse of Celestial Grace", subtitle: "晨星与真情之缪斯 (Cordelia / Rosalind)", name: "@saya.ka", tagline: "“如天际璀璨之晨星，以温润真情与无声之光照拂众生。”")
-                    StaticCreditsRow(title: "The Spirit of Woodland Harmony", subtitle: "绿林与颂歌之精灵 (Celia / Ophelia)", name: "@sayu", tagline: "“林间和煦之微风，赋予剧场欢快和谐之韵律与治愈之力。”")
-                    StaticCreditsRow(title: "The Guardian of Serene Moonlight", subtitle: "宁静月光之守护者 (Juliet / Viola)", name: "@さおり", tagline: "“宁静月光之守护者，以纯真与柔情照亮凡间，使全剧平添温情。”")
+                    StaticCreditsRow(title: "The Muse of Celestial Grace", subtitle: "晨星与真情之缪斯 (Cordelia / Rosalind)", name: "@saya.ka", tagline: "“如天际璀璨之晨星，以温润真情与无声之光照拂众生。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Spirit of Woodland Harmony", subtitle: "绿林与颂歌之精灵 (Celia / Ophelia)", name: "@sayu", tagline: "“林间和煦之微风，赋予剧场欢快和谐之韵律与治愈之力。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
+                    StaticCreditsRow(title: "The Guardian of Serene Moonlight", subtitle: "宁静月光之守护者 (Juliet / Viola)", name: "@さおり", tagline: "“宁静月光之守护者，以纯真与柔情照亮凡间，使全剧平添温情。”", primaryColor: primaryColor, secondaryColor: secondaryColor)
                 }
             }
 
             // A Wyrd Messenger
-            AboutSectionCard(title: "A Wyrd Messenger", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”", showInfoHint: false) {
+            AboutSectionCard(title: "🔮 A Wyrd Messenger 命运信使", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”", showInfoHint: false) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("如荒野上之回响，自迷雾中而来，其低语之建言，足以扭转吾辈大业之航向者，乃")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .lineSpacing(4)
 
-                    StaticCreditsRow(title: "The Prophet of Wyrd Echoes", subtitle: "荒野神谕与命运信使 (Ariel / Hecate)", name: "@小汐shio", tagline: "“自迷雾破空而来，其金石低语建言扭转全剧浩瀚航程！”")
+                    StaticCreditsRow(title: "The Prophet of Wyrd Echoes", subtitle: "荒野神谕与命运信使 (Ariel / Hecate)", name: "@小汐shio", tagline: "“自迷雾破空而来，其金石低语建言扭转全剧浩瀚航程！”", primaryColor: primaryColor, secondaryColor: secondaryColor)
                 }
             }
 
-            // 版权
-            VStack(spacing: 4) {
-                Text("© 2026 YumikoToys. All rights reserved.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
+            // 萌系水滴封印与专属底部水印
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(primaryColor)
+                    Text("Made with 🐰 兔可可皇后魔法守护")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [primaryColor, secondaryColor],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(secondaryColor)
+                }
 
-                Text("Made with 🐰 兔可可皇后")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.quaternary)
+                Text("© 2026 YumikoToys Lite · 罗德岛不休眠协议 · 莎士比亚悲剧史诗纪念卡片")
+                    .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.tertiary)
             }
-            .padding(.top, 6)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(primaryColor.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [primaryColor.opacity(0.3), secondaryColor.opacity(0.18)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+            )
+            .padding(.top, 8)
         }
+        .padding(32)
+        .background(
+            ZStack {
+                Color(nsColor: .windowBackgroundColor)
+                EllipticalGradient(
+                    stops: [
+                        .init(color: primaryColor.opacity(0.1), location: 0.0),
+                        .init(color: secondaryColor.opacity(0.05), location: 0.5),
+                        .init(color: .clear, location: 0.85)
+                    ],
+                    center: .top,
+                    startRadiusFraction: 0,
+                    endRadiusFraction: 0.95
+                )
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(
+                    LinearGradient(
+                        colors: [primaryColor.opacity(0.4), secondaryColor.opacity(0.2)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
+        )
     }
 }
 
-// MARK: - 长截图静态行 (StaticCreditsRow)
+// MARK: - 长截图萌系静态行 (StaticCreditsRow)
 
 private struct StaticCreditsRow: View {
     let title: String
     let subtitle: String
     let name: String
     var tagline: String? = nil
+    var primaryColor: Color = Color(hex: "FF6B9D")
+    var secondaryColor: Color = Color(hex: "C44FE2")
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -694,7 +773,7 @@ private struct StaticCreditsRow: View {
                     .font(.system(size: 13.5, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color(hex: "5856D6"), Color(hex: "FF6B9D")],
+                            colors: [primaryColor, secondaryColor],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
