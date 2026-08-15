@@ -749,10 +749,28 @@ struct SettingsView: View {
     private var statusBarThemeColorSection: some View {
         SettingsSection(title: "状态栏主题色", icon: "paintpalette.fill", iconColor: "FF6B9D") {
             VStack(alignment: .leading, spacing: 12) {
+                if AnimeThemeService.shared.isEnabled {
+                    HStack(spacing: 6) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color(hex: "FF6B9D"))
+                        Text("二次元主题已启用，状态栏主题色选择暂时禁用（由二次元风格统一接管）")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color(hex: "FF6B9D"))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: "FF6B9D").opacity(0.1))
+                    )
+                }
+
                 // 主题选择
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 8) {
                     ForEach(ThemeColor.allCases) { theme in
                         Button(action: {
+                            guard !AnimeThemeService.shared.isEnabled else { return }
                             viewModel.selectThemeColor(theme)
                         }) {
                             VStack(spacing: 6) {
@@ -779,6 +797,8 @@ struct SettingsView: View {
                         .buttonStyle(.plain)
                     }
                 }
+                .disabled(AnimeThemeService.shared.isEnabled)
+                .opacity(AnimeThemeService.shared.isEnabled ? 0.45 : 1.0)
                 
                 // 如果是自定义主题，显示 ColorPicker & HEX 输入框
                 if viewModel.selectedThemeColor == .custom {
@@ -821,6 +841,8 @@ struct SettingsView: View {
                         .labelsHidden()
                     }
                     .padding(.horizontal, 4)
+                    .disabled(AnimeThemeService.shared.isEnabled)
+                    .opacity(AnimeThemeService.shared.isEnabled ? 0.45 : 1.0)
                 }
             }
         }
@@ -829,10 +851,28 @@ struct SettingsView: View {
     private var mainWindowThemeColorSection: some View {
         SettingsSection(title: "主界面主题色", icon: "paintpalette", iconColor: "007AFF") {
             VStack(alignment: .leading, spacing: 12) {
+                if AnimeThemeService.shared.isEnabled {
+                    HStack(spacing: 6) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color(hex: "FF6B9D"))
+                        Text("二次元主题已启用，主界面主题色选择暂时禁用（由二次元风格统一接管）")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color(hex: "FF6B9D"))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: "FF6B9D").opacity(0.1))
+                    )
+                }
+
                 // 主题选择
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 8) {
                     ForEach(ThemeColor.allCases) { theme in
                         Button(action: {
+                            guard !AnimeThemeService.shared.isEnabled else { return }
                             viewModel.selectMainWindowThemeColor(theme)
                         }) {
                             VStack(spacing: 6) {
@@ -859,6 +899,8 @@ struct SettingsView: View {
                         .buttonStyle(.plain)
                     }
                 }
+                .disabled(AnimeThemeService.shared.isEnabled)
+                .opacity(AnimeThemeService.shared.isEnabled ? 0.45 : 1.0)
                 
                 // 如果是自定义主题，显示 ColorPicker & HEX 输入框
                 if viewModel.mainWindowThemeColor == .custom {

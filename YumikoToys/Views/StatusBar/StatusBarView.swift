@@ -1370,46 +1370,21 @@ struct StatusBarView: View {
 
     private var themeToggleButton: some View {
         Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                showThemePicker.toggle()
-            }
-        }) {
-            HStack(spacing: 4) {
-                Image(systemName: themeColor.themeIcon)
-                    .font(.system(size: 10))
-                Circle()
-                    .fill(themeColor.animeOrAccent)
-                    .frame(width: 8, height: 8)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .medium))
-                    .rotationEffect(.degrees(showThemePicker ? 180 : 0))
-            }
-            .foregroundStyle(themeColor.animeOrAccent)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(
-                Capsule()
-                    .fill(themeColor.animeOrButton)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(themeColor.animeOrBorder, lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .scaleEffect(isThemeBtnHovered ? 1.05 : 1.0)
-        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isThemeBtnHovered)
-        .onHover { isThemeBtnHovered = $0 }
-        .help("切换主题色")
-    }
-
     // MARK: - 底部主题色选择器
 
     private var themeColorPicker: some View {
         VStack(spacing: 10) {
-            Text("选择主题")
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(themeColor.animeOrTextSecondary)
+            HStack(spacing: 4) {
+                Text("选择主题")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(themeColor.animeOrTextSecondary)
+
+                if AnimeThemeService.shared.isEnabled {
+                    Text("(二次元主题已生效，选择已禁用)")
+                        .font(.system(size: 9.5, weight: .bold))
+                        .foregroundStyle(Color(hex: "FF6B9D"))
+                }
+            }
 
             let columns = [
                 GridItem(.flexible(), spacing: 8),
@@ -1424,6 +1399,7 @@ struct StatusBarView: View {
                         theme: theme,
                         isSelected: themeColor == theme,
                         action: {
+                            guard !AnimeThemeService.shared.isEnabled else { return }
                             withAnimation(.easeInOut(duration: 0.25)) {
                                 themeColor = theme
                                 saveThemeColor(theme)
@@ -1441,6 +1417,8 @@ struct StatusBarView: View {
                 }
             }
             .padding(.horizontal, 2)
+            .disabled(AnimeThemeService.shared.isEnabled)
+            .opacity(AnimeThemeService.shared.isEnabled ? 0.45 : 1.0)
             
             // 如果是自定义主题，显示 HEX 输入框和 ColorPicker
             if themeColor == .custom {
