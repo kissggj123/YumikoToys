@@ -648,24 +648,13 @@ private struct CreditsRow: View {
                         )
                     )
 
-                Text(subtitle)
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(.tertiary)
-                    .italic()
-            }
-
-            HStack(alignment: .center, spacing: 6) {
-                Text(name)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.primary)
-
-                // ⓘ 按钮：展现原著典故与文学深层解读
+                // ⓘ 按钮：移动至称号 (title) 正右侧
                 if originalAllusion != nil || literaryDecoding != nil {
                     Button(action: {
                         showInfoPopover.toggle()
                     }) {
                         Image(systemName: "info.circle.fill")
-                            .font(.system(size: 13.5, weight: .bold))
+                            .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(
                                 isInfoBtnHovered || showInfoPopover
                                     ? Color(hex: "FF6B9D")
@@ -729,6 +718,17 @@ private struct CreditsRow: View {
                         .frame(width: 290)
                     }
                 }
+
+                Text(subtitle)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(.tertiary)
+                    .italic()
+            }
+
+            HStack(alignment: .center, spacing: 6) {
+                Text(name)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.primary)
 
                 if let tagline = tagline {
                     Text(tagline)
