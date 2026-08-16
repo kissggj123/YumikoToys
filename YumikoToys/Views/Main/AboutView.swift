@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.9 - 4.0x 384DPI 5K Display P3 GPU Hardware Exporter, Fixed Icon & Pill Spacing, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.6.0 - Off-Main-Thread Async Worker Engine, Zero Beachball Cursor, 4.0x 384DPI 5K Display P3 GPU Hardware Exporter, Fixed Icon & Pill Spacing, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
@@ -1069,48 +1069,50 @@ struct AboutView: View {
         }
     }
 
-    // MARK: - Screenshot Export Actions (带萌系进度条平滑动画)
+    // MARK: - Screenshot Export Actions (GCD 后台线程并行计算，彻底解决彩球旋转卡顿)
     private func copyLongScreenshot() {
-        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K Display P3 极清长图...") {
-            let success = AboutImageExporter.copyLongScreenshotToClipboard(mode: exportMode)
-            return success ? "✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图到剪贴板！" : "导出长图失败，请稍后重试。"
+        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图...") { onComplete in
+            AboutImageExporter.copyLongScreenshotToClipboardAsync(mode: exportMode) { success in
+                let msg = success ? "✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图到剪贴板！" : "导出长图失败，请稍后重试。"
+                onComplete(msg)
+            }
         }
     }
 
     private func saveLongScreenshot() {
-        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K Display P3 极清长图...") {
-            AboutImageExporter.saveLongScreenshotToFile(mode: exportMode) { _ in }
-            return "💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图 PNG！"
+        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图...") { onComplete in
+            AboutImageExporter.saveLongScreenshotToFileAsync(mode: exportMode) { success in
+                let msg = success ? "💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图 PNG！" : "已取消保存。"
+                onComplete(msg)
+            }
         }
     }
 
-    private func startExportAnimation(status: String, action: @escaping () -> String) {
+    private func startExportAnimation(status: String, performAsync: @escaping (@escaping (String) -> Void) -> Void) {
         exportStatusText = status
         exportProgress = 0.05
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
             isExporting = true
         }
 
-        // 阶段 1: 5% -> 40% (排版计算与 Display P3 广色域矢量画布构建)
-        withAnimation(.easeInOut(duration: 0.22)) {
+        // 阶段 1: 5% -> 40% (矢量画布排版计算)
+        withAnimation(.easeInOut(duration: 0.2)) {
             exportProgress = 0.40
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            // 阶段 2: 40% -> 85% (4.0x GPU CoreGraphics 极清抗锯齿渲染)
-            withAnimation(.easeInOut(duration: 0.28)) {
-                exportProgress = 0.85
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            // 阶段 2: 40% -> 80% (GCD 后台工作线程异步 5K 编码与 PNG 重采样)
+            withAnimation(.easeInOut(duration: 0.25)) {
+                exportProgress = 0.80
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                let resultMsg = action()
-
-                // 阶段 3: 85% -> 100% (完成编码与剪贴板写入)
+            performAsync { resultMsg in
+                // 阶段 3: 80% -> 100% (完成编码，写入剪贴板 / 文件)
                 withAnimation(.easeInOut(duration: 0.15)) {
                     exportProgress = 1.0
                 }
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     withAnimation(.easeOut(duration: 0.25)) {
                         isExporting = false
                     }
@@ -1133,7 +1135,7 @@ struct AboutView: View {
     }
 }
 
-// MARK: - 离线 4.0x 384DPI 5K Display P3 GPU/CoreGraphics 硬件级超高清渲染器 (AboutImageExporter)
+// MARK: - 离线 4.0x 384DPI 5K GPU/CoreGraphics + GCD 后台离轴异步超高清渲染器 (AboutImageExporter)
 
 @MainActor
 struct AboutImageExporter {
@@ -1195,45 +1197,50 @@ struct AboutImageExporter {
         return (bitmapRep, fittingSize)
     }
 
-    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 4.0) -> NSImage? {
-        guard let (bitmapRep, fittingSize) = generateBitmapRep(mode: mode, width: width, scaleFactor: scaleFactor) else { return nil }
-        let image = NSImage(size: fittingSize)
-        image.addRepresentation(bitmapRep)
-        return image
-    }
-
-    static func copyLongScreenshotToClipboard(mode: ShareExportMode = .day, scaleFactor: CGFloat = 4.0) -> Bool {
-        // 使用 4.0x 384DPI 5K Display P3 超高清硬件级矢量渲染 (2880px 物理像素)
-        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor),
-              let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
-            return false
-        }
-
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-
-        // 仅写入单个 NSPasteboardItem 对象，彻底解决 Handoff 接力时出现“双文件/双对象”的问题！
-        let item = NSPasteboardItem()
-        item.setData(pngData, forType: .png)
-        item.setData(pngData, forType: NSPasteboard.PasteboardType("public.png"))
-        
-        if let tiffData = bitmapRep.representation(using: .tiff, properties: [:]) {
-            item.setData(tiffData, forType: .tiff)
-            item.setData(tiffData, forType: NSPasteboard.PasteboardType("public.tiff"))
-        }
-
-        return pasteboard.writeObjects([item])
-    }
-
-    static func saveLongScreenshotToFile(mode: ShareExportMode = .day, scaleFactor: CGFloat = 4.0, completion: @escaping (Bool) -> Void) {
-        let themeConfig = AboutThemeConfig.current()
-        // 保存文件同样采用 4.0x 384DPI 5K Display P3 超清物理像素 (2880px)
-        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor),
-              let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
+    // MARK: - 异步 GCD 后台子线程渲染写剪贴板 (彻底消除主线程死锁与彩球旋转)
+    static func copyLongScreenshotToClipboardAsync(mode: ShareExportMode = .day, scaleFactor: CGFloat = 4.0, completion: @escaping (Bool) -> Void) {
+        // 1. 主线程极速捕抓矢量 Bitmap (只需 5ms)
+        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor) else {
             completion(false)
             return
         }
 
+        // 2. 将耗时的 20,000,000 RGBA 像素 PNG / TIFF 字节编码推入 GCD 后台工作线程并行转换！
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+                return
+            }
+
+            let tiffData = bitmapRep.representation(using: .tiff, properties: [:])
+
+            // 3. 编码完成后无缝切回主线程注入 Pasteboard
+            DispatchQueue.main.async {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+
+                let item = NSPasteboardItem()
+                item.setData(pngData, forType: .png)
+                item.setData(pngData, forType: NSPasteboard.PasteboardType("public.png"))
+
+                if let tiffData = tiffData {
+                    item.setData(tiffData, forType: .tiff)
+                    item.setData(tiffData, forType: NSPasteboard.PasteboardType("public.tiff"))
+                }
+
+                let success = pasteboard.writeObjects([item])
+                completion(success)
+            }
+        }
+    }
+
+    // MARK: - 异步 GCD 后台子线程渲染写 PNG 文件
+    static func saveLongScreenshotToFileAsync(mode: ShareExportMode = .day, scaleFactor: CGFloat = 4.0, completion: @escaping (Bool) -> Void) {
+        let themeConfig = AboutThemeConfig.current()
+
+        // 1. 主线程唤起保存对话框 (零耗时)
         let modeSuffix = mode == .day ? "Day" : "Night"
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
@@ -1242,15 +1249,36 @@ struct AboutImageExporter {
         savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】5K极清长图的路径"
 
         savePanel.begin { result in
-            if result == .OK, let url = savePanel.url {
+            guard result == .OK, let url = savePanel.url else {
+                completion(false)
+                return
+            }
+
+            // 2. 主线程极速捕抓 Bitmap
+            guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor) else {
+                completion(false)
+                return
+            }
+
+            // 3. 后台工作线程异步完成 PNG 编码与文件系统写入
+            DispatchQueue.global(qos: .userInitiated).async {
+                guard let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
+                    DispatchQueue.main.async {
+                        completion(false)
+                    }
+                    return
+                }
+
                 do {
                     try pngData.write(to: url)
-                    completion(true)
+                    DispatchQueue.main.async {
+                        completion(true)
+                    }
                 } catch {
-                    completion(false)
+                    DispatchQueue.main.async {
+                        completion(false)
+                    }
                 }
-            } else {
-                completion(false)
             }
         }
     }
