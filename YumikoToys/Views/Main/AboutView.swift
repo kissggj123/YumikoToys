@@ -2061,6 +2061,8 @@ private struct AboutExportableContentView: View {
                 )
         )
     }
+}
+
 // MARK: - 横版宣发手册 2x2 核心特质图鉴卡片 (ExportFeatureMatrixCard)
 
 private struct ExportFeatureMatrixCard: View {
