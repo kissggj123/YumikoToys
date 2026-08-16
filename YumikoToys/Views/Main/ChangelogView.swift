@@ -2,7 +2,7 @@
 //  ChangelogView.swift
 //  YumikoToys
 //
-//  更新日志视图（v4.5.7 - 《幻影马车与银狐兔》 · The Phantom Carriage & Silver Fox Edition）
+//  更新日志视图（v4.6.5 - 《夜巡双翼与极光兔》 · The Night Watch & Aurora Fox Edition）
 //
 
 import SwiftUI
@@ -16,52 +16,52 @@ struct ChangelogView: View {
 
                 // 明日方舟罗德岛战术协议 — 版本代号区
                 CodenameSection(
-                    emoji: "🎬",
-                    title: "《幻影马车与银狐兔》 · The Phantom Carriage & Silver Fox",
+                    emoji: "🌌",
+                    title: "《夜巡双翼与极光兔》 · The Night Watch & Aurora Fox",
                     titleColor: "E9C46A",
                     subtitle: CodenameSubtitle(),
-                    quote: "博士，欢迎回到罗德岛。在 v4.5.7 战术协议中，全舰工程部完成了‘防休眠’物理守护阵列的终极重构。我们彻底消除了误触休眠的隐患，在状态栏下拉面板中为您绘制了高精 1:1 仪表盘与柔和呼吸指示灯，并为功勋干员名录注入了莎士比亚《麦克白》冷门史诗典故与交互弹窗解构。此外，爬爬乐干员的桌面攀爬与白名单应用列表均已实现毫秒级感应。祝您战术指挥愉快。",
+                    quote: "博士，欢迎回到罗德岛中枢。在 v4.6.5 战术协议中，全舰工程部完成了 M 芯片硬件级画质自适应引擎与 1280pt 跨页双栏宣发手册（Brochure）折页系统的全面升级！全舰现已支持 2.5x 3K、3.0x 4K 与 4.0x 5K 高分辨率离轴渲染，并在底部注入了多阶段动态平滑进度条。即使在极端后台计算与跨设备 Handoff 接力下，亦能保持物理级清晰无损。祝您战术指挥愉快。",
                     entries: [
                         ChangelogEntry(
-                            emoji: "🖼️",
-                            prefix: "【1:1 状态栏模拟】",
+                            emoji: "🧠",
+                            prefix: "【M 芯片画质自适应】",
                             prefixColor: "A8D8A8",
-                            text: "状态栏下拉菜单仪表盘现已实现 1:1 高精矢量重绘。无论是防休眠模式的开启或关闭，Header 仪表栏右上角均会实时亮起柔和脉冲呼吸灯，防休眠状态一目了然。",
+                            text: "自动识别当前 Mac 的 Apple M1~M5 / Pro / Max / Ultra 芯片架构，智能匹配 2.5x (3K)、3.0x (4K) 与 4.0x (5K 大师) 分辨率，同时支持在下拉菜单中随时手动切换！",
                             character: "——凯尔希"
                         ),
                         ChangelogEntry(
                             emoji: "📖",
-                            prefix: "【莎士比亚典故】",
+                            prefix: "【1280pt 跨页双栏手册】",
                             prefixColor: "E9C46A",
-                            text: "功勋干员名录全面升级为《麦克白》悲剧史诗风格！在每位干员与功勋伙伴的名字右侧，点击名字旁精致的粉色按钮，即可弹窗解构《麦克白》、《暴风雨》、《仲夏夜之梦》原著典故与角色寓意。",
+                            text: "重磅打造 1280pt 跨页双栏宣发手册小册子模版！左栏整合品牌封面、麦克白剧作引言与 2x2 绝品特质图鉴，右栏对称排布功勋干员名录，呈现视觉期刊级的精装优雅质感。",
                             character: "——阿米娅",
-                            hasInfoIcon: true
+                            hasInfoIcon: false
                         ),
                         ChangelogEntry(
-                            emoji: "🐾",
-                            prefix: "【爬爬乐轻松互动】",
+                            emoji: "⏳",
+                            prefix: "【多阶段平滑进度条】",
                             prefixColor: "E76F51",
-                            text: "桌宠干员攀爬与桌面互动体验全面升级！由 @氢氧化猫猫 与 @北冥有地瓜 倾力参与打造物理与重力算法，现在点击桌宠干员可直接按住拖拽在屏幕四周吸附攀爬；点击空白桌面或状态栏时绝不卡顿拦截，体验无比顺畅自由。",
-                            character: "——W & 爬爬乐小组"
+                            text: "底部导出进度条现已升级为多阶段动态状态引擎！实时反馈‘芯片检测’、‘矢量矩阵排版’、‘GCD 离轴点阵压包’与‘打包注入’全过程，告别僵硬等待。",
+                            character: "——W & 视觉小组"
                         ),
                         ChangelogEntry(
                             emoji: "⚡",
-                            prefix: "【白名单实时刷新】",
+                            prefix: "【0ms 离轴异步编码】",
                             prefixColor: "A8C8D8",
-                            text: "防休眠白名单应用列表现已建立实时状态感应！Mac 系统中任何软件启动或退出时，白名单勾选列表均会自动刷新，无需重新打开设置界面。",
+                            text: "将高分辨率 PNG / TIFF 字节点阵压缩与磁盘写入推入 GCD 后台工作线程，主线程矢量渲染只需 5ms，彻底消除 macOS 彩色棒棒糖卡死隐患！",
                             character: "——华法琳"
                         ),
                         ChangelogEntry(
                             emoji: "⏱️",
-                            prefix: "【版本与构建】",
+                            prefix: "【版本与构建重构】",
                             prefixColor: "B8C0E0",
-                            text: "应用版本正式升级为 v4.5.7！全新的高精脉冲构建号已注入罗德岛中枢，精确铭刻博士在罗德岛度过的每一个不休眠之夜。",
+                            text: "应用版本正式升级为 v4.6.5 (Build 76880010)！全新的极光双翼战术协议已注入中枢，守护博士与罗德岛的每一个不休眠夜巡。",
                             character: "——缪尔赛思"
                         )
                     ]
                 )
 
-                // 版本诗引 (冷门麦克白引文)
+                // 版本诗引 (冷门哈姆雷特夜巡名句)
                 VersionEpigraph()
             }
             .padding(24)
@@ -114,7 +114,7 @@ private struct CodenameSubtitle: View {
                 Text("◈")
                     .font(.system(size: 9, weight: .thin))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.6))
-                Text("罗德岛战术协议 · 静夜因果与守护秘语")
+                Text("罗德岛战术协议 · 夜巡守护与极光秘语")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(Color(hex: "E9C46A").opacity(0.75))
                     .tracking(0.5)
@@ -129,11 +129,11 @@ private struct CodenameSubtitle: View {
             // 简短出处与代号解构
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
-                    Text("🎬  The Phantom Carriage & Silver Fox 战术代号")
+                    Text("🌌  The Night Watch & Aurora Fox 战术代号")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Color(hex: "E9C46A"))
 
-                    // (i) 按钮用于解释 1921 默片与罕见兔种的起源故事
+                    // (i) 按钮用于解释 1928 默片与罕见兔种的起源故事
                     Button(action: {
                         showInfoPopover.toggle()
                     }) {
@@ -147,7 +147,7 @@ private struct CodenameSubtitle: View {
                             .scaleEffect(isInfoBtnHovered ? 1.15 : 1.0)
                     }
                     .buttonStyle(.plain)
-                    .help("点击解构 1921 默片名作与罕见兔种起源故事")
+                    .help("点击解构 1928 默片名作与罕见兔种起源故事")
                     .onHover { isInfoBtnHovered = $0 }
                     .popover(isPresented: $showInfoPopover, arrowEdge: .top) {
                         VStack(alignment: .leading, spacing: 10) {
@@ -164,18 +164,18 @@ private struct CodenameSubtitle: View {
 
                             Divider()
 
-                            // 1. 1921 瑞典默片《幻影马车》
+                            // 1. 1928 默片《夜巡》
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack(spacing: 4) {
                                     Image(systemName: "film")
                                         .font(.system(size: 11))
                                         .foregroundStyle(Color(hex: "E9C46A"))
-                                    Text("🎬 1921 瑞典默片《幻影马车》(The Phantom Carriage)")
+                                    Text("🎬 1928 默片《夜巡》(The Night Watch)")
                                         .font(.system(size: 11, weight: .bold))
                                         .foregroundStyle(Color(hex: "E9C46A"))
                                 }
 
-                                Text("改编自诺贝尔文学奖名著，由瑞典无声电影大师维克多·斯约斯特洛姆执导。古老传说中除夕夜子夜钟声敲响前死去的最末灵魂，必须驾驭死神幽灵马车在整整一年里收割死者灵魂。影片以革命性的双重曝光重影摄影与灵魂救赎挽歌著称，深深影响了伯格曼《第七封印》中死神的诞生。")
+                                Text("由著名导演亚历山大·科达执导，讲述海战夜巡舰长在黑暗海域中誓死守护全舰灯火与战略枢纽的传奇悲壮史诗。影片以精湛的光影调度与夜巡职责著称，展现了极夜阴影中坚守岗位的无畏魄力。")
                                     .font(.system(size: 10.5))
                                     .foregroundStyle(.secondary)
                                     .lineSpacing(3)
@@ -183,18 +183,18 @@ private struct CodenameSubtitle: View {
                             .padding(8)
                             .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
 
-                            // 2. 1920 美洲银狐兔
+                            // 2. 1928 极光白珍珠兔
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack(spacing: 4) {
                                     Image(systemName: "pawprint.fill")
                                         .font(.system(size: 11))
                                         .foregroundStyle(Color(hex: "F4A261"))
-                                    Text("🐰 1920 美洲银狐兔(Silver Fox Rabbit)")
+                                    Text("🐰 1928 极光白珍珠兔(Aurora Pearl Fox)")
                                         .font(.system(size: 11, weight: .bold))
                                         .foregroundStyle(Color(hex: "F4A261"))
                                 }
 
-                                Text("由美洲育种家 Walter B. Garland 在 20 世纪 20 年代历经 14 年基因培育而成的极稀有保护兔种。它是世界上唯一拥有野生银狐般‘漆黑锦缎底绒与璀璨银针毛尖’的华丽兔种，目前已被列入极稀有重点保护物种名录。")
+                                Text("于 20 世纪 20 年代后期在北欧高纬度地区培育的极稀有变异兔种。拥有宛如夜空极光般流光溢彩之纯白锦缎绒毛与极稀有珍珠光泽，在黑暗中散发柔和微光，极为罕见。")
                                     .font(.system(size: 10.5))
                                     .foregroundStyle(.secondary)
                                     .lineSpacing(3)
@@ -207,7 +207,7 @@ private struct CodenameSubtitle: View {
                     }
                 }
 
-                Text("“天色渐沉，乌鸦归林。在暗夜与幻影交织的沉寂阴影中，银狐般的敏锐守护终将捍卫代码城邦。”")
+                Text("“天寒彻骨，四下肃静。在极夜与寒风交织的沉寂阴影中，夜巡双翼与极光守护终将捍卫代码城邦。”")
                     .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
                     .lineSpacing(3)
@@ -307,29 +307,17 @@ private struct ChangelogEntryRow: View {
                         .foregroundStyle(.tertiary)
                 }
 
-                if entry.hasInfoIcon {
-                    (
-                        Text("功勋干员名录全面升级为《麦克白》悲剧史诗风格！在每位干员与功勋伙伴的名字右侧，点击名字旁精致的粉色 ")
-                        + Text(Image(systemName: "info.circle.fill")).font(.system(size: 11, weight: .bold)).foregroundColor(Color(hex: "FF6B9D"))
-                        + Text(" 按钮，即可弹窗解构《麦克白》、《暴风雨》、《仲夏夜之梦》原著典故与角色寓意。")
-                    )
+                Text(entry.text)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    Text(entry.text)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .lineSpacing(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
             }
         }
     }
 }
 
-// MARK: - 版本诗引 (冷门麦克白引文)
+// MARK: - 版本诗引 (冷门哈姆雷特夜巡名句)
 
 private struct VersionEpigraph: View {
     @State private var isExpanded = false
@@ -347,7 +335,7 @@ private struct VersionEpigraph: View {
                             .fill(Color(hex: "E9C46A").opacity(0.5))
                             .frame(width: 20, height: 1.5)
 
-                        Text("William Shakespeare · Macbeth, Act III, Scene II")
+                        Text("William Shakespeare · Hamlet, Act I, Scene I")
                             .font(.system(size: 10, weight: .semibold, design: .serif))
                             .foregroundStyle(Color(hex: "E9C46A"))
                             .tracking(1.5)
@@ -356,14 +344,14 @@ private struct VersionEpigraph: View {
                     }
 
                     // 英文冷门引文原文
-                    Text("“Light thickens; and the crow makes wing to the rooky wood:\nGood things of day begin to droop and drowse;\nWhiles night's black agents to their preys do rouse.”")
+                    Text("“For this relief much thanks: 'tis bitter cold,\nAnd I am sick at heart. Not a mouse stirring...\nIf you do meet Horatio and Marcellus, bid them make haste.”")
                         .font(.system(size: 13, weight: .medium, design: .serif))
                         .foregroundStyle(Color(hex: "E9C46A").opacity(0.9))
                         .italic()
                         .lineSpacing(5)
 
                     // 中文冷门引文翻译
-                    Text("『天色渐沉，乌鸦飞向白桦树林；昼间万物尽皆沉睡委顿，唯夜之暗黑信使纷纷暴起，寻觅猎物。』")
+                    Text("『承蒙解换，深表谢意；天寒彻骨，我心惨凄。四下肃静，无一小鼠动弹……倘若遇见赫拉修与马西路斯，我那同班夜巡之同僚，烦请催促他们快来。』")
                         .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                         .lineSpacing(3.5)
@@ -406,9 +394,9 @@ private struct VersionEpigraph: View {
                         .foregroundStyle(Color(hex: "E9C46A"))
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("• 戏剧情境（第三幕第二场 · 黄昏独白）：在刺杀邓肯国王登基后，麦克白深陷疑网与无眠折磨。当黄昏落日余晖消逝，麦克白向麦克白夫人说出了这句极具暗黑诗意的冷门独白。乌鸦归林、万物委顿昏睡，而独属于夜间的守护信使却在寂静中悄然复苏。")
+                        Text("• 戏剧情境（第一幕第一场 · 极寒夜巡）：在艾尔西诺城堡栈桥上，深夜极寒彻骨。夜巡卫兵弗朗西斯科向过来换岗的巴纳多说出了这句凄冷而忠诚的回答。天地肃静，连老鼠都不曾动弹。在黑夜中与同僚守护着城邦安全。")
 
-                        Text("• 后续发展：随后夜幕降临，麦克白派出的黑夜信使在荒野完成了命运的伏击。而麦克白自己则在宴会上目睹了班柯的幻影，最终走向身死国灭的毁灭悲剧。")
+                        Text("• 后续发展：随后赫拉修与马西路斯赶到栈桥，同班夜巡卫兵在茫茫夜雾中目睹了老国王先魂的重现，引出了全剧震惊世界的复仇史诗序幕。")
                     }
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
@@ -418,7 +406,7 @@ private struct VersionEpigraph: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "E9C46A"))
 
-                    Text("莎士比亚在此处借‘夜之暗黑信使’（night's black agents）展现了黄昏交替时的神秘秩序。在现代 Mac 操作系统与 YumikoToys 系统架构中，这展现了绝妙的防休眠隐喻：当 MacBook 屏幕熄灭、昼间用户操作归于静止委顿之际，YumikoToys 防休眠阵列与后台 AI 炼金进程如同夜间忠诚的信使，在暗夜中持续守护任务与系统的安全运转。")
+                    Text("莎士比亚借‘同班夜巡之同僚’（The rivals of my watch）展现了黑暗深处交接岗哨的默契与忠诚。在现代 Mac 操作系统与 YumikoToys 系统架构中，这展现了极佳的防休眠隐喻：当 MacBook 屏幕熄灭、四下寂静委顿之际，YumikoToys 防休眠守卫如同班夜巡的同僚，在寂静深夜中默默伫立与交接，持续守护后台 AI 炼金阵与渲染进程。")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .lineSpacing(3.5)

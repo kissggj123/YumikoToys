@@ -41,7 +41,7 @@ enum AppConfig {
         if let date = Bundle.main.infoDictionary?["CFBuildDate"] as? String {
             return date
         }
-        return "2026-08-15"
+        return "2026-08-16"
     }
 }
 
