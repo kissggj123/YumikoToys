@@ -335,7 +335,7 @@ private struct VersionEpigraph: View {
                             .fill(Color(hex: "E9C46A").opacity(0.5))
                             .frame(width: 20, height: 1.5)
 
-                        Text("William Shakespeare · Hamlet, Act I, Scene I")
+                        Text("William Shakespeare · Macbeth, Act III, Scene II")
                             .font(.system(size: 10, weight: .semibold, design: .serif))
                             .foregroundStyle(Color(hex: "E9C46A"))
                             .tracking(1.5)
@@ -344,14 +344,14 @@ private struct VersionEpigraph: View {
                     }
 
                     // 英文冷门引文原文
-                    Text("“For this relief much thanks: 'tis bitter cold,\nAnd I am sick at heart. Not a mouse stirring...\nIf you do meet Horatio and Marcellus, bid them make haste.”")
+                    Text("“Light thickens; and the crow makes wing to the rooky wood:\nGood things of day begin to droop and drowse;\nWhiles night's black agents to their preys do rouse.”")
                         .font(.system(size: 13, weight: .medium, design: .serif))
                         .foregroundStyle(Color(hex: "E9C46A").opacity(0.9))
                         .italic()
                         .lineSpacing(5)
 
                     // 中文冷门引文翻译
-                    Text("『承蒙解换，深表谢意；天寒彻骨，我心惨凄。四下肃静，无一小鼠动弹……倘若遇见赫拉修与马西路斯，我那同班夜巡之同僚，烦请催促他们快来。』")
+                    Text("『天色渐沉，乌鸦飞向白桦树林；昼间万物尽皆沉睡委顿，唯夜之暗黑信使纷纷暴起，寻觅猎物。』")
                         .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                         .lineSpacing(3.5)
@@ -394,9 +394,9 @@ private struct VersionEpigraph: View {
                         .foregroundStyle(Color(hex: "E9C46A"))
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("• 戏剧情境（第一幕第一场 · 极寒夜巡）：在艾尔西诺城堡栈桥上，深夜极寒彻骨。夜巡卫兵弗朗西斯科向过来换岗的巴纳多说出了这句凄冷而忠诚的回答。天地肃静，连老鼠都不曾动弹。在黑夜中与同僚守护着城邦安全。")
+                        Text("• 戏剧情境（第三幕第二场 · 黄昏独白）：在刺杀邓肯国王登基后，麦克白深陷疑网与无眠折磨。当黄昏落日余晖消逝，麦克白向麦克白夫人说出了这句极具暗黑诗意的冷门独白。乌鸦归林、万物委顿昏睡，而独属于夜间的守护信使却在寂静中悄然复苏。")
 
-                        Text("• 后续发展：随后赫拉修与马西路斯赶到栈桥，同班夜巡卫兵在茫茫夜雾中目睹了老国王先魂的重现，引出了全剧震惊世界的复仇史诗序幕。")
+                        Text("• 后续发展：随后夜幕降临，麦克白派出的黑夜信使在荒野完成了命运的伏击。而麦克白自己则在宴会上目睹了班柯的幻影，最终走向身死国灭的毁灭悲剧。")
                     }
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
@@ -406,7 +406,7 @@ private struct VersionEpigraph: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: "E9C46A"))
 
-                    Text("莎士比亚借‘同班夜巡之同僚’（The rivals of my watch）展现了黑暗深处交接岗哨的默契与忠诚。在现代 Mac 操作系统与 YumikoToys 系统架构中，这展现了极佳的防休眠隐喻：当 MacBook 屏幕熄灭、四下寂静委顿之际，YumikoToys 防休眠守卫如同班夜巡的同僚，在寂静深夜中默默伫立与交接，持续守护后台 AI 炼金阵与渲染进程。")
+                    Text("莎士比亚在此处借‘夜之暗黑信使’（night's black agents）展现了黄昏交替时的神秘秩序。在现代 Mac 操作系统与 YumikoToys 系统架构中，这展现了绝妙的防休眠隐喻：当 MacBook 屏幕熄灭、昼间用户操作归于静止委顿之际，YumikoToys 防休眠阵列与后台 AI 炼金进程如同夜间忠诚的信使，在暗夜中持续守护任务与系统的安全运转。")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .lineSpacing(3.5)
