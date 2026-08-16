@@ -167,6 +167,7 @@ struct PetPlaygroundOverlayView: View {
                             .font(.system(size: 9.5, weight: .bold, design: .monospaced))
                             .foregroundStyle(.white)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                         
                         Spacer()
                         
@@ -292,7 +293,7 @@ struct PetPlaygroundOverlayView: View {
                     }
                 }
                 .padding(8)
-                .frame(width: 360)
+                .frame(width: 440)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.black.opacity(0.88))
@@ -468,14 +469,20 @@ final class PetNode: SKNode {
     }
 
     func updateHUDWorldPosition() {
-        guard let scene = self.scene else { return }
-        if hudNode.parent == nil {
+        guard let scene = self.scene else {
+            hudNode.removeFromParent()
+            return
+        }
+        if hudNode.parent !== scene {
+            hudNode.removeFromParent()
             scene.addChild(hudNode)
         }
         hudNode.position = CGPoint(x: self.position.x, y: self.position.y + 78.0)
         hudNode.zRotation = 0.0
         hudNode.xScale = 1.0
         hudNode.yScale = 1.0
+        hudNode.alpha = self.alpha
+        hudNode.isHidden = self.isHidden
     }
 
     /// 马里奥“信仰之跃”抛物线跳跃物理引擎 (Mario Leap of Faith Parabola Physics)
@@ -557,6 +564,7 @@ final class PetDesktopScene: SKScene {
         if draggedPetNode === node {
             draggedPetNode = nil
         }
+        node.hudNode.removeFromParent()
         node.removeFromParent()
         petNodes.removeAll(where: { $0 === node })
     }
@@ -676,6 +684,9 @@ final class PetDesktopScene: SKScene {
         self.screenCount = screenCount
         backgroundColor = .clear
         scaleMode = .resizeFill
+        for node in petNodes {
+            node.hudNode.removeFromParent()
+        }
         removeAllChildren()
         petNodes.removeAll()
 
@@ -1426,8 +1437,8 @@ final class PetPlaygroundService: ObservableObject {
 
             // 2. 右上角微型 NPU Telemetry 推理框面板：支持鼠标按住背景自由拖拽移动与交互穿透
             if screenIndex == 0 {
-                let hudWidth: CGFloat = 360
-                let hudHeight: CGFloat = 200
+                let hudWidth: CGFloat = 440
+                let hudHeight: CGFloat = 220
                 let hudFrame = NSRect(
                     x: screen.frame.maxX - hudWidth - 20,
                     y: screen.frame.maxY - hudHeight - 35,
