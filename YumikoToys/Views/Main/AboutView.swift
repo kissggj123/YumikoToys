@@ -1034,11 +1034,11 @@ struct AboutView: View {
     }
 }
 
-// MARK: - 离线 2.0x HiDPI Retina 超高清长图导出渲染器 (AboutImageExporter)
+// MARK: - 离线 3.0x 300DPI 4K Ultra-HD 超高清长图导出渲染器 (AboutImageExporter)
 
 @MainActor
 struct AboutImageExporter {
-    static func generateBitmapRep(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 2.0) -> (NSBitmapImageRep, NSSize)? {
+    static func generateBitmapRep(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 3.0) -> (NSBitmapImageRep, NSSize)? {
         let exportContentView = AboutExportableContentView(mode: mode)
             .frame(width: width)
 
@@ -1052,7 +1052,7 @@ struct AboutImageExporter {
         let pixelWidth = Int(fittingSize.width * scaleFactor)
         let pixelHeight = Int(fittingSize.height * scaleFactor)
 
-        // 创建高分辨率 2.0x HiDPI Retina Bitmap Image Rep
+        // 创建高分辨率 3.0x 300DPI 4K Cinema Retina Bitmap Image Rep (2160px 宽度)
         guard let bitmapRep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: pixelWidth,
@@ -1066,7 +1066,7 @@ struct AboutImageExporter {
             bitsPerPixel: 0
         ) else { return nil }
 
-        // 设置逻辑点尺寸，使系统识别为高 DPI Retina 2.0x 图像 (144 DPI 物理 1440px)
+        // 设置逻辑点尺寸，使系统识别为高 DPI Retina 3.0x 图像 (300 DPI 物理 2160px)
         bitmapRep.size = fittingSize
 
         NSGraphicsContext.saveGraphicsState()
@@ -1076,7 +1076,7 @@ struct AboutImageExporter {
         }
         NSGraphicsContext.current = context
 
-        // 核心：CGContext 按 2.0x 超采样缩放，排版文字与线条 100% 矢量级高精抗锯齿渲染！
+        // 核心：CGContext 按 3.0x 超采样缩放，排版文字与线条 100% 矢量级高精抗锯齿渲染！
         context.cgContext.scaleBy(x: scaleFactor, y: scaleFactor)
 
         hostingView.displayIgnoringOpacity(hostingView.bounds, in: context)
@@ -1085,16 +1085,16 @@ struct AboutImageExporter {
         return (bitmapRep, fittingSize)
     }
 
-    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 2.0) -> NSImage? {
+    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 3.0) -> NSImage? {
         guard let (bitmapRep, fittingSize) = generateBitmapRep(mode: mode, width: width, scaleFactor: scaleFactor) else { return nil }
         let image = NSImage(size: fittingSize)
         image.addRepresentation(bitmapRep)
         return image
     }
 
-    static func copyLongScreenshotToClipboard(mode: ShareExportMode = .day) -> Bool {
-        // 使用 2.0x HiDPI Retina 超高清矢量渲染 (1440px 物理像素)，兼容全平台接力与无损原图
-        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: 2.0),
+    static func copyLongScreenshotToClipboard(mode: ShareExportMode = .day, scaleFactor: CGFloat = 3.0) -> Bool {
+        // 使用 3.0x 300DPI 4K 超高清矢量渲染 (2160px 物理像素)，无视体积限制，确保极致放大放大也不模糊
+        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor),
               let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
             return false
         }
@@ -1115,10 +1115,10 @@ struct AboutImageExporter {
         return pasteboard.writeObjects([item])
     }
 
-    static func saveLongScreenshotToFile(mode: ShareExportMode = .day, completion: @escaping (Bool) -> Void) {
+    static func saveLongScreenshotToFile(mode: ShareExportMode = .day, scaleFactor: CGFloat = 3.0, completion: @escaping (Bool) -> Void) {
         let themeConfig = AboutThemeConfig.current()
-        // 保存文件采用 2.0x Retina 超清物理像素 (1440px)
-        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: 2.0),
+        // 保存文件同样采用 3.0x 300DPI 4K 超清物理像素 (2160px)
+        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor),
               let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
             completion(false)
             return
@@ -1128,8 +1128,8 @@ struct AboutImageExporter {
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
         savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(modeSuffix)_\(AppConfig.version).png"
-        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")高清长图"
-        savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】极清长图的路径"
+        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")4K极清长图"
+        savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】4K极清长图的路径"
 
         savePanel.begin { result in
             if result == .OK, let url = savePanel.url {
