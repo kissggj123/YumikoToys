@@ -124,31 +124,23 @@ struct PetPlaygroundSpriteView: View {
     }
 }
 
+final class WindowDragNSView: NSView {
+    override func mouseDown(with event: NSEvent) {
+        self.window?.performDrag(with: event)
+    }
+}
+
+struct WindowDragRepresentable: NSViewRepresentable {
+    func makeNSView(context: Context) -> WindowDragNSView {
+        return WindowDragNSView()
+    }
+    func updateNSView(_ nsView: WindowDragNSView, context: Context) {}
+}
+
 struct PetPlaygroundOverlayView: View {
     @ObservedObject private var visionDetector = AppleNeuralVisionDetector.shared
     @State private var isMinimized: Bool = false
     @State private var showCalibrationPanel: Bool = false
-    @State private var dragInitialOrigin: CGPoint? = nil
-
-    private var windowDragGesture: some Gesture {
-        DragGesture(minimumDistance: 1)
-            .onChanged { value in
-                guard let window = NSApp.windows.first(where: { $0 is NPUHUDPanel }) else { return }
-                if dragInitialOrigin == nil {
-                    dragInitialOrigin = window.frame.origin
-                }
-                if let start = dragInitialOrigin {
-                    let newOrigin = CGPoint(
-                        x: start.x + value.translation.width,
-                        y: start.y - value.translation.height
-                    )
-                    window.setFrameOrigin(newOrigin)
-                }
-            }
-            .onEnded { _ in
-                dragInitialOrigin = nil
-            }
-    }
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
@@ -182,7 +174,7 @@ struct PetPlaygroundOverlayView: View {
                             Capsule().stroke(Color.green.opacity(0.55), lineWidth: 1)
                         )
                 )
-                .gesture(windowDragGesture)
+                .background(WindowDragRepresentable())
                 .onTapGesture(count: 2) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         isMinimized = false
@@ -214,7 +206,7 @@ struct PetPlaygroundOverlayView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    .gesture(windowDragGesture)
+                    .background(WindowDragRepresentable())
 
                     // NPU 自学习与手工标记校准控制栏
                     HStack(spacing: 6) {
