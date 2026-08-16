@@ -362,13 +362,6 @@ final class ImageAnalysisService: Sendable {
         request.recognitionLanguages = Self.recognitionLanguages
         request.usesLanguageCorrection = true
 
-        // 绑定 Apple M 芯片 ANE (Neural Engine) / GPU 神经网络硬件加速单元
-        if let npuDevice = VNProcessingDevice.defaultForNPU {
-            request.processingDevice = npuDevice
-        } else if let gpuDevice = VNProcessingDevice.defaultForGPU {
-            request.processingDevice = gpuDevice
-        }
-
         // 处理大图片：限制最大尺寸以节省内存
         let maxDimension: CGFloat = 4096
         let processingImage: CGImage
@@ -650,13 +643,6 @@ final class ImageAnalysisService: Sendable {
 
         let request = VNDetectBarcodesRequest()
         request.symbologies = Self.supportedBarcodeSymbologies as [VNBarcodeSymbology]
-
-        // 绑定 Apple M 芯片 ANE (Neural Engine) / GPU 神经网络硬件加速单元
-        if let npuDevice = VNProcessingDevice.defaultForNPU {
-            request.processingDevice = npuDevice
-        } else if let gpuDevice = VNProcessingDevice.defaultForGPU {
-            request.processingDevice = gpuDevice
-        }
 
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
 
