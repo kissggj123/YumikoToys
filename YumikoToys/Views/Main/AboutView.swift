@@ -2101,26 +2101,26 @@ private struct BrochureShakespeareEasterEggSection: View {
                         )
                 )
 
-                // 3 大萌系特质解构卡片
+                // 麦克白前后幕戏剧剧情脉络解构卡片
                 VStack(spacing: 8) {
                     BrochureEasterEggBadge(
                         icon: "🎭",
-                        title: "戏剧背景 · 幕起黄昏",
-                        desc: "第三幕第二场：刺杀邓肯国王后麦克白深陷无眠折磨，于落日余晖下唤醒夜间守护信使",
+                        title: "前序幕剧情 · 第三幕第一场",
+                        desc: "刺杀邓肯登基后，麦克白深感班柯威胁，在宫殿秘密召见刺客，悬赏策划黑夜荒野伏击",
+                        isNight: isNight
+                    )
+
+                    BrochureEasterEggBadge(
+                        icon: "⚔️",
+                        title: "本幕彩蛋情境 · 第三幕第二场",
+                        desc: "麦克白深陷疑网与无眠折磨，向夫人倾诉恐惧；在落日余晖交替之际唤醒夜之暗黑信使",
                         isNight: isNight
                     )
 
                     BrochureEasterEggBadge(
                         icon: "🏰",
-                        title: "系统隐喻 · 夜巡守卫",
-                        desc: "MacBook 屏幕熄灭、万物沉睡之际，YumikoToys 防休眠守卫在黑夜中默默守护计算",
-                        isNight: isNight
-                    )
-
-                    BrochureEasterEggBadge(
-                        icon: "🔮",
-                        title: "动态跟随 · 罗德岛印记",
-                        desc: "全自动感知当前版本 Build \(AppConfig.buildNumber)，将莎翁史诗融为横版专属符文",
+                        title: "下一幕剧情 · 第三幕第三/四场",
+                        desc: "黑夜信使荒野伏杀班柯；宴会上班柯幽灵现形狂嚎惊恐，命运终走向不可逆转的毁灭",
                         isNight: isNight
                     )
                 }
