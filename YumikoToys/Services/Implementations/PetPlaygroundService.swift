@@ -458,6 +458,7 @@ final class PetNode: SKNode {
         }
 
         breathingPhase += Double(dt) * 1.5
+        if breathingPhase > .pi * 2 { breathingPhase -= .pi * 2 }
         let sinusArrhythmia = sin(breathingPhase) * 2.2
 
         let targetBaseBPM: Double
@@ -489,9 +490,17 @@ final class PetNode: SKNode {
         }
         motionData.heartRate = max(60, min(180, Int(round(physioBPM))))
 
-        updateHUDTextAndDynamicLayout()
+        let newBPM = max(60, min(180, Int(round(physioBPM))))
+        if newBPM != motionData.heartRate || motionData.steps != _lastHUDSteps {
+            _lastHUDSteps = motionData.steps
+            updateHUDTextAndDynamicLayout()
+        }
         updateHUDWorldPosition()
     }
+
+    // Cache fields to prevent per-frame CGPath allocation
+    private var _lastHUDSteps: Int = -1
+    private var _lastHUDBgWidth: CGFloat = 0
 
     private func updateHUDTextAndDynamicLayout() {
         let stepStr = "\(motionData.steps)"
@@ -506,8 +515,12 @@ final class PetNode: SKNode {
         let bgWidth: CGFloat = max(168.0, 142.0 + extraStepsWidth + extraKcalWidth)
         let bgHeight: CGFloat = 22.0
 
-        let bgRect = CGRect(x: -bgWidth / 2, y: -bgHeight / 2, width: bgWidth, height: bgHeight)
-        self.hudBackground.path = CGPath(roundedRect: bgRect, cornerWidth: 11, cornerHeight: 11, transform: nil)
+        // Only rebuild CGPath when width actually changes (saves allocs when digits stay same)
+        if abs(bgWidth - _lastHUDBgWidth) > 0.5 {
+            _lastHUDBgWidth = bgWidth
+            let bgRect = CGRect(x: -bgWidth / 2, y: -bgHeight / 2, width: bgWidth, height: bgHeight)
+            self.hudBackground.path = CGPath(roundedRect: bgRect, cornerWidth: 11, cornerHeight: 11, transform: nil)
+        }
 
         let margin: CGFloat = 12.0
         bpmLabel.position = CGPoint(x: -bgWidth / 2 + margin, y: 0)
@@ -532,9 +545,10 @@ final class PetNode: SKNode {
         hudNode.isHidden = self.isHidden
     }
 
-    /// 马里奥“信仰之跃”抛物线跳跃物理引擎 (Mario Leap of Faith Parabola Physics)
+    /// 马里奥"信仰之跃"抛物线跳跃物理引擎 (Mario Leap of Faith Parabola Physics)
     func performMarioLeap(to targetPoint: CGPoint, targetState: MotionState) {
         removeAllActions()
+        spriteNode.removeAllActions() // Also cancel walk anim on child sprite node (MINOR-2)
         isStateLocked = true
 
         let startPos = self.position
@@ -809,12 +823,15 @@ final class PetDesktopScene: SKScene {
     }
 
     private var inspectorLayerNode: SKNode?
+    // Dirty-flag: only rebuild inspector nodes when window set actually changes (PERF-4)
+    private var _lastInspectorWindowIDs: [CGWindowID] = []
 
     /// 类似浏览器开发者工具 (Inspect Element) 的动态 NPU 神经网络识别框与虚拟物理透明墙 Overlay
     func updateDevToolsInspectorOverlays(windows: [WindowObstacle], isEnabled: Bool) {
         if !isEnabled {
             inspectorLayerNode?.removeFromParent()
             inspectorLayerNode = nil
+            _lastInspectorWindowIDs = []
             return
         }
 
@@ -826,6 +843,12 @@ final class PetDesktopScene: SKScene {
         }
 
         guard let layer = inspectorLayerNode else { return }
+
+        // Skip expensive full rebuild if the window IDs haven't changed
+        let currentIDs = windows.map { $0.windowID }
+        guard currentIDs != _lastInspectorWindowIDs else { return }
+        _lastInspectorWindowIDs = currentIDs
+
         layer.removeAllChildren()
 
         for win in windows {
@@ -964,7 +987,9 @@ final class PetDesktopScene: SKScene {
             var pos = petNode.position
 
             // 全系统 Universal UI 控件、媒体进度条与浏览器跑酷/控件趴卧动作适配
-            for window in mainWindows {
+            // BUG-6 fix: use labeled break so only the FIRST matching control per pet fires
+            let actionKey = "ctrlInteract_\(petNode.character.id)"
+            outerLoop: for window in mainWindows {
                 for ledge in window.controlLedges {
                     let btnRect = ledge.rect
                     if abs(pos.x - btnRect.midX) < 45 && abs(pos.y - btnRect.midY) < 40 {
@@ -986,7 +1011,7 @@ final class PetDesktopScene: SKScene {
                                 petNode.spriteNode.zRotation = 0.0
                                 petNode.currentPetState = .walkingRoof(window)
                             }
-                            petNode.run(SKAction.sequence([hopOnTop, snuggleTilt, restSleep, resetTilt, unlock]))
+                            petNode.run(SKAction.sequence([hopOnTop, snuggleTilt, restSleep, resetTilt, unlock]), withKey: actionKey)
                         } else {
                             switch ledge.type {
                             case .button, .searchField:
@@ -1001,13 +1026,12 @@ final class PetDesktopScene: SKScene {
                                     petNode.spriteNode.zRotation = 0.0
                                     petNode.currentPetState = .walkingRoof(window)
                                 }
-                                petNode.run(SKAction.sequence([hopToButton, crawlAcross, wiggle, resetRot, unlock]))
+                                petNode.run(SKAction.sequence([hopToButton, crawlAcross, wiggle, resetRot, unlock]), withKey: actionKey)
 
                             case .textField, .textArea:
                                 petNode.currentPetState = .slidingTextBox(window, ledge)
                                 let startPos = CGPoint(x: btnRect.minX + 15.0, y: btnRect.maxY + 15.0)
                                 let endPos = CGPoint(x: btnRect.maxX - 15.0, y: btnRect.maxY + 15.0)
-                                
                                 let stepOntoText = SKAction.move(to: startPos, duration: 0.12)
                                 let slideAlongText = SKAction.move(to: endPos, duration: 0.38)
                                 let leapToRoof = SKAction.move(to: CGPoint(x: endPos.x, y: window.topEdgeY + 45.0), duration: 0.2)
@@ -1017,7 +1041,7 @@ final class PetDesktopScene: SKScene {
                                     petNode.spriteNode.zRotation = 0.0
                                     petNode.currentPetState = .walkingRoof(window)
                                 }
-                                petNode.run(SKAction.sequence([stepOntoText, slideAlongText, leapToRoof, unlock]))
+                                petNode.run(SKAction.sequence([stepOntoText, slideAlongText, leapToRoof, unlock]), withKey: actionKey)
 
                             case .progressBar:
                                 petNode.currentPetState = .grindingProgressBar(window, ledge)
@@ -1034,7 +1058,7 @@ final class PetDesktopScene: SKScene {
                                     petNode.spriteNode.zRotation = 0.0
                                     petNode.currentPetState = .walkingRoof(window)
                                 }
-                                petNode.run(SKAction.sequence([stepOntoRail, tiltSkate, railGrind, resetTilt, leapToRoof, unlock]))
+                                petNode.run(SKAction.sequence([stepOntoRail, tiltSkate, railGrind, resetTilt, leapToRoof, unlock]), withKey: actionKey)
 
                             case .addressBar, .tabBar:
                                 petNode.currentPetState = .sprintingBrowserTab(window, ledge)
@@ -1049,10 +1073,10 @@ final class PetDesktopScene: SKScene {
                                     petNode.spriteNode.zRotation = 0.0
                                     petNode.currentPetState = .walkingRoof(window)
                                 }
-                                petNode.run(SKAction.sequence([stepOntoBar, tabSprint, leapToRoof, unlock]))
+                                petNode.run(SKAction.sequence([stepOntoBar, tabSprint, leapToRoof, unlock]), withKey: actionKey)
                             }
                         }
-                        continue
+                        break outerLoop  // First match wins — prevents multi-window action stacking
                     }
                 }
             }
@@ -1469,6 +1493,8 @@ final class PetPlaygroundService: ObservableObject {
 
         let screens = NSScreen.screens
         let totalScreens = screens.count
+        // BUG-4: screenCount=0 on display disconnect → would cause divide-by-zero in setupScene
+        guard totalScreens > 0 else { return }
 
         for (screenIndex, screen) in screens.enumerated() {
             let lane = Self.movementLane(for: screen)
