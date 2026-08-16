@@ -127,6 +127,7 @@ struct PetPlaygroundSpriteView: View {
 struct PetPlaygroundOverlayView: View {
     @ObservedObject private var visionDetector = AppleNeuralVisionDetector.shared
     @State private var isMinimized: Bool = false
+    @State private var showCalibrationPanel: Bool = false
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
@@ -158,13 +159,14 @@ struct PetPlaygroundOverlayView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
                         Image(systemName: "cpu.fill")
                             .foregroundStyle(.green)
                         Text(visionDetector.npuStatusText)
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .font(.system(size: 9.5, weight: .bold, design: .monospaced))
                             .foregroundStyle(.white)
+                            .lineLimit(1)
                         
                         Spacer()
                         
@@ -180,6 +182,88 @@ struct PetPlaygroundOverlayView: View {
                                 .background(Circle().fill(Color.white.opacity(0.2)))
                         }
                         .buttonStyle(.plain)
+                    }
+
+                    // NPU 自学习与手工标记校准控制栏
+                    HStack(spacing: 6) {
+                        Button {
+                            visionDetector.toggleSelfLearning()
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: visionDetector.isSelfLearningEnabled ? "checkmark.circle.fill" : "circle")
+                                Text(visionDetector.isSelfLearningEnabled ? "自学习:开" : "自学习:关")
+                            }
+                            .font(.system(size: 9.5, weight: .semibold))
+                            .foregroundStyle(visionDetector.isSelfLearningEnabled ? .green : .gray)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Capsule().fill(Color.white.opacity(0.12)))
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showCalibrationPanel.toggle()
+                            }
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "scope")
+                                Text("🎯 手工标记校准")
+                            }
+                            .font(.system(size: 9.5, weight: .semibold))
+                            .foregroundStyle(.cyan)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Capsule().fill(Color.white.opacity(0.12)))
+                        }
+                        .buttonStyle(.plain)
+
+                        Spacer()
+
+                        Button {
+                            visionDetector.resetCalibrationCache()
+                        } label: {
+                            HStack(spacing: 2) {
+                                Image(systemName: "arrow.counterclockwise")
+                                Text("重置校准")
+                            }
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 3)
+                            .background(Capsule().fill(Color.white.opacity(0.1)))
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if showCalibrationPanel {
+                        HStack(spacing: 6) {
+                            Text("📍 偏移:")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(.white.opacity(0.8))
+
+                            Button("X-5") { visionDetector.adjustManualCalibration(deltaX: -5, deltaY: 0) }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.cyan)
+                                .font(.system(size: 8.5))
+
+                            Button("X+5") { visionDetector.adjustManualCalibration(deltaX: 5, deltaY: 0) }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.cyan)
+                                .font(.system(size: 8.5))
+
+                            Button("Y-5") { visionDetector.adjustManualCalibration(deltaX: 0, deltaY: -5) }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.green)
+                                .font(.system(size: 8.5))
+
+                            Button("Y+5") { visionDetector.adjustManualCalibration(deltaX: 0, deltaY: 5) }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.green)
+                                .font(.system(size: 8.5))
+                        }
+                        .padding(4)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.08)))
                     }
 
                     Divider()
@@ -208,10 +292,10 @@ struct PetPlaygroundOverlayView: View {
                     }
                 }
                 .padding(8)
-                .frame(width: 340)
+                .frame(width: 360)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.85))
+                        .fill(Color.black.opacity(0.88))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color.green.opacity(0.45), lineWidth: 1)
@@ -456,6 +540,34 @@ final class PetDesktopScene: SKScene {
     private var draggedPetNode: PetNode?
     private var dragOffset: CGPoint = .zero
 
+    var isDraggingPet: Bool {
+        draggedPetNode != nil
+    }
+
+    var activeTargetScreen: NSScreen? {
+        targetScreen
+    }
+
+    func setDraggedPetNode(_ node: PetNode?, dragOffset: CGPoint = .zero) {
+        self.draggedPetNode = node
+        self.dragOffset = dragOffset
+    }
+
+    func removePetNode(_ node: PetNode) {
+        if draggedPetNode === node {
+            draggedPetNode = nil
+        }
+        node.removeFromParent()
+        petNodes.removeAll(where: { $0 === node })
+    }
+
+    func addPetNode(_ node: PetNode) {
+        if !petNodes.contains(where: { $0 === node }) {
+            petNodes.append(node)
+            addChild(node)
+        }
+    }
+
     func hitTestPetNode(at point: CGPoint) -> PetNode? {
         for petNode in petNodes {
             let pos = petNode.position
@@ -480,6 +592,14 @@ final class PetDesktopScene: SKScene {
     func handleMouseDragged(to point: CGPoint) {
         guard let petNode = draggedPetNode else { return }
         petNode.position = CGPoint(x: point.x - dragOffset.x, y: point.y - dragOffset.y)
+
+        // 跨屏拖拽实测检测 (Cross-Screen Drag Transfer):
+        let globalMouse = NSEvent.mouseLocation
+        if let currentScreen = targetScreen, !NSPointInRect(globalMouse, currentScreen.frame) {
+            if let destScreen = NSScreen.screens.first(where: { NSPointInRect(globalMouse, $0.frame) }) {
+                PetPlaygroundService.shared.transferDraggedPet(petNode, fromScene: self, toScreen: destScreen, globalMouse: globalMouse)
+            }
+        }
     }
 
     func handleMouseUp(at point: CGPoint) {
@@ -559,12 +679,13 @@ final class PetDesktopScene: SKScene {
         removeAllChildren()
         petNodes.removeAll()
 
-        let allCharacters = PetCharacter.all
+        let disabledSet = Set(DependencyContainer.shared.settingsService.settings.disabledPetCharacters)
+        let enabledCharacters = PetCharacter.all.filter { !disabledSet.contains($0.rawValue) }
         let assignedCharacters: [PetCharacter]
-        if screenCount > 1 {
-            assignedCharacters = allCharacters.enumerated().filter { $0.offset % screenCount == screenIndex }.map { $0.element }
+        if screenCount > 1 && !enabledCharacters.isEmpty {
+            assignedCharacters = enabledCharacters.enumerated().filter { $0.offset % screenCount == screenIndex }.map { $0.element }
         } else {
-            assignedCharacters = allCharacters
+            assignedCharacters = enabledCharacters
         }
 
         let screenWidth = max(lane.maxX - lane.minX, 200)
@@ -880,9 +1001,19 @@ final class PetDesktopScene: SKScene {
                 pos.y = dockTopY
 
                 if pos.x >= lane.maxX - 20 {
+                    let frame = targetScreen.frame
+                    if let rightScreen = NSScreen.screens.first(where: { abs($0.frame.minX - frame.maxX) < 60 }) {
+                        PetPlaygroundService.shared.transferWalkingPet(petNode, fromScene: self, toScreen: rightScreen, enteringLeftEdge: true)
+                        return
+                    }
                     pos.x = lane.maxX - 20
                     petNode.spriteNode.xScale = 1.0
                 } else if pos.x <= lane.minX + 20 {
+                    let frame = targetScreen.frame
+                    if let leftScreen = NSScreen.screens.first(where: { abs($0.frame.maxX - frame.minX) < 60 }) {
+                        PetPlaygroundService.shared.transferWalkingPet(petNode, fromScene: self, toScreen: leftScreen, enteringLeftEdge: false)
+                        return
+                    }
                     pos.x = lane.minX + 20
                     petNode.spriteNode.xScale = -1.0
                 }
@@ -1148,6 +1279,46 @@ final class PetPlaygroundService: ObservableObject {
         scenes.forEach { $0.resetPositions() }
     }
 
+    func reloadPets() {
+        if isEnabled {
+            installOverlays()
+        }
+    }
+
+    func transferDraggedPet(_ petNode: PetNode, fromScene sourceScene: PetDesktopScene, toScreen destScreen: NSScreen, globalMouse: NSPoint) {
+        guard let destScene = scenes.first(where: { $0.activeTargetScreen === destScreen }) else { return }
+        sourceScene.removePetNode(petNode)
+        
+        let localX = globalMouse.x - destScreen.frame.minX
+        let localY = globalMouse.y - destScreen.frame.minY
+        
+        petNode.position = CGPoint(x: localX, y: localY)
+        petNode.zRotation = 0.0
+        petNode.spriteNode.zRotation = 0.0
+        petNode.isStateLocked = true
+        petNode.isBeingDragged = true
+        
+        destScene.addPetNode(petNode)
+        destScene.setDraggedPetNode(petNode, dragOffset: .zero)
+    }
+
+    func transferWalkingPet(_ petNode: PetNode, fromScene sourceScene: PetDesktopScene, toScreen destScreen: NSScreen, enteringLeftEdge: Bool) {
+        guard let destScene = scenes.first(where: { $0.activeTargetScreen === destScreen }) else { return }
+        sourceScene.removePetNode(petNode)
+
+        let lane = Self.movementLane(for: destScreen)
+        let groundY = DesktopWindowDetector.shared.dockTopY + 45.0
+        let startX = enteringLeftEdge ? lane.minX + 25 : lane.maxX - 25
+
+        petNode.position = CGPoint(x: startX, y: groundY)
+        petNode.zRotation = 0.0
+        petNode.spriteNode.zRotation = 0.0
+        petNode.isStateLocked = false
+        petNode.currentPetState = .onGround
+
+        destScene.addPetNode(petNode)
+    }
+
     private func startPlayground() {
         isEnabled = true
         PetPlaygroundEngine.shared.start()
@@ -1175,18 +1346,15 @@ final class PetPlaygroundService: ObservableObject {
             Task { @MainActor in
                 guard let self = self, self.isEnabled else { return }
                 let mouseLocation = NSEvent.mouseLocation
-                var isNearAnyPet = false
-                for scene in self.scenes {
-                    if scene.isPetNear(screenPoint: mouseLocation) {
-                        isNearAnyPet = true
-                        break
-                    }
-                }
-
-                // hitTest 在 PetInteractiveSKView 中精准处理穿透，无需全屏翻转 ignoresMouseEvents 导致界面屏蔽
-                for panel in self.overlays {
-                    if panel.ignoresMouseEvents != false {
-                        panel.ignoresMouseEvents = false
+                
+                for (idx, panel) in self.overlays.enumerated() {
+                    guard self.scenes.indices.contains(idx) else { continue }
+                    let scene = self.scenes[idx]
+                    let isNear = scene.isPetNear(screenPoint: mouseLocation)
+                    let shouldCapture = isNear || scene.isDraggingPet
+                    
+                    if panel.ignoresMouseEvents != !shouldCapture {
+                        panel.ignoresMouseEvents = !shouldCapture
                     }
                 }
             }
@@ -1234,7 +1402,7 @@ final class PetPlaygroundService: ObservableObject {
             petPanel.backgroundColor = .clear
             petPanel.level = .floating
             petPanel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-            petPanel.ignoresMouseEvents = false
+            petPanel.ignoresMouseEvents = true
             petPanel.hasShadow = false
             petPanel.hidesOnDeactivate = false
             petPanel.isReleasedWhenClosed = false

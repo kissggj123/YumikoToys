@@ -1947,6 +1947,43 @@ extension SettingsView {
             )
 
             if viewModel.isPetPlaygroundEnabled {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.crop.rectangle.stack.fill")
+                            .foregroundStyle(Color(hex: "A78BFA"))
+                        Text("🐾 桌宠干员角色管理（点击启用 / 隐藏角色）")
+                            .font(.system(size: 13, weight: .bold))
+                    }
+
+                    HStack(spacing: 8) {
+                        ForEach(PetCharacter.allCases) { character in
+                            let isEnabled = viewModel.isPetCharacterEnabled(character)
+                            Button {
+                                viewModel.togglePetCharacter(character)
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: isEnabled ? "checkmark.circle.fill" : "circle")
+                                    Text(character.displayName)
+                                }
+                                .font(.system(size: 12, weight: .medium))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule()
+                                        .fill(isEnabled ? Color.purple.opacity(0.2) : Color.gray.opacity(0.12))
+                                )
+                                .overlay(
+                                    Capsule()
+                                        .stroke(isEnabled ? Color.purple.opacity(0.6) : Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                                .foregroundStyle(isEnabled ? .primary : .secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+
                 HStack(spacing: 12) {
                     Button(action: viewModel.togglePausePets) {
                         Label("暂停 / 继续", systemImage: "pause.fill")
@@ -4329,6 +4366,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var isPetPlaygroundEnabled: Bool = false
     @Published var isPetTouchBarEnabled: Bool = true
     @Published var showANEVisionInspector: Bool = false
+    @Published var disabledPetCharacters: [String] = []
 
     @Published var activeAssertionOwner: String = "系统准备就绪 (无第三方程序接管)"
     @Published var sleepGuardWhitelist: [String] = []
@@ -4417,6 +4455,7 @@ final class SettingsViewModel: ObservableObject {
         let settings = container.settingsService.settings
         isPetTouchBarEnabled = settings.isPetTouchBarEnabled
         showANEVisionInspector = settings.showANEVisionInspector
+        disabledPetCharacters = settings.disabledPetCharacters
         selectedFont = settings.selectedFont
         selectedIconStyle = settings.selectedIconStyle
         statusBarIconStyle = settings.statusBarIconStyle
@@ -4833,6 +4872,22 @@ final class SettingsViewModel: ObservableObject {
         settings.showANEVisionInspector = enabled
         container.settingsService.updateSettings(settings)
         LoggerService.shared.info("ANEVisionInspector toggled to: \(enabled)")
+    }
+
+    func isPetCharacterEnabled(_ character: PetCharacter) -> Bool {
+        !disabledPetCharacters.contains(character.rawValue)
+    }
+
+    func togglePetCharacter(_ character: PetCharacter) {
+        if disabledPetCharacters.contains(character.rawValue) {
+            disabledPetCharacters.removeAll(where: { $0 == character.rawValue })
+        } else {
+            disabledPetCharacters.append(character.rawValue)
+        }
+        var settings = container.settingsService.settings
+        settings.disabledPetCharacters = disabledPetCharacters
+        container.settingsService.updateSettings(settings)
+        PetPlaygroundService.shared.reloadPets()
     }
 
     func togglePausePets() {

@@ -550,6 +550,10 @@ struct AppSettings: Codable, Sendable {
     var isPreventSleepEnabled: Bool
     var autoDisableSleepOnLaunch: Bool
     var isPetPlaygroundEnabled: Bool
+    var disabledPetCharacters: [String]
+    var npuSelfLearningEnabled: Bool
+    var npuManualCalibrationXOffset: Double
+    var npuManualCalibrationYOffset: Double
     var isPetTouchBarEnabled: Bool
     var isLaunchAtLoginEnabled: Bool
     var showStatusBarIcon: Bool
@@ -659,6 +663,10 @@ struct AppSettings: Codable, Sendable {
         isPreventSleepEnabled: Bool = false,
         autoDisableSleepOnLaunch: Bool = false,
         isPetPlaygroundEnabled: Bool = false,
+        disabledPetCharacters: [String] = [],
+        npuSelfLearningEnabled: Bool = true,
+        npuManualCalibrationXOffset: Double = 0.0,
+        npuManualCalibrationYOffset: Double = 0.0,
         showANEVisionInspector: Bool = false,
         isPetTouchBarEnabled: Bool = true,
         isLaunchAtLoginEnabled: Bool = false,
@@ -733,6 +741,10 @@ struct AppSettings: Codable, Sendable {
         self.isPreventSleepEnabled = isPreventSleepEnabled
         self.autoDisableSleepOnLaunch = autoDisableSleepOnLaunch
         self.isPetPlaygroundEnabled = isPetPlaygroundEnabled
+        self.disabledPetCharacters = disabledPetCharacters
+        self.npuSelfLearningEnabled = npuSelfLearningEnabled
+        self.npuManualCalibrationXOffset = npuManualCalibrationXOffset
+        self.npuManualCalibrationYOffset = npuManualCalibrationYOffset
         self.showANEVisionInspector = showANEVisionInspector
         self.sleepGuardWhitelist = sleepGuardWhitelist
         self.isPetTouchBarEnabled = isPetTouchBarEnabled
@@ -815,6 +827,10 @@ struct AppSettings: Codable, Sendable {
         isPreventSleepEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPreventSleepEnabled) ?? false
         autoDisableSleepOnLaunch = try container.decodeIfPresent(Bool.self, forKey: .autoDisableSleepOnLaunch) ?? false
         isPetPlaygroundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPetPlaygroundEnabled) ?? false
+        disabledPetCharacters = try container.decodeIfPresent([String].self, forKey: .disabledPetCharacters) ?? []
+        npuSelfLearningEnabled = try container.decodeIfPresent(Bool.self, forKey: .npuSelfLearningEnabled) ?? true
+        npuManualCalibrationXOffset = try container.decodeIfPresent(Double.self, forKey: .npuManualCalibrationXOffset) ?? 0.0
+        npuManualCalibrationYOffset = try container.decodeIfPresent(Double.self, forKey: .npuManualCalibrationYOffset) ?? 0.0
         showANEVisionInspector = try container.decodeIfPresent(Bool.self, forKey: .showANEVisionInspector) ?? false
         sleepGuardWhitelist = try container.decodeIfPresent([String].self, forKey: .sleepGuardWhitelist) ?? ["antigravity", "trae", "xcodebuild", "code", "git", "ffmpeg", "rsync"]
         isPetTouchBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .isPetTouchBarEnabled) ?? true

@@ -31,7 +31,10 @@ final class AppleNeuralVisionDetector: ObservableObject {
 
     @Published private(set) var detectedEdges: [VisionPlatformEdge] = []
     @Published private(set) var reasoningLogs: [String] = []
-    @Published private(set) var npuStatusText: String = "🧠 Apple Neural Engine (ANE v3) | 自学习平滑自校准: 活跃 | 延时: 0.8ms"
+    @Published private(set) var npuStatusText: String = "🧠 ANE v3 NPU 自学习校准 | 信任图层: 0个 | 智能过滤: 开启"
+    @Published var isSelfLearningEnabled: Bool = true
+    @Published var manualXOffset: CGFloat = 0.0
+    @Published var manualYOffset: CGFloat = 0.0
 
     private var timer: Timer?
     private var learnedLayouts: [String: LearnedWindowStructure] = [:]
@@ -64,6 +67,36 @@ final class AppleNeuralVisionDetector: ObservableObject {
         if self.reasoningLogs != logs {
             self.reasoningLogs = logs
         }
+    }
+
+    func setManualCalibrationOffset(x: CGFloat, y: CGFloat) {
+        self.manualXOffset = x
+        self.manualYOffset = y
+        var settings = DependencyContainer.shared.settingsService.settings
+        settings.npuManualCalibrationXOffset = Double(x)
+        settings.npuManualCalibrationYOffset = Double(y)
+        DependencyContainer.shared.settingsService.updateSettings(settings)
+    }
+
+    func adjustManualCalibration(deltaX: CGFloat, deltaY: CGFloat) {
+        setManualCalibrationOffset(x: manualXOffset + deltaX, y: manualYOffset + deltaY)
+    }
+
+    func resetCalibrationCache() {
+        learnedLayouts.removeAll()
+        manualXOffset = 0.0
+        manualYOffset = 0.0
+        var settings = DependencyContainer.shared.settingsService.settings
+        settings.npuManualCalibrationXOffset = 0.0
+        settings.npuManualCalibrationYOffset = 0.0
+        DependencyContainer.shared.settingsService.updateSettings(settings)
+    }
+
+    func toggleSelfLearning() {
+        isSelfLearningEnabled.toggle()
+        var settings = DependencyContainer.shared.settingsService.settings
+        settings.npuSelfLearningEnabled = isSelfLearningEnabled
+        DependencyContainer.shared.settingsService.updateSettings(settings)
     }
 
     private func scanWithNeuralEngine() {
@@ -127,9 +160,10 @@ final class AppleNeuralVisionDetector: ObservableObject {
                 finalRect = rawCocoaRect
             }
 
-            // 只有当置信度评分达到稳定状态 (>= 2 帧) 才加入有效平台列表
+            // 只有当置信度评分达到稳定状态 (>= 2 帧) 才加入有效平台列表 (加上手工标记校准偏移)
             if (learnedLayouts[ownerName]?.consecutiveFrames ?? 0) >= 2 {
-                edges.append(VisionPlatformEdge(rect: finalRect))
+                let calibratedRect = finalRect.offsetBy(dx: manualXOffset, dy: manualYOffset)
+                edges.append(VisionPlatformEdge(rect: calibratedRect))
             }
         }
 
@@ -137,6 +171,7 @@ final class AppleNeuralVisionDetector: ObservableObject {
         if self.detectedEdges != edges {
             self.detectedEdges = edges
         }
-        self.npuStatusText = "🧠 ANE v3 NPU 自学习校准 | 信任图层: \(edges.count) 个 | 智能滤波: 开启"
+        let offsetStr = (manualXOffset == 0 && manualYOffset == 0) ? "" : " | 偏移: (X:\(Int(manualXOffset)), Y:\(Int(manualYOffset)))"
+        self.npuStatusText = "🧠 ANE v3 NPU 自学习校准 | 信任图层: \(edges.count)个 | 智能过滤: \(isSelfLearningEnabled ? "开启" : "关闭")\(offsetStr)"
     }
 }
