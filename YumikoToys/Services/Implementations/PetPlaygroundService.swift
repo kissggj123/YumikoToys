@@ -132,32 +132,40 @@ struct PetPlaygroundOverlayView: View {
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
             if isMinimized {
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        isMinimized = false
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "brain.head.profile")
-                            .foregroundStyle(.green)
-                        Text("🧠 ANE NPU Multi-Screen")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .foregroundStyle(.white)
+                HStack(spacing: 6) {
+                    Image(systemName: "brain.head.profile")
+                        .foregroundStyle(.green)
+                    Text("🧠 ANE NPU Multi-Screen")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.white)
+                    
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            isMinimized = false
+                        }
+                    } label: {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(.green)
+                            .padding(4)
+                            .background(Circle().fill(Color.white.opacity(0.18)))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(Color.black.opacity(0.85))
-                            .overlay(
-                                Capsule().stroke(Color.green.opacity(0.5), lineWidth: 1)
-                            )
-                    )
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(Color.black.opacity(0.88))
+                        .overlay(
+                            Capsule().stroke(Color.green.opacity(0.55), lineWidth: 1)
+                        )
+                )
+                .onTapGesture(count: 2) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isMinimized = false
+                    }
+                }
             } else {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
