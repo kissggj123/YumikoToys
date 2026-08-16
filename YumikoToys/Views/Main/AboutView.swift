@@ -1630,9 +1630,6 @@ private struct AboutHorizontalExportableContentView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    // 核心防休眠特质与工坊绝件卡片 (填补横版手册左栏下半部分，达到 100% 对称视觉呈现)
-                    ExportFeatureMatrixCard(isNight: isNight)
-
                     // 📜 横版宣发手册左栏彩蛋：莎士比亚麦克白史诗与系统隐喻 (动态版本跟随)
                     BrochureShakespeareEasterEggSection(isNight: isNight)
 
@@ -2061,93 +2058,6 @@ private struct AboutExportableContentView: View {
                         endPoint: .bottomTrailing
                     ),
                     lineWidth: 2
-                )
-        )
-    }
-}
-
-// MARK: - 横版宣发手册 2x2 核心特质图鉴卡片 (ExportFeatureMatrixCard)
-
-private struct ExportFeatureMatrixCard: View {
-    let isNight: Bool
-
-    private var themeConfig: AboutThemeConfig {
-        AboutThemeConfig.current()
-    }
-
-    var body: some View {
-        ExportSectionCard(title: "⚡️ 核心防休眠特质与工坊绝品", subtitle: "“让 MacBook 跨越极夜，注入永续计算能量”", isNight: isNight) {
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                FeatureBadgeItem(
-                    emoji: "🐰",
-                    title: "粉色魔晶王权",
-                    desc: "禁绝万物休眠，使 AI 炼金阵与后台计算永无止境",
-                    isNight: isNight
-                )
-
-                FeatureBadgeItem(
-                    emoji: "🧠",
-                    title: "M 芯片硬件自适应",
-                    desc: "智能识别 M1~M5 / Pro / Max 架构，300DPI 极清离轴采样",
-                    isNight: isNight
-                )
-
-                FeatureBadgeItem(
-                    emoji: "🐾",
-                    title: "奇幻桌宠爬爬乐",
-                    desc: "ANE 神经网络碰撞检测，桌宠干员游行绝壁四周",
-                    isNight: isNight
-                )
-
-                FeatureBadgeItem(
-                    emoji: "🎨",
-                    title: "20 款双模式调色盘",
-                    desc: "二次元草莓软萌、赛博朋克与日夜双态视觉阵列",
-                    isNight: isNight
-                )
-            }
-        }
-    }
-}
-
-private struct FeatureBadgeItem: View {
-    let emoji: String
-    let title: String
-    let desc: String
-    let isNight: Bool
-
-    private var themeConfig: AboutThemeConfig {
-        AboutThemeConfig.current()
-    }
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text(emoji)
-                .font(.system(size: 15))
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(size: 11.5, weight: .bold))
-                    .foregroundStyle(themeConfig.primaryColor)
-
-                Text(desc)
-                    .font(.system(size: 10))
-                    .foregroundStyle(isNight ? Color.white.opacity(0.7) : Color.black.opacity(0.6))
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(9)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(isNight ? Color(hex: "222534").opacity(0.8) : Color(hex: "F4F5F9"))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(
-                            themeConfig.primaryColor.opacity(isNight ? 0.3 : 0.15),
-                            lineWidth: 1
-                        )
                 )
         )
     }
