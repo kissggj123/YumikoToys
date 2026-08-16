@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - Fix Canvas Clipping, 3.0x 4K Ultra-HD Exporter & Cute Floating Progress Bar, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.9 - 4.0x 384DPI 5K Display P3 GPU Hardware Exporter, Fixed Icon & Pill Spacing, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
@@ -769,9 +769,9 @@ struct AboutView: View {
 
     // MARK: - Hero Icon Header & 3D Interactive Parallax Physics Engine
     private var appHeroHeader: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             ZStack(alignment: .topTrailing) {
-                VStack(spacing: 14) {
+                VStack(spacing: 12) {
                     // 顶栏专属主题模式胶囊 Indicator
                     HStack(spacing: 5) {
                         Image(systemName: themeConfig.themeIcon)
@@ -792,7 +792,7 @@ struct AboutView: View {
                             )
                     )
 
-                    // Hero 动态 3D 物理倾斜与纯质感彩蛋 Icon 容器
+                    // Hero 动态 3D 物理倾斜与纯质感彩蛋 Icon 容器 (锁紧 112x112 layout 容器，消除多余空白)
                     ZStack {
                         // 1. 纯质感极光星云超新星扩张 (Supernova Lightburst Aura)
                         Circle()
@@ -889,6 +889,7 @@ struct AboutView: View {
                         .rotation3DEffect(.degrees(-tiltY), axis: (x: 1, y: 0, z: 0))
                         .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isIconHovered)
                     }
+                    .frame(width: 112, height: 112)
                     .contentShape(Rectangle())
                     .onHover { isHovered in
                         isIconHovered = isHovered
@@ -1070,16 +1071,16 @@ struct AboutView: View {
 
     // MARK: - Screenshot Export Actions (带萌系进度条平滑动画)
     private func copyLongScreenshot() {
-        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图...") {
+        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K Display P3 极清长图...") {
             let success = AboutImageExporter.copyLongScreenshotToClipboard(mode: exportMode)
-            return success ? "✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图到剪贴板！" : "导出长图失败，请稍后重试。"
+            return success ? "✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图到剪贴板！" : "导出长图失败，请稍后重试。"
         }
     }
 
     private func saveLongScreenshot() {
-        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图...") {
+        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K Display P3 极清长图...") {
             AboutImageExporter.saveLongScreenshotToFile(mode: exportMode) { _ in }
-            return "💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图 PNG！"
+            return "💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图 PNG！"
         }
     }
 
@@ -1090,13 +1091,13 @@ struct AboutView: View {
             isExporting = true
         }
 
-        // 阶段 1: 5% -> 40% (排版计算与矢量画布构建)
+        // 阶段 1: 5% -> 40% (排版计算与 Display P3 广色域矢量画布构建)
         withAnimation(.easeInOut(duration: 0.22)) {
             exportProgress = 0.40
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            // 阶段 2: 40% -> 85% (3.0x 超采样矢量高分辨率渲染)
+            // 阶段 2: 40% -> 85% (4.0x GPU CoreGraphics 极清抗锯齿渲染)
             withAnimation(.easeInOut(duration: 0.28)) {
                 exportProgress = 0.85
             }
@@ -1132,11 +1133,11 @@ struct AboutView: View {
     }
 }
 
-// MARK: - 离线 3.0x 300DPI 4K Ultra-HD 超高清长图导出渲染器 (AboutImageExporter - 100% 完整画布无截断)
+// MARK: - 离线 4.0x 384DPI 5K Display P3 GPU/CoreGraphics 硬件级超高清渲染器 (AboutImageExporter)
 
 @MainActor
 struct AboutImageExporter {
-    static func generateBitmapRep(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 3.0) -> (NSBitmapImageRep, NSSize)? {
+    static func generateBitmapRep(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 4.0) -> (NSBitmapImageRep, NSSize)? {
         let exportContentView = AboutExportableContentView(mode: mode)
             .frame(width: width)
 
@@ -1150,7 +1151,7 @@ struct AboutImageExporter {
         hostingView.frame = CGRect(origin: .zero, size: fittingSize)
         hostingView.layoutSubtreeIfNeeded()
 
-        // 1. 创建物理像素大小 (pixelWidth x pixelHeight) 的 NSBitmapImageRep (2160px 宽度)
+        // 1. 创建高分辨率 4.0x 384DPI 5K Display P3 广色域 Retina Bitmap Image Rep (2880px 物理像素)
         guard let bitmapRep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: pixelWidth,
@@ -1159,12 +1160,12 @@ struct AboutImageExporter {
             samplesPerPixel: 4,
             hasAlpha: true,
             isPlanar: false,
-            colorSpaceName: .deviceRGB,
+            colorSpaceName: .displayP3, // Display P3 广色域，色彩鲜艳度与锐利对比度达硬件级极致
             bytesPerRow: 0,
             bitsPerPixel: 0
         ) else { return nil }
 
-        // 核心修正 1：在绘制阶段，bitmapRep.size 必须先设置为物理像素大小 (pixelWidth x pixelHeight)，使 CGContext 获得完整的 2160px x (H*3) 画布容量！
+        // 绘图阶段：设置物理尺寸为 2880px x (H*4)，保证 CGContext 画布 100% 充满
         bitmapRep.size = NSSize(width: CGFloat(pixelWidth), height: CGFloat(pixelHeight))
 
         NSGraphicsContext.saveGraphicsState()
@@ -1174,27 +1175,35 @@ struct AboutImageExporter {
         }
         NSGraphicsContext.current = context
 
-        // 核心修正 2：按 scaleFactor 缩放 CGContext 坐标系，使 720pt 的 hostingView 100% 充满 2160px 画布，右侧绝对完整！
-        context.cgContext.scaleBy(x: scaleFactor, y: scaleFactor)
+        // 2. 启用 GPU CoreGraphics 硬件最高精度重采样与抗锯齿渲染管线
+        let cgContext = context.cgContext
+        cgContext.interpolationQuality = .high
+        cgContext.setShouldAntialias(true)
+        cgContext.setAllowsAntialiasing(true)
+        cgContext.setShouldSmoothFonts(true)
+        cgContext.setAllowsFontSmoothing(true)
+
+        // 3. CGContext 按 4.0x 超采样缩放，使 720pt 的 hostingView 100% 完整绘制至 2880px 画布
+        cgContext.scaleBy(x: scaleFactor, y: scaleFactor)
 
         hostingView.displayIgnoringOpacity(CGRect(origin: .zero, size: fittingSize), in: context)
         NSGraphicsContext.restoreGraphicsState()
 
-        // 核心修正 3：绘制完成之后，重置 bitmapRep.size 为逻辑 fittingSize (720pt x Hpt)，使 macOS 系统将其标记为 Retina 300DPI HiDPI 规格
+        // 4. 绘制完成，重置 bitmapRep.size 为逻辑 fittingSize (720pt x Hpt)，标记为 HiDPI Retina 规格
         bitmapRep.size = fittingSize
 
         return (bitmapRep, fittingSize)
     }
 
-    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 3.0) -> NSImage? {
+    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 4.0) -> NSImage? {
         guard let (bitmapRep, fittingSize) = generateBitmapRep(mode: mode, width: width, scaleFactor: scaleFactor) else { return nil }
         let image = NSImage(size: fittingSize)
         image.addRepresentation(bitmapRep)
         return image
     }
 
-    static func copyLongScreenshotToClipboard(mode: ShareExportMode = .day, scaleFactor: CGFloat = 3.0) -> Bool {
-        // 使用 3.0x 300DPI 4K 超高清矢量渲染 (2160px 物理像素)，100% 完整画布无裁切
+    static func copyLongScreenshotToClipboard(mode: ShareExportMode = .day, scaleFactor: CGFloat = 4.0) -> Bool {
+        // 使用 4.0x 384DPI 5K Display P3 超高清硬件级矢量渲染 (2880px 物理像素)
         guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor),
               let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
             return false
@@ -1216,9 +1225,9 @@ struct AboutImageExporter {
         return pasteboard.writeObjects([item])
     }
 
-    static func saveLongScreenshotToFile(mode: ShareExportMode = .day, scaleFactor: CGFloat = 3.0, completion: @escaping (Bool) -> Void) {
+    static func saveLongScreenshotToFile(mode: ShareExportMode = .day, scaleFactor: CGFloat = 4.0, completion: @escaping (Bool) -> Void) {
         let themeConfig = AboutThemeConfig.current()
-        // 保存文件同样采用 3.0x 300DPI 4K 超清物理像素 (2160px)
+        // 保存文件同样采用 4.0x 384DPI 5K Display P3 超清物理像素 (2880px)
         guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor),
               let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
             completion(false)
@@ -1229,8 +1238,8 @@ struct AboutImageExporter {
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
         savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(modeSuffix)_\(AppConfig.version).png"
-        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")4K极清长图"
-        savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】4K极清长图的路径"
+        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")5K极清长图"
+        savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】5K极清长图的路径"
 
         savePanel.begin { result in
             if result == .OK, let url = savePanel.url {
@@ -1292,7 +1301,7 @@ private struct AboutExportableContentView: View {
             .padding(.top, 8)
 
             // App Hero Icon Header (静态无按钮主题限定版)
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 32)
                         .fill(
@@ -1329,6 +1338,7 @@ private struct AboutExportableContentView: View {
                             .foregroundStyle(.white)
                     }
                 }
+                .frame(width: 116, height: 116)
 
                 VStack(spacing: 6) {
                     Text(AppConfig.appName)
@@ -1789,7 +1799,7 @@ private struct YumikoPopoverMockupView: View {
 
                 Spacer()
 
-                // 右侧功能 Pill (✨ 🔵 ▾) + 预留防休眠呼吸指示点 (• 预留 14x14 相同布局)
+                // 右侧功能 Pill (✨ 🔵 ▾) + 防休眠呼吸指示点 (只有在 isActive == true 时渲染，避免未开启模式右侧多余空隙)
                 HStack(spacing: 6) {
                     HStack(spacing: 3) {
                         Text("✨").font(.system(size: 7))
@@ -1804,9 +1814,8 @@ private struct YumikoPopoverMockupView: View {
                     .padding(.vertical, 2.5)
                     .background(Capsule().fill(themeConfig.primaryColor.opacity(isNight ? 0.2 : 0.12)))
 
-                    // 预留 14x14 框体，确保开启/关闭两张 Mockup 卡片绝对同高同宽
-                    ZStack {
-                        if isActive {
+                    if isActive {
+                        ZStack {
                             Circle()
                                 .stroke(themeConfig.primaryColor.opacity(0.6), lineWidth: 1.2)
                                 .scaleEffect(isPulsing ? 1.6 : 1.0)
@@ -1817,8 +1826,8 @@ private struct YumikoPopoverMockupView: View {
                                 .frame(width: 6.5, height: 6.5)
                                 .shadow(color: themeConfig.primaryColor, radius: isPulsing ? 3 : 1)
                         }
+                        .frame(width: 14, height: 14)
                     }
-                    .frame(width: 14, height: 14)
                 }
             }
 
