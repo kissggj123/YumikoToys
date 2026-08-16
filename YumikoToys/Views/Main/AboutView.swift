@@ -1193,11 +1193,20 @@ struct AboutView: View {
         }
     }
 
-    // MARK: - Screenshot Export Actions (GCD 后台线程并行计算，真实平滑进度条离轴渲染)
+    // MARK: - Screenshot Export Actions (多阶段动态渲染进度条文本与离轴 GCD 并行引擎)
     private func copyLongScreenshot() {
         let orientationName = exportOrientation == .horizontal ? "📖横版手册" : "📱竖版卡片"
         let scaleName = AppleChipDetector.scaleTitle(for: effectiveScaleFactor)
-        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(orientationName) (\(scaleName))...") { onComplete in
+        let chipName = AppleChipDetector.getChipName()
+
+        let stages: [(progress: Double, text: String)] = [
+            (0.25, "🧠 正在检测 [\(chipName)] 芯片架构与 GPU 画布节点..."),
+            (0.60, exportOrientation == .horizontal ? "📖 正在构建 1280pt 跨页双栏折页与剧组名录..." : "🎨 正在构建【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")矢量框架..."),
+            (0.90, "⚡️ 正在调用 GCD 后台多核离轴压包 [\(scaleName)] 数据..."),
+            (1.00, "✨ 已完成矢量渲染，正在注入剪贴板...")
+        ]
+
+        startMultiStageExportAnimation(stages: stages) { onComplete in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 AboutImageExporter.copyLongScreenshotToClipboardAsync(
                     mode: exportMode,
@@ -1214,7 +1223,16 @@ struct AboutView: View {
     private func saveLongScreenshot() {
         let orientationName = exportOrientation == .horizontal ? "📖横版手册" : "📱竖版卡片"
         let scaleName = AppleChipDetector.scaleTitle(for: effectiveScaleFactor)
-        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(orientationName) (\(scaleName))...") { onComplete in
+        let chipName = AppleChipDetector.getChipName()
+
+        let stages: [(progress: Double, text: String)] = [
+            (0.25, "🧠 正在调度 [\(chipName)] NPU/GPU 图形绘制管线..."),
+            (0.60, exportOrientation == .horizontal ? "📖 正在生成 1280pt 双栏宣发手册与致谢群星..." : "🎨 正在渲染【\(themeConfig.themeName)】\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 印刷级矢量图..."),
+            (0.90, "🚀 正在使用 GCD 后台工作线程异步生成 PNG 点阵..."),
+            (1.00, "💾 已完成离轴编码，正在保存到文件系统...")
+        ]
+
+        startMultiStageExportAnimation(stages: stages) { onComplete in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 AboutImageExporter.saveLongScreenshotToFileAsync(
                     mode: exportMode,
@@ -1228,35 +1246,50 @@ struct AboutView: View {
         }
     }
 
-    private func startExportAnimation(status: String, performAsync: @escaping (@escaping (String) -> Void) -> Void) {
-        exportStatusText = status
+    private func startMultiStageExportAnimation(
+        stages: [(progress: Double, text: String)],
+        performAsync: @escaping (@escaping (String) -> Void) -> Void
+    ) {
+        guard stages.count >= 4 else { return }
+
+        // 阶段 1: 5% -> 25% (芯片检测与画布节点初始化)
+        exportStatusText = stages[0].text
         exportProgress = 0.05
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
             isExporting = true
         }
 
-        // 阶段 1: 5% -> 35% (画质与版式矩阵排版计算)
         withAnimation(.easeInOut(duration: 0.18)) {
-            exportProgress = 0.35
+            exportProgress = stages[0].progress
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-            // 阶段 2: 35% -> 75% (GCD 异步工作线程离轴像素点阵运算)
+        // 阶段 2: 25% -> 60% (矢量排版与双栏折页矩阵构建)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) {
+            exportStatusText = stages[1].text
             withAnimation(.easeInOut(duration: 0.22)) {
-                exportProgress = 0.75
+                exportProgress = stages[1].progress
             }
 
-            performAsync { resultMsg in
-                // 阶段 3: 75% -> 100% (数据打包完成，写入剪贴板 / 文件)
-                withAnimation(.easeInOut(duration: 0.12)) {
-                    exportProgress = 1.0
+            // 阶段 3: 60% -> 90% (GCD 后台线程 300 DPI 离轴重采样)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                exportStatusText = stages[2].text
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    exportProgress = stages[2].progress
                 }
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                    withAnimation(.easeOut(duration: 0.22)) {
-                        isExporting = false
+                performAsync { resultMsg in
+                    // 阶段 4: 90% -> 100% (数据打包完成，写入剪贴板 / 文件)
+                    exportStatusText = stages[3].text
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        exportProgress = stages[3].progress
                     }
-                    triggerToast(resultMsg)
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        withAnimation(.easeOut(duration: 0.22)) {
+                            isExporting = false
+                        }
+                        triggerToast(resultMsg)
+                    }
                 }
             }
         }
@@ -1596,6 +1629,9 @@ private struct AboutHorizontalExportableContentView: View {
                         }
                         .fixedSize(horizontal: false, vertical: true)
                     }
+
+                    // 核心防休眠特质与工坊绝件卡片 (填补横版手册左栏下半部分，达到 100% 对称视觉呈现)
+                    ExportFeatureMatrixCard(isNight: isNight)
 
                     Spacer(minLength: 0)
                 }
@@ -2022,6 +2058,91 @@ private struct AboutExportableContentView: View {
                         endPoint: .bottomTrailing
                     ),
                     lineWidth: 2
+                )
+        )
+    }
+// MARK: - 横版宣发手册 2x2 核心特质图鉴卡片 (ExportFeatureMatrixCard)
+
+private struct ExportFeatureMatrixCard: View {
+    let isNight: Bool
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
+    var body: some View {
+        ExportSectionCard(title: "⚡️ 核心防休眠特质与工坊绝品", subtitle: "“让 MacBook 跨越极夜，注入永续计算能量”", isNight: isNight) {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                FeatureBadgeItem(
+                    emoji: "🐰",
+                    title: "粉色魔晶王权",
+                    desc: "禁绝万物休眠，使 AI 炼金阵与后台计算永无止境",
+                    isNight: isNight
+                )
+
+                FeatureBadgeItem(
+                    emoji: "🧠",
+                    title: "M 芯片硬件自适应",
+                    desc: "智能识别 M1~M5 / Pro / Max 架构，300DPI 极清离轴采样",
+                    isNight: isNight
+                )
+
+                FeatureBadgeItem(
+                    emoji: "🐾",
+                    title: "奇幻桌宠爬爬乐",
+                    desc: "ANE 神经网络碰撞检测，桌宠干员游行绝壁四周",
+                    isNight: isNight
+                )
+
+                FeatureBadgeItem(
+                    emoji: "🎨",
+                    title: "20 款双模式调色盘",
+                    desc: "二次元草莓软萌、赛博朋克与日夜双态视觉阵列",
+                    isNight: isNight
+                )
+            }
+        }
+    }
+}
+
+private struct FeatureBadgeItem: View {
+    let emoji: String
+    let title: String
+    let desc: String
+    let isNight: Bool
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(emoji)
+                .font(.system(size: 15))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 11.5, weight: .bold))
+                    .foregroundStyle(themeConfig.primaryColor)
+
+                Text(desc)
+                    .font(.system(size: 10))
+                    .foregroundStyle(isNight ? Color.white.opacity(0.7) : Color.black.opacity(0.6))
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(9)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(isNight ? Color(hex: "222534").opacity(0.8) : Color(hex: "F4F5F9"))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(
+                            themeConfig.primaryColor.opacity(isNight ? 0.3 : 0.15),
+                            lineWidth: 1
+                        )
                 )
         )
     }
