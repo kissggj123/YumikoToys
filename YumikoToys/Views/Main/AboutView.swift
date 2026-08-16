@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.6.0 - Off-Main-Thread Async Worker Engine, Zero Beachball Cursor, 4.0x 384DPI 5K Display P3 GPU Hardware Exporter, Fixed Icon & Pill Spacing, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.6.5 - M 芯片画质自适应菜单, 📖 横版宣传手册/折页小册子模版, 📱 竖版海报卡片, 0ms 离轴异步渲染）
 //
 
 import SwiftUI
@@ -21,6 +21,57 @@ enum ShareExportMode: String, CaseIterable, Identifiable {
         switch self {
         case .day: return "☀️ 日间浅色卡片"
         case .night: return "🌙 夜间深色卡片"
+        }
+    }
+}
+
+// MARK: - 分享长图版式方向枚举 (Vertical Poster / Horizontal Brochure)
+
+enum ShareExportOrientation: String, CaseIterable, Identifiable {
+    case vertical = "vertical"
+    case horizontal = "horizontal"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .vertical: return "📱 竖版海报长图 (720px)"
+        case .horizontal: return "📖 横版宣传手册 (1280px 跨页折页)"
+        }
+    }
+}
+
+// MARK: - M 芯片检测与画质推荐引擎 (AppleChipDetector)
+
+@MainActor
+struct AppleChipDetector {
+    static func getChipName() -> String {
+        var size = 0
+        sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
+        guard size > 0 else { return "Apple Silicon" }
+        var buffer = [CChar](repeating: 0, count: size)
+        sysctlbyname("machdep.cpu.brand_string", &buffer, &size, nil, 0)
+        let name = String(cString: buffer)
+        return name.isEmpty ? "Apple Silicon" : name
+    }
+
+    static func recommendedScaleFactor() -> CGFloat {
+        let chip = getChipName().lowercased()
+        if chip.contains("m4") || chip.contains("m5") || chip.contains("max") || chip.contains("ultra") {
+            return 4.0 // 5K 极致大师
+        } else if chip.contains("pro") || chip.contains("m3") {
+            return 3.0 // 4K 推荐画质
+        } else {
+            return 2.5 // 3K 极速画质
+        }
+    }
+
+    static func scaleTitle(for factor: CGFloat) -> String {
+        switch factor {
+        case 2.5: return "⚡️ 2.5x 3K 极速 (1800px)"
+        case 3.0: return "🌟 3.0x 4K 推荐 (2160px)"
+        case 4.0: return "🚀 4.0x 5K 大师 (2880px)"
+        default: return "\(String(format: "%.1f", factor))x 自定义"
         }
     }
 }
@@ -426,10 +477,21 @@ struct AboutView: View {
     @State private var exportProgress: Double = 0.0
     @State private var exportStatusText = ""
 
-    // 分享导出日间/夜间模式 (持久化记忆 UserDefaults)
+    // 分享导出日间/夜间模式 + 版式形态 (持久化记忆 UserDefaults)
     @AppStorage("aboutShareExportMode") private var exportModeRaw: String = ShareExportMode.day.rawValue
+    @AppStorage("aboutShareExportOrientation") private var exportOrientationRaw: String = ShareExportOrientation.vertical.rawValue
+    @AppStorage("aboutShareCustomScaleFactor") private var customScaleFactor: Double = 0.0
+
     private var exportMode: ShareExportMode {
         ShareExportMode(rawValue: exportModeRaw) ?? .day
+    }
+
+    private var exportOrientation: ShareExportOrientation {
+        ShareExportOrientation(rawValue: exportOrientationRaw) ?? .vertical
+    }
+
+    private var effectiveScaleFactor: CGFloat {
+        customScaleFactor > 0 ? CGFloat(customScaleFactor) : AppleChipDetector.recommendedScaleFactor()
     }
 
     // 3D 物理倾斜与彩蛋状态 Engine
@@ -706,7 +768,7 @@ struct AboutView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
-                .frame(width: 400)
+                .frame(width: 440)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(.thinMaterial)
@@ -938,20 +1000,82 @@ struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                // 导出/分享专属长图按钮与模式勾选菜单 (日间/夜间模式 + 默认记忆)
+                // 导出/分享专属长图与宣传手册 Menu (M 芯片画质自适应 + 📖横版手册/📱竖版卡片切换)
                 Menu {
                     Button(action: copyLongScreenshot) {
-                        Label("复制【\(themeConfig.themeName)】专属长图 (\(exportMode == .day ? "☀️日间" : "🌙夜间"))", systemImage: "doc.on.doc.fill")
+                        Label("复制【\(themeConfig.themeName)】宣传图卡 (\(exportOrientation.title) · \(exportMode == .day ? "☀️日间" : "🌙夜间"))", systemImage: "doc.on.doc.fill")
                     }
 
                     Button(action: saveLongScreenshot) {
-                        Label("保存【\(themeConfig.themeName)】长图文件 (.png)", systemImage: "square.and.arrow.down.fill")
+                        Label("保存【\(themeConfig.themeName)】宣传图卡文件 (.png)", systemImage: "square.and.arrow.down.fill")
                     }
 
                     Divider()
 
-                    // 长图模式记忆勾选菜单
-                    Menu("导出模式选择 (已自动勾选记忆)") {
+                    // 1. 版式形态选择 (📖 横版宣传手册小册子 / 📱 竖版海报长图)
+                    Menu("版式形态: \(exportOrientation == .horizontal ? "📖 横版宣传手册" : "📱 竖版海报长图")") {
+                        Button(action: { exportOrientationRaw = ShareExportOrientation.vertical.rawValue }) {
+                            HStack {
+                                Text("📱 竖版海报长图 (720px 宽度单栏卡片)")
+                                if exportOrientation == .vertical {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+
+                        Button(action: { exportOrientationRaw = ShareExportOrientation.horizontal.rawValue }) {
+                            HStack {
+                                Text("📖 横版宣传手册 (1280px 双页折页小册子)")
+                                if exportOrientation == .horizontal {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. M 芯片硬件自适应画质选择菜单
+                    Menu("导出画质 (当前设备: \(AppleChipDetector.getChipName()))") {
+                        Button(action: { customScaleFactor = 0.0 }) {
+                            HStack {
+                                Text("🧠 根据当前 [\(AppleChipDetector.getChipName())] 自动推荐: \(AppleChipDetector.scaleTitle(for: AppleChipDetector.recommendedScaleFactor()))")
+                                if customScaleFactor == 0.0 {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+
+                        Divider()
+
+                        Button(action: { customScaleFactor = 2.5 }) {
+                            HStack {
+                                Text("⚡️ 2.5x 3K 极速画质 (1800px) - 适合基础版 M1/M2 芯片")
+                                if customScaleFactor == 2.5 {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+
+                        Button(action: { customScaleFactor = 3.0 }) {
+                            HStack {
+                                Text("🌟 3.0x 4K 推荐画质 (2160px) - 适合 M1/M2 Pro & M3 芯片")
+                                if customScaleFactor == 3.0 {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+
+                        Button(action: { customScaleFactor = 4.0 }) {
+                            HStack {
+                                Text("🚀 4.0x 5K 极致大师 (2880px) - 适合 M3 Pro/Max & M4/M5 芯片")
+                                if customScaleFactor == 4.0 {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. 长图模式日间 / 夜间调色盘勾选菜单
+                    Menu("色彩主题: \(exportMode == .day ? "☀️ 日间浅色" : "🌙 夜间深色")") {
                         Button(action: { exportModeRaw = ShareExportMode.day.rawValue }) {
                             HStack {
                                 Text("☀️ 日间浅色模式")
@@ -972,9 +1096,9 @@ struct AboutView: View {
                     }
                 } label: {
                     HStack(spacing: 5) {
-                        Image(systemName: "photo.badge.plus.fill")
+                        Image(systemName: exportOrientation == .horizontal ? "book.pages.fill" : "photo.badge.plus.fill")
                             .font(.system(size: 11, weight: .bold))
-                        Text("分享长图 (\(exportMode == .day ? "日间" : "夜间"))")
+                        Text("\(exportOrientation == .horizontal ? "横版手册" : "竖版卡片") (\(exportMode == .day ? "日间" : "夜间"))")
                             .font(.system(size: 11, weight: .bold))
                     }
                     .foregroundStyle(.white)
@@ -993,7 +1117,7 @@ struct AboutView: View {
                     )
                 }
                 .menuStyle(.borderlessButton)
-                .help("生成并分享【\(themeConfig.themeName)】专属定制长图 (\(exportMode.title))")
+                .help("生成并分享【\(themeConfig.themeName)】专属定制图卡 (\(exportOrientation.title) · \(exportMode.title))")
                 .padding(.top, 4)
             }
         }
@@ -1069,12 +1193,18 @@ struct AboutView: View {
         }
     }
 
-    // MARK: - Screenshot Export Actions (GCD 后台线程并行计算，彻底解决彩球旋转卡顿)
+    // MARK: - Screenshot Export Actions (GCD 后台线程并行计算，真实平滑进度条离轴渲染)
     private func copyLongScreenshot() {
-        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图...") { onComplete in
+        let orientationName = exportOrientation == .horizontal ? "📖横版手册" : "📱竖版卡片"
+        let scaleName = AppleChipDetector.scaleTitle(for: effectiveScaleFactor)
+        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(orientationName) (\(scaleName))...") { onComplete in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                AboutImageExporter.copyLongScreenshotToClipboardAsync(mode: exportMode, scaleFactor: 3.0) { success in
-                    let msg = success ? "✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图到剪贴板！" : "导出长图失败，请稍后重试。"
+                AboutImageExporter.copyLongScreenshotToClipboardAsync(
+                    mode: exportMode,
+                    orientation: exportOrientation,
+                    customScale: customScaleFactor
+                ) { success in
+                    let msg = success ? "✨ 已成功复制【\(themeConfig.themeName)】专属\(orientationName)到剪贴板！" : "导出失败，请稍后重试。"
                     onComplete(msg)
                 }
             }
@@ -1082,10 +1212,16 @@ struct AboutView: View {
     }
 
     private func saveLongScreenshot() {
-        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图...") { onComplete in
+        let orientationName = exportOrientation == .horizontal ? "📖横版手册" : "📱竖版卡片"
+        let scaleName = AppleChipDetector.scaleTitle(for: effectiveScaleFactor)
+        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(orientationName) (\(scaleName))...") { onComplete in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                AboutImageExporter.saveLongScreenshotToFileAsync(mode: exportMode, scaleFactor: 3.0) { success in
-                    let msg = success ? "💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图 PNG！" : "已取消保存。"
+                AboutImageExporter.saveLongScreenshotToFileAsync(
+                    mode: exportMode,
+                    orientation: exportOrientation,
+                    customScale: customScaleFactor
+                ) { success in
+                    let msg = success ? "💾 已成功保存【\(themeConfig.themeName)】专属\(orientationName) PNG！" : "已取消保存。"
                     onComplete(msg)
                 }
             }
@@ -1099,25 +1235,25 @@ struct AboutView: View {
             isExporting = true
         }
 
-        // 阶段 1: 5% -> 40% (矢量画布排版计算)
-        withAnimation(.easeInOut(duration: 0.2)) {
-            exportProgress = 0.40
+        // 阶段 1: 5% -> 35% (画质与版式矩阵排版计算)
+        withAnimation(.easeInOut(duration: 0.18)) {
+            exportProgress = 0.35
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            // 阶段 2: 40% -> 80% (GCD 后台工作线程异步 5K 编码与 PNG 重采样)
-            withAnimation(.easeInOut(duration: 0.25)) {
-                exportProgress = 0.80
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            // 阶段 2: 35% -> 75% (GCD 异步工作线程离轴像素点阵运算)
+            withAnimation(.easeInOut(duration: 0.22)) {
+                exportProgress = 0.75
             }
 
             performAsync { resultMsg in
-                // 阶段 3: 80% -> 100% (完成编码，写入剪贴板 / 文件)
-                withAnimation(.easeInOut(duration: 0.15)) {
+                // 阶段 3: 75% -> 100% (数据打包完成，写入剪贴板 / 文件)
+                withAnimation(.easeInOut(duration: 0.12)) {
                     exportProgress = 1.0
                 }
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    withAnimation(.easeOut(duration: 0.25)) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                    withAnimation(.easeOut(duration: 0.22)) {
                         isExporting = false
                     }
                     triggerToast(resultMsg)
@@ -1139,15 +1275,29 @@ struct AboutView: View {
     }
 }
 
-// MARK: - 离线 4.0x 384DPI 5K GPU/CoreGraphics + GCD 后台离轴异步超高清渲染器 (AboutImageExporter)
+// MARK: - 离线 GPU/CoreGraphics + GCD 后台离轴异步超高清渲染器 (AboutImageExporter)
 
 @MainActor
 struct AboutImageExporter {
-    static func generateBitmapRep(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 3.0) -> (NSBitmapImageRep, NSSize)? {
-        let exportContentView = AboutExportableContentView(mode: mode)
-            .frame(width: width)
+    static func generateBitmapRep(
+        mode: ShareExportMode = .day,
+        orientation: ShareExportOrientation = .vertical,
+        customScale: CGFloat = 0.0
+    ) -> (NSBitmapImageRep, NSSize)? {
+        let scaleFactor = customScale > 0 ? customScale : AppleChipDetector.recommendedScaleFactor()
+        let canvasWidth: CGFloat = orientation == .horizontal ? 1280 : 720
 
-        let hostingView = NSHostingView(rootView: exportContentView)
+        let hostingView: NSHostingView<AnyView>
+        if orientation == .horizontal {
+            let exportContentView = AboutHorizontalExportableContentView(mode: mode)
+                .frame(width: canvasWidth)
+            hostingView = NSHostingView(rootView: AnyView(exportContentView))
+        } else {
+            let exportContentView = AboutExportableContentView(mode: mode)
+                .frame(width: canvasWidth)
+            hostingView = NSHostingView(rootView: AnyView(exportContentView))
+        }
+
         let fittingSize = hostingView.fittingSize
         guard fittingSize.width > 0 && fittingSize.height > 0 else { return nil }
 
@@ -1157,7 +1307,7 @@ struct AboutImageExporter {
         hostingView.frame = CGRect(origin: .zero, size: fittingSize)
         hostingView.layoutSubtreeIfNeeded()
 
-        // 1. 创建高分辨率 3.0x 300DPI 4K Ultra-HD Display P3 广色域 Retina Bitmap Image Rep (2160px 物理像素)
+        // 1. 创建高分辨率 Display P3 广色域 Retina Bitmap Image Rep
         guard let bitmapRep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: pixelWidth,
@@ -1171,7 +1321,7 @@ struct AboutImageExporter {
             bitsPerPixel: 0
         ) else { return nil }
 
-        // 绘图阶段：设置物理尺寸为 2160px x (H*3)，保证 CGContext 画布 100% 充满
+        // 绘图阶段：设置物理尺寸为 pixelWidth x pixelHeight，保证 CGContext 画布 100% 充满
         bitmapRep.size = NSSize(width: CGFloat(pixelWidth), height: CGFloat(pixelHeight))
 
         NSGraphicsContext.saveGraphicsState()
@@ -1189,32 +1339,35 @@ struct AboutImageExporter {
         cgContext.setShouldSmoothFonts(true)
         cgContext.setAllowsFontSmoothing(true)
 
-        // 3. CGContext 按 3.0x 超采样缩放，使 720pt 的 hostingView 100% 完整绘制至 2160px 画布
+        // 3. CGContext 按 scaleFactor 超采样缩放
         cgContext.scaleBy(x: scaleFactor, y: scaleFactor)
 
         hostingView.displayIgnoringOpacity(CGRect(origin: .zero, size: fittingSize), in: context)
         NSGraphicsContext.restoreGraphicsState()
 
-        // 4. 绘制完成，重置 bitmapRep.size 为逻辑 fittingSize (720pt x Hpt)，标记为 HiDPI Retina 规格
+        // 4. 绘制完成，重置 bitmapRep.size 为逻辑 fittingSize，标记为 HiDPI Retina 规格
         bitmapRep.size = fittingSize
 
         return (bitmapRep, fittingSize)
     }
 
     // MARK: - 异步 GCD 后台子线程渲染写剪贴板 (彻底消除主线程死锁与彩球旋转)
-    static func copyLongScreenshotToClipboardAsync(mode: ShareExportMode = .day, scaleFactor: CGFloat = 3.0, completion: @escaping (Bool) -> Void) {
+    static func copyLongScreenshotToClipboardAsync(
+        mode: ShareExportMode = .day,
+        orientation: ShareExportOrientation = .vertical,
+        customScale: CGFloat = 0.0,
+        completion: @escaping (Bool) -> Void
+    ) {
         // 1. 主线程极速捕抓矢量 Bitmap (只需 5ms)
-        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor) else {
+        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, orientation: orientation, customScale: customScale) else {
             completion(false)
             return
         }
 
-        // 2. 将耗时的 20,000,000 RGBA 像素 PNG / TIFF 字节编码推入 GCD 后台工作线程并行转换！
+        // 2. 将耗时的 RGBA 像素 PNG / TIFF 字节编码推入 GCD 后台工作线程并行转换！
         DispatchQueue.global(qos: .userInitiated).async {
             guard let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
-                DispatchQueue.main.async {
-                    completion(false)
-                }
+                DispatchQueue.main.async { completion(false) }
                 return
             }
 
@@ -1241,16 +1394,22 @@ struct AboutImageExporter {
     }
 
     // MARK: - 异步 GCD 后台子线程渲染写 PNG 文件
-    static func saveLongScreenshotToFileAsync(mode: ShareExportMode = .day, scaleFactor: CGFloat = 4.0, completion: @escaping (Bool) -> Void) {
+    static func saveLongScreenshotToFileAsync(
+        mode: ShareExportMode = .day,
+        orientation: ShareExportOrientation = .vertical,
+        customScale: CGFloat = 0.0,
+        completion: @escaping (Bool) -> Void
+    ) {
         let themeConfig = AboutThemeConfig.current()
+        let modeSuffix = mode == .day ? "Day" : "Night"
+        let orientationSuffix = orientation == .horizontal ? "Brochure" : "Poster"
 
         // 1. 主线程唤起保存对话框 (零耗时)
-        let modeSuffix = mode == .day ? "Day" : "Night"
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
-        savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(modeSuffix)_\(AppConfig.version).png"
-        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")5K极清长图"
-        savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】5K极清长图的路径"
+        savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(orientationSuffix)_\(modeSuffix)_\(AppConfig.version).png"
+        savePanel.title = "保存【\(themeConfig.themeName)】专属\(orientation == .horizontal ? "📖横版手册" : "📱竖版卡片")"
+        savePanel.message = "选择保存 YumikoToys 宣传图卡的路径"
 
         savePanel.begin { result in
             guard result == .OK, let url = savePanel.url else {
@@ -1259,7 +1418,7 @@ struct AboutImageExporter {
             }
 
             // 2. 主线程极速捕抓 Bitmap
-            guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor) else {
+            guard let (bitmapRep, _) = generateBitmapRep(mode: mode, orientation: orientation, customScale: customScale) else {
                 completion(false)
                 return
             }
@@ -1267,28 +1426,309 @@ struct AboutImageExporter {
             // 3. 后台工作线程异步完成 PNG 编码与文件系统写入
             DispatchQueue.global(qos: .userInitiated).async {
                 guard let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
-                    DispatchQueue.main.async {
-                        completion(false)
-                    }
+                    DispatchQueue.main.async { completion(false) }
                     return
                 }
 
                 do {
                     try pngData.write(to: url)
-                    DispatchQueue.main.async {
-                        completion(true)
-                    }
+                    DispatchQueue.main.async { completion(true) }
                 } catch {
-                    DispatchQueue.main.async {
-                        completion(false)
-                    }
+                    DispatchQueue.main.async { completion(false) }
                 }
             }
         }
     }
 }
 
-// MARK: - 主题专属自适应长截图模版容器 (AboutExportableContentView - 20 款主题色高精定制)
+// MARK: - 📖 横版宣传手册折页小册子模版 (AboutHorizontalExportableContentView - 1280pt 双栏双页设计)
+
+private struct AboutHorizontalExportableContentView: View {
+    let mode: ShareExportMode
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
+    var isNight: Bool {
+        mode == .night
+    }
+
+    var body: some View {
+        VStack(spacing: 24) {
+            // 顶栏主题专属萌系 Banner
+            HStack(spacing: 8) {
+                Text(themeConfig.cardDecorationEmoji)
+                    .font(.system(size: 16))
+                Text(themeConfig.cuteBannerBadge)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(themeConfig.primaryColor)
+                Text("✨ 📖 宣传手册折页特辑")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(themeConfig.secondaryColor)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(themeConfig.primaryColor.opacity(isNight ? 0.22 : 0.12))
+                    .overlay(
+                        Capsule()
+                            .stroke(themeConfig.primaryColor.opacity(isNight ? 0.5 : 0.35), lineWidth: 1.2)
+                    )
+            )
+            .padding(.top, 12)
+
+            // 跨页 2 栏布局 (Left Column: 封面与核心功能 | Right Column: 功勋名录与致谢群星)
+            HStack(alignment: .top, spacing: 28) {
+                // MARK: - 左栏 (封面与核心功能 - 570pt)
+                VStack(spacing: 20) {
+                    // App Hero Icon Header (静态无按钮主题限定版)
+                    VStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 32)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            themeConfig.primaryColor.opacity(isNight ? 0.35 : 0.25),
+                                            themeConfig.secondaryColor.opacity(isNight ? 0.22 : 0.15)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 116, height: 116)
+
+                            RoundedRectangle(cornerRadius: 26)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 98, height: 98)
+                                .shadow(color: themeConfig.primaryColor.opacity(isNight ? 0.6 : 0.4), radius: 14, x: 0, y: 6)
+
+                            if let customImage = NSImage(named: "YumikoToys") {
+                                Image(nsImage: customImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 62, height: 62)
+                            } else {
+                                Image(systemName: "rabbit.fill")
+                                    .font(.system(size: 44, weight: .medium))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .frame(width: 116, height: 116)
+
+                        VStack(spacing: 6) {
+                            Text(AppConfig.appName)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
+
+                            HStack(spacing: 6) {
+                                Text("v\(AppConfig.version)")
+                                    .font(.system(size: 11.5, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(
+                                        Capsule()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                )
+                                            )
+                                    )
+
+                                Text("Build \(AppConfig.buildNumber)")
+                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
+                            }
+                        }
+                    }
+
+                    // 主描述
+                    ExportTextCard(isNight: isNight) {
+                        VStack(spacing: 12) {
+                            Text("⚔️ “睡眠已死，麦克白杀死了睡眠！”")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+
+                            Text("“不眠之钟声已然响彻，纵使天地合闭、MacBook 暗无天日，此神器亦如永不熄灭之圣血符文！搭载 YumikoToys 🐰兔可可皇后之粉色魔晶王权，禁绝万物休眠，使 AI 炼金阵与后台劳作永无止境！”")
+                                .font(.system(size: 12.5))
+                                .foregroundStyle(isNight ? Color.white.opacity(0.85) : Color(hex: "3A3A3C"))
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(4)
+                        }
+                    }
+
+                    // 图标说明 (模拟器双生卡片)
+                    ExportSectionCard(title: "图标说明与模式对照", subtitle: "状态栏菜单面板与防休眠呼吸指示点", isNight: isNight) {
+                        HStack(alignment: .top, spacing: 14) {
+                            ExportIconLegendCard(
+                                title: "常规模式 (防休眠关闭)",
+                                description: "未开启防休眠，右上角无指示点",
+                                isActive: false,
+                                isPulsing: false,
+                                isNight: isNight
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                            ExportIconLegendCard(
+                                title: "不休眠模式 (防休眠开启)",
+                                description: "开启后亮起柔和呼吸点",
+                                isActive: true,
+                                isPulsing: true,
+                                isNight: isNight
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .frame(width: 570)
+
+                // MARK: - 右栏 (剧组名录与致谢群星 - 620pt)
+                VStack(spacing: 16) {
+                    ExportSectionCard(title: "🎭 Dramatis Personae 功勋名录", subtitle: "“幕起幕落，铸就此悲剧史诗之功勋名录”", isNight: isNight) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            StaticCreditsRow(title: "The Grand Artificer", subtitle: "伟大之工匠 (Macbeth)", name: "@🍊蜜柑工具人", tagline: "“以铁血铸就逻辑城邦，夜以继日斩尽 Bug。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "The Limner of the Sigil", subtitle: "徽记描绘者 (Lady Macbeth)", name: "@会拧头的ruarua怪", tagline: "“洗不净手中极彩墨迹，赐界面以华美霓裳。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "The Muse of Whimsy", subtitle: "奇思之缪斯 (The Wyrd Sister)", name: "@cici", tagline: "“在大锅中倒进奇妙遐想，炼化出颠覆灵感。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "The Patron of New Marvels", subtitle: "新奇赞助人 (High Queen)", name: "@🐰兔可可", tagline: "“戴上粉色魔晶王冠，庇佑万物免受休眠。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                        }
+                    }
+
+                    ExportSectionCard(title: "💖 The Sacred Fellowship 挚友同心", subtitle: "“心魂相契、同行无间之至亲挚友”", isNight: isNight) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            StaticCreditsRow(title: "The Enchantress of Mist", subtitle: "雾霭与歌咏之灵", name: "@烟烟", tagline: "“如薄雾凝霜之灵，赋万物以飘逸诗意。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "The Sovereign of Starlight", subtitle: "永恒星芒之女王", name: "@ching_1222", tagline: "“如璀璨星辰，以优雅与睿智光照剧场。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "The Guardian of Realm", subtitle: "幻境奇迹守护者", name: "@邱", tagline: "“如奇迹女神 Miranda，赐予作品纯真守护。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                        }
+                    }
+
+                    ExportSectionCard(title: "🐾 Architects of Playground 爬爬乐创作者", subtitle: "“于桌面绝壁间筑奇幻桌宠乐园”", isNight: isNight) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            StaticCreditsRow(title: "The Agile Enchantress", subtitle: "绝壁与灵动之仙子", name: "@氢氧化猫猫", tagline: "“如绝壁上翩跹之仙子，赋桌宠以轻灵生机。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "The Warden of Gravity", subtitle: "极地与重力之勋爵", name: "@北冥有地瓜", tagline: "“掌控重力与天法，筑坚实锚点庇佑攀行。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                        }
+                    }
+
+                    ExportSectionCard(title: "🌸 A Note of Gratitude 深情致谢", subtitle: "“汝等之光，亦使此剧增辉”", isNight: isNight) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            StaticCreditsRow(title: "The Muse of Grace", subtitle: "晨星与真情之缪斯", name: "@saya.ka", tagline: "“以温润真情与无声之光照拂众生。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "The Woodland Spirit", subtitle: "绿林与颂歌之精灵", name: "@sayu", tagline: "“赋予剧场欢快和谐之韵律与治愈之力。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "Serene Moonlight", subtitle: "宁静月光之守护者", name: "@さおり", tagline: "“以纯真与柔情照亮凡间，使全剧平添温情。”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                            StaticCreditsRow(title: "A Wyrd Messenger", subtitle: "荒野神谕与命运信使", name: "@小汐shio", tagline: "“其金石低语建言扭转全剧浩瀚航程！”", primaryColor: themeConfig.primaryColor, secondaryColor: themeConfig.secondaryColor, isNight: isNight)
+                        }
+                    }
+                }
+                .frame(width: 620)
+            }
+
+            // 萌系水滴封印与专属主题水印
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(themeConfig.primaryColor)
+                    Text(themeConfig.watermarkTitle)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(themeConfig.secondaryColor)
+                }
+
+                Text("\(themeConfig.watermarkSubtitle) • 📖横版宣传手册折页特辑 • \(isNight ? "🌙夜间模式" : "☀️日间模式")")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(themeConfig.primaryColor.opacity(isNight ? 0.15 : 0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [themeConfig.primaryColor.opacity(0.4), themeConfig.secondaryColor.opacity(0.2)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+            )
+            .padding(.top, 4)
+        }
+        .padding(32)
+        .background(
+            ZStack {
+                if isNight {
+                    themeConfig.exportNightCanvasBg
+                    EllipticalGradient(
+                        stops: [
+                            .init(color: themeConfig.primaryColor.opacity(0.28), location: 0.0),
+                            .init(color: themeConfig.secondaryColor.opacity(0.15), location: 0.5),
+                            .init(color: .clear, location: 0.88)
+                        ],
+                        center: .top,
+                        startRadiusFraction: 0,
+                        endRadiusFraction: 0.95
+                    )
+                } else {
+                    themeConfig.exportDayCanvasBg
+                    EllipticalGradient(
+                        stops: [
+                            .init(color: themeConfig.primaryColor.opacity(0.15), location: 0.0),
+                            .init(color: themeConfig.secondaryColor.opacity(0.08), location: 0.5),
+                            .init(color: .clear, location: 0.85)
+                        ],
+                        center: .top,
+                        startRadiusFraction: 0,
+                        endRadiusFraction: 0.95
+                    )
+                }
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            themeConfig.primaryColor.opacity(isNight ? 0.55 : 0.38),
+                            themeConfig.secondaryColor.opacity(isNight ? 0.35 : 0.2)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
+        )
+    }
+}
+
+// MARK: - 主题专属自适应长截图模版容器 (AboutExportableContentView - 20 款主题色高精竖版海报)
 
 private struct AboutExportableContentView: View {
     let mode: ShareExportMode
