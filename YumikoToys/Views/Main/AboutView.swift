@@ -1340,7 +1340,7 @@ struct AboutImageExporter {
         hostingView.frame = CGRect(origin: .zero, size: fittingSize)
         hostingView.layoutSubtreeIfNeeded()
 
-        // 1. 创建高分辨率 sRGB 色域 Retina Bitmap Image Rep (完美抵抗 IM 聊天软件二次压缩)
+        // 1. 创建高分辨率 sRGB / CalibratedRGB 色域 Retina Bitmap Image Rep (完美抵抗 IM 聊天软件二次压缩)
         guard let bitmapRep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: pixelWidth,
@@ -1349,7 +1349,7 @@ struct AboutImageExporter {
             samplesPerPixel: 4,
             hasAlpha: true,
             isPlanar: false,
-            colorSpaceName: .sRGB,
+            colorSpaceName: .calibratedRGB,
             bytesPerRow: 0,
             bitsPerPixel: 0
         ) else { return nil }
@@ -1366,7 +1366,7 @@ struct AboutImageExporter {
 
         // 2. 启用 GPU CoreGraphics 硬件最高精度重采样与抗锯齿渲染管线
         let cgContext = context.cgContext
-        cgContext.interpolationQuality = .high
+        cgContext.interpolationQuality = CGInterpolationQuality.high
         cgContext.setShouldAntialias(true)
         cgContext.setAllowsAntialiasing(true)
         // 禁用离屏点阵 LCD 彩边模糊，采用纯净 8-bit 灰度矢量抗锯齿，抵抗 IM 聊天工具 (微信/QQ) 二次压缩
