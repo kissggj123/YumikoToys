@@ -574,6 +574,10 @@ final class PetDesktopScene: SKScene {
             petNodes.append(node)
             addChild(node)
         }
+        if node.hudNode.parent !== self {
+            node.hudNode.removeFromParent()
+            addChild(node.hudNode)
+        }
     }
 
     func hitTestPetNode(at point: CGPoint) -> PetNode? {
@@ -1237,6 +1241,15 @@ final class PetInteractiveSKView: SKView {
     }
 }
 
+final class NPUHUDPanel: NSPanel {
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
+
+    override func mouseDown(with event: NSEvent) {
+        self.performDrag(with: event)
+    }
+}
+
 @MainActor
 final class PetPlaygroundService: ObservableObject {
     static let shared = PetPlaygroundService()
@@ -1445,7 +1458,7 @@ final class PetPlaygroundService: ObservableObject {
                     width: hudWidth,
                     height: hudHeight
                 )
-                let hudPanel = NSPanel(
+                let hudPanel = NPUHUDPanel(
                     contentRect: hudFrame,
                     styleMask: [.borderless],
                     backing: .buffered,

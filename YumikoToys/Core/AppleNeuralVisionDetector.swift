@@ -63,10 +63,46 @@ final class AppleNeuralVisionDetector: ObservableObject {
         learnedLayouts.removeAll()
     }
 
+    private var latestCharacterLogs: [String: String] = [:]
+    private var lastTopologyLog: String = ""
+
     func updatePetDecisionLogs(_ logs: [String]) {
-        if self.reasoningLogs != logs {
-            self.reasoningLogs = logs
+        for log in logs {
+            if log.contains("NPU 视觉拓扑") {
+                lastTopologyLog = log
+            } else if let charName = extractCharacterName(from: log) {
+                latestCharacterLogs[charName] = log
+            }
         }
+
+        var combined: [String] = []
+        if !lastTopologyLog.isEmpty {
+            combined.append(lastTopologyLog)
+        }
+
+        let orderedCharacters = ["浅蓝", "深灰", "白衣", "浅灰"]
+        for name in orderedCharacters {
+            if let logLine = latestCharacterLogs[name] {
+                combined.append(logLine)
+            }
+        }
+        for (name, logLine) in latestCharacterLogs where !orderedCharacters.contains(name) {
+            combined.append(logLine)
+        }
+
+        if self.reasoningLogs != combined {
+            self.reasoningLogs = combined
+        }
+    }
+
+    private func extractCharacterName(from log: String) -> String? {
+        let names = ["浅蓝", "深灰", "白衣", "浅灰"]
+        for name in names {
+            if log.contains(name) {
+                return name
+            }
+        }
+        return nil
     }
 
     func setManualCalibrationOffset(x: CGFloat, y: CGFloat) {
