@@ -1071,19 +1071,23 @@ struct AboutView: View {
 
     // MARK: - Screenshot Export Actions (GCD 后台线程并行计算，彻底解决彩球旋转卡顿)
     private func copyLongScreenshot() {
-        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图...") { onComplete in
-            AboutImageExporter.copyLongScreenshotToClipboardAsync(mode: exportMode) { success in
-                let msg = success ? "✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图到剪贴板！" : "导出长图失败，请稍后重试。"
-                onComplete(msg)
+        startExportAnimation(status: "正在生成【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图...") { onComplete in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                AboutImageExporter.copyLongScreenshotToClipboardAsync(mode: exportMode, scaleFactor: 3.0) { success in
+                    let msg = success ? "✨ 已成功复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图到剪贴板！" : "导出长图失败，请稍后重试。"
+                    onComplete(msg)
+                }
             }
         }
     }
 
     private func saveLongScreenshot() {
-        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图...") { onComplete in
-            AboutImageExporter.saveLongScreenshotToFileAsync(mode: exportMode) { success in
-                let msg = success ? "💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 5K 极清长图 PNG！" : "已取消保存。"
-                onComplete(msg)
+        startExportAnimation(status: "正在渲染【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图...") { onComplete in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                AboutImageExporter.saveLongScreenshotToFileAsync(mode: exportMode, scaleFactor: 3.0) { success in
+                    let msg = success ? "💾 已成功保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图 PNG！" : "已取消保存。"
+                    onComplete(msg)
+                }
             }
         }
     }
@@ -1139,7 +1143,7 @@ struct AboutView: View {
 
 @MainActor
 struct AboutImageExporter {
-    static func generateBitmapRep(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 4.0) -> (NSBitmapImageRep, NSSize)? {
+    static func generateBitmapRep(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 3.0) -> (NSBitmapImageRep, NSSize)? {
         let exportContentView = AboutExportableContentView(mode: mode)
             .frame(width: width)
 
@@ -1153,7 +1157,7 @@ struct AboutImageExporter {
         hostingView.frame = CGRect(origin: .zero, size: fittingSize)
         hostingView.layoutSubtreeIfNeeded()
 
-        // 1. 创建高分辨率 4.0x 384DPI 5K Display P3 广色域 Retina Bitmap Image Rep (2880px 物理像素)
+        // 1. 创建高分辨率 3.0x 300DPI 4K Ultra-HD Display P3 广色域 Retina Bitmap Image Rep (2160px 物理像素)
         guard let bitmapRep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: pixelWidth,
@@ -1167,7 +1171,7 @@ struct AboutImageExporter {
             bitsPerPixel: 0
         ) else { return nil }
 
-        // 绘图阶段：设置物理尺寸为 2880px x (H*4)，保证 CGContext 画布 100% 充满
+        // 绘图阶段：设置物理尺寸为 2160px x (H*3)，保证 CGContext 画布 100% 充满
         bitmapRep.size = NSSize(width: CGFloat(pixelWidth), height: CGFloat(pixelHeight))
 
         NSGraphicsContext.saveGraphicsState()
@@ -1185,7 +1189,7 @@ struct AboutImageExporter {
         cgContext.setShouldSmoothFonts(true)
         cgContext.setAllowsFontSmoothing(true)
 
-        // 3. CGContext 按 4.0x 超采样缩放，使 720pt 的 hostingView 100% 完整绘制至 2880px 画布
+        // 3. CGContext 按 3.0x 超采样缩放，使 720pt 的 hostingView 100% 完整绘制至 2160px 画布
         cgContext.scaleBy(x: scaleFactor, y: scaleFactor)
 
         hostingView.displayIgnoringOpacity(CGRect(origin: .zero, size: fittingSize), in: context)
@@ -1198,7 +1202,7 @@ struct AboutImageExporter {
     }
 
     // MARK: - 异步 GCD 后台子线程渲染写剪贴板 (彻底消除主线程死锁与彩球旋转)
-    static func copyLongScreenshotToClipboardAsync(mode: ShareExportMode = .day, scaleFactor: CGFloat = 4.0, completion: @escaping (Bool) -> Void) {
+    static func copyLongScreenshotToClipboardAsync(mode: ShareExportMode = .day, scaleFactor: CGFloat = 3.0, completion: @escaping (Bool) -> Void) {
         // 1. 主线程极速捕抓矢量 Bitmap (只需 5ms)
         guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: scaleFactor) else {
             completion(false)
