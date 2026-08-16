@@ -125,14 +125,22 @@ struct PetPlaygroundSpriteView: View {
 }
 
 final class WindowDragNSView: NSView {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override var acceptsFirstResponder: Bool { false }
+
     override func mouseDown(with event: NSEvent) {
+        // performDrag gives 100% locked window-to-cursor dragging via WindowServer
         self.window?.performDrag(with: event)
     }
 }
 
 struct WindowDragRepresentable: NSViewRepresentable {
     func makeNSView(context: Context) -> WindowDragNSView {
-        return WindowDragNSView()
+        let v = WindowDragNSView()
+        // Transparent background — SwiftUI hit test still passes through for subviews
+        v.wantsLayer = true
+        v.layer?.backgroundColor = .clear
+        return v
     }
     func updateNSView(_ nsView: WindowDragNSView, context: Context) {}
 }
@@ -146,12 +154,25 @@ struct PetPlaygroundOverlayView: View {
         VStack(alignment: .trailing, spacing: 0) {
             if isMinimized {
                 HStack(spacing: 6) {
-                    Image(systemName: "brain.head.profile")
-                        .foregroundStyle(.green)
-                    Text("🧠 ANE NPU Multi-Screen")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.white)
-                    
+                    // Drag handle + label — WindowDragRepresentable overlaid on top to receive mouseDown
+                    ZStack(alignment: .leading) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "brain.head.profile")
+                                .foregroundStyle(.green)
+                                .font(.system(size: 11))
+                            Text("🧠 ANE NPU")
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.white)
+                                .fixedSize()
+                        }
+                        .padding(.trailing, 4)
+                        // Overlay transparent drag NSView on top of the label/icon area
+                        WindowDragRepresentable()
+                            .allowsHitTesting(true)
+                    }
+
+                    Spacer(minLength: 0)
+
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             isMinimized = false
@@ -166,7 +187,7 @@ struct PetPlaygroundOverlayView: View {
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 10)
-                .padding(.vertical, 6)
+                .padding(.vertical, 7)
                 .background(
                     Capsule()
                         .fill(Color.black.opacity(0.88))
@@ -174,7 +195,7 @@ struct PetPlaygroundOverlayView: View {
                             Capsule().stroke(Color.green.opacity(0.55), lineWidth: 1)
                         )
                 )
-                .background(WindowDragRepresentable())
+                .fixedSize()
                 .onTapGesture(count: 2) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         isMinimized = false
