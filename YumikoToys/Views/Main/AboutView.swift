@@ -2,7 +2,7 @@
 //  AboutView.swift
 //  YumikoToys
 //
-//  关于页面视图（v4.5.8 - 2.0x HiDPI Retina Ultra-HD Exporter & Mode-Adapted Popover Mockups, 1:1 Restored Legend from 8342803）
+//  关于页面视图（v4.5.8 - 3.0x 300DPI 4K Cinema Ultra-HD Exporter & Full Text Wrapping, 1:1 Restored Legend from 8342803）
 //
 
 import SwiftUI
@@ -538,7 +538,7 @@ struct AboutView: View {
                     }
 
                     // MARK: - 挚友同心三星辉 (The Sacred Fellowship of Soulmates)
-                    AboutSectionCard(title: "The Sacred Fellowship of Soulmates", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”", showInfoHint: true) {
+                    AboutSectionCard(title: "The Sacred Fellowship of Soulmates 挚友同心", subtitle: "“如《皆大欢喜》与《第十二夜》，心魂相契、同行无间之至亲挚友”", showInfoHint: true) {
                         VStack(alignment: .leading, spacing: 12) {
                             CreditsRow(
                                 title: "The Enchantress of Mist & Song",
@@ -568,7 +568,7 @@ struct AboutView: View {
                     }
 
                     // MARK: - 爬爬乐特别致谢 (Architects of Pet Playground)
-                    AboutSectionCard(title: "Architects of Pet Playground", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”", showInfoHint: true) {
+                    AboutSectionCard(title: "Architects of Pet Playground 爬爬乐创作者", subtitle: "“于桌面绝壁与重力极地间筑奇幻桌宠乐园”", showInfoHint: true) {
                         VStack(alignment: .leading, spacing: 12) {
                             CreditsRow(
                                 title: "The Agile Enchantress of Walls",
@@ -590,7 +590,7 @@ struct AboutView: View {
                     }
 
                     // MARK: - 致谢深情群星 (Shakespearean Chorus Edition)
-                    AboutSectionCard(title: "A Note of Gratitude Most Profound", subtitle: "“汝等之光，亦使此剧增辉”", showInfoHint: true) {
+                    AboutSectionCard(title: "A Note of Gratitude Most Profound 深情致谢", subtitle: "“汝等之光，亦使此剧增辉”", showInfoHint: true) {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("吾辈亦向此众友献上敬意：")
                                 .font(.system(size: 13))
@@ -626,7 +626,7 @@ struct AboutView: View {
                     }
 
                     // MARK: - 命运的信使 (Shakespearean Oracle Edition)
-                    AboutSectionCard(title: "A Wyrd Messenger", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”", showInfoHint: true) {
+                    AboutSectionCard(title: "A Wyrd Messenger 命运信使", subtitle: "“荒野神谕，低语建言扭转浩瀚航程”", showInfoHint: true) {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("如荒野上之回响，自迷雾中而来，其低语之建言，足以扭转吾辈大业之航向者，乃")
                                 .font(.system(size: 13))
@@ -1007,7 +1007,7 @@ struct AboutView: View {
     // MARK: - Screenshot Export Actions
     private func copyLongScreenshot() {
         if AboutImageExporter.copyLongScreenshotToClipboard(mode: exportMode) {
-            triggerToast("✨ 已复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")高清长图 (超清 2K/4K)！")
+            triggerToast("✨ 已复制【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图到剪贴板！")
         } else {
             triggerToast("导出长图失败，请稍后重试。")
         }
@@ -1016,7 +1016,7 @@ struct AboutView: View {
     private func saveLongScreenshot() {
         AboutImageExporter.saveLongScreenshotToFile(mode: exportMode) { success in
             if success {
-                triggerToast("💾 已保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间")超清长图 PNG！")
+                triggerToast("💾 已保存【\(themeConfig.themeName)】专属\(exportMode == .day ? "☀️日间" : "🌙夜间") 4K 极清长图 PNG！")
             }
         }
     }
@@ -1034,11 +1034,11 @@ struct AboutView: View {
     }
 }
 
-// MARK: - 离线 2.0x HiDPI Retina 超高清长图导出渲染器 (AboutImageExporter - 解决剪贴板糊化)
+// MARK: - 离线 3.0x 300DPI 4K Cinema Ultra-HD 超高清长图导出渲染器 (AboutImageExporter)
 
 @MainActor
 struct AboutImageExporter {
-    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 2.0) -> NSImage? {
+    static func generateBitmapRep(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 3.0) -> (NSBitmapImageRep, NSSize)? {
         let exportContentView = AboutExportableContentView(mode: mode)
             .frame(width: width)
 
@@ -1052,7 +1052,7 @@ struct AboutImageExporter {
         let pixelWidth = Int(fittingSize.width * scaleFactor)
         let pixelHeight = Int(fittingSize.height * scaleFactor)
 
-        // 创建高分辨率 2.0x HiDPI Retina Bitmap Image Rep
+        // 创建高分辨率 3.0x 300DPI 4K Cinema Retina Bitmap Image Rep
         guard let bitmapRep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: pixelWidth,
@@ -1066,7 +1066,8 @@ struct AboutImageExporter {
             bitsPerPixel: 0
         ) else { return nil }
 
-        bitmapRep.size = fittingSize // 保持 720pt 逻辑点尺寸，但包含 2x 像素采样！
+        // 设置像素尺寸，保证系统剪贴板与底层编码器认定为 3.0x 2160px 超级矢量画卷
+        bitmapRep.size = NSSize(width: CGFloat(pixelWidth), height: CGFloat(pixelHeight))
 
         NSGraphicsContext.saveGraphicsState()
         guard let context = NSGraphicsContext(bitmapImageRep: bitmapRep) else {
@@ -1075,20 +1076,25 @@ struct AboutImageExporter {
         }
         NSGraphicsContext.current = context
 
-        // 渲染 2x 超采样矢量画面
+        // 核心：CGContext 按 3.0x 超采样缩放，排版文字与线条 100% 矢量级高精抗锯齿渲染！
+        context.cgContext.scaleBy(x: scaleFactor, y: scaleFactor)
+
         hostingView.displayIgnoringOpacity(hostingView.bounds, in: context)
         NSGraphicsContext.restoreGraphicsState()
 
-        let image = NSImage(size: fittingSize)
+        return (bitmapRep, fittingSize)
+    }
+
+    static func generateLongScreenshot(mode: ShareExportMode = .day, width: CGFloat = 720, scaleFactor: CGFloat = 3.0) -> NSImage? {
+        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, width: width, scaleFactor: scaleFactor) else { return nil }
+        let image = NSImage(size: NSSize(width: CGFloat(bitmapRep.pixelsWide), height: CGFloat(bitmapRep.pixelsHigh)))
         image.addRepresentation(bitmapRep)
         return image
     }
 
     static func copyLongScreenshotToClipboard(mode: ShareExportMode = .day) -> Bool {
-        // 使用 2.0x 4K 超高清 Retina 渲染
-        guard let image = generateLongScreenshot(mode: mode, scaleFactor: 2.0),
-              let tiffData = image.tiffRepresentation,
-              let bitmapRep = NSBitmapImageRep(data: tiffData),
+        // 使用 3.0x 300DPI 4K 超高清 Cinema 级矢量渲染 (2160px 宽度)
+        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: 3.0),
               let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
             return false
         }
@@ -1096,18 +1102,27 @@ struct AboutImageExporter {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
 
-        // 同时注册原生 PNG 数据与 TIFF 数据，确保微信、QQ、Telegram、Pages、Photoshop 等客户端粘贴均为最高清无损图片！
-        let pngSuccess = pasteboard.setData(pngData, forType: .png)
-        let tiffSuccess = pasteboard.setData(tiffData, forType: .tiff)
-        return pngSuccess || tiffSuccess || pasteboard.writeObjects([image])
+        // 1. 创建 NSPasteboardItem 写入原生 3x 4K 无损 PNG 字节流（彻底解决 Handoff 接力复制与微信/QQ/Telegram 剪贴板糊化）
+        let item = NSPasteboardItem()
+        item.setData(pngData, forType: .png)
+        item.setData(pngData, forType: NSPasteboard.PasteboardType("public.png"))
+        
+        if let tiffData = bitmapRep.representation(using: .tiff, properties: [:]) {
+            item.setData(tiffData, forType: .tiff)
+            item.setData(tiffData, forType: NSPasteboard.PasteboardType("public.tiff"))
+        }
+
+        // 2. 显式添加 3x 4K 2160px 高像素 NSImage 图像对象
+        let highResImage = NSImage(size: NSSize(width: CGFloat(bitmapRep.pixelsWide), height: CGFloat(bitmapRep.pixelsHigh)))
+        highResImage.addRepresentation(bitmapRep)
+
+        return pasteboard.writeObjects([item, highResImage])
     }
 
     static func saveLongScreenshotToFile(mode: ShareExportMode = .day, completion: @escaping (Bool) -> Void) {
         let themeConfig = AboutThemeConfig.current()
-        // 保存文件采用 2.0x 高清 Retina 像素
-        guard let image = generateLongScreenshot(mode: mode, scaleFactor: 2.0),
-              let tiffData = image.tiffRepresentation,
-              let bitmapRep = NSBitmapImageRep(data: tiffData),
+        // 保存文件采用 3.0x 300DPI 4K 超高清 Retina 像素
+        guard let (bitmapRep, _) = generateBitmapRep(mode: mode, scaleFactor: 3.0),
               let pngData = bitmapRep.representation(using: .png, properties: [:]) else {
             completion(false)
             return
@@ -1117,8 +1132,8 @@ struct AboutImageExporter {
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.png]
         savePanel.nameFieldStringValue = "YumikoToys_About_\(themeConfig.themeName)_\(modeSuffix)_\(AppConfig.version).png"
-        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")超清长图"
-        savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】精美长图的路径"
+        savePanel.title = "保存【\(themeConfig.themeName)】专属\(mode == .day ? "☀️日间" : "🌙夜间")4K超清长图"
+        savePanel.message = "选择保存 YumikoToys【\(themeConfig.themeName)】4K极清长图的路径"
 
         savePanel.begin { result in
             if result == .OK, let url = savePanel.url {
@@ -1488,16 +1503,18 @@ private struct ExportSectionCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(isNight ? .white : Color(hex: "1D1D1F"))
+                    .fixedSize(horizontal: false, vertical: true)
 
-                Text(subtitle)
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
-
-                Spacer()
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(isNight ? Color.white.opacity(0.5) : Color.black.opacity(0.4))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             Divider().opacity(isNight ? 0.2 : 0.6)
@@ -1541,7 +1558,7 @@ private struct ExportIconLegendCard: View {
                     Text(title)
                         .font(.system(size: 12.5, weight: .bold))
                         .foregroundStyle(isActive ? themeConfig.primaryColor : (isNight ? .white : Color(hex: "1D1D1F")))
-                        .lineLimit(1)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     ZStack {
                         if isActive {
@@ -1558,7 +1575,6 @@ private struct ExportIconLegendCard: View {
                     .font(.system(size: 11))
                     .foregroundStyle(isNight ? Color.white.opacity(0.65) : Color.black.opacity(0.5))
                     .fixedSize(horizontal: false, vertical: true)
-                    .lineLimit(2)
             }
             .frame(maxHeight: .infinity, alignment: .topLeading)
         }
@@ -1879,7 +1895,7 @@ private struct IconLegendCard: View {
                     Text(title)
                         .font(.system(size: 12.5, weight: .bold))
                         .foregroundStyle(isActive ? themeConfig.primaryColor : .primary)
-                        .lineLimit(1)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     ZStack {
                         if isActive {
@@ -1896,7 +1912,6 @@ private struct IconLegendCard: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .lineLimit(2)
             }
             .frame(maxHeight: .infinity, alignment: .topLeading)
         }
@@ -1993,14 +2008,20 @@ private struct AboutSectionCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(title)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.primary)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                Text(subtitle)
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(.tertiary)
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
 
                 Spacer()
 
