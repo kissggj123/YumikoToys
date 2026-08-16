@@ -1160,7 +1160,7 @@ struct AboutImageExporter {
             samplesPerPixel: 4,
             hasAlpha: true,
             isPlanar: false,
-            colorSpaceName: .displayP3, // Display P3 广色域，色彩鲜艳度与锐利对比度达硬件级极致
+            colorSpaceName: .deviceRGB,
             bytesPerRow: 0,
             bitsPerPixel: 0
         ) else { return nil }
