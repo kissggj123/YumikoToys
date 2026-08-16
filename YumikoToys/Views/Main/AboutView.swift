@@ -58,19 +58,19 @@ struct AppleChipDetector {
     static func recommendedScaleFactor() -> CGFloat {
         let chip = getChipName().lowercased()
         if chip.contains("m4") || chip.contains("m5") || chip.contains("max") || chip.contains("ultra") {
-            return 4.0 // 5K 极致大师
+            return 4.0 // 5K 大师 (2880px)
         } else if chip.contains("pro") || chip.contains("m3") {
-            return 3.0 // 4K 推荐画质
+            return 4.0 // 5K 推荐 (2880px)
         } else {
-            return 2.5 // 3K 极速画质
+            return 3.0 // 4K 极清 (2160px)
         }
     }
 
     static func scaleTitle(for factor: CGFloat) -> String {
         switch factor {
-        case 2.5: return "⚡️ 2.5x 3K 极速 (1800px)"
-        case 3.0: return "🌟 3.0x 4K 推荐 (2160px)"
-        case 4.0: return "🚀 4.0x 5K 大师 (2880px)"
+        case 3.0: return "⚡️ 3.0x 4K 极清 (2160px)"
+        case 4.0: return "🌟 4.0x 5K 大师 (2880px)"
+        case 5.0: return "🚀 5.0x 6K 旗舰 (3600px)"
         default: return "\(String(format: "%.1f", factor))x 自定义"
         }
     }
@@ -1340,7 +1340,7 @@ struct AboutImageExporter {
         hostingView.frame = CGRect(origin: .zero, size: fittingSize)
         hostingView.layoutSubtreeIfNeeded()
 
-        // 1. 创建高分辨率 Display P3 广色域 Retina Bitmap Image Rep
+        // 1. 创建高分辨率 sRGB 色域 Retina Bitmap Image Rep (完美抵抗 IM 聊天软件二次压缩)
         guard let bitmapRep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: pixelWidth,
@@ -1349,7 +1349,7 @@ struct AboutImageExporter {
             samplesPerPixel: 4,
             hasAlpha: true,
             isPlanar: false,
-            colorSpaceName: .deviceRGB,
+            colorSpaceName: .sRGB,
             bytesPerRow: 0,
             bitsPerPixel: 0
         ) else { return nil }
@@ -1369,8 +1369,9 @@ struct AboutImageExporter {
         cgContext.interpolationQuality = .high
         cgContext.setShouldAntialias(true)
         cgContext.setAllowsAntialiasing(true)
-        cgContext.setShouldSmoothFonts(true)
-        cgContext.setAllowsFontSmoothing(true)
+        // 禁用离屏点阵 LCD 彩边模糊，采用纯净 8-bit 灰度矢量抗锯齿，抵抗 IM 聊天工具 (微信/QQ) 二次压缩
+        cgContext.setShouldSmoothFonts(false)
+        cgContext.setAllowsFontSmoothing(false)
 
         // 3. CGContext 按 scaleFactor 超采样缩放
         cgContext.scaleBy(x: scaleFactor, y: scaleFactor)
@@ -2082,13 +2083,13 @@ private struct BrochureShakespeareEasterEggSection: View {
                 // 引文原文与翻译
                 VStack(alignment: .leading, spacing: 5) {
                     Text("“Light thickens; and the crow makes wing to the rooky wood:\nGood things of day begin to droop and drowse; Whiles night's black agents to their preys do rouse.”")
-                        .font(.system(size: 11.5, weight: .medium, design: .serif))
-                        .foregroundStyle(isNight ? Color.white.opacity(0.9) : Color(hex: "2C2C2E"))
+                        .font(.system(size: 12.5, weight: .semibold, design: .serif))
+                        .foregroundStyle(isNight ? Color.white.opacity(0.95) : Color(hex: "1D1D1F"))
                         .italic()
 
                     Text("『天色渐沉，乌鸦飞向白桦树林；昼间万物尽皆沉睡委顿，唯夜之暗黑信使纷纷暴起……』")
-                        .font(.system(size: 11))
-                        .foregroundStyle(isNight ? Color.white.opacity(0.65) : Color(hex: "666666"))
+                        .font(.system(size: 11.5, weight: .medium))
+                        .foregroundStyle(isNight ? Color.white.opacity(0.85) : Color(hex: "333333"))
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -2143,16 +2144,16 @@ private struct BrochureEasterEggBadge: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
                 Text(icon)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                 Text(title)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(themeConfig.primaryColor)
             }
 
             Text(desc)
-                .font(.system(size: 9.5))
-                .foregroundStyle(isNight ? Color.white.opacity(0.7) : Color.black.opacity(0.6))
-                .lineSpacing(2)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(isNight ? Color.white.opacity(0.88) : Color(hex: "2D2D30"))
+                .lineSpacing(2.5)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(10)
