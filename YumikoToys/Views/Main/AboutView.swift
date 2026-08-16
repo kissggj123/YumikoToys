@@ -1675,6 +1675,9 @@ private struct AboutHorizontalExportableContentView: View {
                 .frame(width: 620)
             }
 
+            // 📜 横版宣发手册专属彩蛋：莎士比亚麦克白史诗、背景剧情与系统隐喻 (动态版本跟随)
+            BrochureShakespeareEasterEggSection(isNight: isNight)
+
             // 萌系水滴封印与专属主题水印
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
@@ -2145,6 +2148,158 @@ private struct FeatureBadgeItem: View {
                             themeConfig.primaryColor.opacity(isNight ? 0.3 : 0.15),
                             lineWidth: 1
                         )
+                )
+        )
+    }
+}
+
+// MARK: - 📖 横版手册专属彩蛋区块：莎士比亚史诗名句、剧情背景与防休眠隐喻 (自动随版本跟随更新)
+
+private struct BrochureShakespeareEasterEggSection: View {
+    let isNight: Bool
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Header
+            HStack(spacing: 8) {
+                Text("📜")
+                    .font(.system(size: 16))
+
+                Text("William Shakespeare · Macbeth, Act III, Scene II")
+                    .font(.system(size: 13, weight: .bold, design: .serif))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [themeConfig.primaryColor, themeConfig.secondaryColor],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+
+                Spacer()
+
+                // 版本跟随印记 Badge
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 9))
+                    Text("横版限定彩蛋 • \(AppConfig.version)")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3.5)
+                .background(
+                    Capsule()
+                        .fill(themeConfig.primaryColor.opacity(isNight ? 0.25 : 0.12))
+                        .overlay(
+                            Capsule().stroke(themeConfig.primaryColor.opacity(0.35), lineWidth: 1)
+                        )
+                )
+                .foregroundStyle(themeConfig.primaryColor)
+            }
+
+            // 引文原文与翻译
+            VStack(alignment: .leading, spacing: 6) {
+                Text("“Light thickens; and the crow makes wing to the rooky wood:\nGood things of day begin to droop and drowse; Whiles night's black agents to their preys do rouse.”")
+                    .font(.system(size: 12.5, weight: .medium, design: .serif))
+                    .foregroundStyle(isNight ? Color.white.opacity(0.9) : Color(hex: "2C2C2E"))
+                    .italic()
+
+                Text("『天色渐沉，乌鸦飞向白桦树林；昼间万物尽皆沉睡委顿，唯夜之暗黑信使纷纷暴起……』")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(isNight ? Color.white.opacity(0.65) : Color(hex: "666666"))
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isNight ? Color(hex: "222534").opacity(0.8) : Color(hex: "F6F7FA"))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(themeConfig.primaryColor.opacity(0.2), lineWidth: 1)
+                    )
+            )
+
+            // 3 大萌系特质解构小魔方
+            HStack(spacing: 12) {
+                BrochureEasterEggBadge(
+                    icon: "🎭",
+                    title: "戏剧背景 · 幕起黄昏",
+                    desc: "第三幕第二场：刺杀邓肯后麦克白深陷无眠折磨，于落日余晖下唤醒夜间守护信使",
+                    isNight: isNight
+                )
+
+                BrochureEasterEggBadge(
+                    icon: "🏰",
+                    title: "系统隐喻 · 夜巡守卫",
+                    desc: "MacBook 屏幕熄灭、万物沉睡之际，YumikoToys 防休眠守卫在黑夜中默默守护计算",
+                    isNight: isNight
+                )
+
+                BrochureEasterEggBadge(
+                    icon: "🔮",
+                    title: "动态跟随 · 罗德岛印记",
+                    desc: "全自动感知版本 \(AppConfig.version) (\(AppConfig.buildNumber))，将莎翁史诗融为横版专属符文",
+                    isNight: isNight
+                )
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(isNight ? Color(hex: "181A26").opacity(0.95) : Color.white.opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(
+                            LinearGradient(
+                                colors: [themeConfig.primaryColor.opacity(isNight ? 0.5 : 0.3), themeConfig.secondaryColor.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.2
+                        )
+                )
+                .shadow(color: themeConfig.primaryColor.opacity(isNight ? 0.2 : 0.05), radius: 10, x: 0, y: 3)
+        )
+    }
+}
+
+private struct BrochureEasterEggBadge: View {
+    let icon: String
+    let title: String
+    let desc: String
+    let isNight: Bool
+
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                Text(icon)
+                    .font(.system(size: 13))
+                Text(title)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(themeConfig.primaryColor)
+            }
+
+            Text(desc)
+                .font(.system(size: 9.5))
+                .foregroundStyle(isNight ? Color.white.opacity(0.7) : Color.black.opacity(0.6))
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isNight ? Color(hex: "222534").opacity(0.7) : Color(hex: "F4F5F9"))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(themeConfig.primaryColor.opacity(0.18), lineWidth: 1)
                 )
         )
     }
