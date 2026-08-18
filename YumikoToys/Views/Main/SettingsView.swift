@@ -86,11 +86,7 @@ struct SettingsView: View {
                         .background(
                             RoundedRectangle(cornerRadius: 8)
                                 .fill(selectedTab == tab ? 
-                                      LinearGradient(
-                                          colors: [Color(hex: "5856D6"), Color(hex: "AF52DE")],
-                                          startPoint: .leading,
-                                          endPoint: .trailing
-                                      ) : LinearGradient(colors: [.clear], startPoint: .leading, endPoint: .trailing)
+                                      AnyShapeStyle(AboutThemeConfig.current().linearGradient) : AnyShapeStyle(Color.clear)
                                 )
                         )
                     }
@@ -156,6 +152,8 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(settingsBackground)
         .preferredColorScheme(viewModel.mainWindowThemeColor.isDarkTheme ? .dark : .light)
+        .tint(AboutThemeConfig.current().primaryColor)
+        .accentColor(AboutThemeConfig.current().primaryColor)
         
         // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
         //  【新增】密码输入弹窗 - 用于重新授权或首次写入钥匙串
@@ -3212,15 +3210,9 @@ private struct SettingsHeader: View, Equatable {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "5856D6"), Color(hex: "AF52DE")],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(AboutThemeConfig.current().linearGradient)
                     .frame(width: 48, height: 48)
-                    .shadow(color: Color(hex: "5856D6").opacity(0.3), radius: 10, x: 0, y: 4)
+                    .shadow(color: AboutThemeConfig.current().primaryColor.opacity(0.35), radius: 10, x: 0, y: 4)
 
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 22, weight: .medium))
@@ -3245,268 +3237,115 @@ private struct SettingsHeader: View, Equatable {
 // MARK: - YumiScript 插件管理 Section
 struct PluginManagementSectionView: View {
     @ObservedObject var pluginService = PluginService.shared
-    @State private var showingEditor = false
     @State private var selectedPlugin: YumiPlugin? = nil
-    @State private var newAppName = ""
-    @State private var showingAppPicker = false
+    @State private var isCreating = false
     
     var body: some View {
-        SettingsSection(title: "YumiScript 插件与快速启动管理", icon: "powerplug", iconColor: "34C759") {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("🧩 YumiScript 插件配置")
-                    .font(.system(size: 12, weight: .bold))
-                
-                Text("配置状态栏中可快速执行的 YumiScript 插件，支持模块化和自定义编写。")
+        SettingsSection(title: "YumiScript 插件系统", icon: "puzzlepiece.extension.fill", iconColor: "00F0FF") {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("自定义自动化插件扩展")
+                        .font(.system(size: 13, weight: .medium))
+                    Spacer()
+                    Button("＋ 新增插件") {
+                        selectedPlugin = YumiPlugin(
+                            id: "plugin_\(UUID().uuidString.prefix(6).lowercased())",
+                            name: "新插件",
+                            icon: "terminal.fill",
+                            description: "自定义自动化功能",
+                            isEnabled: true,
+                            scriptContent: "toast \"Hello Yumiko!\""
+                        )
+                        isCreating = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AboutThemeConfig.current().primaryColor)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 4)
-                
-                // 插件列表
-                VStack(spacing: 8) {
-                    ForEach(pluginService.customPlugins) { plugin in
-                        HStack {
-                            Image(systemName: plugin.icon.isEmpty ? "powerplug" : plugin.icon)
-                                .font(.system(size: 12))
-                                .frame(width: 20, height: 20)
-                                .foregroundStyle(plugin.isEnabled ? .green : .secondary)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack(spacing: 6) {
-                                    Text(plugin.name)
-                                        .font(.system(size: 12, weight: .bold))
-                                    Text("(\(plugin.id))")
-                                        .font(.system(size: 9, design: .monospaced))
-                                        .foregroundStyle(.tertiary)
-                                }
-                                Text(plugin.description)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            HStack(spacing: 12) {
-                                Toggle("", isOn: Binding(
-                                    get: { plugin.isEnabled },
-                                    set: { newValue in
-                                        var updated = plugin
-                                        updated.isEnabled = newValue
-                                        pluginService.addOrUpdatePlugin(updated)
-                                    }
-                                ))
-                                .toggleStyle(SwitchToggleStyle(tint: .green))
-                                .labelsHidden()
-                                
-                                Button(action: {
-                                    selectedPlugin = plugin
-                                    showingEditor = true
-                                }) {
-                                    Text("编辑")
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .foregroundStyle(Color(hex: "007AFF"))
-                                }
-                                .buttonStyle(.plain)
-                                
-                                Button(action: {
-                                    pluginService.deletePlugin(id: plugin.id)
-                                }) {
-                                    Text("删除")
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .foregroundStyle(.red)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(10)
-                        .background(Color.primary.opacity(0.02))
-                        .cornerRadius(10)
-                    }
                 }
-                
-                Button(action: {
-                    selectedPlugin = YumiPlugin(
-                        id: "plugin_\(UUID().uuidString.prefix(6).lowercased())",
-                        name: "自定义新插件",
-                        icon: "powerplug",
-                        description: "执行自定义 YumiScript 脚本指令",
-                        isEnabled: true,
-                        scriptContent: """
-                        # YumiScript 自定义脚本
-                        notify "自定义通知" "Hello YumiScript!"
-                        """
-                    )
-                    showingEditor = true
-                }) {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                        Text("新增自定义插件")
-                    }
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity)
-                    .background(Color(hex: "34C759"))
-                    .cornerRadius(8)
-                }
-                .buttonStyle(.plain)
-                .padding(.bottom, 8)
                 
                 Divider()
-                    .padding(.vertical, 4)
                 
-                Text("🚀 状态栏快速启动应用配置")
-                    .font(.system(size: 12, weight: .bold))
-                
-                Text("添加或移除展示在状态栏弹出菜单中的快速启动应用。点击对应应用时将自动通过 `launch` 指令激活。")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                
-                HStack(spacing: 8) {
-                    TextField("输入应用英文/拼音名称（如 Safari, Xcode）", text: $newAppName)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 11))
-                    
-                    Button(action: {
-                        let name = newAppName.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if !name.isEmpty {
-                            pluginService.addQuickLaunchApp(name: name)
-                            newAppName = ""
-                        }
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "plus")
-                            Text("添加")
-                        }
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color(hex: "007AFF"))
-                        .cornerRadius(6)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(newAppName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-                
-                Button(action: {
-                    showingAppPicker = true
-                }) {
-                    HStack {
-                        Image(systemName: "list.bullet.rectangle.portrait")
-                        Text("从已安装应用批量选择")
-                    }
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 12)
-                    .background(Color(hex: "007AFF"))
-                    .cornerRadius(6)
-                }
-                .buttonStyle(.plain)
-                .padding(.bottom, 4)
-                
-                if !pluginService.quickLaunchApps.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(pluginService.quickLaunchApps) { app in
-                                HStack(spacing: 4) {
-                                    Text(app.name)
-                                        .font(.system(size: 10, weight: .semibold))
-                                    
-                                    Button(action: {
-                                        pluginService.deleteQuickLaunchApp(id: app.id)
-                                    }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .font(.system(size: 10))
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.primary.opacity(0.04))
-                                .cornerRadius(6)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-                                )
+                ForEach(pluginService.customPlugins) { plugin in
+                    HStack(spacing: 12) {
+                        Image(systemName: plugin.icon.isEmpty ? "powerplug" : plugin.icon)
+                            .font(.system(size: 14))
+                            .frame(width: 24, height: 24)
+                            .background(Circle().fill(AboutThemeConfig.current().primaryColor.opacity(0.15)))
+                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack {
+                                Text(plugin.name)
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text("(\(plugin.id))")
+                                    .font(.system(size: 9, design: .monospaced))
+                                    .foregroundStyle(.tertiary)
                             }
+                            Text(plugin.description)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4)
-                    }
-                } else {
-                    Text("暂无快速启动应用，请在上方输入框添加应用。")
+                        
+                        Spacer()
+                        
+                        Button("编辑") {
+                            selectedPlugin = plugin
+                            isCreating = false
+                        }
+                        .buttonStyle(.bordered)
                         .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .italic()
-                        .padding(.vertical, 4)
+                        
+                        Button(action: {
+                            pluginService.deletePlugin(id: plugin.id)
+                        }) {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red.opacity(0.8))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 4)
                 }
             }
-        }
-        .sheet(item: $selectedPlugin) { plugin in
-            PluginEditorView(plugin: plugin, selectedPlugin: $selectedPlugin)
-        }
-        .sheet(isPresented: $showingAppPicker) {
-            AppPickerView(isPresented: $showingAppPicker)
+            .sheet(item: $selectedPlugin) { _ in
+                PluginEditorSheet(selectedPlugin: $selectedPlugin, isCreating: isCreating)
+            }
         }
     }
 }
 
-struct PluginEditorView: View {
-    @State var plugin: YumiPlugin
+// MARK: - 插件编辑器 Sheet
+
+struct PluginEditorSheet: View {
     @Binding var selectedPlugin: YumiPlugin?
+    let isCreating: Bool
     @ObservedObject var pluginService = PluginService.shared
+    
+    @State private var plugin: YumiPlugin = YumiPlugin(id: "", name: "", icon: "star.fill", description: "", isEnabled: true, scriptContent: "")
     
     var body: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("编辑 YumiScript 插件")
-                    .font(.system(size: 14, weight: .bold))
+                Text(isCreating ? "新建 YumiScript 插件" : "编辑插件: \(plugin.name)")
+                    .font(.system(size: 15, weight: .bold))
                 Spacer()
-                Button("关闭") {
+                Button("取消") {
                     selectedPlugin = nil
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
             }
-            .padding(.horizontal)
-            .padding(.top)
+            .padding()
+            
+            Divider()
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("插件标识 (ID，唯一)")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                        TextField("例如: quick_launch", text: $plugin.id)
-                            .textFieldStyle(.roundedBorder)
-                            .font(.system(size: 12, design: .monospaced))
-                    }
+                    TextField("插件名称", text: $plugin.name)
+                        .textFieldStyle(.roundedBorder)
+                    TextField("插件描述", text: $plugin.description)
+                        .textFieldStyle(.roundedBorder)
                     
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("插件名称")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                        TextField("例如: 快速启动应用", text: $plugin.name)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("图标名称 (SFSymbol)")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                        TextField("例如: rocket / camera / video / powerplug", text: $plugin.icon)
-                            .textFieldStyle(.roundedBorder)
-                            .font(.system(size: 12, design: .monospaced))
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("插件用途描述")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                        TextField("简要描述插件的功能", text: $plugin.description)
-                            .textFieldStyle(.roundedBorder)
-                    }
+                    TextField("SF Symbol 图标", text: $plugin.icon)
+                        .textFieldStyle(.roundedBorder)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("YumiScript 脚本内容")
@@ -3527,7 +3366,7 @@ struct PluginEditorView: View {
                             .foregroundStyle(.white)
                             .padding(.vertical, 8)
                             .frame(maxWidth: .infinity)
-                            .background(Color(hex: "34C759"))
+                            .background(AboutThemeConfig.current().linearGradient)
                             .cornerRadius(6)
                     }
                     .buttonStyle(.plain)
@@ -3568,7 +3407,7 @@ private struct SettingsSection<Content: View>: View {
                 } else {
                     Image(systemName: icon)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color(hex: iconColor))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                 }
 
                 Text(title)
@@ -3590,7 +3429,7 @@ private struct SettingsSection<Content: View>: View {
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(
                                 LinearGradient(
-                                    colors: [.white.opacity(0.15), .white.opacity(0.05)],
+                                    colors: [AboutThemeConfig.current().primaryColor.opacity(0.18), .white.opacity(0.05)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -3619,12 +3458,12 @@ private struct SettingsToggleRow: View {
             // 图标
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(hex: iconColor).opacity(0.12))
+                    .fill(AboutThemeConfig.current().primaryColor.opacity(0.12))
                     .frame(width: 36, height: 36)
 
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(Color(hex: iconColor))
+                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
             }
 
             // 文字
@@ -3649,6 +3488,7 @@ private struct SettingsToggleRow: View {
                 }
             ))
             .toggleStyle(.switch)
+            .tint(AboutThemeConfig.current().primaryColor)
             .labelsHidden()
         }
         .padding(.vertical, 6)
@@ -3724,21 +3564,19 @@ private struct SettingsButtonRow: View {
                         .fill(
                             isDestructive
                                 ? Color.red.opacity(0.12)
-                                : Color(hex: iconColor).opacity(0.12)
+                                : AboutThemeConfig.current().primaryColor.opacity(0.12)
                         )
                         .frame(width: 36, height: 36)
-                        // 【新增】点击时发光效果
                         .shadow(
-                            color: (isDestructive ? Color.red : Color(hex: iconColor)).opacity(isPressed ? 0.5 : 0),
+                            color: (isDestructive ? Color.red : AboutThemeConfig.current().primaryColor).opacity(isPressed ? 0.5 : 0),
                             radius: isPressed ? 8 : 0
                         )
 
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(
-                            isDestructive ? .red : Color(hex: iconColor)
+                            isDestructive ? .red : AboutThemeConfig.current().primaryColor
                         )
-                        // 【新增】点击时图标弹跳
                         .scaleEffect(isPressed ? 0.85 : 1.0)
                 }
 
@@ -3757,7 +3595,6 @@ private struct SettingsButtonRow: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.tertiary)
-                    // 【新增】悬停时移动
                     .offset(x: isHovered ? 3 : 0)
             }
             .padding(.vertical, 6)

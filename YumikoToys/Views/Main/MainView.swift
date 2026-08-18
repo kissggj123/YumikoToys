@@ -156,6 +156,8 @@ struct MainView: View {
             LearnedPreferencesSheet(viewModel: viewModel)
         }
         .preferredColorScheme(viewModel.resolvedTheme.animeOrIsDark ? .dark : .light)
+        .tint(AboutThemeConfig.current().primaryColor)
+        .accentColor(AboutThemeConfig.current().primaryColor)
         .onReceive(viewModel.$componentLayouts) { layouts in
             self.adjustMainWindowSize(layouts: layouts)
         }
@@ -689,18 +691,19 @@ struct SidebarButtonStyle: ButtonStyle {
     let isLoading: Bool
     
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let themePrimary = AboutThemeConfig.current().primaryColor
+        return configuration.label
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isLoading
-                          ? Color.accentColor.opacity(0.08)
+                          ? themePrimary.opacity(0.12)
                           : (isHovered
-                             ? (isDestructive ? Color.red.opacity(0.1) : Color.primary.opacity(0.06))
+                             ? (isDestructive ? Color.red.opacity(0.12) : themePrimary.opacity(0.12))
                              : Color.clear))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isDestructive && isHovered ? Color.red.opacity(0.2) : Color.clear, lineWidth: 1)
+                    .stroke(isDestructive && isHovered ? Color.red.opacity(0.25) : (isHovered ? themePrimary.opacity(0.35) : Color.clear), lineWidth: 1)
             )
             .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
             .animation(.spring(response: 0.1), value: configuration.isPressed)

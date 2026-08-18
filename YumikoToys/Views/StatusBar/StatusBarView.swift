@@ -807,6 +807,8 @@ struct StatusBarView: View {
         .frame(width: 340)
         .background(themeColor.animeOrBackground)
         .preferredColorScheme(themeColor.animeOrIsDark ? .dark : .light)
+        .tint(themeColor.animeOrAccent)
+        .accentColor(themeColor.animeOrAccent)
         .onAppear {
             viewModel.onAppear()
             themeColor = DependencyContainer.shared.settingsService.settings.selectedThemeColor

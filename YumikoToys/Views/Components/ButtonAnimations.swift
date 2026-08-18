@@ -28,17 +28,18 @@ struct BounceScaleButtonStyle: ButtonStyle {
 // MARK: - 发光脉冲按钮样式
 
 struct GlowPulseButtonStyle: ButtonStyle {
-    let glowColor: Color
+    var glowColor: Color?
     let glowRadius: CGFloat
 
-    init(glowColor: Color = .pink, glowRadius: CGFloat = 8) {
+    init(glowColor: Color? = nil, glowRadius: CGFloat = 8) {
         self.glowColor = glowColor
         self.glowRadius = glowRadius
     }
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .shadow(color: glowColor.opacity(configuration.isPressed ? 0.8 : 0.3), radius: configuration.isPressed ? glowRadius * 1.5 : glowRadius)
+        let activeGlow = glowColor ?? AboutThemeConfig.current().primaryColor
+        return configuration.label
+            .shadow(color: activeGlow.opacity(configuration.isPressed ? 0.8 : 0.3), radius: configuration.isPressed ? glowRadius * 1.5 : glowRadius)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.spring(response: 0.12, dampingFraction: 0.7), value: configuration.isPressed)
     }
@@ -63,20 +64,22 @@ struct RippleButtonStyle: ButtonStyle {
 // MARK: - 颜色渐变按钮样式
 
 struct GradientButtonStyle: ButtonStyle {
-    let fromColor: Color
-    let toColor: Color
+    var fromColor: Color?
+    var toColor: Color?
     let isActive: Bool
 
-    init(fromColor: Color = Color(hex: "FF6B9D"), toColor: Color = Color(hex: "C44FE2"), isActive: Bool = true) {
+    init(fromColor: Color? = nil, toColor: Color? = nil, isActive: Bool = true) {
         self.fromColor = fromColor
         self.toColor = toColor
         self.isActive = isActive
     }
 
     func makeBody(configuration: Configuration) -> some View {
-        // Precompute gradient and target opacity to avoid type-checking complexity
+        let startColor = fromColor ?? AboutThemeConfig.current().primaryColor
+        let endColor = toColor ?? AboutThemeConfig.current().secondaryColor
+
         let baseGradient = LinearGradient(
-            colors: [fromColor.opacity(0.8), toColor.opacity(0.8)],
+            colors: [startColor.opacity(0.85), endColor.opacity(0.85)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -84,7 +87,6 @@ struct GradientButtonStyle: ButtonStyle {
         let overlayOpacity: Double = configuration.isPressed ? 0.7 : (isActive ? 1.0 : 0.3)
 
         return configuration.label
-            // Use background with explicit opacity to avoid ambiguous overloads on LinearGradient
             .background(
                 baseGradient
                     .opacity(overlayOpacity)
@@ -115,12 +117,13 @@ struct ShakeEffect: GeometryEffect {
 // MARK: - 点击涟漪效果视图
 
 struct ClickRipple: View {
-    let color: Color
+    var color: Color? = nil
     @State private var isAnimating = false
 
     var body: some View {
-        Circle()
-            .fill(color.opacity(0.3))
+        let activeColor = color ?? AboutThemeConfig.current().primaryColor
+        return Circle()
+            .fill(activeColor.opacity(0.3))
             .frame(width: 20, height: 20)
             .scaleEffect(isAnimating ? 3 : 0)
             .opacity(isAnimating ? 0 : 1)

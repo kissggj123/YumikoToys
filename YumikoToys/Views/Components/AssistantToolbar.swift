@@ -80,18 +80,14 @@ private struct ToolbarToggleButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isOn
-                        ? AnyShapeStyle(LinearGradient(
-                            colors: [Color(hex: "059669"), Color(hex: "0891B2")],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ))
+                        ? AnyShapeStyle(AboutThemeConfig.current().linearGradient)
                         : AnyShapeStyle(Color.primary.opacity(isDisabled ? 0.02 : (isHovered ? 0.08 : 0.04)))
                     )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(isOn
-                        ? Color(hex: "059669").opacity(0.3)
+                        ? AboutThemeConfig.current().primaryColor.opacity(0.4)
                         : Color.primary.opacity(isDisabled ? 0.05 : 0.1),
                         lineWidth: 1
                     )

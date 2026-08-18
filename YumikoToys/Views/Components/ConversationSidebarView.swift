@@ -78,18 +78,18 @@ struct ConversationSidebarView: View {
     private var newBtnColor: Color {
         switch chatMode {
         case .petCompanion:
-            return themeColor.accentColor
+            return AboutThemeConfig.current().primaryColor
         case .aiAssistant, .universalAgent:
-            return Color(hex: "059669")
+            return AboutThemeConfig.current().primaryColor
         }
     }
     
     private var footerIconColor: Color {
         switch chatMode {
         case .petCompanion:
-            return themeColor.accentColor.opacity(0.6)
+            return AboutThemeConfig.current().primaryColor.opacity(0.7)
         case .aiAssistant, .universalAgent:
-            return Color(hex: "059669").opacity(0.6)
+            return AboutThemeConfig.current().primaryColor.opacity(0.7)
         }
     }
     
