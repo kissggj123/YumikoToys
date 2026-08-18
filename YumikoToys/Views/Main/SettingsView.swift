@@ -3442,7 +3442,7 @@ struct PluginEditorSheet: View {
                             .textFieldStyle(.roundedBorder)
                     }
                     
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text("YumiScript 脚本内容")
                                 .font(.system(size: 11, weight: .semibold))
@@ -3466,12 +3466,74 @@ struct PluginEditorSheet: View {
                                 }
                                 .font(.system(size: 10, weight: .medium))
                                 .foregroundStyle(AboutThemeConfig.current().primaryColor)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3.5)
                                 .background(Capsule().fill(AboutThemeConfig.current().primaryColor.opacity(0.12)))
                             }
                             .buttonStyle(.plain)
                             .disabled(isRunningTest)
+                        }
+                        
+                        // 常用变量快速插入栏
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                Text("快捷插入:")
+                                    .font(.system(size: 9.5))
+                                    .foregroundStyle(.tertiary)
+                                
+                                Button("+ $OUTPUT") {
+                                    plugin.scriptContent += (plugin.scriptContent.isEmpty ? "" : " ") + "$OUTPUT"
+                                }
+                                .buttonStyle(.plain)
+                                .font(.system(size: 9.5, design: .monospaced))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                
+                                Button("+ $CLIPBOARD") {
+                                    plugin.scriptContent += (plugin.scriptContent.isEmpty ? "" : " ") + "$CLIPBOARD"
+                                }
+                                .buttonStyle(.plain)
+                                .font(.system(size: 9.5, design: .monospaced))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                
+                                Button("+ $DATE $TIME") {
+                                    plugin.scriptContent += (plugin.scriptContent.isEmpty ? "" : " ") + "$DATE $TIME"
+                                }
+                                .buttonStyle(.plain)
+                                .font(.system(size: 9.5, design: .monospaced))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                
+                                Button("+ var 变量") {
+                                    let snippet = "\nvar custom_val = \"Hello\"\nnotify \"变量测试\" \"当前值: $custom_val\""
+                                    plugin.scriptContent += snippet
+                                }
+                                .buttonStyle(.plain)
+                                .font(.system(size: 9.5, design: .monospaced))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                
+                                Button("+ Shell 变量") {
+                                    let snippet = "\nvar my_ip = shell ipconfig getifaddr en0\nnotify \"本机IP\" \"内网地址: $my_ip\""
+                                    plugin.scriptContent += snippet
+                                }
+                                .buttonStyle(.plain)
+                                .font(.system(size: 9.5, design: .monospaced))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                            }
+                            .padding(.vertical, 2)
                         }
                         
                         TextEditor(text: $plugin.scriptContent)
@@ -3480,12 +3542,12 @@ struct PluginEditorSheet: View {
                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.12), lineWidth: 1))
                     }
                     
-                    // 指令速查提示卡片
+                    // 指令与变量速查卡片
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("💡 语法速查与变量支持:")
+                        Text("💡 YumiScript 变量与指令语法:")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(AboutThemeConfig.current().primaryColor)
-                        Text("• launch <应用名> (支持多开)  |  open <路径/网址>  |  copy <文本>\n• sys lock (锁屏) | emptytrash (清废纸篓) | toggletheme (外观) | purge (内存) | ip | cpu | disk\n• shell <指令>  |  notify \"标题\" \"内容\"  |  支持 $OUTPUT, $CLIPBOARD, $DATE, $TIME 变量")
+                        Text("• 自定义变量: var name = \"张三\" | let url = https://... | var ip = shell ipconfig getifaddr en0\n• 变量插值: notify \"提醒\" \"你好 $name, 你的IP是 $ip\" | open $url | copy $name\n• 内置变量: $OUTPUT (上一步输出), $CLIPBOARD (剪贴板), $DATE, $TIME, $DATETIME, $USER, $HOME\n• 系统控制: sys lock (锁屏) | emptytrash (清废纸篓) | toggletheme (深浅色) | purge (释放内存) | ip | cpu | disk\n• 动作执行: launch <应用名> (支持多开) | open <路径/网址> | shell <指令> | applescript <代码>")
                             .font(.system(size: 9.5, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .lineSpacing(2)

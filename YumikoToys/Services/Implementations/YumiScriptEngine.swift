@@ -18,8 +18,9 @@ final class YumiScriptEngine {
         var logs: [String] = []
         let lines = script.components(separatedBy: .newlines)
         var lastOutput: String = ""
+        var userVariables: [String: String] = [:]
         
-        logs.append("=== YumiScript Engine v2.5.0 ===")
+        logs.append("=== YumiScript Engine v3.0.0 (支持自定义变量) ===")
         logs.append("开始执行脚本，总行数: \(lines.count)")
         
         for (index, line) in lines.enumerated() {
@@ -32,25 +33,31 @@ final class YumiScriptEngine {
             
             logs.append("[\(index + 1)] 执行: \(trimmed)")
             
-            // 变量替换 ($OUTPUT, $CLIPBOARD, $DATE, $TIME, $USER)
-            let processedLine = interpolateVariables(trimmed, lastOutput: lastOutput)
+            // 1. 检查是否为变量赋值语句 (var a = 123, let b = "abc", set c = ..., key = value)
+            if let (varName, varExpr) = parseVariableAssignment(trimmed) {
+                let evaluatedValue = await evaluateExpression(varExpr, variables: userVariables, lastOutput: lastOutput)
+                userVariables[varName] = evaluatedValue
+                lastOutput = evaluatedValue
+                logs.append("   ↳ 变量赋值: $\(varName) = \"\(evaluatedValue)\"")
+                continue
+            }
             
-            // 解析指令与参数
-            let parts = processedLine.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+            // 2. 解析指令与原始参数
+            let parts = trimmed.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
             guard let cmdToken = parts.first else { continue }
             let command = cmdToken.lowercased()
             let rawArgs = parts.count > 1 ? String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
-            let argsStr = cleanQuotes(rawArgs)
             
             switch command {
             case "launch":
-                guard !argsStr.isEmpty else {
+                let appName = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                guard !appName.isEmpty else {
                     logs.append(" 错误: launch 命令缺少应用名称参数")
                     continue
                 }
-                let resolvedPath = Self.resolveInstalledAppPath(named: argsStr)
+                let resolvedPath = Self.resolveInstalledAppPath(named: appName)
                 if resolvedPath == nil {
-                    logs.append(" 启动失败: 找不到应用 \"\(argsStr)\"（已搜索 /Applications、/System/Applications 和已安装的 bundle id）")
+                    logs.append(" 启动失败: 找不到应用 \"\(appName)\"（已搜索 /Applications、/System/Applications 和已安装的 bundle id）")
                     logs.append(" 提示: 请确认应用名拼写正确，且应用已安装")
                     continue
                 }
@@ -60,7 +67,7 @@ final class YumiScriptEngine {
                 var success = false
 
                 if allowMultiple {
-                    // 多开模式：优先通过 macOS 原生 /usr/bin/open -n 分离进程实现真多开
+                    // 多开模式：通过 macOS 原生 /usr/bin/open -n 分离进程实现真多开
                     let process = Process()
                     process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
                     process.arguments = ["-n", resolvedPath!]
@@ -90,50 +97,51 @@ final class YumiScriptEngine {
                 }
                 
                 if success {
-                    lastOutput = "已启动 \(argsStr)"
-                    logs.append(" 启动应用 \"\(argsStr)\" 成功\(allowMultiple ? " [多开独立实例]" : "")（\(resolvedPath ?? "")）")
+                    lastOutput = "已启动 \(appName)"
+                    logs.append(" 启动应用 \"\(appName)\" 成功\(allowMultiple ? " [多开独立实例]" : "")（\(resolvedPath ?? "")）")
                 } else {
-                    // AppleScript 兜底
                     logs.append(" 启动失败，改用 AppleScript 兜底…")
-                    let appleScript = "tell application \"\(argsStr.replacingOccurrences(of: "\"", with: "\\\""))\" to activate"
+                    let appleScript = "tell application \"\(appName.replacingOccurrences(of: "\"", with: "\\\""))\" to activate"
                     let result = await SkillService.shared.runAppleScript(appleScript)
                     if result.contains("error") {
                         logs.append(" 启动失败: \(result)")
                     } else {
-                        lastOutput = "已启动 \(argsStr)"
-                        logs.append(" 启动应用 \"\(argsStr)\" 成功（AppleScript 兜底）")
+                        lastOutput = "已启动 \(appName)"
+                        logs.append(" 启动应用 \"\(appName)\" 成功（AppleScript 兜底）")
                     }
                 }
                 
             case "open":
-                guard !argsStr.isEmpty else {
+                let target = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                guard !target.isEmpty else {
                     logs.append(" 错误: open 命令缺少路径或 URL")
                     continue
                 }
-                let expandedPath = (argsStr as NSString).expandingTildeInPath
-                if let url = URL(string: argsStr), url.scheme != nil {
+                let expandedPath = (target as NSString).expandingTildeInPath
+                if let url = URL(string: target), url.scheme != nil {
                     NSWorkspace.shared.open(url)
-                    lastOutput = "已打开网页/链接: \(argsStr)"
-                    logs.append(" 已打开 URL: \(argsStr)")
+                    lastOutput = "已打开网页/链接: \(target)"
+                    logs.append(" 已打开 URL: \(target)")
                 } else if FileManager.default.fileExists(atPath: expandedPath) {
                     NSWorkspace.shared.open(URL(fileURLWithPath: expandedPath))
                     lastOutput = "已打开目录: \(expandedPath)"
                     logs.append(" 已打开路径: \(expandedPath)")
                 } else {
-                    let res = await SkillService.shared.runShell("open \"\(expandedPath)\"")
-                    lastOutput = res.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let res = await runRawShell("open \"\(expandedPath)\"")
+                    lastOutput = res
                     logs.append(" 执行 open 结果: \(res)")
                 }
                 
             case "copy", "clipboard":
-                guard !argsStr.isEmpty else {
+                let textToCopy = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                guard !textToCopy.isEmpty else {
                     logs.append(" 错误: copy 命令缺少文本参数")
                     continue
                 }
                 NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(argsStr, forType: .string)
-                lastOutput = argsStr
-                logs.append(" 已写入系统剪贴板: \"\(argsStr.prefix(50))\(argsStr.count > 50 ? "..." : "")\"")
+                NSPasteboard.general.setString(textToCopy, forType: .string)
+                lastOutput = textToCopy
+                logs.append(" 已写入系统剪贴板: \"\(textToCopy.prefix(50))\(textToCopy.count > 50 ? "..." : "")\"")
                 
             case "paste":
                 let clip = NSPasteboard.general.string(forType: .string) ?? ""
@@ -141,15 +149,15 @@ final class YumiScriptEngine {
                 logs.append(" 读取剪贴板内容（共 \(clip.count) 字）: \(clip.prefix(60))")
                 
             case "sys", "system":
-                let action = argsStr.lowercased()
-                switch action {
+                let subCmd = interpolateVariables(rawArgs, variables: userVariables, lastOutput: lastOutput).lowercased()
+                switch subCmd {
                 case "lock":
                     lockScreen()
                     lastOutput = "屏幕已锁定"
                     logs.append(" 已锁定 Mac 屏幕 🔒")
                     
                 case "emptytrash":
-                    let res = await SkillService.shared.runAppleScript("tell application \"Finder\" to empty trash")
+                    let _ = await SkillService.shared.runAppleScript("tell application \"Finder\" to empty trash")
                     lastOutput = "废纸篓已清空"
                     logs.append(" 已清空废纸篓 🗑️")
                     
@@ -167,12 +175,12 @@ final class YumiScriptEngine {
                     logs.append(" \(lastOutput)")
                     
                 case "purge", "cleanmem":
-                    let _ = await SkillService.shared.runShell("/usr/sbin/purge 2>/dev/null || true")
+                    let _ = await runRawShell("/usr/sbin/purge 2>/dev/null || true")
                     lastOutput = "内存缓存已释放 ⚡"
                     logs.append(" \(lastOutput)")
                     
                 case "ip":
-                    let ipRes = await SkillService.shared.runShell("""
+                    let ipRes = await runRawShell("""
                     LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "无内网")
                     PING_MS=$(ping -c 1 -t 2 223.5.5.5 2>/dev/null | awk -F'/' 'END{print $5}')
                     if [ -n "$PING_MS" ]; then
@@ -181,17 +189,17 @@ final class YumiScriptEngine {
                         echo "内网IP: $LOCAL_IP | 网络离线 ⚠️"
                     fi
                     """)
-                    lastOutput = ipRes.trimmingCharacters(in: .whitespacesAndNewlines)
+                    lastOutput = ipRes
                     logs.append(" 网络诊断结果: \(lastOutput)")
                     
                 case "cpu":
-                    let cpuRes = await SkillService.shared.runShell("ps -Ao %cpu,comm -r | head -4 | awk 'NR>1 {print $2 \"(\" $1 \"%)\"}' | paste -sd ', ' -")
-                    lastOutput = "Top CPU: " + cpuRes.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let cpuRes = await runRawShell("ps -Ao %cpu,comm -r | head -4 | awk 'NR>1 {print $2 \"(\" $1 \"%)\"}' | paste -sd ', ' -")
+                    lastOutput = "Top CPU: " + cpuRes
                     logs.append(" 进程负载: \(lastOutput)")
                     
                 case "disk":
-                    let diskRes = await SkillService.shared.runShell("df -h / | awk 'NR==2 {print \"总量 \" $2 \", 已用 \" $3 \" (\" $5 \"), 可用 \" $4}'")
-                    lastOutput = "主磁盘空间: " + diskRes.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let diskRes = await runRawShell("df -h / | awk 'NR==2 {print \"总量 \" $2 \", 已用 \" $3 \" (\" $5 \"), 可用 \" $4}'")
+                    lastOutput = "主磁盘空间: " + diskRes
                     logs.append(" 磁盘空间: \(lastOutput)")
                     
                 case "togglemute", "mute":
@@ -203,20 +211,22 @@ final class YumiScriptEngine {
                     logs.append(" \(lastOutput)")
                     
                 default:
-                    logs.append(" 未知系统动作: \"\(action)\"，支持: lock, emptytrash, toggletheme, purge, ip, cpu, disk, togglemute")
+                    logs.append(" 未知系统动作: \"\(subCmd)\"，支持: lock, emptytrash, toggletheme, purge, ip, cpu, disk, togglemute")
                 }
                 
             case "applescript", "osascript":
-                guard !argsStr.isEmpty else {
+                let scriptContent = interpolateVariables(rawArgs, variables: userVariables, lastOutput: lastOutput)
+                guard !scriptContent.isEmpty else {
                     logs.append(" 错误: applescript 命令缺少脚本内容")
                     continue
                 }
-                let result = await SkillService.shared.runAppleScript(argsStr)
+                let result = await SkillService.shared.runAppleScript(cleanQuotes(scriptContent))
                 lastOutput = result.trimmingCharacters(in: .whitespacesAndNewlines)
                 logs.append(" AppleScript 执行结果: \(lastOutput)")
 
             case "screenshot":
-                let target: String? = argsStr.isEmpty ? nil : (argsStr as NSString).expandingTildeInPath
+                let targetStr = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                let target: String? = targetStr.isEmpty ? nil : (targetStr as NSString).expandingTildeInPath
                 let result = await ScreenMediaHelper.shared.captureFullscreenAsync(targetPath: target)
                 switch result.status {
                 case .success:
@@ -235,7 +245,8 @@ final class YumiScriptEngine {
                 }
 
             case "record":
-                let argsParts = argsStr.split(separator: " ").map(String.init)
+                let durStr = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                let argsParts = durStr.split(separator: " ").map(String.init)
                 let duration = Int(argsParts.first ?? "5") ?? 5
                 let path: String? = argsParts.count > 1 ? (argsParts[1] as NSString).expandingTildeInPath : nil
 
@@ -256,24 +267,13 @@ final class YumiScriptEngine {
                 }
                 
             case "notify", "toast", "hud":
-                let title: String
-                let message: String
-
-                let matches = extractQuotedParams(argsStr)
-                if matches.count >= 2 {
-                    title = matches[0]
-                    message = matches[1]
-                } else if matches.count == 1 {
-                    title = "YumiScript"
-                    message = matches[0]
-                } else {
-                    title = "YumiScript"
-                    message = argsStr.isEmpty ? lastOutput : argsStr
-                }
+                let (titleRaw, messageRaw) = parseNotificationArgs(rawArgs)
+                let title = interpolateVariables(titleRaw, variables: userVariables, lastOutput: lastOutput)
+                let message = interpolateVariables(messageRaw.isEmpty ? "$OUTPUT" : messageRaw, variables: userVariables, lastOutput: lastOutput)
 
                 let content = UNMutableNotificationContent()
-                content.title = title
-                content.body = message
+                content.title = title.isEmpty ? "YumiScript" : title
+                content.body = message.isEmpty ? lastOutput : message
                 content.sound = .default
                 let request = UNNotificationRequest(
                     identifier: UUID().uuidString,
@@ -281,20 +281,21 @@ final class YumiScriptEngine {
                     trigger: nil
                 )
                 UNUserNotificationCenter.current().add(request) { _ in }
-                logs.append(" 发送通知: [\(title)] \(message)")
+                logs.append(" 发送通知: [\(content.title)] \(content.body)")
                 
             case "shell":
-                guard !argsStr.isEmpty else {
+                let cmdToRun = interpolateVariables(rawArgs, variables: userVariables, lastOutput: lastOutput)
+                guard !cmdToRun.isEmpty else {
                     logs.append(" 错误: shell 命令缺少指令参数")
                     continue
                 }
-                let result = await SkillService.shared.runShell(argsStr)
-                let cleanResult = result.trimmingCharacters(in: .whitespacesAndNewlines)
+                let cleanResult = await runRawShell(cmdToRun)
                 lastOutput = cleanResult
                 logs.append(" 执行 Shell 结果:\n\(cleanResult)")
                 
             case "wait", "sleep":
-                guard let seconds = Double(argsStr) else {
+                let secStr = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                guard let seconds = Double(secStr) else {
                     logs.append(" 错误: wait 命令参数非法，需为数字秒数")
                     continue
                 }
@@ -310,35 +311,140 @@ final class YumiScriptEngine {
         return logs.joined(separator: "\n")
     }
     
-    // MARK: - 变量替换
+    // MARK: - 原生无包装 Shell 执行 (避免 JSON 污染)
     
-    private static func interpolateVariables(_ input: String, lastOutput: String) -> String {
-        var str = input
-        
-        // $OUTPUT
-        str = str.replacingOccurrences(of: "$OUTPUT", with: lastOutput)
-        
-        // $CLIPBOARD
-        if str.contains("$CLIPBOARD") {
-            let clip = NSPasteboard.general.string(forType: .string) ?? ""
-            str = str.replacingOccurrences(of: "$CLIPBOARD", with: clip)
+    static func runRawShell(_ script: String) async -> String {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        task.arguments = ["-c", script]
+
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = pipe
+
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    try task.run()
+                    task.waitUntilExit()
+                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                    let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    continuation.resume(returning: output)
+                } catch {
+                    continuation.resume(returning: "执行失败: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    // MARK: - 变量解析与赋值
+    
+    /// 解析变量赋值语句：var a = "123", let b = hello, set count = 5, my_var = ...
+    private static func parseVariableAssignment(_ line: String) -> (name: String, expr: String)? {
+        var str = line
+        if str.hasPrefix("var ") {
+            str = String(str.dropFirst(4)).trimmingCharacters(in: .whitespaces)
+        } else if str.hasPrefix("let ") {
+            str = String(str.dropFirst(4)).trimmingCharacters(in: .whitespaces)
+        } else if str.hasPrefix("set ") {
+            str = String(str.dropFirst(4)).trimmingCharacters(in: .whitespaces)
         }
         
-        // $DATE / $TIME / $USER
-        if str.contains("$DATE") || str.contains("$TIME") || str.contains("$USER") {
+        guard let eqIdx = str.firstIndex(of: "=") else { return nil }
+        let varName = String(str[..<eqIdx]).trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "$", with: "")
+        let expr = String(str[str.index(after: eqIdx)...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !varName.isEmpty else { return nil }
+        return (varName, expr)
+    }
+    
+    /// 计算变量赋值右侧表达式 (支持直接值、shell 指令、paste 剪贴板、变量引用)
+    private static func evaluateExpression(_ expr: String, variables: [String: String], lastOutput: String) async -> String {
+        let interpolated = interpolateVariables(expr, variables: variables, lastOutput: lastOutput)
+        let trimmed = cleanQuotes(interpolated)
+        
+        if trimmed.hasPrefix("shell ") {
+            let cmd = String(trimmed.dropFirst(6)).trimmingCharacters(in: .whitespaces)
+            return await runRawShell(cmd)
+        } else if trimmed == "paste" || trimmed == "clipboard" {
+            return NSPasteboard.general.string(forType: .string) ?? ""
+        }
+        
+        return cleanQuotes(trimmed)
+    }
+    
+    // MARK: - 变量替换
+    
+    static func interpolateVariables(_ input: String, variables: [String: String], lastOutput: String) -> String {
+        var str = input
+        
+        // 1. 系统内置变量
+        str = str.replacingOccurrences(of: "$OUTPUT", with: lastOutput)
+        str = str.replacingOccurrences(of: "${OUTPUT}", with: lastOutput)
+        
+        if str.contains("$CLIPBOARD") || str.contains("${CLIPBOARD}") {
+            let clip = NSPasteboard.general.string(forType: .string) ?? ""
+            str = str.replacingOccurrences(of: "$CLIPBOARD", with: clip)
+            str = str.replacingOccurrences(of: "${CLIPBOARD}", with: clip)
+        }
+        
+        if str.contains("$DATE") || str.contains("$TIME") || str.contains("$DATETIME") || str.contains("$USER") || str.contains("$HOME") {
             let df = DateFormatter()
             df.dateFormat = "yyyy-MM-dd"
             let dateStr = df.string(from: Date())
             df.dateFormat = "HH:mm:ss"
             let timeStr = df.string(from: Date())
+            let datetimeStr = "\(dateStr) \(timeStr)"
             let user = NSUserName()
+            let home = NSHomeDirectory()
             
             str = str.replacingOccurrences(of: "$DATE", with: dateStr)
+            str = str.replacingOccurrences(of: "${DATE}", with: dateStr)
             str = str.replacingOccurrences(of: "$TIME", with: timeStr)
+            str = str.replacingOccurrences(of: "${TIME}", with: timeStr)
+            str = str.replacingOccurrences(of: "$DATETIME", with: datetimeStr)
+            str = str.replacingOccurrences(of: "${DATETIME}", with: datetimeStr)
             str = str.replacingOccurrences(of: "$USER", with: user)
+            str = str.replacingOccurrences(of: "${USER}", with: user)
+            str = str.replacingOccurrences(of: "$HOME", with: home)
+            str = str.replacingOccurrences(of: "${HOME}", with: home)
+        }
+        
+        // 2. 自定义变量替换 ($var, ${var})
+        for (key, value) in variables {
+            str = str.replacingOccurrences(of: "${\(key)}", with: value)
+            str = str.replacingOccurrences(of: "$\(key)", with: value)
         }
         
         return str
+    }
+    
+    // MARK: - 通知参数精准解析
+    
+    /// 解析形如: "标题" "内容" 或 "标题" 内容 或 仅内容
+    private static func parseNotificationArgs(_ raw: String) -> (title: String, message: String) {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return ("YumiScript", "") }
+        
+        // 如果以引号开头
+        if trimmed.hasPrefix("\"") {
+            // 寻找第一个结束引号
+            let restAfterFirstQuote = trimmed.dropFirst()
+            if let endQuoteIdx = restAfterFirstQuote.firstIndex(of: "\"") {
+                let title = String(restAfterFirstQuote[..<endQuoteIdx])
+                let remainder = String(restAfterFirstQuote[restAfterFirstQuote.index(after: endQuoteIdx)...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let message = cleanQuotes(remainder)
+                return (title, message)
+            }
+        }
+        
+        // 否则按第一个空格分割
+        let parts = trimmed.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+        if parts.count >= 2 {
+            return (cleanQuotes(String(parts[0])), cleanQuotes(String(parts[1])))
+        } else {
+            return ("YumiScript", cleanQuotes(trimmed))
+        }
     }
     
     // MARK: - 系统锁屏
@@ -362,40 +468,12 @@ final class YumiScriptEngine {
     
     private static func cleanQuotes(_ str: String) -> String {
         var trimmed = str.trimmingCharacters(in: .whitespacesAndNewlines)
-        if (trimmed.hasPrefix("\"") && trimmed.hasSuffix("\"")) ||
-           (trimmed.hasPrefix("'") && trimmed.hasSuffix("'")) {
+        if (trimmed.hasPrefix("\"") && trimmed.hasSuffix("\"") && trimmed.count >= 2) ||
+           (trimmed.hasPrefix("'") && trimmed.hasSuffix("'") && trimmed.count >= 2) {
             trimmed.removeFirst()
             trimmed.removeLast()
         }
         return trimmed
-    }
-    
-    private static func extractQuotedParams(_ str: String) -> [String] {
-        var results: [String] = []
-        var current = ""
-        var inQuotes = false
-
-        for char in str {
-            if char == "\"" {
-                if inQuotes {
-                    results.append(current)
-                    current = ""
-                    inQuotes = false
-                } else {
-                    inQuotes = true
-                }
-            } else {
-                if inQuotes {
-                    current.append(char)
-                } else if char != " " {
-                    current.append(char)
-                }
-            }
-        }
-        if !current.isEmpty {
-            results.append(current)
-        }
-        return results
     }
 
     // MARK: - App 启动辅助
