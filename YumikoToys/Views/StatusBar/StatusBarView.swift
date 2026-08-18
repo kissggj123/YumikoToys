@@ -1532,6 +1532,7 @@ struct StatusBarView: View {
     private func saveThemeColor(_ theme: ThemeColor) {
         var settings = DependencyContainer.shared.settingsService.settings
         settings.selectedThemeColor = theme
+        settings.mainWindowThemeColor = theme
         DependencyContainer.shared.settingsService.updateSettings(settings)
         DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
     }
@@ -1540,7 +1541,9 @@ struct StatusBarView: View {
     private func saveCustomThemeColorHex(_ hex: String) {
         var settings = DependencyContainer.shared.settingsService.settings
         settings.customThemeColorHex = hex
+        settings.customMainWindowThemeColorHex = hex
         settings.selectedThemeColor = .custom
+        settings.mainWindowThemeColor = .custom
         DependencyContainer.shared.settingsService.updateSettings(settings)
         DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
     }

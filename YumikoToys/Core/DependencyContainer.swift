@@ -516,10 +516,10 @@ final class WindowManager {
         }
     }
     
-    /// 显示 SwiftUI 视图窗口
+    /// 显示 SwiftUI 视图窗口（首击即时响应与直接拖拽支持）
     func showWindow<Content: View>(_ type: WindowType, @ViewBuilder content: () -> Content) {
         showWindow(type) {
-            NSHostingView(rootView: content())
+            FirstMouseHostingView(rootView: content())
         }
     }
     
@@ -543,6 +543,15 @@ final class WindowManager {
     /// 获取窗口
     func getWindow(_ type: WindowType) -> NSWindow? {
         return windows[type]
+    }
+}
+
+// MARK: - 首击即时响应与直接拖拽 HostingView 容器
+
+/// 专为 macOS 桌面应用定制的 Hosting 容器，支持非激活窗口直接响应首击点击与长按背景直接拖拽
+final class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        return true
     }
 }
 

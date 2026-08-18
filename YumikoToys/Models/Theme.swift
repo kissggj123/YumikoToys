@@ -162,8 +162,9 @@ struct AboutThemeConfig {
 
         // 2. 二次元主题未开启时，全面支持 16 款标准主题色专属配置
         let settings = DependencyContainer.shared.settingsService.settings
-        let themeColor = settings.mainWindowThemeColor
-        let gradient = themeColor.iconGradient(customHex: settings.customMainWindowThemeColorHex)
+        let themeColor = settings.selectedThemeColor != .dark ? settings.selectedThemeColor : (settings.mainWindowThemeColor != .dark ? settings.mainWindowThemeColor : settings.selectedThemeColor)
+        let customHex = !settings.customThemeColorHex.isEmpty ? settings.customThemeColorHex : settings.customMainWindowThemeColorHex
+        let gradient = themeColor.iconGradient(customHex: customHex)
         let primary = gradient.first ?? Color(hex: "FF6B9D")
         let secondary = gradient.count > 1 ? gradient[1] : Color(hex: "C44FE2")
 

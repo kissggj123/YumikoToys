@@ -80,7 +80,7 @@ final class YumiScriptIDEManager: ObservableObject {
             panel.backgroundColor = NSColor.windowBackgroundColor
             panel.hasShadow = true
             
-            let hosting = NSHostingView(rootView: YumiScriptIDEView(manager: self))
+            let hosting = FirstMouseHostingView(rootView: YumiScriptIDEView(manager: self))
             panel.contentView = hosting
             panel.center()
             panel.setFrameAutosaveName("YumiScriptIDEPanelFrame")
@@ -111,6 +111,7 @@ struct YumiScriptIDEView: View {
     @State private var showSaveToast = false
     @State private var isConsoleExpanded = true
     @State private var activeTabSuggestion: String? = nil
+    @State private var currentTheme: AboutThemeConfig = AboutThemeConfig.current()
     
     // 积木临时配置参数
     @State private var blockAppName: String = "Safari"
@@ -124,7 +125,7 @@ struct YumiScriptIDEView: View {
     @State private var blockVarExpr: String = "192.168.50.1"
     
     private var theme: AboutThemeConfig {
-        AboutThemeConfig.current()
+        currentTheme
     }
     
     // 常用 Tab 快速补全候选词
@@ -198,6 +199,18 @@ struct YumiScriptIDEView: View {
             }
         }
         .animation(.spring(response: 0.3), value: showSaveToast)
+        .onAppear {
+            currentTheme = AboutThemeConfig.current()
+        }
+        .onReceive(DependencyContainer.shared.settingsService.settingsPublisher) { _ in
+            currentTheme = AboutThemeConfig.current()
+        }
+        .onReceive(AnimeThemeService.shared.$currentStyle) { _ in
+            currentTheme = AboutThemeConfig.current()
+        }
+        .onReceive(AnimeThemeService.shared.$isEnabled) { _ in
+            currentTheme = AboutThemeConfig.current()
+        }
     }
     
     // MARK: - 顶部标题与工具栏

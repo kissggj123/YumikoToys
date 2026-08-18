@@ -5606,8 +5606,10 @@ final class SettingsViewModel: ObservableObject {
     
     func selectThemeColor(_ theme: ThemeColor) {
         selectedThemeColor = theme
+        mainWindowThemeColor = theme
         var settings = container.settingsService.settings
         settings.selectedThemeColor = theme
+        settings.mainWindowThemeColor = theme
         container.settingsService.updateSettings(settings)
         DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
         LoggerService.shared.info("Theme color changed to: \(theme.rawValue)")
@@ -5616,9 +5618,12 @@ final class SettingsViewModel: ObservableObject {
     func updateCustomThemeColorHex(_ hex: String) {
         customThemeColorHex = hex
         selectedThemeColor = .custom
+        mainWindowThemeColor = .custom
         var settings = container.settingsService.settings
         settings.customThemeColorHex = hex
+        settings.customMainWindowThemeColorHex = hex
         settings.selectedThemeColor = .custom
+        settings.mainWindowThemeColor = .custom
         container.settingsService.updateSettings(settings)
         DependencyContainer.shared.anniversaryService.forceSyncAndReloadWidget()
         LoggerService.shared.info("Custom theme color hex changed to: \(hex)")
