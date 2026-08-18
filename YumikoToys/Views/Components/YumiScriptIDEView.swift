@@ -92,6 +92,154 @@ final class YumiScriptIDEManager: ObservableObject {
     }
 }
 
+// MARK: - YumiScript 语法高亮引擎
+
+enum YumiScriptSyntaxHighlighter {
+    static func highlight(text: String, themePrimary: NSColor) -> NSAttributedString {
+        let attr = NSMutableAttributedString(string: text)
+        let fullRange = NSRange(location: 0, length: (text as NSString).length)
+        guard fullRange.length > 0 else { return attr }
+        
+        let defaultFont = NSFont.monospacedSystemFont(ofSize: 13.5, weight: .regular)
+        let baseColor = NSColor(white: 0.90, alpha: 1.0)
+        
+        attr.addAttribute(.font, value: defaultFont, range: fullRange)
+        attr.addAttribute(.foregroundColor, value: baseColor, range: fullRange)
+        
+        // 1. IP 地址、纯数字与浮点数 (明亮青蓝 / 霓虹青)
+        let ipPattern = #"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b|\b\d+(\.\d+)?\b"#
+        if let ipRegex = try? NSRegularExpression(pattern: ipPattern) {
+            ipRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+                if let r = match?.range {
+                    attr.addAttribute(.foregroundColor, value: NSColor(red: 0.35, green: 0.85, blue: 0.95, alpha: 1.0), range: r)
+                    attr.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13.5, weight: .medium), range: r)
+                }
+            }
+        }
+        
+        // 2. 核心关键字 (主题高亮 / 活力紫粉)
+        let keywords = ["var", "let", "set", "sys", "system", "notify", "dialog", "toast", "hud", "launch", "open", "wait", "shell", "copy", "paste", "ping", "applescript", "osascript"]
+        let keywordPattern = #"\b("# + keywords.joined(separator: "|") + #")\b"#
+        if let keywordRegex = try? NSRegularExpression(pattern: keywordPattern, options: .caseInsensitive) {
+            keywordRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+                if let r = match?.range {
+                    attr.addAttribute(.foregroundColor, value: themePrimary, range: r)
+                    attr.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13.5, weight: .bold), range: r)
+                }
+            }
+        }
+        
+        // 3. 环境变量与系统变量 ($OUTPUT, $CLIPBOARD, $DATE, $TIME, $USER, $HOME 等)
+        let varPattern = #"\$[A-Za-z0-9_]+"#
+        if let varRegex = try? NSRegularExpression(pattern: varPattern) {
+            varRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+                if let r = match?.range {
+                    attr.addAttribute(.foregroundColor, value: NSColor(red: 1.0, green: 0.72, blue: 0.28, alpha: 1.0), range: r)
+                    attr.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13.5, weight: .semibold), range: r)
+                }
+            }
+        }
+        
+        // 4. 字符串常量 ("...") (温暖杏黄 / 蜜桃橙)
+        let stringPattern = #""[^"\\]*(?:\\.[^"\\]*)*""#
+        if let stringRegex = try? NSRegularExpression(pattern: stringPattern) {
+            stringRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+                if let r = match?.range {
+                    attr.addAttribute(.foregroundColor, value: NSColor(red: 0.96, green: 0.65, blue: 0.42, alpha: 1.0), range: r)
+                }
+            }
+        }
+        
+        // 5. 注释行 (# ...) (清新绿意 / 覆盖全行最高优先级)
+        let commentPattern = #"#.*$"#
+        if let commentRegex = try? NSRegularExpression(pattern: commentPattern, options: .anchorsMatchLines) {
+            commentRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+                if let r = match?.range {
+                    attr.addAttribute(.foregroundColor, value: NSColor(red: 0.45, green: 0.82, blue: 0.52, alpha: 1.0), range: r)
+                }
+            }
+        }
+        
+        return attr
+    }
+}
+
+// MARK: - 原生富文本高亮代码编辑器
+
+struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
+    @Binding var text: String
+    var themePrimary: Color
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
+        
+        let textView = NSTextView()
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.isRichText = true
+        textView.allowsUndo = true
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+        textView.backgroundColor = NSColor(red: 0.11, green: 0.11, blue: 0.14, alpha: 1.0)
+        textView.textContainerInset = NSSize(width: 14, height: 14)
+        textView.delegate = context.coordinator
+        
+        context.coordinator.textView = textView
+        context.coordinator.applyHighlighting(text: text)
+        
+        scrollView.documentView = textView
+        return scrollView
+    }
+    
+    func updateNSView(_ nsView: NSScrollView, context: Context) {
+        if let textView = nsView.documentView as? NSTextView {
+            if textView.string != text {
+                context.coordinator.applyHighlighting(text: text)
+            }
+        }
+    }
+    
+    class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: YumiScriptCodeEditorRepresentable
+        weak var textView: NSTextView?
+        private var isUpdating = false
+        
+        init(_ parent: YumiScriptCodeEditorRepresentable) {
+            self.parent = parent
+        }
+        
+        func textDidChange(_ notification: Notification) {
+            guard let tv = textView, !isUpdating else { return }
+            let newText = tv.string
+            parent.text = newText
+            
+            let selectedRanges = tv.selectedRanges
+            applyHighlighting(text: newText)
+            tv.selectedRanges = selectedRanges
+        }
+        
+        func applyHighlighting(text: String) {
+            guard let tv = textView else { return }
+            isUpdating = true
+            let nsColor = NSColor(parent.themePrimary)
+            let highlighted = YumiScriptSyntaxHighlighter.highlight(text: text, themePrimary: nsColor)
+            tv.textStorage?.setAttributedString(highlighted)
+            isUpdating = false
+        }
+    }
+}
+
 // MARK: - IDE 主界面
 
 struct YumiScriptIDEView: View {
@@ -154,8 +302,8 @@ struct YumiScriptIDEView: View {
                 // 左侧：动作积木工具箱
                 if selectedTab == .split || selectedTab == .visual {
                     ideToolboxSidebar
-                        .frame(width: selectedTab == .visual ? nil : 290)
-                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.45))
+                        .frame(width: selectedTab == .visual ? nil : 295)
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.55))
                     
                     if selectedTab == .split {
                         Divider()
@@ -223,8 +371,8 @@ struct YumiScriptIDEView: View {
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(theme.primaryColor)
                     .frame(width: 28, height: 28)
-                    .background(Circle().fill(theme.primaryColor.opacity(0.16)))
-                    .overlay(Circle().stroke(theme.primaryColor.opacity(0.3), lineWidth: 1))
+                    .background(Circle().fill(theme.primaryColor.opacity(0.18)))
+                    .overlay(Circle().stroke(theme.primaryColor.opacity(0.35), lineWidth: 1))
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
@@ -347,7 +495,7 @@ struct YumiScriptIDEView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("⚙️ 系统控制 (System Control)")
                         .font(.system(size: 10.5, weight: .bold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.primaryColor)
                     
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
                         blockCard("📶 网络/IP诊断", icon: "wifi") {
@@ -376,14 +524,15 @@ struct YumiScriptIDEView: View {
                         }
                     }
                 }
-                .padding(8)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                .padding(9)
+                .background(RoundedRectangle(cornerRadius: 9).fill(theme.primaryColor.opacity(0.05)))
+                .overlay(RoundedRectangle(cornerRadius: 9).stroke(theme.primaryColor.opacity(0.18), lineWidth: 0.8))
                 
                 // 2. 自定义变量定义 (支持变量与 ping/IP 结合)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("📝 自定义变量 (Variables)")
                         .font(.system(size: 10.5, weight: .bold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.primaryColor)
                     
                     HStack(spacing: 4) {
                         TextField("变量名", text: $blockVarName)
@@ -413,14 +562,15 @@ struct YumiScriptIDEView: View {
                         .controlSize(.small)
                     }
                 }
-                .padding(8)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                .padding(9)
+                .background(RoundedRectangle(cornerRadius: 9).fill(theme.primaryColor.opacity(0.05)))
+                .overlay(RoundedRectangle(cornerRadius: 9).stroke(theme.primaryColor.opacity(0.18), lineWidth: 0.8))
                 
                 // 3. 弹窗与通知积木
                 VStack(alignment: .leading, spacing: 6) {
                     Text("🔔 弹窗与结果通知 (Dialog / HUD)")
                         .font(.system(size: 10.5, weight: .bold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.primaryColor)
                     
                     HStack(spacing: 4) {
                         TextField("标题", text: $blockNotifyTitle)
@@ -438,14 +588,15 @@ struct YumiScriptIDEView: View {
                     .controlSize(.small)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-                .padding(8)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                .padding(9)
+                .background(RoundedRectangle(cornerRadius: 9).fill(theme.primaryColor.opacity(0.05)))
+                .overlay(RoundedRectangle(cornerRadius: 9).stroke(theme.primaryColor.opacity(0.18), lineWidth: 0.8))
                 
                 // 4. 启动应用积木
                 VStack(alignment: .leading, spacing: 6) {
                     Text("🚀 启动应用程序 (Launch App)")
                         .font(.system(size: 10.5, weight: .bold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.primaryColor)
                     
                     HStack(spacing: 4) {
                         TextField("应用名", text: $blockAppName)
@@ -469,18 +620,21 @@ struct YumiScriptIDEView: View {
                             .font(.system(size: 9))
                             .padding(.horizontal, 4)
                             .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.primary.opacity(0.06)))
+                            .background(Capsule().fill(theme.primaryColor.opacity(0.12)))
+                            .foregroundStyle(theme.primaryColor)
                         }
                     }
                 }
-                .padding(8)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                .padding(9)
+                .background(RoundedRectangle(cornerRadius: 9).fill(theme.primaryColor.opacity(0.05)))
+                .overlay(RoundedRectangle(cornerRadius: 9).stroke(theme.primaryColor.opacity(0.18), lineWidth: 0.8))
                 
                 // 5. 更多操作 (打开网址、延时)
                 HStack(spacing: 6) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("🌐 打开网址/路径")
                             .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(theme.primaryColor)
                         HStack(spacing: 2) {
                             TextField("网址", text: $blockOpenTarget)
                                 .font(.system(size: 10))
@@ -493,11 +647,13 @@ struct YumiScriptIDEView: View {
                         }
                     }
                     .padding(6)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.03)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(theme.primaryColor.opacity(0.04)))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(theme.primaryColor.opacity(0.15), lineWidth: 0.6))
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("⏱️ 等待延时")
                             .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(theme.primaryColor)
                         HStack(spacing: 2) {
                             Stepper("\(String(format: "%.1f", blockWaitSec))s", value: $blockWaitSec, in: 0.5...10.0, step: 0.5)
                                 .font(.system(size: 10))
@@ -509,18 +665,19 @@ struct YumiScriptIDEView: View {
                         }
                     }
                     .padding(6)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.03)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(theme.primaryColor.opacity(0.04)))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(theme.primaryColor.opacity(0.15), lineWidth: 0.6))
                 }
             }
             .padding(12)
         }
     }
     
-    // MARK: - 代码编辑主区 (带多色高亮与 Tab 智能补全条)
+    // MARK: - 代码编辑主区 (多色语法高亮与 Tab 智能补全条)
     
     private var ideCodeEditorArea: some View {
         VStack(spacing: 0) {
-            // 变量快速插入条
+            // 快捷变量插入条
             HStack(spacing: 6) {
                 Text("快捷变量:")
                     .font(.system(size: 10))
@@ -550,7 +707,7 @@ struct YumiScriptIDEView: View {
                     .foregroundStyle(theme.primaryColor)
                 Text("Tab 补全推荐:")
                     .font(.system(size: 9.5, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(theme.primaryColor)
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 4) {
@@ -560,9 +717,16 @@ struct YumiScriptIDEView: View {
                             } label: {
                                 Text(item)
                                     .font(.system(size: 9.5, design: .monospaced))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(0.06)))
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 2.5)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(theme.primaryColor.opacity(0.12))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .stroke(theme.primaryColor.opacity(0.25), lineWidth: 0.6)
+                                    )
                                     .foregroundStyle(.primary)
                             }
                             .buttonStyle(.plain)
@@ -571,17 +735,17 @@ struct YumiScriptIDEView: View {
                 }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 4)
-            .background(theme.primaryColor.opacity(0.04))
+            .padding(.vertical, 4.5)
+            .background(theme.primaryColor.opacity(0.06))
             
             Divider()
             
-            // 代码编辑器区域
-            TextEditor(text: $manager.editingPlugin.scriptContent)
-                .font(.system(size: 13, design: .monospaced))
-                .lineSpacing(3)
-                .padding(10)
-                .background(Color(nsColor: .textBackgroundColor))
+            // MARK: - 多彩语法高亮编辑器
+            YumiScriptCodeEditorRepresentable(
+                text: $manager.editingPlugin.scriptContent,
+                themePrimary: theme.primaryColor
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
     
@@ -665,7 +829,7 @@ struct YumiScriptIDEView: View {
                 .foregroundStyle(theme.primaryColor)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Capsule().fill(theme.primaryColor.opacity(0.1)))
+                .background(Capsule().fill(theme.primaryColor.opacity(0.12)))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
@@ -685,12 +849,12 @@ struct YumiScriptIDEView: View {
                 Spacer()
                 Image(systemName: "plus")
                     .font(.system(size: 9))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(theme.primaryColor.opacity(0.6))
             }
             .padding(.horizontal, 7)
-            .padding(.vertical, 5)
-            .background(RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.04)))
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.primary.opacity(0.08), lineWidth: 0.8))
+            .padding(.vertical, 5.5)
+            .background(RoundedRectangle(cornerRadius: 6).fill(theme.primaryColor.opacity(0.08)))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(theme.primaryColor.opacity(0.18), lineWidth: 0.8))
         }
         .buttonStyle(.plain)
     }
@@ -701,7 +865,7 @@ struct YumiScriptIDEView: View {
                 .font(.system(size: 9.5, design: .monospaced))
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(RoundedRectangle(cornerRadius: 4).fill(theme.primaryColor.opacity(0.1)))
+                .background(RoundedRectangle(cornerRadius: 4).fill(theme.primaryColor.opacity(0.12)))
                 .foregroundStyle(theme.primaryColor)
         }
         .buttonStyle(.plain)
