@@ -55,24 +55,46 @@ final class YumiScriptEngine {
                     continue
                 }
 
+                let allowMultiple = DependencyContainer.shared.settingsService.settings.allowMultipleInstances
                 let url = URL(fileURLWithPath: resolvedPath!)
-                let configuration = NSWorkspace.OpenConfiguration()
-                
-                let success: Bool = await withCheckedContinuation { continuation in
-                    NSWorkspace.shared.openApplication(at: url, configuration: configuration) { (app, error) in
-                        if let _ = error {
-                            continuation.resume(returning: false)
-                        } else {
-                            continuation.resume(returning: true)
+                var success = false
+
+                if allowMultiple {
+                    // 多开模式：优先通过 macOS 原生 /usr/bin/open -n 分离进程实现真多开
+                    let process = Process()
+                    process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+                    process.arguments = ["-n", resolvedPath!]
+                    do {
+                        try process.run()
+                        process.waitUntilExit()
+                        success = (process.terminationStatus == 0)
+                    } catch {
+                        success = false
+                    }
+                }
+
+                // 若非多开模式或 Process 启动异常，走 NSWorkspace 管道
+                if !success {
+                    let configuration = NSWorkspace.OpenConfiguration()
+                    configuration.createsNewApplicationInstance = allowMultiple
+                    configuration.activates = true
+                    
+                    success = await withCheckedContinuation { continuation in
+                        NSWorkspace.shared.openApplication(at: url, configuration: configuration) { (app, error) in
+                            if let _ = error {
+                                continuation.resume(returning: false)
+                            } else {
+                                continuation.resume(returning: true)
+                            }
                         }
                     }
                 }
                 
                 if success {
-                    logs.append(" 启动应用 \"\(argsStr)\" 成功（\(resolvedPath ?? "")）")
+                    logs.append(" 启动应用 \"\(argsStr)\" 成功\(allowMultiple ? " [多开独立实例]" : "")（\(resolvedPath ?? "")）")
                 } else {
                     // 二次兜底：直接用 AppleScript activate（已加 5s 超时，不会卡死）
-                    logs.append(" NSWorkspace 启动失败，改用 AppleScript 兜底…")
+                    logs.append(" 启动失败，改用 AppleScript 兜底…")
                     let appleScript = "tell application \"\(argsStr.replacingOccurrences(of: "\"", with: "\\\""))\" to activate"
                     let result = await SkillService.shared.runAppleScript(appleScript)
                     if result.contains("error") {

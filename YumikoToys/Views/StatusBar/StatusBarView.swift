@@ -966,12 +966,8 @@ struct StatusBarView: View {
                             .font(.system(size: 10))
 
                             Toggle(isOn: Binding(
-                                get: { DependencyContainer.shared.settingsService.settings.allowMultipleInstances },
-                                set: { enabled in
-                                    var settings = DependencyContainer.shared.settingsService.settings
-                                    settings.allowMultipleInstances = enabled
-                                    DependencyContainer.shared.settingsService.updateSettings(settings)
-                                }
+                                get: { viewModel.allowMultipleInstances },
+                                set: { _ in viewModel.toggleAllowMultipleInstances() }
                             )) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "square.stack.3d.up")
@@ -1979,12 +1975,8 @@ struct StatusBarView: View {
                         
                         // 允许多开
                         Toggle(isOn: Binding(
-                            get: { DependencyContainer.shared.settingsService.settings.allowMultipleInstances },
-                            set: { enabled in
-                                var settings = DependencyContainer.shared.settingsService.settings
-                                settings.allowMultipleInstances = enabled
-                                DependencyContainer.shared.settingsService.updateSettings(settings)
-                            }
+                            get: { viewModel.allowMultipleInstances },
+                            set: { _ in viewModel.toggleAllowMultipleInstances() }
                         )) {
                             HStack(spacing: 6) {
                                 Image(systemName: "square.stack.3d.up")
@@ -2404,6 +2396,7 @@ final class StatusBarViewModel: ObservableObject {
     @Published var isPreventSleepEnabled: Bool = false
     @Published var isPetPlaygroundEnabled: Bool = false
     @Published var selectedIconStyle: IconStyle = .pixelAnimal
+    @Published var allowMultipleInstances: Bool = false
     @Published var themeColor: ThemeColor = .dark
     @Published var customThemeColorHex: String = "FF6B9D"
     
@@ -2460,6 +2453,7 @@ final class StatusBarViewModel: ObservableObject {
                 self.selectedIconStyle = settings.selectedIconStyle
                 self.themeColor = settings.selectedThemeColor
                 self.customThemeColorHex = settings.customThemeColorHex
+                self.allowMultipleInstances = settings.allowMultipleInstances
             }
             .store(in: &cancellables)
         
@@ -2470,6 +2464,7 @@ final class StatusBarViewModel: ObservableObject {
         self.selectedIconStyle = container.settingsService.settings.selectedIconStyle
         self.themeColor = container.settingsService.settings.selectedThemeColor
         self.customThemeColorHex = container.settingsService.settings.customThemeColorHex
+        self.allowMultipleInstances = container.settingsService.settings.allowMultipleInstances
         if let info = self.anniversaryInfo {
             self.shortCountdown = info.calculation.shortString
         }
@@ -2486,6 +2481,13 @@ final class StatusBarViewModel: ObservableObject {
     func togglePetPlayground() {
         container.petPlaygroundService.togglePlayground()
         isPetPlaygroundEnabled = container.petPlaygroundService.isEnabled
+    }
+    
+    func toggleAllowMultipleInstances() {
+        var settings = container.settingsService.settings
+        settings.allowMultipleInstances.toggle()
+        container.settingsService.updateSettings(settings)
+        self.allowMultipleInstances = settings.allowMultipleInstances
     }
     
     func setActiveAnniversary(id: UUID) {
