@@ -2648,7 +2648,7 @@ struct SettingsView: View {
                                     viewModel.updatePsychologySettings()
                                 }
                             ), in: 0.1...1.5, step: 0.05)
-                            .tint(Color(hex: "AF52DE"))
+                            .tint(AboutThemeConfig.current().primaryColor)
                         }
 
                         // Top P Slider
@@ -2665,7 +2665,7 @@ struct SettingsView: View {
                                     viewModel.updatePsychologySettings()
                                 }
                             ), in: 0.1...1.0, step: 0.05)
-                            .tint(Color(hex: "AF52DE"))
+                            .tint(AboutThemeConfig.current().primaryColor)
                         }
 
                         // Presence Penalty Slider
@@ -2682,7 +2682,7 @@ struct SettingsView: View {
                                     viewModel.updatePsychologySettings()
                                 }
                             ), in: -2.0...2.0, step: 0.1)
-                            .tint(Color(hex: "AF52DE"))
+                            .tint(AboutThemeConfig.current().primaryColor)
                         }
 
                         // Frequency Penalty Slider
@@ -2699,7 +2699,7 @@ struct SettingsView: View {
                                     viewModel.updatePsychologySettings()
                                 }
                             ), in: -2.0...2.0, step: 0.1)
-                            .tint(Color(hex: "AF52DE"))
+                            .tint(AboutThemeConfig.current().primaryColor)
                         }
 
                         // Empathy Level Slider
@@ -2716,7 +2716,7 @@ struct SettingsView: View {
                                     viewModel.updatePsychologySettings()
                                 }
                             ), in: 0.0...1.0, step: 0.05)
-                            .tint(Color(hex: "AF52DE"))
+                            .tint(AboutThemeConfig.current().primaryColor)
                         }
 
                         // Clinical Depth Slider
@@ -2733,7 +2733,7 @@ struct SettingsView: View {
                                     viewModel.updatePsychologySettings()
                                 }
                             ), in: 0.0...1.0, step: 0.05)
-                            .tint(Color(hex: "AF52DE"))
+                            .tint(AboutThemeConfig.current().primaryColor)
                         }
 
                         // Reframing Intensity Slider
@@ -2750,14 +2750,14 @@ struct SettingsView: View {
                                     viewModel.updatePsychologySettings()
                                 }
                             ), in: 0.0...1.0, step: 0.05)
-                            .tint(Color(hex: "AF52DE"))
+                            .tint(AboutThemeConfig.current().primaryColor)
                         }
 
                         // 学术理论支持说明卡片
                         VStack(alignment: .leading, spacing: 8) {
                             Text("【专业心理陪伴学术支持说明】")
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(Color(hex: "AF52DE"))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
                             
                             Text("本系统心理陪伴机制深度集成了认知行为重构、自我决定论的三大基础心理需求评估（主观能动性、自我成长力、关怀归属感）、罗杰斯人本主义无条件关注机制与精神分析深层动机追索。通过调控底层超参数以控制大模型的词汇发散和发散度核采样率，从而输出更具关怀深度 and 学术合理性的回应。")
                                 .font(.system(size: 11))
@@ -2892,7 +2892,7 @@ struct SettingsView: View {
                             viewModel.updateProHumanSettings()
                         }
                     ), in: 0.0...1.0, step: 0.05)
-                    .tint(Color(hex: "34C759"))
+                    .tint(AboutThemeConfig.current().primaryColor)
                 }
 
                 // Self-Reflection Interval Slider
@@ -2909,7 +2909,7 @@ struct SettingsView: View {
                             viewModel.updateProHumanSettings()
                         }
                     ), in: 0.0...1.0, step: 0.05)
-                    .tint(Color(hex: "34C759"))
+                    .tint(AboutThemeConfig.current().primaryColor)
                 }
 
                 // Screen Time Therapy Slider
@@ -2926,7 +2926,7 @@ struct SettingsView: View {
                             viewModel.updateProHumanSettings()
                         }
                     ), in: 0.0...1.0, step: 0.05)
-                    .tint(Color(hex: "34C759"))
+                    .tint(AboutThemeConfig.current().primaryColor)
                 }
 
                 // Cognitive Resistance Slider
@@ -2943,7 +2943,7 @@ struct SettingsView: View {
                             viewModel.updateProHumanSettings()
                         }
                     ), in: 0.0...1.0, step: 0.05)
-                    .tint(Color(hex: "34C759"))
+                    .tint(AboutThemeConfig.current().primaryColor)
                 }
             }
         }
@@ -3225,28 +3225,68 @@ struct PluginManagementSectionView: View {
     @ObservedObject var pluginService = PluginService.shared
     @State private var selectedPlugin: YumiPlugin? = nil
     @State private var isCreating = false
+    @State private var runningPluginId: String? = nil
+    @State private var showRestoreAlert = false
     
     var body: some View {
         SettingsSection(title: "YumiScript 插件系统", icon: "puzzlepiece.extension.fill", iconColor: "00F0FF") {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
                     Text("自定义自动化插件扩展")
                         .font(.system(size: 13, weight: .medium))
                     Spacer()
-                    Button("＋ 新增插件") {
+                    
+                    Button {
+                        showRestoreAlert = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.counterclockwise")
+                            Text("恢复默认预设")
+                        }
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(AboutThemeConfig.current().primaryColor.opacity(0.12)))
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button {
                         selectedPlugin = YumiPlugin(
                             id: "plugin_\(UUID().uuidString.prefix(6).lowercased())",
-                            name: "新插件",
-                            icon: "terminal.fill",
+                            name: "新自动化插件",
+                            icon: "bolt.fill",
                             description: "自定义自动化功能",
                             isEnabled: true,
-                            scriptContent: "toast \"Hello Yumiko!\""
+                            scriptContent: """
+                            # 执行系统命令或应用启动
+                            sys toggletheme
+                            notify "自定义插件" "执行成功！"
+                            """
                         )
                         isCreating = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                            Text("新增插件")
+                        }
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(AboutThemeConfig.current().linearGradient)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .shadow(color: AboutThemeConfig.current().primaryColor.opacity(0.3), radius: 3, y: 1)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(AboutThemeConfig.current().primaryColor)
-                    .font(.system(size: 11))
+                    .buttonStyle(.plain)
+                }
+                .alert("恢复默认预设插件", isPresented: $showRestoreAlert) {
+                    Button("取消", role: .cancel) { }
+                    Button("确认重置", role: .destructive) {
+                        pluginService.restoreDefaultPresets()
+                    }
+                } message: {
+                    Text("确定要将所有插件重置为官方最新优化版预设吗？自定义添加的插件将被覆盖。")
                 }
                 
                 Divider()
@@ -3254,8 +3294,8 @@ struct PluginManagementSectionView: View {
                 ForEach(pluginService.customPlugins) { plugin in
                     HStack(spacing: 12) {
                         Image(systemName: plugin.icon.isEmpty ? "powerplug" : plugin.icon)
-                            .font(.system(size: 14))
-                            .frame(width: 24, height: 24)
+                            .font(.system(size: 13))
+                            .frame(width: 28, height: 28)
                             .background(Circle().fill(AboutThemeConfig.current().primaryColor.opacity(0.15)))
                             .foregroundStyle(AboutThemeConfig.current().primaryColor)
                         
@@ -3274,18 +3314,58 @@ struct PluginManagementSectionView: View {
                         
                         Spacer()
                         
-                        Button("编辑") {
+                        // 运行测试按钮
+                        Button {
+                            runningPluginId = plugin.id
+                            Task {
+                                let logs = await YumiScriptEngine.execute(plugin.scriptContent)
+                                runningPluginId = nil
+                            }
+                        } label: {
+                            HStack(spacing: 3) {
+                                if runningPluginId == plugin.id {
+                                    ProgressView()
+                                        .controlSize(.mini)
+                                } else {
+                                    Image(systemName: "play.fill")
+                                        .font(.system(size: 9))
+                                }
+                                Text("运行")
+                                    .font(.system(size: 10, weight: .medium))
+                            }
+                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(runningPluginId != nil)
+                        
+                        // 编辑按钮
+                        Button {
                             selectedPlugin = plugin
                             isCreating = false
+                        } label: {
+                            Text("编辑")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3.5)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 5)
+                                        .stroke(AboutThemeConfig.current().primaryColor.opacity(0.5), lineWidth: 1)
+                                )
                         }
-                        .buttonStyle(.bordered)
-                        .font(.system(size: 11))
+                        .buttonStyle(.plain)
                         
+                        // 删除按钮
                         Button(action: {
                             pluginService.deletePlugin(id: plugin.id)
                         }) {
                             Image(systemName: "trash")
+                                .font(.system(size: 12))
                                 .foregroundStyle(.red.opacity(0.8))
+                                .padding(4)
                         }
                         .buttonStyle(.plain)
                     }
@@ -3307,40 +3387,129 @@ struct PluginEditorSheet: View {
     @ObservedObject var pluginService = PluginService.shared
     
     @State private var plugin: YumiPlugin = YumiPlugin(id: "", name: "", icon: "star.fill", description: "", isEnabled: true, scriptContent: "")
+    @State private var testLogs: String = ""
+    @State private var isRunningTest = false
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             HStack {
+                Image(systemName: "puzzlepiece.extension.fill")
+                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
                 Text(isCreating ? "新建 YumiScript 插件" : "编辑插件: \(plugin.name)")
                     .font(.system(size: 15, weight: .bold))
                 Spacer()
-                Button("取消") {
+                Button("关闭") {
                     selectedPlugin = nil
                 }
                 .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
             }
-            .padding()
+            .padding([.top, .horizontal])
             
             Divider()
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    TextField("插件名称", text: $plugin.name)
-                        .textFieldStyle(.roundedBorder)
-                    TextField("插件描述", text: $plugin.description)
-                        .textFieldStyle(.roundedBorder)
-                    
-                    TextField("SF Symbol 图标", text: $plugin.icon)
-                        .textFieldStyle(.roundedBorder)
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("插件名称")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            TextField("如：清空废纸篓", text: $plugin.name)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("SF Symbol 图标")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            HStack {
+                                TextField("如：trash.fill", text: $plugin.icon)
+                                    .textFieldStyle(.roundedBorder)
+                                Image(systemName: plugin.icon.isEmpty ? "powerplug" : plugin.icon)
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                    .frame(width: 24)
+                            }
+                        }
+                    }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("YumiScript 脚本内容")
+                        Text("插件功能简要描述")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.secondary)
+                        TextField("简要说明该插件的作用", text: $plugin.description)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("YumiScript 脚本内容")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button {
+                                isRunningTest = true
+                                Task {
+                                    let logs = await YumiScriptEngine.execute(plugin.scriptContent)
+                                    testLogs = logs
+                                    isRunningTest = false
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    if isRunningTest {
+                                        ProgressView().controlSize(.mini)
+                                    } else {
+                                        Image(systemName: "play.fill")
+                                    }
+                                    Text("运行测试")
+                                }
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(AboutThemeConfig.current().primaryColor.opacity(0.12)))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isRunningTest)
+                        }
+                        
                         TextEditor(text: $plugin.scriptContent)
                             .font(.system(size: 12, design: .monospaced))
-                            .frame(height: 180)
-                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.1), lineWidth: 1))
+                            .frame(height: 150)
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.12), lineWidth: 1))
+                    }
+                    
+                    // 指令速查提示卡片
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("💡 语法速查与变量支持:")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                        Text("• launch <应用名> (支持多开)  |  open <路径/网址>  |  copy <文本>\n• sys lock (锁屏) | emptytrash (清废纸篓) | toggletheme (外观) | purge (内存) | ip | cpu | disk\n• shell <指令>  |  notify \"标题\" \"内容\"  |  支持 $OUTPUT, $CLIPBOARD, $DATE, $TIME 变量")
+                            .font(.system(size: 9.5, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineSpacing(2)
+                    }
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.03)))
+                    
+                    // 测试输出日志
+                    if !testLogs.isEmpty {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("执行日志输出:")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            ScrollView {
+                                Text(testLogs)
+                                    .font(.system(size: 9.5, design: .monospaced))
+                                    .foregroundStyle(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .frame(height: 70)
+                            .padding(6)
+                            .background(RoundedRectangle(cornerRadius: 5).fill(Color.black.opacity(0.1)))
+                        }
                     }
                     
                     Button(action: {
@@ -3354,14 +3523,15 @@ struct PluginEditorSheet: View {
                             .frame(maxWidth: .infinity)
                             .background(AboutThemeConfig.current().linearGradient)
                             .cornerRadius(6)
+                            .shadow(color: AboutThemeConfig.current().primaryColor.opacity(0.3), radius: 4, y: 1)
                     }
                     .buttonStyle(.plain)
-                    .padding(.top, 8)
+                    .padding(.top, 4)
                 }
                 .padding(.horizontal)
             }
         }
-        .frame(width: 450, height: 500)
+        .frame(width: 480, height: 560)
         .onAppear {
             if let sel = selectedPlugin {
                 self.plugin = sel

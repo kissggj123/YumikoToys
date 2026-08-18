@@ -17,8 +17,9 @@ final class YumiScriptEngine {
     static func execute(_ script: String) async -> String {
         var logs: [String] = []
         let lines = script.components(separatedBy: .newlines)
+        var lastOutput: String = ""
         
-        logs.append("=== YumiScript Engine v1.0.0 ===")
+        logs.append("=== YumiScript Engine v2.5.0 ===")
         logs.append("开始执行脚本，总行数: \(lines.count)")
         
         for (index, line) in lines.enumerated() {
@@ -31,27 +32,26 @@ final class YumiScriptEngine {
             
             logs.append("[\(index + 1)] 执行: \(trimmed)")
             
+            // 变量替换 ($OUTPUT, $CLIPBOARD, $DATE, $TIME, $USER)
+            let processedLine = interpolateVariables(trimmed, lastOutput: lastOutput)
+            
             // 解析指令与参数
-            let parts = trimmed.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+            let parts = processedLine.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
             guard let cmdToken = parts.first else { continue }
             let command = cmdToken.lowercased()
             let rawArgs = parts.count > 1 ? String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
-            
-            // 清理参数中的前后双引号/单引号
             let argsStr = cleanQuotes(rawArgs)
             
             switch command {
             case "launch":
                 guard !argsStr.isEmpty else {
-                    logs.append("错误: launch 命令缺少应用名称参数")
+                    logs.append(" 错误: launch 命令缺少应用名称参数")
                     continue
                 }
-                // 预校验：先确认 app 实际存在（搜标准安装目录 + NSWorkspace bundle id 回退）
-                // 避免 AppleScript 在主线程弹"定位 App"对话框把整个 App 卡死
                 let resolvedPath = Self.resolveInstalledAppPath(named: argsStr)
                 if resolvedPath == nil {
                     logs.append(" 启动失败: 找不到应用 \"\(argsStr)\"（已搜索 /Applications、/System/Applications 和已安装的 bundle id）")
-                    logs.append(" 提示: 请确认应用名拼写正确，且应用已安装；如名字带引号或反斜杠，请用 \\\" 转义")
+                    logs.append(" 提示: 请确认应用名拼写正确，且应用已安装")
                     continue
                 }
 
@@ -73,7 +73,6 @@ final class YumiScriptEngine {
                     }
                 }
 
-                // 若非多开模式或 Process 启动异常，走 NSWorkspace 管道
                 if !success {
                     let configuration = NSWorkspace.OpenConfiguration()
                     configuration.createsNewApplicationInstance = allowMultiple
@@ -91,58 +90,172 @@ final class YumiScriptEngine {
                 }
                 
                 if success {
+                    lastOutput = "已启动 \(argsStr)"
                     logs.append(" 启动应用 \"\(argsStr)\" 成功\(allowMultiple ? " [多开独立实例]" : "")（\(resolvedPath ?? "")）")
                 } else {
-                    // 二次兜底：直接用 AppleScript activate（已加 5s 超时，不会卡死）
+                    // AppleScript 兜底
                     logs.append(" 启动失败，改用 AppleScript 兜底…")
                     let appleScript = "tell application \"\(argsStr.replacingOccurrences(of: "\"", with: "\\\""))\" to activate"
                     let result = await SkillService.shared.runAppleScript(appleScript)
                     if result.contains("error") {
                         logs.append(" 启动失败: \(result)")
                     } else {
+                        lastOutput = "已启动 \(argsStr)"
                         logs.append(" 启动应用 \"\(argsStr)\" 成功（AppleScript 兜底）")
                     }
                 }
                 
+            case "open":
+                guard !argsStr.isEmpty else {
+                    logs.append(" 错误: open 命令缺少路径或 URL")
+                    continue
+                }
+                let expandedPath = (argsStr as NSString).expandingTildeInPath
+                if let url = URL(string: argsStr), url.scheme != nil {
+                    NSWorkspace.shared.open(url)
+                    lastOutput = "已打开网页/链接: \(argsStr)"
+                    logs.append(" 已打开 URL: \(argsStr)")
+                } else if FileManager.default.fileExists(atPath: expandedPath) {
+                    NSWorkspace.shared.open(URL(fileURLWithPath: expandedPath))
+                    lastOutput = "已打开目录: \(expandedPath)"
+                    logs.append(" 已打开路径: \(expandedPath)")
+                } else {
+                    let res = await SkillService.shared.runShell("open \"\(expandedPath)\"")
+                    lastOutput = res.trimmingCharacters(in: .whitespacesAndNewlines)
+                    logs.append(" 执行 open 结果: \(res)")
+                }
+                
+            case "copy", "clipboard":
+                guard !argsStr.isEmpty else {
+                    logs.append(" 错误: copy 命令缺少文本参数")
+                    continue
+                }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(argsStr, forType: .string)
+                lastOutput = argsStr
+                logs.append(" 已写入系统剪贴板: \"\(argsStr.prefix(50))\(argsStr.count > 50 ? "..." : "")\"")
+                
+            case "paste":
+                let clip = NSPasteboard.general.string(forType: .string) ?? ""
+                lastOutput = clip
+                logs.append(" 读取剪贴板内容（共 \(clip.count) 字）: \(clip.prefix(60))")
+                
+            case "sys", "system":
+                let action = argsStr.lowercased()
+                switch action {
+                case "lock":
+                    lockScreen()
+                    lastOutput = "屏幕已锁定"
+                    logs.append(" 已锁定 Mac 屏幕 🔒")
+                    
+                case "emptytrash":
+                    let res = await SkillService.shared.runAppleScript("tell application \"Finder\" to empty trash")
+                    lastOutput = "废纸篓已清空"
+                    logs.append(" 已清空废纸篓 🗑️")
+                    
+                case "toggletheme", "darkmode", "lightmode":
+                    let res = await SkillService.shared.runAppleScript("""
+                    tell application "System Events"
+                        tell appearance preferences
+                            set dark mode to not dark mode
+                            return dark mode
+                        end tell
+                    end tell
+                    """)
+                    let isDark = res.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "true"
+                    lastOutput = isDark ? "已切换为深色模式 🌙" : "已切换为浅色模式 ☀️"
+                    logs.append(" \(lastOutput)")
+                    
+                case "purge", "cleanmem":
+                    let _ = await SkillService.shared.runShell("/usr/sbin/purge 2>/dev/null || true")
+                    lastOutput = "内存缓存已释放 ⚡"
+                    logs.append(" \(lastOutput)")
+                    
+                case "ip":
+                    let ipRes = await SkillService.shared.runShell("""
+                    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "无内网")
+                    PING_MS=$(ping -c 1 -t 2 223.5.5.5 2>/dev/null | awk -F'/' 'END{print $5}')
+                    if [ -n "$PING_MS" ]; then
+                        echo "内网IP: $LOCAL_IP | 延迟: ${PING_MS}ms (连通正常 📶)"
+                    else
+                        echo "内网IP: $LOCAL_IP | 网络离线 ⚠️"
+                    fi
+                    """)
+                    lastOutput = ipRes.trimmingCharacters(in: .whitespacesAndNewlines)
+                    logs.append(" 网络诊断结果: \(lastOutput)")
+                    
+                case "cpu":
+                    let cpuRes = await SkillService.shared.runShell("ps -Ao %cpu,comm -r | head -4 | awk 'NR>1 {print $2 \"(\" $1 \"%)\"}' | paste -sd ', ' -")
+                    lastOutput = "Top CPU: " + cpuRes.trimmingCharacters(in: .whitespacesAndNewlines)
+                    logs.append(" 进程负载: \(lastOutput)")
+                    
+                case "disk":
+                    let diskRes = await SkillService.shared.runShell("df -h / | awk 'NR==2 {print \"总量 \" $2 \", 已用 \" $3 \" (\" $5 \"), 可用 \" $4}'")
+                    lastOutput = "主磁盘空间: " + diskRes.trimmingCharacters(in: .whitespacesAndNewlines)
+                    logs.append(" 磁盘空间: \(lastOutput)")
+                    
+                case "togglemute", "mute":
+                    let _ = await SkillService.shared.runAppleScript("""
+                    set curMute to output muted of (get volume settings)
+                    set volume output muted (not curMute)
+                    """)
+                    lastOutput = "已切换系统静音状态 🔇"
+                    logs.append(" \(lastOutput)")
+                    
+                default:
+                    logs.append(" 未知系统动作: \"\(action)\"，支持: lock, emptytrash, toggletheme, purge, ip, cpu, disk, togglemute")
+                }
+                
+            case "applescript", "osascript":
+                guard !argsStr.isEmpty else {
+                    logs.append(" 错误: applescript 命令缺少脚本内容")
+                    continue
+                }
+                let result = await SkillService.shared.runAppleScript(argsStr)
+                lastOutput = result.trimmingCharacters(in: .whitespacesAndNewlines)
+                logs.append(" AppleScript 执行结果: \(lastOutput)")
+
             case "screenshot":
-                // 委托给 ScreenMediaHelper：自动展开 ~、保证父目录、判定退出码、给出友好提示
                 let target: String? = argsStr.isEmpty ? nil : (argsStr as NSString).expandingTildeInPath
                 let result = await ScreenMediaHelper.shared.captureFullscreenAsync(targetPath: target)
                 switch result.status {
                 case .success:
+                    lastOutput = result.path ?? "截图已保存至桌面"
                     logs.append(" 截图成功：\(result.message)")
                     logs.append(" 输出路径：\(result.path ?? "?")")
                 case .cancelled:
+                    lastOutput = "截图已取消"
                     logs.append(" 已取消截图（用户按 Esc）")
                 case .denied:
+                    lastOutput = "截图权限被拒绝"
                     logs.append(" 截图权限被拒绝：\(result.message)")
-                    logs.append(" 请到 系统设置 → 隐私与安全性 → 屏幕录制 中授予权限后重试。")
                 case .failed:
+                    lastOutput = "截图失败: \(result.message)"
                     logs.append(" 截图失败：\(result.message)")
                 }
 
             case "record":
-                // record [seconds] [path]
                 let argsParts = argsStr.split(separator: " ").map(String.init)
                 let duration = Int(argsParts.first ?? "5") ?? 5
-                let path: String? = argsParts.count > 1
-                    ? (argsParts[1] as NSString).expandingTildeInPath
-                    : nil
+                let path: String? = argsParts.count > 1 ? (argsParts[1] as NSString).expandingTildeInPath : nil
 
                 let result = await ScreenMediaHelper.shared.recordForDuration(seconds: duration, outputPath: path)
                 switch result.status {
                 case .success:
+                    lastOutput = result.path ?? "录屏完成"
                     logs.append(" 录屏完成（\(duration) 秒）：\(result.path ?? "?")")
                 case .cancelled:
+                    lastOutput = "录屏已取消"
                     logs.append(" 录屏被取消")
                 case .denied:
+                    lastOutput = "录屏权限被拒绝"
                     logs.append(" 录屏权限被拒绝：\(result.message)")
-                    logs.append(" 请到 系统设置 → 隐私与安全性 → 屏幕录制 中授予权限。")
                 case .failed:
+                    lastOutput = "录屏失败: \(result.message)"
                     logs.append(" 录屏失败：\(result.message)")
                 }
                 
-            case "notify":
+            case "notify", "toast", "hud":
                 let title: String
                 let message: String
 
@@ -155,10 +268,9 @@ final class YumiScriptEngine {
                     message = matches[0]
                 } else {
                     title = "YumiScript"
-                    message = argsStr
+                    message = argsStr.isEmpty ? lastOutput : argsStr
                 }
 
-                // 走系统通知中心（沙盒下 AppleScript 的 display notification 经常被拒）
                 let content = UNMutableNotificationContent()
                 content.title = title
                 content.body = message
@@ -173,15 +285,17 @@ final class YumiScriptEngine {
                 
             case "shell":
                 guard !argsStr.isEmpty else {
-                    logs.append("错误: shell 命令缺少指令参数")
+                    logs.append(" 错误: shell 命令缺少指令参数")
                     continue
                 }
                 let result = await SkillService.shared.runShell(argsStr)
-                logs.append(" 执行 Shell 结果:\n\(result)")
+                let cleanResult = result.trimmingCharacters(in: .whitespacesAndNewlines)
+                lastOutput = cleanResult
+                logs.append(" 执行 Shell 结果:\n\(cleanResult)")
                 
-            case "wait":
+            case "wait", "sleep":
                 guard let seconds = Double(argsStr) else {
-                    logs.append("错误: wait 命令参数非法，需为数字秒数")
+                    logs.append(" 错误: wait 命令参数非法，需为数字秒数")
                     continue
                 }
                 logs.append(" 等待 \(seconds) 秒...")
@@ -194,6 +308,54 @@ final class YumiScriptEngine {
         
         logs.append("执行结束。")
         return logs.joined(separator: "\n")
+    }
+    
+    // MARK: - 变量替换
+    
+    private static func interpolateVariables(_ input: String, lastOutput: String) -> String {
+        var str = input
+        
+        // $OUTPUT
+        str = str.replacingOccurrences(of: "$OUTPUT", with: lastOutput)
+        
+        // $CLIPBOARD
+        if str.contains("$CLIPBOARD") {
+            let clip = NSPasteboard.general.string(forType: .string) ?? ""
+            str = str.replacingOccurrences(of: "$CLIPBOARD", with: clip)
+        }
+        
+        // $DATE / $TIME / $USER
+        if str.contains("$DATE") || str.contains("$TIME") || str.contains("$USER") {
+            let df = DateFormatter()
+            df.dateFormat = "yyyy-MM-dd"
+            let dateStr = df.string(from: Date())
+            df.dateFormat = "HH:mm:ss"
+            let timeStr = df.string(from: Date())
+            let user = NSUserName()
+            
+            str = str.replacingOccurrences(of: "$DATE", with: dateStr)
+            str = str.replacingOccurrences(of: "$TIME", with: timeStr)
+            str = str.replacingOccurrences(of: "$USER", with: user)
+        }
+        
+        return str
+    }
+    
+    // MARK: - 系统锁屏
+    
+    private static func lockScreen() {
+        let libHandle = dlopen("/System/Library/PrivateFrameworks/login.framework/Versions/Current/login", RTLD_LAZY)
+        if let libHandle = libHandle {
+            let sym = dlsym(libHandle, "SACLockScreenImmediate")
+            if let sym = sym {
+                typealias Func = @convention(c) () -> Void
+                let fn = unsafeBitCast(sym, to: Func.self)
+                fn()
+            }
+            dlclose(libHandle)
+        } else {
+            let _ = Process.launchedProcess(launchPath: "/usr/bin/pmset", arguments: ["displaysleepnow"])
+        }
     }
     
     // MARK: - 私有解析辅助

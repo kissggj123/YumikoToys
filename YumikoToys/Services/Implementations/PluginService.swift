@@ -61,122 +61,133 @@ final class PluginService: ObservableObject {
     
     // MARK: - Plugin Presets
     
-    private var defaultPresetPlugins: [YumiPlugin] {
+    var defaultPresetPlugins: [YumiPlugin] {
         [
             YumiPlugin(
-                id: "quick_launch",
-                name: "快速启动应用",
-                icon: "rocket",
-                description: "通过自研 YumiScript 脚本一键启动常用 macOS 开发或办公应用程序",
+                id: "empty_trash",
+                name: "清空废纸篓",
+                icon: "trash.fill",
+                description: "一键安全清空 macOS 废纸篓，快速释放磁盘空间",
                 isEnabled: true,
                 scriptContent: """
-                # 启动内置 Terminal 终端
-                launch Terminal
-                # 等待一秒
-                wait 1.0
-                notify "快速启动" "Terminal 终端已成功拉起！"
+                # 安全清空废纸篓
+                sys emptytrash
+                notify "废纸篓已清空" "🗑️ 废纸篓已成功清空，已为您释放磁盘存储空间"
                 """
             ),
             YumiPlugin(
-                id: "screen_media",
-                name: "截图与录屏助手",
-                icon: "camera.viewfinder",
-                description: "执行屏幕截图或指定时长的快速屏幕录制，自动化保存至桌面",
+                id: "lock_screen",
+                name: "一键锁定屏幕",
+                icon: "lock.shield.fill",
+                description: "立即快速锁定 Mac 屏幕，离开座位时保护隐私",
                 isEnabled: true,
                 scriptContent: """
-                # 一键截全屏，自动保存到桌面（按当前时间戳命名）
-                # 不带参数 = 使用默认桌面路径 + screencapture 退出码 0 才算成功
-                screenshot
-                wait 0.3
-                # 弹一条通知告诉用户结果
-                notify "截图插件" "桌面已生成最新截图（如未生成，请到 系统设置 → 隐私与安全性 → 屏幕录制 授予权限）。"
+                # 立即锁定屏幕
+                sys lock
                 """
             ),
             YumiPlugin(
-                id: "terminal_tool",
-                name: "终端指令执行插件",
-                icon: "terminal",
-                description: "通过 YumiScript 提供的 shell 指令执行自定义终端 Shell 指令并输出结果",
+                id: "toggle_dark_mode",
+                name: "深浅外观切换",
+                icon: "circle.righthalf.filled",
+                description: "在 macOS 深色外观与浅色外观之间一键快速无缝切换",
                 isEnabled: true,
                 scriptContent: """
-                # 执行 Shell 命令
-                shell echo "Hello from YumikoToys Terminal Plugin!"
+                # 切换系统深色/浅色外观
+                sys toggletheme
+                notify "系统外观切换" "$OUTPUT"
                 """
             ),
             YumiPlugin(
-                id: "text_tools",
-                name: "文本处理工具",
-                icon: "text.badge.star",
-                description: "快速统计剪贴板文本字数、转换大小写、去除多余空格等文本处理操作",
+                id: "clean_clipboard",
+                name: "剪贴板格式净化",
+                icon: "doc.text.magnifyingglass",
+                description: "去除剪贴板首尾多余空格、空白行与富文本格式，并统计纯文字数",
                 isEnabled: true,
                 scriptContent: """
-                # 获取剪贴板文本并统计字数
-                shell pbpaste | wc -c | xargs -I{} echo "当前剪贴板字符数: {}"
-                notify "文本工具" "已统计剪贴板文本字数"
+                # 净化剪贴板格式并统计字数
+                shell pbpaste | awk '{$1=$1};1' | pbcopy && pbpaste | wc -m | xargs -I{} echo "剪贴板文本格式已净化，共 {} 字"
+                notify "剪贴板净化完成" "$OUTPUT"
                 """
             ),
             YumiPlugin(
-                id: "network_status",
-                name: "网络状态检测",
+                id: "network_diagnostics",
+                name: "网络与延迟诊断",
                 icon: "wifi",
-                description: "快速检测当前 Wi-Fi 连接状态与网络延迟，并显示通知结果",
+                description: "检测当前 Wi-Fi/内网 IP、连通性及网络延迟",
                 isEnabled: true,
                 scriptContent: """
-                # 检测网络连通性
-                shell ping -c 1 -t 2 8.8.8.8 > /dev/null 2>&1 && echo "网络正常" || echo "网络异常"
-                notify "网络检测" "网络状态检测完成"
+                # 检测内网 IP 与 DNS 延迟
+                sys ip
+                notify "网络状态诊断" "$OUTPUT"
                 """
             ),
             YumiPlugin(
-                id: "process_monitor",
-                name: "进程监控",
+                id: "system_status",
+                name: "系统负载速查",
                 icon: "cpu",
-                description: "快速查看当前 CPU 占用最高的前 5 个进程，输出至运行日志",
+                description: "快速查看当前 CPU 占用最高的进程及系统主要负载",
                 isEnabled: true,
                 scriptContent: """
-                # 查看 CPU 占用前 5
-                shell ps -Ao pid,pcpu,comm -r | head -6
-                notify "进程监控" "已获取 CPU 占用前 5 进程"
+                # 监控当前 CPU 负载 Top 进程
+                sys cpu
+                notify "系统负载概览" "$OUTPUT"
                 """
             ),
             YumiPlugin(
                 id: "disk_analyzer",
-                name: "磁盘空间分析",
-                icon: "internaldrive",
-                description: "快速显示当前磁盘使用情况（总量/已用/可用）并通过通知展示结果",
+                name: "主磁盘空间概览",
+                icon: "internaldrive.fill",
+                description: "快速显示当前主硬盘容量、已用空间及剩余可用百分比",
                 isEnabled: true,
                 scriptContent: """
-                # 磁盘空间分析
-                shell df -h / | tail -1 | awk '{print "磁盘: 总量" $2 " 已用" $3 " 可用" $4}'
-                notify "磁盘分析" "已完成磁盘空间分析"
+                # 检查主磁盘使用情况
+                sys disk
+                notify "主磁盘空间" "$OUTPUT"
                 """
             ),
             YumiPlugin(
-                id: "clipboard_history",
-                name: "剪贴板快捷",
-                icon: "doc.on.clipboard",
-                description: "将当前日期时间复制到剪贴板，或清除剪贴板内容",
+                id: "purge_memory",
+                name: "释放内存缓存",
+                icon: "bolt.fill",
+                description: "释放系统非活跃缓存与脏内存，让 Mac 运行更流畅",
                 isEnabled: true,
                 scriptContent: """
-                # 将当前时间复制到剪贴板
-                shell date '+%Y-%m-%d %H:%M:%S' | tr -d '\n' | pbcopy
-                notify "剪贴板" "当前时间已复制到剪贴板"
+                # 释放系统内存缓存
+                sys purge
+                notify "内存优化" "⚡ 内存缓存已成功释放，系统运行更轻快"
                 """
             ),
             YumiPlugin(
-                id: "finder_quick",
-                name: "Finder 快速操作",
-                icon: "folder.badge.gearshape",
-                description: "快速打开桌面文件夹、清理废纸篓或在 Finder 中显示当前用户目录",
+                id: "copy_timestamp",
+                name: "复制当前时间戳",
+                icon: "clock.badge.checkmark",
+                description: "将标准格式的当前日期时间一键复制到剪贴板",
                 isEnabled: true,
                 scriptContent: """
-                # 打开桌面文件夹
-                launch Finder
-                shell open ~/Desktop
-                notify "Finder" "已在 Finder 中打开桌面"
+                # 格式化日期时间并复制
+                shell date "+%Y-%m-%d %H:%M:%S" | tr -d '\\n' | pbcopy
+                notify "时间已复制" "📋 已将当前时间复制到剪贴板: $DATE $TIME"
+                """
+            ),
+            YumiPlugin(
+                id: "open_downloads",
+                name: "打开下载目录",
+                icon: "arrow.down.circle.fill",
+                description: "在 Finder 中快速打开 Downloads 下载文件夹",
+                isEnabled: true,
+                scriptContent: """
+                # 打开下载目录
+                open ~/Downloads
+                notify "访达快捷" "📂 已打开 Downloads 下载文件夹"
                 """
             )
         ]
+    }
+    
+    func restoreDefaultPresets() {
+        self.customPlugins = defaultPresetPlugins
+        savePlugins()
     }
     
     func loadPlugins() {
@@ -186,6 +197,15 @@ final class PluginService: ObservableObject {
             for preset in defaultPresetPlugins {
                 if !list.contains(where: { $0.id == preset.id }) {
                     list.append(preset)
+                }
+            }
+            // 升级旧插件脚本内容为 v2.5 新脚本
+            for preset in defaultPresetPlugins {
+                if let idx = list.firstIndex(where: { $0.id == preset.id }) {
+                    // 如果旧插件脚本包含老旧代码，自动无缝升级
+                    if list[idx].scriptContent.contains("v1.0") || list[idx].scriptContent.contains("一键截全屏") || list[idx].id == "screen_media" {
+                        list[idx] = preset
+                    }
                 }
             }
             self.customPlugins = list

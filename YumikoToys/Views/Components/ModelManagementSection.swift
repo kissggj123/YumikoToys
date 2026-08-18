@@ -429,12 +429,12 @@ struct ModelManagementCard: View {
             // 类型图标
             ZStack {
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(hex: "5856D6").opacity(0.1))
+                    .fill(AboutThemeConfig.current().primaryColor.opacity(0.1))
                     .frame(width: 28, height: 28)
 
                 Image(systemName: model.type.icon)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Color(hex: "5856D6"))
+                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
             }
 
             // 名称
@@ -536,7 +536,7 @@ struct ModelManagementCard: View {
                     get: { isModelDisabled },
                     set: { modelService.setModelDisabled(model.id, disabled: $0) }
                 ))
-                .toggleStyle(.checkbox)
+                .toggleStyle(CheckboxToggleStyle())
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
             }
@@ -567,7 +567,7 @@ struct ModelManagementCard: View {
             .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(hex: "5856D6"))
+                    .fill(AboutThemeConfig.current().linearGradient)
             )
         }
         .buttonStyle(.plain)
