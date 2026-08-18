@@ -81,16 +81,19 @@ struct AppHeader: View, Equatable {
                         .font(.system(size: 13 * fontSizeScale))
                         .foregroundStyle(.secondary)
                     
-                    // 版本标签
+                    // 版本标签（动态跟随全局主题）
                     Text("v\(AppConfig.version)")
-                        .font(.system(size: 10 * fontSizeScale))
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .font(.system(size: 10 * fontSizeScale, weight: .semibold, design: .rounded))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2.5)
                         .background(
                             Capsule()
-                                .fill(Color.secondary.opacity(0.3))
+                                .fill(AboutThemeConfig.current().primaryColor.opacity(0.14))
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(AboutThemeConfig.current().primaryColor.opacity(0.28), lineWidth: 0.8)
                         )
                 }
             }

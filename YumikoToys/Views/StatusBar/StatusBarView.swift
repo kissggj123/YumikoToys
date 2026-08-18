@@ -1642,8 +1642,11 @@ struct StatusBarView: View {
             .fixedSize()
 
             Text("v\(AppConfig.version)")
-                .font(.system(size: 9, design: .monospaced))
-                .foregroundStyle(themeColor.animeOrTextSecondary.opacity(0.6))
+                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .foregroundStyle(themeColor.animeOrAccent)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(themeColor.animeOrAccent.opacity(0.12)))
                 .lineLimit(1)
         }
     }

@@ -3252,23 +3252,11 @@ struct PluginManagementSectionView: View {
                     .buttonStyle(.plain)
                     
                     Button {
-                        selectedPlugin = YumiPlugin(
-                            id: "plugin_\(UUID().uuidString.prefix(6).lowercased())",
-                            name: "新自动化插件",
-                            icon: "bolt.fill",
-                            description: "自定义自动化功能",
-                            isEnabled: true,
-                            scriptContent: """
-                            # 执行系统命令或应用启动
-                            sys toggletheme
-                            notify "自定义插件" "执行成功！"
-                            """
-                        )
-                        isCreating = true
+                        YumiScriptIDEManager.shared.open(plugin: nil, isCreating: true)
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "plus")
-                            Text("新增插件")
+                            Text("新增插件 (IDE)")
                         }
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.white)
@@ -3341,20 +3329,23 @@ struct PluginManagementSectionView: View {
                         .buttonStyle(.plain)
                         .disabled(runningPluginId != nil)
                         
-                        // 编辑按钮
+                        // 编辑按钮（打开专业独立可拖拽 IDE 面板）
                         Button {
-                            selectedPlugin = plugin
-                            isCreating = false
+                            YumiScriptIDEManager.shared.open(plugin: plugin, isCreating: false)
                         } label: {
-                            Text("编辑")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3.5)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 5)
-                                        .stroke(AboutThemeConfig.current().primaryColor.opacity(0.5), lineWidth: 1)
-                                )
+                            HStack(spacing: 3) {
+                                Image(systemName: "pencil.and.outline")
+                                    .font(.system(size: 9))
+                                Text("IDE 编辑")
+                            }
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3.5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 5)
+                                    .stroke(AboutThemeConfig.current().primaryColor.opacity(0.5), lineWidth: 1)
+                            )
                         }
                         .buttonStyle(.plain)
                         
