@@ -981,7 +981,7 @@ struct StatusBarView: View {
                                         .font(.system(size: 11))
                                 }
                             }
-                            .toggleStyle(.switch)
+                            .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
 
                             Divider()
 
@@ -997,7 +997,7 @@ struct StatusBarView: View {
                                         .font(.system(size: 11))
                                 }
                             }
-                            .toggleStyle(.switch)
+                            .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
 
                             Toggle(isOn: Binding(
                                 get: { pluginService.showCustomPluginsSection },
@@ -1011,7 +1011,7 @@ struct StatusBarView: View {
                                         .font(.system(size: 11))
                                 }
                             }
-                            .toggleStyle(.switch)
+                            .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
 
                             Divider()
 
@@ -1029,7 +1029,7 @@ struct StatusBarView: View {
                                             .font(.system(size: 10))
                                             .foregroundStyle(plugin.isEnabled ? .primary : .secondary)
                                     }
-                                    .toggleStyle(.switch)
+                                    .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
                                     .disabled(!plugin.isEnabled)
                                 }
                             }
@@ -1796,8 +1796,7 @@ struct StatusBarView: View {
                     get: { viewModel.isPreventSleepEnabled },
                     set: { _ in viewModel.togglePreventSleep() }
                 ))
-                .toggleStyle(.switch)
-                .tint(themeColor.animeOrToggleOn)
+                .toggleStyle(ThemedToggleStyle(width: 34, height: 20))
                 .labelsHidden()
                 .allowsHitTesting(false) // 【核心修复】阻断 Toggle 本身对鼠标的响应，统一由外层整行手势接管，消除冲突 [1]
             }
@@ -1995,7 +1994,7 @@ struct StatusBarView: View {
                                     .font(.system(size: 11))
                             }
                         }
-                        .toggleStyle(.switch)
+                        .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
                         
                         Divider()
                         
@@ -2012,7 +2011,7 @@ struct StatusBarView: View {
                                     .font(.system(size: 11))
                             }
                         }
-                        .toggleStyle(.switch)
+                        .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
                         
                         // 快速启动区
                         Toggle(isOn: Binding(
@@ -2027,7 +2026,7 @@ struct StatusBarView: View {
                                     .font(.system(size: 11))
                             }
                         }
-                        .toggleStyle(.switch)
+                        .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
                         
                         // 自定义插件区
                         Toggle(isOn: Binding(
@@ -2042,7 +2041,7 @@ struct StatusBarView: View {
                                     .font(.system(size: 11))
                             }
                         }
-                        .toggleStyle(.switch)
+                        .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
                         
                         Divider()
                         
@@ -2061,7 +2060,7 @@ struct StatusBarView: View {
                                         .font(.system(size: 10))
                                         .foregroundStyle(plugin.isEnabled ? .primary : .secondary)
                                 }
-                                .toggleStyle(.switch)
+                                .toggleStyle(ThemedToggleStyle(width: 32, height: 18))
                                 .disabled(!plugin.isEnabled)
                             }
                         }

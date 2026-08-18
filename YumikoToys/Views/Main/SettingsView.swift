@@ -549,45 +549,43 @@ struct SettingsView: View {
                     }) {
                         Text(viewModel.isKeychainAuthorized ? "重新授权" : "立即授权")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Color(hex: "007AFF"))
+                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(.leading, 50) // 缩进对齐上面的 Toggle Row 文本
                 .padding(.bottom, 4)
-            }
 
-            SettingsToggleRow(
-                icon: "menubar.rectangle",
-                iconColor: "007AFF",
-                title: "显示状态栏图标",
-                subtitle: "在菜单栏中显示兔可可",
-                isOn: $viewModel.showStatusBarIcon,
-                onToggle: { value in viewModel.updateShowStatusBarIcon(value) }
-            )
+                SettingsToggleRow(
+                    icon: "menubar.rectangle",
+                    iconColor: "007AFF",
+                    title: "显示状态栏图标",
+                    subtitle: "在菜单栏中显示兔可可",
+                    isOn: $viewModel.showStatusBarIcon,
+                    onToggle: { value in viewModel.updateShowStatusBarIcon(value) }
+                )
 
-            SettingsToggleRow(
-                icon: "sparkles.rectangle.stack",
-                iconColor: "007AFF",
-                title: "开机自启显示主界面",
-                subtitle: "在系统开机/登录自动启动时，是否打开主窗口",
-                isOn: $viewModel.showMainWindowOnAutoLaunch,
-                onToggle: { value in viewModel.updateShowMainWindowOnAutoLaunch(value) }
-            )
+                SettingsToggleRow(
+                    icon: "sparkles.rectangle.stack",
+                    iconColor: "007AFF",
+                    title: "开机自启显示主界面",
+                    subtitle: "在系统开机/登录自动启动时，是否打开主窗口",
+                    isOn: $viewModel.showMainWindowOnAutoLaunch,
+                    onToggle: { value in viewModel.updateShowMainWindowOnAutoLaunch(value) }
+                )
 
-            SettingsToggleRow(
-                icon: "hand.tap.fill",
-                iconColor: "007AFF",
-                title: "手动启动显示主界面",
-                subtitle: "在手动运行应用时，是否自动打开主窗口",
-                isOn: $viewModel.showMainWindowOnManualLaunch,
-                onToggle: { value in viewModel.updateShowMainWindowOnManualLaunch(value) }
-            )
-            
-            Divider()
-                .padding(.vertical, 4)
-            
-            VStack(alignment: .leading, spacing: 10) {
+                SettingsToggleRow(
+                    icon: "hand.tap.fill",
+                    iconColor: "007AFF",
+                    title: "手动启动显示主界面",
+                    subtitle: "在手动运行应用时，是否自动打开主窗口",
+                    isOn: $viewModel.showMainWindowOnManualLaunch,
+                    onToggle: { value in viewModel.updateShowMainWindowOnManualLaunch(value) }
+                )
+                
+                Divider()
+                    .padding(.vertical, 4)
+                
                 SettingsToggleRow(
                     icon: "sidebar.right",
                     iconColor: "007AFF",
@@ -600,7 +598,7 @@ struct SettingsView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: "007AFF"))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                         .frame(width: 24, height: 24)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -630,7 +628,7 @@ struct SettingsView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "cursorarrow.click")
                         .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: "007AFF"))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                         .frame(width: 24, height: 24)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -660,7 +658,7 @@ struct SettingsView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "camera")
                         .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: "007AFF"))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                         .frame(width: 24, height: 24)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -720,7 +718,7 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                .toggleStyle(.switch)
+                .toggleStyle(ThemedToggleStyle())
 
                 if viewModel.isAnimeModeEnabled {
                     Divider()
@@ -964,7 +962,7 @@ struct SettingsView: View {
                                     
                                     Text(scheme.name)
                                         .font(.system(size: 12, weight: .medium))
-                                        .foregroundStyle(viewModel.activeColorSchemeName == scheme.name ? Color(hex: "007AFF") : .primary)
+                                        .foregroundStyle(viewModel.activeColorSchemeName == scheme.name ? AboutThemeConfig.current().primaryColor : .primary)
                                     
                                     Spacer()
                                     
@@ -972,7 +970,7 @@ struct SettingsView: View {
                                         viewModel.loadColorScheme(name: scheme.name)
                                     }
                                     .buttonStyle(.plain)
-                                    .foregroundStyle(Color(hex: "007AFF"))
+                                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
                                     .font(.system(size: 11, weight: .semibold))
                                     
                                     Button(action: {
@@ -1006,7 +1004,7 @@ struct SettingsView: View {
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
-                                .background(viewModel.newSchemeName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : Color(hex: "007AFF"))
+                                .background(viewModel.newSchemeName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : AboutThemeConfig.current().primaryColor)
                                 .cornerRadius(6)
                         }
                         .buttonStyle(.plain)
@@ -1044,7 +1042,7 @@ struct SettingsView: View {
                                 if viewModel.widgetDisplayStyle == style {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 14, weight: .medium))
-                                        .foregroundStyle(Color(hex: "007AFF"))
+                                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                                 } else {
                                     Image(systemName: "circle")
                                         .font(.system(size: 14, weight: .medium))
@@ -1055,13 +1053,13 @@ struct SettingsView: View {
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
                                     .fill(viewModel.widgetDisplayStyle == style
-                                          ? Color(hex: "007AFF").opacity(0.08)
+                                          ? AboutThemeConfig.current().primaryColor.opacity(0.08)
                                           : Color.primary.opacity(0.04))
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
                                     .stroke(viewModel.widgetDisplayStyle == style
-                                            ? Color(hex: "007AFF").opacity(0.55)
+                                            ? AboutThemeConfig.current().primaryColor.opacity(0.55)
                                             : Color.primary.opacity(0.1),
                                             lineWidth: 1)
                             )
@@ -1082,7 +1080,7 @@ struct SettingsView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "widget.small")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color(hex: "007AFF"))
+                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
                         Text("添加 Widget 到系统")
                             .font(.system(size: 12, weight: .semibold))
                         Spacer()
@@ -1114,8 +1112,8 @@ struct SettingsView: View {
                                 .font(.system(size: 8, weight: .medium))
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
-                                .background(Capsule().fill(Color(hex: "AF52DE").opacity(0.15)))
-                                .foregroundStyle(Color(hex: "AF52DE"))
+                                .background(Capsule().fill(AboutThemeConfig.current().primaryColor.opacity(0.15)))
+                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
                         }
                         stepRow(num: "1", text: "打开控制中心（点按菜单栏右上角或三指右滑）")
                         stepRow(num: "2", text: "点底部的「编辑控制中心」")
@@ -1132,8 +1130,8 @@ struct SettingsView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(Color(hex: "007AFF").opacity(0.15)))
-                            .foregroundStyle(Color(hex: "007AFF"))
+                            .background(RoundedRectangle(cornerRadius: 6).fill(AboutThemeConfig.current().primaryColor.opacity(0.15)))
+                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
                         }
                         .buttonStyle(.plain)
 
@@ -1144,8 +1142,8 @@ struct SettingsView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(Color(hex: "AF52DE").opacity(0.15)))
-                            .foregroundStyle(Color(hex: "AF52DE"))
+                            .background(RoundedRectangle(cornerRadius: 6).fill(AboutThemeConfig.current().secondaryColor.opacity(0.15)))
+                            .foregroundStyle(AboutThemeConfig.current().secondaryColor)
                         }
                         .buttonStyle(.plain)
                     }
@@ -1159,29 +1157,17 @@ struct SettingsView: View {
                 .padding(10)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(hex: "007AFF").opacity(0.06))
+                        .fill(AboutThemeConfig.current().primaryColor.opacity(0.06))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color(hex: "007AFF").opacity(0.25), lineWidth: 1)
-                )
-                }
-                .padding(10)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(hex: "AF52DE").opacity(0.06))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color(hex: "AF52DE").opacity(0.25), lineWidth: 1)
+                        .stroke(AboutThemeConfig.current().primaryColor.opacity(0.25), lineWidth: 1)
                 )
             }
         }
     }
 
 // MARK: - SettingsView 辅助方法
-
-extension SettingsView {
 
     @ViewBuilder
     private func stepRow(num: String, text: String) -> some View {
@@ -1531,7 +1517,7 @@ extension SettingsView {
                             }) {
                                 Image(systemName: expandedComponentId == layout.id ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
                                     .font(.system(size: 16))
-                                    .foregroundStyle(Color(hex: "007AFF").opacity(0.8))
+                                    .foregroundStyle(AboutThemeConfig.current().primaryColor.opacity(0.85))
                             }
                             .buttonStyle(.plain)
                             .padding(.trailing, 8)
@@ -1542,7 +1528,7 @@ extension SettingsView {
                                     get: { layout.isVisible },
                                     set: { _ in viewModel.toggleComponentVisibility(layout.type) }
                                 ))
-                                .toggleStyle(.switch)
+                                .toggleStyle(ThemedToggleStyle())
                                 .labelsHidden()
                             } else {
                                 Text("必选")
@@ -2458,7 +2444,7 @@ extension SettingsView {
                     }) {
                         Text("去开启")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Color(hex: "007AFF"))
+                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
                     }
                     .buttonStyle(.plain)
                 }
@@ -3014,7 +3000,7 @@ extension SettingsView {
                                 }) {
                                     Text("编辑")
                                         .font(.system(size: 11, weight: .semibold))
-                                        .foregroundStyle(Color(hex: "007AFF"))
+                                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                                 }
                                 .buttonStyle(.premium)
                                 .premiumHover()
@@ -3047,7 +3033,7 @@ extension SettingsView {
                     .foregroundStyle(.white)
                     .padding(.vertical, 8)
                     .frame(maxWidth: .infinity)
-                    .background(Color(hex: "FF9500"))
+                    .background(AboutThemeConfig.current().linearGradient)
                     .cornerRadius(10)
                 }
                 .buttonStyle(.premium)
@@ -3084,7 +3070,7 @@ extension SettingsView {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(viewModel.isCLIInstalled ? Color(hex: "5856D6") : Color(hex: "007AFF"))
+                            .background(AboutThemeConfig.current().linearGradient)
                             .cornerRadius(6)
                         }
                         .buttonStyle(.premium)
@@ -3487,8 +3473,7 @@ private struct SettingsToggleRow: View {
                     onToggle?(newValue)
                 }
             ))
-            .toggleStyle(.switch)
-            .tint(AboutThemeConfig.current().primaryColor)
+            .toggleStyle(ThemedToggleStyle())
             .labelsHidden()
         }
         .padding(.vertical, 6)
@@ -5681,7 +5666,7 @@ private struct ComponentCustomizationPanel: View {
                 
                 Text("拉伸与位置调整 (上帝模式)")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(Color(hex: "007AFF"))
+                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
                 
                 // 宽度比例
                 HStack(spacing: 8) {

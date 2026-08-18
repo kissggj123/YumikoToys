@@ -331,7 +331,7 @@ struct ChatSettingsView: View {
                             .font(.system(size: 13, design: .rounded))
                         Spacer()
                         Toggle("", isOn: $viewModel.enableWebSearch)
-                            .toggleStyle(.switch)
+                            .toggleStyle(ThemedToggleStyle())
                             .labelsHidden()
                     }
 
@@ -342,7 +342,7 @@ struct ChatSettingsView: View {
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Toggle("", isOn: $viewModel.autoWebSearch)
-                                .toggleStyle(.switch)
+                                .toggleStyle(ThemedToggleStyle())
                                 .labelsHidden()
                         }
                         
@@ -352,7 +352,7 @@ struct ChatSettingsView: View {
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Toggle("", isOn: $viewModel.enableEnhancedSearchMode)
-                                .toggleStyle(.switch)
+                                .toggleStyle(ThemedToggleStyle())
                                 .labelsHidden()
                         }
                     }
@@ -439,7 +439,7 @@ struct ChatSettingsView: View {
                             .font(.system(size: 13, design: .rounded))
                         Spacer()
                         Toggle("", isOn: $viewModel.enableDeepThinking)
-                            .toggleStyle(.switch)
+                            .toggleStyle(ThemedToggleStyle())
                             .labelsHidden()
                     }
                 }
@@ -452,7 +452,7 @@ struct ChatSettingsView: View {
                         .font(.system(size: 13, design: .rounded))
                     Spacer()
                     Toggle("", isOn: $viewModel.enableAgentMode)
-                        .toggleStyle(.switch)
+                        .toggleStyle(ThemedToggleStyle())
                         .labelsHidden()
                 }
             }

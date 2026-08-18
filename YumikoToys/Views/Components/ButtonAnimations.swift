@@ -434,3 +434,52 @@ extension View {
         self.modifier(ClickEffectModifier())
     }
 }
+
+// MARK: - 全局萌系主题开关样式 (Themed Toggle Style)
+
+struct ThemedToggleStyle: ToggleStyle {
+    var width: CGFloat = 38
+    var height: CGFloat = 22
+    
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 0) {
+            configuration.label
+            
+            ZStack {
+                Capsule()
+                    .fill(
+                        configuration.isOn
+                            ? AnyShapeStyle(AboutThemeConfig.current().linearGradient)
+                            : AnyShapeStyle(Color.gray.opacity(0.32))
+                    )
+                    .frame(width: width, height: height)
+                    .shadow(
+                        color: configuration.isOn ? AboutThemeConfig.current().primaryColor.opacity(0.45) : .clear,
+                        radius: 4,
+                        x: 0,
+                        y: 1
+                    )
+                
+                HStack(spacing: 0) {
+                    if configuration.isOn {
+                        Spacer()
+                    }
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: height - 4, height: height - 4)
+                        .padding(2)
+                        .shadow(color: Color.black.opacity(0.25), radius: 2, x: 0, y: 1)
+                    if !configuration.isOn {
+                        Spacer()
+                    }
+                }
+                .frame(width: width, height: height)
+            }
+            .animation(.spring(response: 0.25, dampingFraction: 0.75), value: configuration.isOn)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                configuration.isOn.toggle()
+            }
+        }
+    }
+}
