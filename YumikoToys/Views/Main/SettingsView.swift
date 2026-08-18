@@ -56,7 +56,7 @@ struct SettingsView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "gearshape.fill")
                         .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: "5856D6"))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                     Text("分类设置")
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
@@ -326,7 +326,7 @@ struct SettingsView: View {
                                                     .font(.system(size: 11))
                                                 
                                                 Toggle("必填", isOn: $param.isRequired)
-                                                    .toggleStyle(.checkbox)
+                                                    .toggleStyle(CheckboxToggleStyle())
                                                     .font(.system(size: 11))
                                                 
                                                 Button(action: {
@@ -5637,7 +5637,7 @@ private struct ComponentCustomizationPanel: View {
                     }
                 ))
                 .font(.system(size: 11))
-                .toggleStyle(.checkbox)
+                .toggleStyle(CheckboxToggleStyle())
                 
                 Spacer()
                 
@@ -5683,6 +5683,7 @@ private struct ComponentCustomizationPanel: View {
                             viewModel.updateComponentLayout(newLayout)
                         }
                     ), in: 0.4...1.0, step: 0.05)
+                    .tint(AboutThemeConfig.current().primaryColor)
                     
                     Text("\(Int((layout.customWidthScale ?? 1.0) * 100))%")
                         .font(.system(size: 11, design: .monospaced))
@@ -5706,7 +5707,7 @@ private struct ComponentCustomizationPanel: View {
                         }
                     ))
                     .font(.system(size: 11))
-                    .toggleStyle(.checkbox)
+                    .toggleStyle(CheckboxToggleStyle())
                     
                     if let height = layout.customHeight {
                         Slider(value: Binding(
@@ -5717,6 +5718,7 @@ private struct ComponentCustomizationPanel: View {
                                 viewModel.updateComponentLayout(newLayout)
                             }
                         ), in: 50...500, step: 5)
+                        .tint(AboutThemeConfig.current().primaryColor)
                         
                         Text("\(Int(height))px")
                             .font(.system(size: 11, design: .monospaced))

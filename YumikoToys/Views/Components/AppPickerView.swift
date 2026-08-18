@@ -128,7 +128,7 @@ struct AppPickerView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Color(hex: "007AFF"))
+                        .background(selectedAppNames.isEmpty ? Color.gray.opacity(0.4) : AboutThemeConfig.current().primaryColor)
                         .cornerRadius(6)
                 }
                 .buttonStyle(.plain)

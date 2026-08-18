@@ -271,8 +271,9 @@ struct CheckboxToggleStyle: ToggleStyle {
         }) {
             HStack(spacing: 8) {
                 Image(systemName: configuration.isOn ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 12))
-                    .foregroundStyle(configuration.isOn ? Color(hex: "059669") : .secondary)
+                    .font(.system(size: 13))
+                    .foregroundStyle(configuration.isOn ? AboutThemeConfig.current().primaryColor : .secondary)
+                    .shadow(color: configuration.isOn ? AboutThemeConfig.current().primaryColor.opacity(0.35) : .clear, radius: 2)
                 configuration.label
             }
         }

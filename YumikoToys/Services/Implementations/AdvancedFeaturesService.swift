@@ -331,7 +331,7 @@ struct AdvancedFeatureRow: View {
                 get: { isEnabled },
                 set: { _ in onToggle() }
             ))
-            .toggleStyle(.switch)
+            .toggleStyle(ThemedToggleStyle())
             .disabled(accessState == .denied)
         }
         .padding(.vertical, 8)

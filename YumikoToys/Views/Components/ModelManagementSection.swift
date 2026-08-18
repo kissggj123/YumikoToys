@@ -747,7 +747,7 @@ struct AdvancedModelSettings: View {
                 Spacer()
 
                 Toggle("", isOn: $autoLoadModels)
-                    .toggleStyle(.switch)
+                    .toggleStyle(ThemedToggleStyle())
                     .labelsHidden()
             }
 
@@ -762,12 +762,12 @@ struct AdvancedModelSettings: View {
 
                     Text(String(format: "%.0f GB", memoryBudgetGB))
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Color(hex: "5856D6"))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(hex: "5856D6").opacity(0.1))
+                                .fill(AboutThemeConfig.current().primaryColor.opacity(0.1))
                         )
                 }
 
@@ -776,7 +776,7 @@ struct AdvancedModelSettings: View {
                     range: 1...8,
                     step: 1
                 )
-                .tint(Color(hex: "5856D6"))
+                .tint(AboutThemeConfig.current().primaryColor)
 
                 HStack {
                     Text("1 GB")

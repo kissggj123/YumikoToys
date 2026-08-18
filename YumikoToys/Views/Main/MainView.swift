@@ -2893,7 +2893,7 @@ struct FloatingLayoutToolbar: View {
                 .help("根据内容自动计算最优窗口大小")
                 
                 Toggle(isEditing ? "编辑中" : "已锁定", isOn: $isEditing)
-                    .toggleStyle(.checkbox)
+                    .toggleStyle(CheckboxToggleStyle())
                     .font(.system(size: 11))
             }
             
@@ -2912,6 +2912,7 @@ struct FloatingLayoutToolbar: View {
                         Slider(value: $windowWidth, in: 460...1200, step: 10) { editing in
                             if !editing { applyWindowSize() }
                         }
+                        .tint(AboutThemeConfig.current().primaryColor)
                         .onChange(of: windowWidth) { _ in applyWindowSize() }
                         
                         Text("\(Int(windowWidth))")
@@ -2930,6 +2931,7 @@ struct FloatingLayoutToolbar: View {
                         Slider(value: $windowHeight, in: 450...1200, step: 10) { editing in
                             if !editing { applyWindowSize() }
                         }
+                        .tint(AboutThemeConfig.current().primaryColor)
                         .onChange(of: windowHeight) { _ in applyWindowSize() }
                         
                         Text("\(Int(windowHeight))")
@@ -2946,6 +2948,7 @@ struct FloatingLayoutToolbar: View {
                             .frame(width: 28, alignment: .trailing)
                         
                         Slider(value: $contentScale, in: 0.7...1.5, step: 0.05)
+                            .tint(AboutThemeConfig.current().primaryColor)
                             .onChange(of: contentScale) { newScale in
                                 applyContentScale(newScale)
                             }

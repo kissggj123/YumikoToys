@@ -637,7 +637,7 @@ private struct VariableTagView: View {
             HStack(spacing: 2) {
                 Text(variable)
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Color(hex: "007AFF"))
+                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
                 Text(desc)
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
@@ -646,7 +646,7 @@ private struct VariableTagView: View {
             .padding(.vertical, 3)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(hex: "007AFF").opacity(isHovered ? 0.18 : 0.08))
+                    .fill(AboutThemeConfig.current().primaryColor.opacity(isHovered ? 0.18 : 0.08))
             )
         }
         .buttonStyle(.premium)
