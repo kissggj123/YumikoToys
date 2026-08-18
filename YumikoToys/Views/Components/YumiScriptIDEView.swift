@@ -96,6 +96,7 @@ final class YumiScriptIDEManager: ObservableObject {
 struct YumiScriptIDEView: View {
     @ObservedObject var manager: YumiScriptIDEManager
     @ObservedObject var pluginService = PluginService.shared
+    @ObservedObject private var animeThemeService = AnimeThemeService.shared
     
     enum IDETab: String, CaseIterable {
         case split = "分栏视图"
