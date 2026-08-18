@@ -741,12 +741,14 @@ struct StatusBarView: View {
         case anniversary = "anniversary"
         case plugins = "plugins"
         case screenshot = "screenshot"
+        case ide = "ide"
 
         var title: String {
             switch self {
             case .anniversary: return "纪念日"
             case .plugins: return "插件"
             case .screenshot: return "截图"
+            case .ide: return "IDE"
             }
         }
 
@@ -755,6 +757,7 @@ struct StatusBarView: View {
             case .anniversary: return "calendar.badge.clock"
             case .plugins: return "puzzlepiece.extension.fill"
             case .screenshot: return "camera.viewfinder"
+            case .ide: return "terminal.fill"
             }
         }
     }
@@ -785,6 +788,8 @@ struct StatusBarView: View {
                     pluginsTabContent
                 case .screenshot:
                     screenshotTabContent
+                case .ide:
+                    ideTabContent
                 }
             }
             .frame(height: 330)
@@ -875,13 +880,30 @@ struct StatusBarView: View {
     private var pluginsTabContent: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 8) {
-                // 插件区头部（含日志 + 配置按钮）
+                // 插件区头部（含日志 + IDE入口 + 配置按钮）
                 HStack(spacing: 6) {
                     Text("🔌 YumiScript")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundStyle(themeColor.animeOrTextPrimary)
 
                     Spacer()
+
+                    Button(action: {
+                        YumiScriptIDEManager.shared.open(plugin: nil)
+                    }) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "terminal.fill")
+                                .font(.system(size: 8))
+                            Text("IDE")
+                                .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                        }
+                        .foregroundStyle(themeColor.animeOrAccent)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(themeColor.animeOrAccent.opacity(0.14)))
+                    }
+                    .buttonStyle(.plain)
+                    .help("打开 YumiScript Studio 可视化 IDE 编辑器")
 
                     if !pluginRunningLogs.isEmpty {
                         Button(action: { showLogsSheet = true }) {
@@ -1202,13 +1224,14 @@ struct StatusBarView: View {
                             onScreenshotTriggered?()
                             ScreenMediaHelper.shared.openScreenshotAnnotation()
                         })
-                        // 第 5 颗按钮独占第二行（用空 View 占位另一半）
                         screenshotButton(title: "TouchBar 截图", icon: "rectangle.bottomthird.inset.filled", action: {
                             onScreenshotTriggered?()
                             ScreenMediaHelper.shared.captureTouchBar()
                         })
-                        Color.clear
-                            .frame(height: 1)
+                        screenshotButton(title: "脚本 IDE", icon: "terminal.fill", action: {
+                            onScreenshotTriggered?()
+                            YumiScriptIDEManager.shared.open(plugin: nil)
+                        })
                     }
 
                     // TouchBar 截图机型提示（2020 以后机型自带 TouchBar 的不多，给个一键确认按钮）
@@ -1340,6 +1363,150 @@ struct StatusBarView: View {
                         }
                         .pickerStyle(.segmented)
                         .font(.system(size: 9))
+                    }
+                }
+            }
+            .padding(12)
+        }
+    }
+
+    // MARK: - IDE Tab
+
+    private var ideTabContent: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 12) {
+                // IDE 快捷大卡片
+                Button(action: {
+                    YumiScriptIDEManager.shared.open(plugin: nil)
+                }) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(themeColor.animeOrAccent.opacity(0.18))
+                                .frame(width: 40, height: 40)
+                            Image(systemName: "terminal.fill")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(themeColor.animeOrAccent)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text("YumiScript Studio")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(themeColor.animeOrTextPrimary)
+                                Text("IDE")
+                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(themeColor.animeOrAccent)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Capsule().fill(themeColor.animeOrAccent.opacity(0.15)))
+                            }
+                            Text("多色语法编辑器 · 动作积木库 · Tab 补全")
+                                .font(.system(size: 10))
+                                .foregroundStyle(themeColor.animeOrTextSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "arrow.up.forward.app")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(themeColor.animeOrAccent)
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(themeColor.animeOrCardBackground)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(themeColor.animeOrAccent.opacity(0.35), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                
+                // 快捷操作
+                HStack(spacing: 8) {
+                    Button(action: {
+                        YumiScriptIDEManager.shared.open(plugin: nil, isCreating: true)
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(themeColor.animeOrAccent)
+                            Text("新建插件脚本")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.animeOrButton))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(themeColor.animeOrBorder, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button(action: {
+                        if let first = pluginService.customPlugins.first {
+                            YumiScriptIDEManager.shared.open(plugin: first)
+                        } else {
+                            YumiScriptIDEManager.shared.open(plugin: nil)
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "pencil")
+                                .foregroundStyle(themeColor.animeOrAccent)
+                            Text("管理与编辑")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .foregroundStyle(themeColor.animeOrTextPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.animeOrButton))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(themeColor.animeOrBorder, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                Divider().padding(.horizontal, 4)
+                
+                // 脚本列表预览
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("我的插件脚本 (\(pluginService.customPlugins.count))")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(themeColor.animeOrTextSecondary)
+                        .padding(.horizontal, 4)
+                    
+                    ForEach(pluginService.customPlugins) { plugin in
+                        HStack(spacing: 8) {
+                            SafeSFSymbolView(plugin.icon, fallback: "bolt.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(themeColor.animeOrAccent)
+                                .frame(width: 20)
+                            
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(plugin.name)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(themeColor.animeOrTextPrimary)
+                                Text(plugin.description.isEmpty ? "自定义 YumiScript 自动化" : plugin.description)
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(themeColor.animeOrTextSecondary)
+                                    .lineLimit(1)
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                YumiScriptIDEManager.shared.open(plugin: plugin)
+                            }) {
+                                Text("IDE编辑")
+                                    .font(.system(size: 9.5, weight: .medium))
+                                    .foregroundStyle(themeColor.animeOrAccent)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(Capsule().fill(themeColor.animeOrAccent.opacity(0.12)))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(8)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.animeOrButton))
                     }
                 }
             }
