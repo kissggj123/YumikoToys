@@ -483,3 +483,23 @@ struct ThemedToggleStyle: ToggleStyle {
         }
     }
 }
+
+// MARK: - 安全 SF Symbol 视图 (防止无效图标名导致空白)
+
+struct SafeSFSymbolView: View {
+    let name: String
+    let fallback: String
+    
+    init(_ name: String, fallback: String = "puzzlepiece.extension.fill") {
+        self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.fallback = fallback
+    }
+    
+    var body: some View {
+        if !name.isEmpty && NSImage(systemSymbolName: name, accessibilityDescription: nil) != nil {
+            Image(systemName: name)
+        } else {
+            Image(systemName: fallback)
+        }
+    }
+}

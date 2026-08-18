@@ -1148,7 +1148,7 @@ struct StatusBarView: View {
                                             }
                                         }) {
                                             HStack(spacing: 3) {
-                                                Image(systemName: plugin.icon)
+                                                SafeSFSymbolView(plugin.icon, fallback: "bolt.fill")
                                                     .font(.system(size: 9))
                                                 Text(plugin.name)
                                                     .font(.system(size: 10, weight: .medium))

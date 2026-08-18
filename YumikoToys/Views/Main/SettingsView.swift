@@ -3293,7 +3293,7 @@ struct PluginManagementSectionView: View {
                 
                 ForEach(pluginService.customPlugins) { plugin in
                     HStack(spacing: 12) {
-                        Image(systemName: plugin.icon.isEmpty ? "powerplug" : plugin.icon)
+                        SafeSFSymbolView(plugin.icon, fallback: "bolt.fill")
                             .font(.system(size: 13))
                             .frame(width: 28, height: 28)
                             .background(Circle().fill(AboutThemeConfig.current().primaryColor.opacity(0.15)))
@@ -3426,7 +3426,7 @@ struct PluginEditorSheet: View {
                             HStack {
                                 TextField("如：trash.fill", text: $plugin.icon)
                                     .textFieldStyle(.roundedBorder)
-                                Image(systemName: plugin.icon.isEmpty ? "powerplug" : plugin.icon)
+                                SafeSFSymbolView(plugin.icon, fallback: "puzzlepiece.extension.fill")
                                     .font(.system(size: 16))
                                     .foregroundStyle(AboutThemeConfig.current().primaryColor)
                                     .frame(width: 24)

@@ -193,21 +193,44 @@ final class PluginService: ObservableObject {
     func loadPlugins() {
         if let data = UserDefaults.standard.data(forKey: userDefaultsKey),
            var list = try? JSONDecoder().decode([YumiPlugin].self, from: data) {
+            
+            // 旧版 1.0 预设插件 ID 集合（如果检测到这些老插件，自动迁移至新版精选预设）
+            let legacyPresetIds: Set<String> = [
+                "quick_launch", "screen_media", "terminal_tool", "text_tools",
+                "network_status", "process_monitor", "clipboard_history", "finder_quick"
+            ]
+            
+            let hasLegacy = list.contains(where: { legacyPresetIds.contains($0.id) })
+            if hasLegacy {
+                // 保留非旧预设、由用户自行创建的插件
+                let newPresetIds = Set(defaultPresetPlugins.map { $0.id })
+                let userCustoms = list.filter { !legacyPresetIds.contains($0.id) && !newPresetIds.contains($0.id) }
+                
+                var migrated = defaultPresetPlugins
+                migrated.append(contentsOf: userCustoms)
+                self.customPlugins = migrated
+                savePlugins()
+                return
+            }
+            
             // 补充缺失的预设插件（版本升级迁移）
             for preset in defaultPresetPlugins {
                 if !list.contains(where: { $0.id == preset.id }) {
                     list.append(preset)
                 }
             }
-            // 升级旧插件脚本内容为 v2.5 新脚本
-            for preset in defaultPresetPlugins {
-                if let idx = list.firstIndex(where: { $0.id == preset.id }) {
-                    // 如果旧插件脚本包含老旧代码，自动无缝升级
-                    if list[idx].scriptContent.contains("v1.0") || list[idx].scriptContent.contains("一键截全屏") || list[idx].id == "screen_media" {
-                        list[idx] = preset
+            
+            // 修复所有插件中可能存在的无效/缺失 SF Symbol 图标
+            for i in 0..<list.count {
+                if list[i].icon.isEmpty || list[i].icon == "rocket" || NSImage(systemSymbolName: list[i].icon, accessibilityDescription: nil) == nil {
+                    if let defaultMatch = defaultPresetPlugins.first(where: { $0.id == list[i].id }) {
+                        list[i].icon = defaultMatch.icon
+                    } else {
+                        list[i].icon = "bolt.fill"
                     }
                 }
             }
+            
             self.customPlugins = list
             savePlugins()
         } else {
