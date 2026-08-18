@@ -351,6 +351,13 @@ final class WindowManager {
         window.makeKey()
         NSApp.activate(ignoringOtherApps: true)
         
+        // 保持已打开的独立子功能窗口（如关于、设置、纪念日管理等）位于主窗口上方，不被覆盖
+        if window.identifier?.rawValue == WindowType.main.rawValue {
+            for (type, childWindow) in windows where type != .main && childWindow.isVisible {
+                childWindow.orderFront(nil)
+            }
+        }
+        
         let currentFrame = window.frame
         let pulseFrame = currentFrame.insetBy(dx: -3, dy: -3)
         
@@ -451,9 +458,10 @@ final class WindowManager {
             window.delegate = WindowDelegate.shared
             window.identifier = NSUserInterfaceItemIdentifier(type.rawValue)
             
-            // 窗口美化设置
+            // 窗口美化与支持全局拖拽
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
+            window.isMovableByWindowBackground = true
             
             // 根据主界面主题色设置背景和外观
             let settings = DependencyContainer.shared.settingsService.settings

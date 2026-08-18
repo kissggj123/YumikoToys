@@ -11,6 +11,7 @@ import Combine
 struct AnniversaryManagementView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = AnniversaryManagementViewModel()
+    @ObservedObject private var animeThemeService = AnimeThemeService.shared
     @State private var showingAddSheet = false
     @State private var editingAnniversary: Anniversary?
     @State private var selectedCardAnniversary: Anniversary? = nil
@@ -29,7 +30,7 @@ struct AnniversaryManagementView: View {
                 Button(action: { showingAddSheet = true }) {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 22))
-                        .foregroundStyle(Color(hex: "FF6B9D"))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                 }
                 .buttonStyle(.premium)
                 .premiumHover(scale: 1.1)
@@ -129,13 +130,7 @@ private struct EmptyPetView: View {
                     .font(.headline)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 12)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(hex: "FF6B9D"), Color(hex: "C44FE2")],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .background(AboutThemeConfig.current().linearGradient)
                     .foregroundStyle(.white)
                     .cornerRadius(10)
             }
@@ -170,10 +165,10 @@ private struct PetProfileRowView: View {
         HStack(spacing: 16) {
             // 活跃指示器
             Circle()
-                .fill(isActive ? Color(hex: "FF6B9D") : Color.clear)
+                .fill(isActive ? AboutThemeConfig.current().primaryColor : Color.clear)
                 .overlay(
                     Circle().stroke(
-                        isActive ? Color(hex: "FF6B9D") : Color.secondary.opacity(0.3),
+                        isActive ? AboutThemeConfig.current().primaryColor : Color.secondary.opacity(0.3),
                         lineWidth: 2
                     )
                 )
@@ -211,9 +206,9 @@ private struct PetProfileRowView: View {
                         .padding(.vertical, 2)
                         .background(
                             Capsule()
-                                .fill(Color(hex: anniversary.type == .countUp ? "FF6B9D" : "00B4D8").opacity(0.15))
+                                .fill(AboutThemeConfig.current().primaryColor.opacity(0.15))
                         )
-                        .foregroundStyle(Color(hex: anniversary.type == .countUp ? "FF6B9D" : "00B4D8"))
+                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                 }
                 
                 HStack(spacing: 8) {
@@ -266,7 +261,7 @@ private struct PetProfileRowView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
                         .stroke(
-                            isActive ? Color(hex: "FF6B9D").opacity(0.4) : Color.clear,
+                            isActive ? AboutThemeConfig.current().primaryColor.opacity(0.4) : Color.clear,
                             lineWidth: 2
                         )
                 )
@@ -360,7 +355,7 @@ struct PetProfileEditView: View {
                     // 头像选择区域
                     VStack(spacing: 12) {
                         PixelAvatarView(emoji: selectedEmoji, size: 80)
-                            .shadow(color: Color(hex: "FF6B9D").opacity(0.3), radius: 8)
+                            .shadow(color: AboutThemeConfig.current().primaryColor.opacity(0.35), radius: 8)
                         
                         LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(petEmojis, id: \.self) { emoji in
@@ -368,7 +363,7 @@ struct PetProfileEditView: View {
                                     PixelAvatarMiniPreview(emoji: emoji, isSelected: selectedEmoji == emoji)
                                     Text(emojiToSpecies[emoji] ?? "宠物")
                                         .font(.system(size: 10))
-                                        .foregroundStyle(selectedEmoji == emoji ? Color(hex: "FF6B9D") : .secondary)
+                                        .foregroundStyle(selectedEmoji == emoji ? AboutThemeConfig.current().primaryColor : .secondary)
                                 }
                                 .onTapGesture {
                                     selectedEmoji = emoji
@@ -449,7 +444,7 @@ struct PetProfileEditView: View {
                                 Text("状态栏显示文字")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
-                                
+                                    
                                 TextField("{name}已到来", text: $statusBarLine1)
                                     .textFieldStyle(.roundedBorder)
                                 
@@ -494,7 +489,7 @@ struct PetProfileEditView: View {
                                     
                                     Text("预览: \(preview)")
                                         .font(.caption)
-                                        .foregroundStyle(Color(hex: "FF6B9D"))
+                                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
                                         .padding(.top, 4)
                                 }
                             }

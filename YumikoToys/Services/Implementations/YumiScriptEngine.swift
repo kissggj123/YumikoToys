@@ -148,20 +148,24 @@ final class YumiScriptEngine {
                 lastOutput = clip
                 logs.append(" 读取剪贴板内容（共 \(clip.count) 字）: \(clip.prefix(60))")
                 
-            case "sys", "system":
-                let subCmd = interpolateVariables(rawArgs, variables: userVariables, lastOutput: lastOutput).lowercased()
-                switch subCmd {
-                case "lock":
+            case "sys", "system", "ping":
+                var targetArg = interpolateVariables(rawArgs, variables: userVariables, lastOutput: lastOutput).trimmingCharacters(in: .whitespacesAndNewlines)
+                // 如果参数本身是一个变量名（未加 $），尝试从变量表中提取
+                if let varValue = userVariables[targetArg] {
+                    targetArg = varValue
+                }
+                
+                let lowerArg = targetArg.lowercased()
+                
+                if lowerArg == "lock" {
                     lockScreen()
                     lastOutput = "屏幕已锁定"
                     logs.append(" 已锁定 Mac 屏幕 🔒")
-                    
-                case "emptytrash":
+                } else if lowerArg == "emptytrash" {
                     let _ = await SkillService.shared.runAppleScript("tell application \"Finder\" to empty trash")
                     lastOutput = "废纸篓已清空"
                     logs.append(" 已清空废纸篓 🗑️")
-                    
-                case "toggletheme", "darkmode", "lightmode":
+                } else if lowerArg == "toggletheme" || lowerArg == "darkmode" || lowerArg == "lightmode" {
                     let res = await SkillService.shared.runAppleScript("""
                     tell application "System Events"
                         tell appearance preferences
@@ -173,13 +177,26 @@ final class YumiScriptEngine {
                     let isDark = res.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "true"
                     lastOutput = isDark ? "已切换为深色模式 🌙" : "已切换为浅色模式 ☀️"
                     logs.append(" \(lastOutput)")
-                    
-                case "purge", "cleanmem":
+                } else if lowerArg == "purge" || lowerArg == "cleanmem" {
                     let _ = await runRawShell("/usr/sbin/purge 2>/dev/null || true")
                     lastOutput = "内存缓存已释放 ⚡"
                     logs.append(" \(lastOutput)")
-                    
-                case "ip":
+                } else if lowerArg == "cpu" {
+                    let cpuRes = await runRawShell("ps -Ao %cpu,comm -r | head -4 | awk 'NR>1 {print $2 \"(\" $1 \"%)\"}' | paste -sd ', ' -")
+                    lastOutput = "Top CPU: " + cpuRes
+                    logs.append(" 进程负载: \(lastOutput)")
+                } else if lowerArg == "disk" {
+                    let diskRes = await runRawShell("df -h / | awk 'NR==2 {print \"总量 \" $2 \", 已用 \" $3 \" (\" $5 \"), 可用 \" $4}'")
+                    lastOutput = "主磁盘空间: " + diskRes
+                    logs.append(" 磁盘空间: \(lastOutput)")
+                } else if lowerArg == "togglemute" || lowerArg == "mute" {
+                    let _ = await SkillService.shared.runAppleScript("""
+                    set curMute to output muted of (get volume settings)
+                    set volume output muted (not curMute)
+                    """)
+                    lastOutput = "已切换系统静音状态 🔇"
+                    logs.append(" \(lastOutput)")
+                } else if lowerArg == "ip" || lowerArg.isEmpty {
                     let ipRes = await runRawShell("""
                     LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "无内网")
                     PING_MS=$(ping -c 1 -t 2 223.5.5.5 2>/dev/null | awk -F'/' 'END{print $5}')
@@ -191,27 +208,30 @@ final class YumiScriptEngine {
                     """)
                     lastOutput = ipRes
                     logs.append(" 网络诊断结果: \(lastOutput)")
+                } else {
+                    // 支持 sys <ip/host>、sys ip <ip/host>、sys ping <ip/host> 或直接 ping <ip/host>
+                    var pingTarget = targetArg
+                    if pingTarget.lowercased().hasPrefix("ip ") {
+                        pingTarget = String(pingTarget.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    } else if pingTarget.lowercased().hasPrefix("ping ") {
+                        pingTarget = String(pingTarget.dropFirst(5)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                    if let mapped = userVariables[pingTarget] {
+                        pingTarget = mapped
+                    }
                     
-                case "cpu":
-                    let cpuRes = await runRawShell("ps -Ao %cpu,comm -r | head -4 | awk 'NR>1 {print $2 \"(\" $1 \"%)\"}' | paste -sd ', ' -")
-                    lastOutput = "Top CPU: " + cpuRes
-                    logs.append(" 进程负载: \(lastOutput)")
-                    
-                case "disk":
-                    let diskRes = await runRawShell("df -h / | awk 'NR==2 {print \"总量 \" $2 \", 已用 \" $3 \" (\" $5 \"), 可用 \" $4}'")
-                    lastOutput = "主磁盘空间: " + diskRes
-                    logs.append(" 磁盘空间: \(lastOutput)")
-                    
-                case "togglemute", "mute":
-                    let _ = await SkillService.shared.runAppleScript("""
-                    set curMute to output muted of (get volume settings)
-                    set volume output muted (not curMute)
+                    let pingRes = await runRawShell("""
+                    TARGET="\(pingTarget)"
+                    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "127.0.0.1")
+                    PING_MS=$(ping -c 1 -t 2 "$TARGET" 2>/dev/null | awk -F'/' 'END{print $5}')
+                    if [ -n "$PING_MS" ]; then
+                        echo "内网IP: $LOCAL_IP | 目标 $TARGET 延迟: ${PING_MS}ms (连通良好 📶)"
+                    else
+                        echo "内网IP: $LOCAL_IP | 目标 $TARGET 连接超时 ⚠️"
+                    fi
                     """)
-                    lastOutput = "已切换系统静音状态 🔇"
-                    logs.append(" \(lastOutput)")
-                    
-                default:
-                    logs.append(" 未知系统动作: \"\(subCmd)\"，支持: lock, emptytrash, toggletheme, purge, ip, cpu, disk, togglemute")
+                    lastOutput = pingRes
+                    logs.append(" 网络目标诊断: \(lastOutput)")
                 }
                 
             case "applescript", "osascript":

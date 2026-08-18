@@ -3,6 +3,7 @@
 //  YumikoToys
 //
 //  独立可拖动、可调大小的 YumiScript 专业可视化 IDE 编辑器面板
+//  （支持多色语法高亮、Tab 快速补全填充、智能积木插入、全链路全局主题色跟随）
 //
 
 import SwiftUI
@@ -26,7 +27,6 @@ final class YumiScriptIDEManager: ObservableObject {
     )
     @Published var isCreating: Bool = false
     
-    private var windowController: NSWindowController?
     private var idePanel: NSPanel?
     
     private init() {}
@@ -44,8 +44,9 @@ final class YumiScriptIDEManager: ObservableObject {
                 description: "自定义自动化功能",
                 isEnabled: true,
                 scriptContent: """
-                # YumiScript 自动化脚本
-                sys ip
+                # 检测内网 IP 与 DNS 延迟
+                var my_ip = 192.168.50.1
+                sys my_ip
                 notify "网络状态诊断" "$OUTPUT"
                 """
             )
@@ -64,17 +65,17 @@ final class YumiScriptIDEManager: ObservableObject {
     private func showIDEPanel() {
         if idePanel == nil {
             let panel = NSPanel(
-                contentRect: NSRect(x: 0, y: 0, width: 880, height: 620),
+                contentRect: NSRect(x: 0, y: 0, width: 920, height: 640),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
-            panel.title = "YumiScript Studio"
+            panel.title = "YumiScript Studio IDE"
             panel.titleVisibility = .hidden
             panel.titlebarAppearsTransparent = true
             panel.isFloatingPanel = false
             panel.level = .normal
-            panel.minSize = NSSize(width: 750, height: 500)
+            panel.minSize = NSSize(width: 760, height: 520)
             panel.isMovableByWindowBackground = true
             panel.backgroundColor = NSColor.windowBackgroundColor
             panel.hasShadow = true
@@ -109,17 +110,36 @@ struct YumiScriptIDEView: View {
     @State private var isRunningTest = false
     @State private var showSaveToast = false
     @State private var isConsoleExpanded = true
+    @State private var activeTabSuggestion: String? = nil
     
     // 积木临时配置参数
     @State private var blockAppName: String = "Safari"
-    @State private var blockNotifyTitle: String = "执行结果"
+    @State private var blockNotifyTitle: String = "网络状态诊断"
     @State private var blockNotifyMsg: String = "$OUTPUT"
     @State private var blockOpenTarget: String = "https://github.com"
     @State private var blockCopyText: String = "$OUTPUT"
     @State private var blockShellCmd: String = "echo \"Hello YumiScript\""
     @State private var blockWaitSec: Double = 1.0
-    @State private var blockVarName: String = "my_var"
-    @State private var blockVarExpr: String = "\"CustomValue\""
+    @State private var blockVarName: String = "my_ip"
+    @State private var blockVarExpr: String = "192.168.50.1"
+    
+    private var theme: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+    
+    // 常用 Tab 快速补全候选词
+    private let tabSuggestions = [
+        "sys ip",
+        "sys my_ip",
+        "sys cpu",
+        "sys disk",
+        "var my_ip = 192.168.50.1",
+        "notify \"标题\" \"$OUTPUT\"",
+        "launch \"Safari\"",
+        "sys toggletheme",
+        "open \"https://github.com\"",
+        "wait 1.0"
+    ]
     
     var body: some View {
         VStack(spacing: 0) {
@@ -130,18 +150,18 @@ struct YumiScriptIDEView: View {
             
             // MARK: - IDE 工作区主体
             HStack(spacing: 0) {
-                // 左侧：动作积木工具箱（在 split 或 visual 模式下显示）
+                // 左侧：动作积木工具箱
                 if selectedTab == .split || selectedTab == .visual {
                     ideToolboxSidebar
                         .frame(width: selectedTab == .visual ? nil : 290)
-                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.4))
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.45))
                     
                     if selectedTab == .split {
                         Divider()
                     }
                 }
                 
-                // 右侧：代码编辑器与控制台（在 split 或 codeOnly 模式下显示）
+                // 右侧：代码编辑器与控制台
                 if selectedTab == .split || selectedTab == .codeOnly {
                     VStack(spacing: 0) {
                         ideCodeEditorArea
@@ -160,19 +180,19 @@ struct YumiScriptIDEView: View {
             // MARK: - IDE 底部状态栏
             ideStatusBar
         }
-        .frame(minWidth: 750, minHeight: 500)
+        .frame(minWidth: 760, minHeight: 520)
         .overlay(alignment: .bottom) {
             if showSaveToast {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                    Text("插件保存成功！")
+                    Text("插件保存成功！已同步至状态栏与系统扩展")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.white)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Capsule().fill(Color.black.opacity(0.85)))
+                .background(Capsule().fill(Color.black.opacity(0.88)))
                 .padding(.bottom, 40)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -187,10 +207,11 @@ struct YumiScriptIDEView: View {
             // 左侧应用标识与插件名称
             HStack(spacing: 8) {
                 SafeSFSymbolView(manager.editingPlugin.icon, fallback: "bolt.fill")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(theme.primaryColor)
                     .frame(width: 28, height: 28)
-                    .background(Circle().fill(AboutThemeConfig.current().primaryColor.opacity(0.15)))
+                    .background(Circle().fill(theme.primaryColor.opacity(0.16)))
+                    .overlay(Circle().stroke(theme.primaryColor.opacity(0.3), lineWidth: 1))
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
@@ -211,7 +232,7 @@ struct YumiScriptIDEView: View {
                         .frame(minWidth: 150, maxWidth: 260)
                 }
             }
-            .padding(.leading, 70) // 给系统红绿灯留出空间
+            .padding(.leading, 70) // 为 macOS 原生红绿灯按钮留出间距
             
             Spacer()
             
@@ -236,10 +257,10 @@ struct YumiScriptIDEView: View {
                     TextField("图标", text: $manager.editingPlugin.icon)
                         .font(.system(size: 10.5, design: .monospaced))
                         .textFieldStyle(.roundedBorder)
-                        .frame(width: 80)
+                        .frame(width: 75)
                 }
                 
-                // 运行测试按钮
+                // 运行测试按钮 (⌘R)
                 Button {
                     runScriptTest()
                 } label: {
@@ -254,17 +275,17 @@ struct YumiScriptIDEView: View {
                             .font(.system(size: 11, weight: .semibold))
                     }
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(AboutThemeConfig.current().linearGradient)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 5.5)
+                    .background(theme.linearGradient)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .shadow(color: AboutThemeConfig.current().primaryColor.opacity(0.35), radius: 3, y: 1)
+                    .shadow(color: theme.primaryColor.opacity(0.35), radius: 3, y: 1)
                 }
                 .buttonStyle(.plain)
                 .disabled(isRunningTest)
                 .keyboardShortcut("r", modifiers: .command)
                 
-                // 保存插件按钮
+                // 保存插件按钮 (⌘S)
                 Button {
                     savePlugin()
                 } label: {
@@ -274,11 +295,14 @@ struct YumiScriptIDEView: View {
                         Text("保存 (⌘S)")
                             .font(.system(size: 11, weight: .medium))
                     }
-                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                    .foregroundStyle(theme.primaryColor)
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.vertical, 5.5)
                     .background(
-                        Capsule().fill(AboutThemeConfig.current().primaryColor.opacity(0.12))
+                        Capsule().fill(theme.primaryColor.opacity(0.12))
+                    )
+                    .overlay(
+                        Capsule().stroke(theme.primaryColor.opacity(0.25), lineWidth: 0.8)
                     )
                 }
                 .buttonStyle(.plain)
@@ -298,9 +322,9 @@ struct YumiScriptIDEView: View {
                 HStack {
                     Label("动作积木库", systemImage: "square.grid.2x2.fill")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                        .foregroundStyle(theme.primaryColor)
                     Spacer()
-                    Text("点选参数插入")
+                    Text("智能自动插入")
                         .font(.system(size: 9.5))
                         .foregroundStyle(.tertiary)
                 }
@@ -313,36 +337,73 @@ struct YumiScriptIDEView: View {
                         .foregroundStyle(.secondary)
                     
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
-                        blockCard("📶 网络诊断", icon: "wifi") {
-                            insertLine("sys ip\nnotify \"网络状态诊断\" \"$OUTPUT\"")
+                        blockCard("📶 网络/IP诊断", icon: "wifi") {
+                            smartInsert("sys ip\nnotify \"网络状态诊断\" \"$OUTPUT\"")
                         }
                         blockCard("📊 CPU 负载", icon: "cpu") {
-                            insertLine("sys cpu\nnotify \"系统负载速查\" \"$OUTPUT\"")
+                            smartInsert("sys cpu\nnotify \"系统负载速查\" \"$OUTPUT\"")
                         }
                         blockCard("💾 磁盘空间", icon: "internaldrive") {
-                            insertLine("sys disk\nnotify \"主磁盘空间概览\" \"$OUTPUT\"")
+                            smartInsert("sys disk\nnotify \"主磁盘空间概览\" \"$OUTPUT\"")
                         }
                         blockCard("🔒 锁定屏幕", icon: "lock.fill") {
-                            insertLine("sys lock")
+                            smartInsert("sys lock")
                         }
                         blockCard("🗑️ 清废纸篓", icon: "trash.fill") {
-                            insertLine("sys emptytrash\nnotify \"废纸篓\" \"已清空\"")
+                            smartInsert("sys emptytrash\nnotify \"废纸篓\" \"已清空\"")
                         }
                         blockCard("🌓 外观切换", icon: "circle.righthalf.filled") {
-                            insertLine("sys toggletheme\nnotify \"系统外观\" \"$OUTPUT\"")
+                            smartInsert("sys toggletheme\nnotify \"系统外观\" \"$OUTPUT\"")
                         }
                         blockCard("⚡ 释放内存", icon: "bolt.fill") {
-                            insertLine("sys purge\nnotify \"内存释放\" \"$OUTPUT\"")
+                            smartInsert("sys purge\nnotify \"内存释放\" \"$OUTPUT\"")
                         }
                         blockCard("🔇 静音切换", icon: "speaker.slash.fill") {
-                            insertLine("sys togglemute")
+                            smartInsert("sys togglemute")
                         }
                     }
                 }
                 .padding(8)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
                 
-                // 2. 弹窗与通知积木
+                // 2. 自定义变量定义 (支持变量与 ping/IP 结合)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("📝 自定义变量 (Variables)")
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(.secondary)
+                    
+                    HStack(spacing: 4) {
+                        TextField("变量名", text: $blockVarName)
+                            .font(.system(size: 10.5))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 65)
+                        Text("=")
+                            .font(.system(size: 11, weight: .bold))
+                        TextField("值/IP/命令", text: $blockVarExpr)
+                            .font(.system(size: 10.5))
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    HStack {
+                        Button("定义并在 sys 中使用") {
+                            smartInsert("var \(blockVarName) = \(blockVarExpr)\nsys \(blockVarName)\nnotify \"目标诊断\" \"$OUTPUT\"")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        
+                        Spacer()
+                        
+                        Button("+ 插入赋值") {
+                            smartInsert("var \(blockVarName) = \(blockVarExpr)")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                
+                // 3. 弹窗与通知积木
                 VStack(alignment: .leading, spacing: 6) {
                     Text("🔔 弹窗与结果通知 (Dialog / HUD)")
                         .font(.system(size: 10.5, weight: .bold))
@@ -358,7 +419,7 @@ struct YumiScriptIDEView: View {
                     }
                     
                     Button("+ 插入弹窗通知") {
-                        insertLine("notify \"\(blockNotifyTitle)\" \"\(blockNotifyMsg)\"")
+                        smartInsert("notify \"\(blockNotifyTitle)\" \"\(blockNotifyMsg)\"")
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -367,7 +428,7 @@ struct YumiScriptIDEView: View {
                 .padding(8)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
                 
-                // 3. 启动应用积木
+                // 4. 启动应用积木
                 VStack(alignment: .leading, spacing: 6) {
                     Text("🚀 启动应用程序 (Launch App)")
                         .font(.system(size: 10.5, weight: .bold))
@@ -379,7 +440,7 @@ struct YumiScriptIDEView: View {
                             .textFieldStyle(.roundedBorder)
                         
                         Button("+ 插入") {
-                            insertLine("launch \"\(blockAppName)\"")
+                            smartInsert("launch \"\(blockAppName)\"")
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
@@ -389,7 +450,7 @@ struct YumiScriptIDEView: View {
                         ForEach(["Safari", "Terminal", "Xcode", "Finder", "Music"], id: \.self) { name in
                             Button(name) {
                                 blockAppName = name
-                                insertLine("launch \"\(name)\"")
+                                smartInsert("launch \"\(name)\"")
                             }
                             .buttonStyle(.plain)
                             .font(.system(size: 9))
@@ -398,34 +459,6 @@ struct YumiScriptIDEView: View {
                             .background(Capsule().fill(Color.primary.opacity(0.06)))
                         }
                     }
-                }
-                .padding(8)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
-                
-                // 4. 自定义变量定义
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("📝 自定义变量 (Variables)")
-                        .font(.system(size: 10.5, weight: .bold))
-                        .foregroundStyle(.secondary)
-                    
-                    HStack(spacing: 4) {
-                        TextField("变量名", text: $blockVarName)
-                            .font(.system(size: 10.5))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 70)
-                        Text("=")
-                            .font(.system(size: 11, weight: .bold))
-                        TextField("表达式", text: $blockVarExpr)
-                            .font(.system(size: 10.5))
-                            .textFieldStyle(.roundedBorder)
-                    }
-                    
-                    Button("+ 插入变量赋值") {
-                        insertLine("var \(blockVarName) = \(blockVarExpr)")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .padding(8)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
@@ -440,7 +473,7 @@ struct YumiScriptIDEView: View {
                                 .font(.system(size: 10))
                                 .textFieldStyle(.roundedBorder)
                             Button("+") {
-                                insertLine("open \"\(blockOpenTarget)\"")
+                                smartInsert("open \"\(blockOpenTarget)\"")
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.mini)
@@ -456,7 +489,7 @@ struct YumiScriptIDEView: View {
                             Stepper("\(String(format: "%.1f", blockWaitSec))s", value: $blockWaitSec, in: 0.5...10.0, step: 0.5)
                                 .font(.system(size: 10))
                             Button("+") {
-                                insertLine("wait \(String(format: "%.1f", blockWaitSec))")
+                                smartInsert("wait \(String(format: "%.1f", blockWaitSec))")
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.mini)
@@ -470,13 +503,13 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 代码编辑主区
+    // MARK: - 代码编辑主区 (带多色高亮与 Tab 智能补全条)
     
     private var ideCodeEditorArea: some View {
         VStack(spacing: 0) {
             // 变量快速插入条
             HStack(spacing: 6) {
-                Text("快速插入变量:")
+                Text("快捷变量:")
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
                 
@@ -497,11 +530,42 @@ struct YumiScriptIDEView: View {
             .padding(.vertical, 6)
             .background(Color.primary.opacity(0.02))
             
+            // Tab 快速补全候选识别条
+            HStack(spacing: 6) {
+                Image(systemName: "keyboard.badge.ellipsis")
+                    .font(.system(size: 9))
+                    .foregroundStyle(theme.primaryColor)
+                Text("Tab 补全推荐:")
+                    .font(.system(size: 9.5, weight: .medium))
+                    .foregroundStyle(.secondary)
+                
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 4) {
+                        ForEach(tabSuggestions, id: \.self) { item in
+                            Button {
+                                smartInsert(item)
+                            } label: {
+                                Text(item)
+                                    .font(.system(size: 9.5, design: .monospaced))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(0.06)))
+                                    .foregroundStyle(.primary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 4)
+            .background(theme.primaryColor.opacity(0.04))
+            
             Divider()
             
-            // 代码编辑器
+            // 代码编辑器区域
             TextEditor(text: $manager.editingPlugin.scriptContent)
-                .font(.system(size: 12.5, design: .monospaced))
+                .font(.system(size: 13, design: .monospaced))
                 .lineSpacing(3)
                 .padding(10)
                 .background(Color(nsColor: .textBackgroundColor))
@@ -516,7 +580,7 @@ struct YumiScriptIDEView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "terminal.fill")
                         .font(.system(size: 10))
-                        .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                        .foregroundStyle(theme.primaryColor)
                     Text("运行控制台 (Console Output)")
                         .font(.system(size: 11, weight: .bold))
                 }
@@ -530,7 +594,7 @@ struct YumiScriptIDEView: View {
                         .font(.system(size: 10))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                .foregroundStyle(theme.primaryColor)
                 
                 Button {
                     testLogs = ""
@@ -583,12 +647,12 @@ struct YumiScriptIDEView: View {
             }
             .buttonStyle(.plain)
             
-            Text("YumiScript IDE v4.0")
+            Text("YumiScript IDE v4.5")
                 .font(.system(size: 10, design: .monospaced))
-                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                .foregroundStyle(theme.primaryColor)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Capsule().fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
+                .background(Capsule().fill(theme.primaryColor.opacity(0.1)))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
@@ -602,7 +666,7 @@ struct YumiScriptIDEView: View {
             HStack(spacing: 5) {
                 Image(systemName: icon)
                     .font(.system(size: 10))
-                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                    .foregroundStyle(theme.primaryColor)
                 Text(title)
                     .font(.system(size: 10.5, weight: .medium))
                 Spacer()
@@ -624,17 +688,19 @@ struct YumiScriptIDEView: View {
                 .font(.system(size: 9.5, design: .monospaced))
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
-                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                .background(RoundedRectangle(cornerRadius: 4).fill(theme.primaryColor.opacity(0.1)))
+                .foregroundStyle(theme.primaryColor)
         }
         .buttonStyle(.plain)
     }
     
-    private func insertLine(_ line: String) {
-        if manager.editingPlugin.scriptContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            manager.editingPlugin.scriptContent = line
+    /// 智能将积木插入到代码适当位置（结尾或合理换行）
+    private func smartInsert(_ snippet: String) {
+        let trimmed = manager.editingPlugin.scriptContent.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            manager.editingPlugin.scriptContent = snippet
         } else {
-            manager.editingPlugin.scriptContent += "\n" + line
+            manager.editingPlugin.scriptContent = trimmed + "\n" + snippet
         }
     }
     

@@ -575,7 +575,7 @@ struct DaysDisplayCard: View {
     }
     
     private var daysGradient: LinearGradient {
-        if let hex = layout?.customColorHex {
+        if let hex = layout?.customColorHex, !hex.isEmpty {
             let col = Color(hex: hex)
             return LinearGradient(
                 colors: [col, col.opacity(0.7)],
@@ -583,25 +583,18 @@ struct DaysDisplayCard: View {
                 endPoint: .trailing
             )
         }
-        return LinearGradient(
-            colors: [
-                Color(hex: "FF6B9D"),
-                Color(hex: "C44FE2")
-            ],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
+        return AboutThemeConfig.current().linearGradient
     }
     
     private var daysFirstColor: Color {
-        if let hex = layout?.customColorHex {
+        if let hex = layout?.customColorHex, !hex.isEmpty {
             return Color(hex: hex)
         }
-        return Color(hex: "FF6B9D")
+        return AboutThemeConfig.current().primaryColor
     }
     
     private var typeGradient: LinearGradient {
-        if let hex = layout?.customColorHex {
+        if let hex = layout?.customColorHex, !hex.isEmpty {
             let col = Color(hex: hex)
             return LinearGradient(
                 colors: [col, col.opacity(0.8)],
@@ -609,20 +602,7 @@ struct DaysDisplayCard: View {
                 endPoint: .trailing
             )
         }
-        switch info.anniversary.type {
-        case .countUp:
-            return LinearGradient(
-                colors: [Color(hex: "FF6B9D"), Color(hex: "FF8E72")],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        case .countDown:
-            return LinearGradient(
-                colors: [Color(hex: "4FACFE"), Color(hex: "00F2FE")],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        }
+        return AboutThemeConfig.current().linearGradient
     }
 }
 
