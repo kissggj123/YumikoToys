@@ -27,7 +27,7 @@ final class YumiScriptIDEManager: ObservableObject {
     )
     @Published var isCreating: Bool = false
     
-    private var idePanel: NSPanel?
+    private var idePanel: NSWindow?
     
     private init() {}
     
@@ -64,7 +64,7 @@ final class YumiScriptIDEManager: ObservableObject {
     
     private func showIDEPanel() {
         if idePanel == nil {
-            let panel = NSPanel(
+            let panel = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 920, height: 640),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                 backing: .buffered,
@@ -73,12 +73,14 @@ final class YumiScriptIDEManager: ObservableObject {
             panel.title = "YumiScript Studio IDE"
             panel.titleVisibility = .hidden
             panel.titlebarAppearsTransparent = true
-            panel.isFloatingPanel = false
             panel.level = .normal
             panel.minSize = NSSize(width: 760, height: 520)
             panel.isMovableByWindowBackground = true
             panel.backgroundColor = NSColor.windowBackgroundColor
             panel.hasShadow = true
+            panel.isExcludedFromWindowsMenu = false
+            panel.collectionBehavior = [.managed, .participatesInCycle, .fullScreenPrimary]
+            panel.identifier = NSUserInterfaceItemIdentifier("YumiScriptIDEWindow")
             
             let hosting = FirstMouseHostingView(rootView: YumiScriptIDEView(manager: self))
             panel.contentView = hosting
@@ -87,6 +89,7 @@ final class YumiScriptIDEManager: ObservableObject {
             self.idePanel = panel
         }
         
+        idePanel?.deminiaturize(nil)
         idePanel?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }

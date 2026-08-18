@@ -197,16 +197,12 @@ final class YumiScriptEngine {
                     lastOutput = "已切换系统静音状态 🔇"
                     logs.append(" \(lastOutput)")
                 } else if lowerArg == "ip" || lowerArg.isEmpty {
-                    let ipRes = await runRawShell("""
-                    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "无内网")
-                    PING_MS=$(ping -c 1 -t 2 223.5.5.5 2>/dev/null | awk -F'/' 'END{print $5}')
-                    if [ -n "$PING_MS" ]; then
-                        echo "内网IP: $LOCAL_IP | 延迟: ${PING_MS}ms (连通正常 📶)"
-                    else
-                        echo "内网IP: $LOCAL_IP | 网络离线 ⚠️"
-                    fi
-                    """)
-                    lastOutput = ipRes
+                    let res = await measureNetworkLatency(to: "223.5.5.5")
+                    if let ms = res.latency {
+                        lastOutput = "内网IP: \(res.localIP) | 延迟: \(String(format: "%.1f", ms))ms (连通正常 📶)"
+                    } else {
+                        lastOutput = "内网IP: \(res.localIP) | 网络离线 ⚠️"
+                    }
                     logs.append(" 网络诊断结果: \(lastOutput)")
                 } else {
                     // 支持 sys <ip/host>、sys ip <ip/host>、sys ping <ip/host> 或直接 ping <ip/host>
@@ -220,17 +216,12 @@ final class YumiScriptEngine {
                         pingTarget = mapped
                     }
                     
-                    let pingRes = await runRawShell("""
-                    TARGET="\(pingTarget)"
-                    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "127.0.0.1")
-                    PING_MS=$(ping -c 1 -t 2 "$TARGET" 2>/dev/null | awk -F'/' 'END{print $5}')
-                    if [ -n "$PING_MS" ]; then
-                        echo "内网IP: $LOCAL_IP | 目标 $TARGET 延迟: ${PING_MS}ms (连通良好 📶)"
-                    else
-                        echo "内网IP: $LOCAL_IP | 目标 $TARGET 连接超时 ⚠️"
-                    fi
-                    """)
-                    lastOutput = pingRes
+                    let res = await measureNetworkLatency(to: pingTarget)
+                    if let ms = res.latency {
+                        lastOutput = "内网IP: \(res.localIP) | 目标 \(pingTarget) 延迟: \(String(format: "%.1f", ms))ms (连通良好 📶)"
+                    } else {
+                        lastOutput = "内网IP: \(res.localIP) | 目标 \(pingTarget) 连接超时 ⚠️"
+                    }
                     logs.append(" 网络目标诊断: \(lastOutput)")
                 }
                 
@@ -585,5 +576,34 @@ final class YumiScriptEngine {
     private static func shellEscape(_ str: String) -> String {
         let escaped = str.replacingOccurrences(of: "'", with: "'\\''")
         return "'\(escaped)'"
+    }
+
+    /// 双协议混合测速（ICMP Ping + TCP 端口自适应握手，彻底消除超时假象）
+    private static func measureNetworkLatency(to target: String) async -> (localIP: String, latency: Double?, isOnline: Bool) {
+        // 1. 获取本地局域网 IP
+        let localIP = await runRawShell("ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || ipconfig getifaddr en2 2>/dev/null || echo \"127.0.0.1\"")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // 2. 尝试标准 ICMP Ping (发2次包，超时1.5s，不带 -t 限制)
+        let pingRaw = await runRawShell("ping -c 2 -W 1500 \(target) 2>/dev/null")
+        if let timeRange = pingRaw.range(of: #"time=([0-9.]+)\s*ms"#, options: .regularExpression) {
+            let match = String(pingRaw[timeRange])
+            let numStr = match.replacingOccurrences(of: "time=", with: "").replacingOccurrences(of: "ms", with: "").trimmingCharacters(in: .whitespaces)
+            if let ms = Double(numStr) {
+                return (localIP, ms, true)
+            }
+        }
+        
+        // 3. 如果 ICMP 被服务商阻断（如 114.114.114.114 或特定公网 DNS），尝试 TCP 握手 (53 DNS, 80 HTTP, 443 HTTPS, 22 SSH)
+        for port in [53, 80, 443, 22] {
+            let start = Date()
+            let ncRes = await runRawShell("nc -z -G 1.5 \(target) \(port) 2>/dev/null && echo OK")
+            if ncRes.contains("OK") {
+                let elapsedMs = max(1.0, Double(round(Date().timeIntervalSince(start) * 10000) / 10))
+                return (localIP, elapsedMs, true)
+            }
+        }
+        
+        return (localIP, nil, false)
     }
 }

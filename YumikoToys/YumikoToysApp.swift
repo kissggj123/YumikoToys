@@ -209,6 +209,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
     
+    nonisolated func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        let menu = NSMenu()
+        
+        let mainItem = NSMenuItem(title: "🐾 打开主界面", action: #selector(DockMenuHelper.showMain), keyEquivalent: "")
+        mainItem.target = DockMenuHelper.shared
+        menu.addItem(mainItem)
+        
+        let ideItem = NSMenuItem(title: "⚡ YumiScript Studio IDE (脚本编辑器)", action: #selector(DockMenuHelper.showIDE), keyEquivalent: "")
+        ideItem.target = DockMenuHelper.shared
+        menu.addItem(ideItem)
+        
+        let settingsItem = NSMenuItem(title: "⚙️ 偏好设置...", action: #selector(DockMenuHelper.showSettings), keyEquivalent: "")
+        settingsItem.target = DockMenuHelper.shared
+        menu.addItem(settingsItem)
+        
+        let aboutItem = NSMenuItem(title: "✨ 关于 YumikoToys", action: #selector(DockMenuHelper.showAbout), keyEquivalent: "")
+        aboutItem.target = DockMenuHelper.shared
+        menu.addItem(aboutItem)
+        
+        menu.addItem(NSMenuItem.separator())
+        
+        let quitItem = NSMenuItem(title: "退出 YumikoToys", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quitItem)
+        
+        return menu
+    }
+    
     // MARK: - Initialization
     
     private func initializeApp() async {
@@ -249,6 +276,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func showMainWindow() {
         DependencyContainer.shared.windowManager.showWindow(.main) {
             MainView()
+        }
+    }
+}
+
+// MARK: - Dock 栏菜单辅助器
+
+final class DockMenuHelper: NSObject, @unchecked Sendable {
+    static let shared = DockMenuHelper()
+    
+    @objc func showMain() {
+        Task { @MainActor in
+            DependencyContainer.shared.windowManager.showWindow(.main) {
+                MainView()
+            }
+        }
+    }
+    
+    @objc func showIDE() {
+        Task { @MainActor in
+            YumiScriptIDEManager.shared.open(plugin: nil)
+        }
+    }
+    
+    @objc func showSettings() {
+        Task { @MainActor in
+            DependencyContainer.shared.windowManager.showWindow(.settings) {
+                SettingsView()
+            }
+        }
+    }
+    
+    @objc func showAbout() {
+        Task { @MainActor in
+            DependencyContainer.shared.windowManager.showWindow(.about) {
+                AboutView()
+            }
         }
     }
 }
