@@ -1947,10 +1947,11 @@ extension SettingsView {
             )
 
             if viewModel.isPetPlaygroundEnabled {
+                let themeConfig = AboutThemeConfig.current()
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
                         Image(systemName: "person.crop.rectangle.stack.fill")
-                            .foregroundStyle(Color(hex: "A78BFA"))
+                            .foregroundStyle(themeConfig.primaryColor)
                         Text("🐾 桌宠干员角色管理（点击启用 / 隐藏角色）")
                             .font(.system(size: 13, weight: .bold))
                     }
@@ -1970,11 +1971,11 @@ extension SettingsView {
                                 .padding(.vertical, 6)
                                 .background(
                                     Capsule()
-                                        .fill(isEnabled ? Color.purple.opacity(0.2) : Color.gray.opacity(0.12))
+                                        .fill(isEnabled ? themeConfig.primaryColor.opacity(0.18) : Color.gray.opacity(0.12))
                                 )
                                 .overlay(
                                     Capsule()
-                                        .stroke(isEnabled ? Color.purple.opacity(0.6) : Color.gray.opacity(0.3), lineWidth: 1)
+                                        .stroke(isEnabled ? themeConfig.primaryColor.opacity(0.6) : Color.gray.opacity(0.3), lineWidth: 1)
                                 )
                                 .foregroundStyle(isEnabled ? .primary : .secondary)
                             }
@@ -6004,26 +6005,30 @@ enum FontPickerError: Error, Equatable {
 struct PetPerformanceCardView: View {
     @ObservedObject var monitor = PetPerformanceMonitor.shared
 
+    private var themeConfig: AboutThemeConfig {
+        AboutThemeConfig.current()
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Label("实时渲染与性能监控", systemImage: "cpu.fill")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Color(hex: "A78BFA"))
+                    .foregroundStyle(themeConfig.primaryColor)
 
                 Spacer()
 
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(Color.green)
+                        .fill(themeConfig.primaryColor)
                         .frame(width: 6, height: 6)
                     Text("LIVE 监控中")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(themeConfig.primaryColor)
                 }
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Color.green.opacity(0.12))
+                .background(themeConfig.primaryColor.opacity(0.12))
                 .clipShape(Capsule())
             }
 
@@ -6064,21 +6069,21 @@ struct PetPerformanceCardView: View {
                     title: "App CPU 占用",
                     value: String(format: "%.1f%%", monitor.cpuUsage),
                     icon: "speedometer",
-                    color: monitor.cpuUsage > 30 ? Color.orange : Color.blue
+                    color: monitor.cpuUsage > 30 ? Color.orange : themeConfig.secondaryColor
                 )
 
                 PetMetricPill(
                     title: "内存 Footprint",
                     value: String(format: "%.1f MB", monitor.memoryUsageMB),
                     icon: "memorychip",
-                    color: Color.purple
+                    color: themeConfig.primaryColor
                 )
 
                 PetMetricPill(
                     title: "已加载动画帧",
                     value: "24 帧 (PNG)",
                     icon: "photo.stack",
-                    color: Color.teal
+                    color: themeConfig.secondaryColor
                 )
             }
         }
@@ -6087,7 +6092,7 @@ struct PetPerformanceCardView: View {
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                .stroke(themeConfig.primaryColor.opacity(0.15), lineWidth: 1)
         )
     }
 }

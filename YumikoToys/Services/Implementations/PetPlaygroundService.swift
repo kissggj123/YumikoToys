@@ -147,8 +147,15 @@ struct WindowDragRepresentable: NSViewRepresentable {
 
 struct PetPlaygroundOverlayView: View {
     @ObservedObject private var visionDetector = AppleNeuralVisionDetector.shared
+    @ObservedObject private var animeTheme = AnimeThemeService.shared
     @State private var isMinimized: Bool = false
     @State private var showCalibrationPanel: Bool = false
+    @State private var themeRefreshTrigger: Bool = false
+
+    private var themeConfig: AboutThemeConfig {
+        _ = themeRefreshTrigger
+        return AboutThemeConfig.current()
+    }
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
@@ -157,11 +164,11 @@ struct PetPlaygroundOverlayView: View {
                     // Drag handle + label — WindowDragRepresentable overlaid on top to receive mouseDown
                     ZStack(alignment: .leading) {
                         HStack(spacing: 6) {
-                            Image(systemName: "brain.head.profile")
-                                .foregroundStyle(.green)
-                                .font(.system(size: 11))
+                            Image(systemName: themeConfig.themeIcon)
+                                .foregroundStyle(themeConfig.primaryColor)
+                                .font(.system(size: 11, weight: .bold))
                             Text("🧠 ANE NPU")
-                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .foregroundStyle(.white)
                                 .fixedSize()
                         }
@@ -180,9 +187,9 @@ struct PetPlaygroundOverlayView: View {
                     } label: {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.green)
+                            .foregroundStyle(themeConfig.primaryColor)
                             .padding(4)
-                            .background(Circle().fill(Color.white.opacity(0.18)))
+                            .background(Circle().fill(themeConfig.primaryColor.opacity(0.18)))
                     }
                     .buttonStyle(.plain)
                 }
@@ -192,9 +199,10 @@ struct PetPlaygroundOverlayView: View {
                     Capsule()
                         .fill(Color.black.opacity(0.88))
                         .overlay(
-                            Capsule().stroke(Color.green.opacity(0.55), lineWidth: 1)
+                            Capsule().stroke(themeConfig.linearGradient, lineWidth: 1.2)
                         )
                 )
+                .shadow(color: themeConfig.primaryColor.opacity(0.35), radius: 6, x: 0, y: 2)
                 .fixedSize()
                 .onTapGesture(count: 2) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -204,10 +212,10 @@ struct PetPlaygroundOverlayView: View {
             } else {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        Image(systemName: "cpu.fill")
-                            .foregroundStyle(.green)
+                        Image(systemName: themeConfig.themeIcon)
+                            .foregroundStyle(themeConfig.primaryColor)
                         Text(visionDetector.npuStatusText)
-                            .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                            .font(.system(size: 9.5, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -223,13 +231,42 @@ struct PetPlaygroundOverlayView: View {
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(.white.opacity(0.85))
                                 .padding(4)
-                                .background(Circle().fill(Color.white.opacity(0.2)))
+                                .background(Circle().fill(Color.white.opacity(0.18)))
                         }
                         .buttonStyle(.plain)
                     }
                     .background(WindowDragRepresentable())
 
-                    // NPU 自学习与手工标记校准控制栏
+                    // 萌系主题极光置信度进度条 (Cute Gradient Progress Capsule Bar - 联动全局主题色)
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Text(themeConfig.cardDecorationEmoji)
+                                .font(.system(size: 11))
+                            Text("ANE 神经网络拓扑置信度")
+                                .font(.system(size: 9.5, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.9))
+                            Spacer()
+                            Text("\(min(100, max(25, visionDetector.detectedEdges.count * 25)))%")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundStyle(themeConfig.primaryColor)
+                        }
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(Color.white.opacity(0.12))
+                                    .frame(height: 5)
+                                Capsule()
+                                    .fill(themeConfig.linearGradient)
+                                    .frame(width: max(16, geo.size.width * CGFloat(min(1.0, Double(max(1, visionDetector.detectedEdges.count)) * 0.25))), height: 5)
+                                    .shadow(color: themeConfig.primaryColor.opacity(0.6), radius: 4, x: 0, y: 1)
+                            }
+                        }
+                        .frame(height: 5)
+                    }
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 2)
+
+                    // NPU 自学习与手工标记校准控制栏（全局主题配色联动）
                     HStack(spacing: 6) {
                         Button {
                             visionDetector.toggleSelfLearning()
@@ -238,11 +275,22 @@ struct PetPlaygroundOverlayView: View {
                                 Image(systemName: visionDetector.isSelfLearningEnabled ? "checkmark.circle.fill" : "circle")
                                 Text(visionDetector.isSelfLearningEnabled ? "自学习:开" : "自学习:关")
                             }
-                            .font(.system(size: 9.5, weight: .semibold))
-                            .foregroundStyle(visionDetector.isSelfLearningEnabled ? .green : .gray)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(Capsule().fill(Color.white.opacity(0.12)))
+                            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                            .foregroundStyle(visionDetector.isSelfLearningEnabled ? .white : .gray)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3.5)
+                            .background(
+                                Group {
+                                    if visionDetector.isSelfLearningEnabled {
+                                        Capsule()
+                                            .fill(themeConfig.linearGradient)
+                                            .shadow(color: themeConfig.primaryColor.opacity(0.35), radius: 3, x: 0, y: 1)
+                                    } else {
+                                        Capsule()
+                                            .fill(Color.white.opacity(0.12))
+                                    }
+                                }
+                            )
                         }
                         .buttonStyle(.plain)
 
@@ -255,11 +303,17 @@ struct PetPlaygroundOverlayView: View {
                                 Image(systemName: "scope")
                                 Text("🎯 手工标记校准")
                             }
-                            .font(.system(size: 9.5, weight: .semibold))
-                            .foregroundStyle(.cyan)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(Capsule().fill(Color.white.opacity(0.12)))
+                            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                            .foregroundStyle(themeConfig.secondaryColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3.5)
+                            .background(
+                                Capsule()
+                                    .fill(themeConfig.secondaryColor.opacity(0.18))
+                                    .overlay(
+                                        Capsule().stroke(themeConfig.secondaryColor.opacity(0.45), lineWidth: 1)
+                                    )
+                            )
                         }
                         .buttonStyle(.plain)
 
@@ -272,11 +326,17 @@ struct PetPlaygroundOverlayView: View {
                                 Image(systemName: "arrow.counterclockwise")
                                 Text("重置校准")
                             }
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.system(size: 9, weight: .medium, design: .rounded))
                             .foregroundStyle(.orange)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 3)
-                            .background(Capsule().fill(Color.white.opacity(0.1)))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3.5)
+                            .background(
+                                Capsule()
+                                    .fill(Color.orange.opacity(0.15))
+                                    .overlay(
+                                        Capsule().stroke(Color.orange.opacity(0.35), lineWidth: 1)
+                                    )
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -284,35 +344,35 @@ struct PetPlaygroundOverlayView: View {
                     if showCalibrationPanel {
                         HStack(spacing: 6) {
                             Text("📍 偏移:")
-                                .font(.system(size: 9, weight: .bold))
-                                .foregroundStyle(.white.opacity(0.8))
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.85))
 
                             Button("X-5") { visionDetector.adjustManualCalibration(deltaX: -5, deltaY: 0) }
                                 .buttonStyle(.borderedProminent)
-                                .tint(.cyan)
-                                .font(.system(size: 8.5))
+                                .tint(themeConfig.secondaryColor)
+                                .font(.system(size: 8.5, weight: .bold))
 
                             Button("X+5") { visionDetector.adjustManualCalibration(deltaX: 5, deltaY: 0) }
                                 .buttonStyle(.borderedProminent)
-                                .tint(.cyan)
-                                .font(.system(size: 8.5))
+                                .tint(themeConfig.secondaryColor)
+                                .font(.system(size: 8.5, weight: .bold))
 
                             Button("Y-5") { visionDetector.adjustManualCalibration(deltaX: 0, deltaY: -5) }
                                 .buttonStyle(.borderedProminent)
-                                .tint(.green)
-                                .font(.system(size: 8.5))
+                                .tint(themeConfig.primaryColor)
+                                .font(.system(size: 8.5, weight: .bold))
 
                             Button("Y+5") { visionDetector.adjustManualCalibration(deltaX: 0, deltaY: 5) }
                                 .buttonStyle(.borderedProminent)
-                                .tint(.green)
-                                .font(.system(size: 8.5))
+                                .tint(themeConfig.primaryColor)
+                                .font(.system(size: 8.5, weight: .bold))
                         }
-                        .padding(4)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.08)))
+                        .padding(5)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.08)))
                     }
 
                     Divider()
-                        .background(Color.white.opacity(0.25))
+                        .background(themeConfig.primaryColor.opacity(0.25))
 
                     ScrollViewReader { proxy in
                         ScrollView(.vertical, showsIndicators: false) {
@@ -320,7 +380,7 @@ struct PetPlaygroundOverlayView: View {
                                 ForEach(Array(visionDetector.reasoningLogs.prefix(8).enumerated()), id: \.offset) { idx, log in
                                     Text(log)
                                         .font(.system(size: 9.5, weight: .medium, design: .monospaced))
-                                        .foregroundStyle(.green.opacity(0.95))
+                                        .foregroundStyle(log.contains("NPU 视觉拓扑") ? themeConfig.primaryColor : .white.opacity(0.92))
                                         .lineLimit(1)
                                         .id("\(idx)_\(log)")
                                 }
@@ -336,21 +396,32 @@ struct PetPlaygroundOverlayView: View {
                         }
                     }
                 }
-                .padding(8)
+                .padding(10)
                 .frame(width: 440)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 14)
                         .fill(Color.black.opacity(0.88))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.green.opacity(0.45), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [themeConfig.primaryColor.opacity(0.6), themeConfig.secondaryColor.opacity(0.35)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.2
+                                )
                         )
                 )
+                .shadow(color: themeConfig.primaryColor.opacity(0.22), radius: 12, x: 0, y: 4)
             }
         }
         .padding(10)
         .onChange(of: isMinimized) { newValue in
             PetPlaygroundService.shared.updateHUDPanelSize(isMinimized: newValue)
+        }
+        .onReceive(DependencyContainer.shared.settingsService.settingsPublisher) { _ in
+            themeRefreshTrigger.toggle()
         }
     }
 }
@@ -405,7 +476,7 @@ final class PetNode: SKNode {
 
         self.hudBackground = SKShapeNode()
         self.hudBackground.fillColor = NSColor.black.withAlphaComponent(0.78)
-        self.hudBackground.strokeColor = NSColor.white.withAlphaComponent(0.35)
+        self.hudBackground.strokeColor = AboutThemeConfig.current().primaryNSColor.withAlphaComponent(0.45)
         self.hudBackground.lineWidth = 1.0
         self.hudNode.addChild(self.hudBackground)
 
@@ -726,12 +797,13 @@ final class PetDesktopScene: SKScene {
         return hitTestPetNode(at: scenePoint) != nil
     }
 
-    /// 在控件踩跃点动态渲染 NPU 神经网络霓绿视觉锁定环 (ANE Target Lock Ring)
+    /// 在控件踩跃点动态渲染 NPU 神经网络霓彩视觉锁定环 (ANE Target Lock Ring - 联动全局主题色)
     func showANEVisionTargetRing(at point: CGPoint) {
         let ring = SKShapeNode(circleOfRadius: 18)
         ring.position = point
-        ring.strokeColor = NSColor.systemGreen
-        ring.fillColor = NSColor.systemGreen.withAlphaComponent(0.22)
+        let themePrimaryNS = AboutThemeConfig.current().primaryNSColor
+        ring.strokeColor = themePrimaryNS
+        ring.fillColor = themePrimaryNS.withAlphaComponent(0.25)
         ring.lineWidth = 2.0
         ring.zPosition = 999
         addChild(ring)
@@ -851,11 +923,14 @@ final class PetDesktopScene: SKScene {
 
         layer.removeAllChildren()
 
+        let themePrimaryNS = AboutThemeConfig.current().primaryNSColor
+        let themeSecondaryNS = AboutThemeConfig.current().secondaryNSColor
+
         for win in windows {
             // 1. 窗口虚拟物理透明墙框 (DevTools Bounding Box)
             let winShape = SKShapeNode(rect: win.cocoaFrame, cornerRadius: 8.0)
-            winShape.strokeColor = NSColor.systemCyan.withAlphaComponent(0.9)
-            winShape.fillColor = NSColor.systemCyan.withAlphaComponent(0.08)
+            winShape.strokeColor = themePrimaryNS.withAlphaComponent(0.85)
+            winShape.fillColor = themePrimaryNS.withAlphaComponent(0.08)
             winShape.lineWidth = 1.5
             layer.addChild(winShape)
 
@@ -863,12 +938,12 @@ final class PetDesktopScene: SKScene {
             let labelBg = SKShapeNode(rectOf: CGSize(width: min(220, win.cocoaFrame.width * 0.7), height: 18), cornerRadius: 4)
             labelBg.position = CGPoint(x: win.cocoaFrame.minX + 90, y: win.cocoaFrame.maxY - 10)
             labelBg.fillColor = NSColor.black.withAlphaComponent(0.85)
-            labelBg.strokeColor = NSColor.systemCyan
+            labelBg.strokeColor = themePrimaryNS
             labelBg.lineWidth = 1.0
 
             let winLabel = SKLabelNode(fontNamed: "Menlo-Bold")
             winLabel.fontSize = 9
-            winLabel.fontColor = .systemCyan
+            winLabel.fontColor = themePrimaryNS
             winLabel.text = "<\(win.ownerName): VirtualWall>"
             winLabel.verticalAlignmentMode = .center
             winLabel.horizontalAlignmentMode = .center
@@ -880,10 +955,10 @@ final class PetDesktopScene: SKScene {
                 let rect = ledge.rect
                 let strokeColor: NSColor
                 switch ledge.type {
-                case .button, .searchField: strokeColor = .systemGreen
-                case .textField, .textArea: strokeColor = .systemYellow
-                case .progressBar: strokeColor = .systemPink
-                case .addressBar, .tabBar: strokeColor = .systemPurple
+                case .button, .searchField: strokeColor = themePrimaryNS
+                case .textField, .textArea: strokeColor = NSColor.systemYellow
+                case .progressBar: strokeColor = themeSecondaryNS
+                case .addressBar, .tabBar: strokeColor = themePrimaryNS
                 }
 
                 let ctrlShape = SKShapeNode(rect: rect, cornerRadius: 4.0)
