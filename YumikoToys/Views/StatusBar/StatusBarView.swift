@@ -844,9 +844,11 @@ struct StatusBarView: View {
                             .font(.system(size: 10))
                         Text(tab.title)
                             .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
                     .foregroundStyle(selectedTab == tab ? (themeColor.animeOrIsDark ? Color.black : Color.white) : themeColor.animeOrTextPrimary)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 9)
                     .padding(.vertical, 5)
                     .background(
                         Capsule()
@@ -1229,7 +1231,6 @@ struct StatusBarView: View {
                             ScreenMediaHelper.shared.captureTouchBar()
                         })
                         screenshotButton(title: "脚本 IDE", icon: "terminal.fill", action: {
-                            onScreenshotTriggered?()
                             YumiScriptIDEManager.shared.open(plugin: nil)
                         })
                     }
@@ -1446,23 +1447,22 @@ struct StatusBarView: View {
                     Button(action: {
                         if let first = pluginService.customPlugins.first {
                             YumiScriptIDEManager.shared.open(plugin: first)
-                        } else {
-                            YumiScriptIDEManager.shared.open(plugin: nil)
                         }
                     }) {
                         HStack(spacing: 6) {
                             Image(systemName: "pencil")
-                                .foregroundStyle(themeColor.animeOrAccent)
+                                .foregroundStyle(pluginService.customPlugins.isEmpty ? themeColor.animeOrTextSecondary : themeColor.animeOrAccent)
                             Text("管理与编辑")
                                 .font(.system(size: 11, weight: .medium))
                         }
-                        .foregroundStyle(themeColor.animeOrTextPrimary)
+                        .foregroundStyle(pluginService.customPlugins.isEmpty ? themeColor.animeOrTextSecondary : themeColor.animeOrTextPrimary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                         .background(RoundedRectangle(cornerRadius: 8).fill(themeColor.animeOrButton))
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(themeColor.animeOrBorder, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
+                    .disabled(pluginService.customPlugins.isEmpty)
                 }
                 
                 Divider().padding(.horizontal, 4)

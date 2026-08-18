@@ -217,27 +217,31 @@ final class DependencyContainer: ObservableObject {
     private func sendStartupNotification() {
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert, .sound]) { granted, error in
-            guard granted else {
-                if let err = error {
-                    LoggerService.shared.error("Failed to request notification permission: \(err)")
+            Task { @MainActor in
+                guard granted else {
+                    if let err = error {
+                        LoggerService.shared.error("Failed to request notification permission: \(err)")
+                    }
+                    return
                 }
-                return
-            }
-            
-            let content = UNMutableNotificationContent()
-            content.title = "🐰 可可皇后已就绪"
-            content.body = "所有底层高权配置及宠物名片档案已安全预加载，随时听候调遣。"
-            content.sound = .default
-            
-            let request = UNNotificationRequest(
-                identifier: "com.yumikotoys.startup_complete",
-                content: content,
-                trigger: nil
-            )
-            
-            center.add(request) { error in
-                if let err = error {
-                    LoggerService.shared.error("Failed to post startup notification: \(err)")
+                
+                let content = UNMutableNotificationContent()
+                content.title = "🐰 可可皇后已就绪"
+                content.body = "所有底层高权配置及宠物名片档案已安全预加载，随时听候调遣。"
+                content.sound = .default
+                
+                let request = UNNotificationRequest(
+                    identifier: "com.yumikotoys.startup_complete",
+                    content: content,
+                    trigger: nil
+                )
+                
+                center.add(request) { error in
+                    Task { @MainActor in
+                        if let err = error {
+                            LoggerService.shared.error("Failed to post startup notification: \(err)")
+                        }
+                    }
                 }
             }
         }
@@ -561,6 +565,7 @@ final class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
 @MainActor
 private class WindowDelegate: NSObject, NSWindowDelegate {
     static let shared = WindowDelegate()
+    private var animatedClosingWindows = Set<ObjectIdentifier>()
     
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         guard let identifier = sender.identifier?.rawValue,
@@ -568,10 +573,14 @@ private class WindowDelegate: NSObject, NSWindowDelegate {
             return true
         }
         
-        // 如果已经开始淡出，则直接允许关闭
-        if sender.alphaValue == 0.0 {
+        let windowId = ObjectIdentifier(sender)
+        // 如果已经在执行退出动画，则直接允许关闭
+        if animatedClosingWindows.contains(windowId) {
+            animatedClosingWindows.remove(windowId)
             return true
         }
+        
+        animatedClosingWindows.insert(windowId)
         
         // 退出过渡动画：淡出并向下偏移15pt以实现滑落效果
         let currentFrame = sender.frame
@@ -590,8 +599,9 @@ private class WindowDelegate: NSObject, NSWindowDelegate {
     }
     
     func windowWillClose(_ notification: Notification) {
-        guard let window = notification.object as? NSWindow,
-              let identifier = window.identifier?.rawValue,
+        guard let window = notification.object as? NSWindow else { return }
+        animatedClosingWindows.remove(ObjectIdentifier(window))
+        guard let identifier = window.identifier?.rawValue,
               let windowType = WindowType(rawValue: identifier) else {
             return
         }

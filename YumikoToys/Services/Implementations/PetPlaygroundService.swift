@@ -434,6 +434,7 @@ struct PetMotionData {
 
 final class PetNode: SKNode {
     let character: PetCharacter
+    private let textures: [SKTexture]
     let spriteNode: SKSpriteNode
     let hudNode: SKNode
     let bpmLabel: SKLabelNode
@@ -466,6 +467,7 @@ final class PetNode: SKNode {
 
     init(character: PetCharacter, textures: [SKTexture]) {
         self.character = character
+        self.textures = textures
 
         let texture = textures.first ?? SKTexture()
         self.spriteNode = SKSpriteNode(texture: texture)
@@ -654,6 +656,10 @@ final class PetNode: SKNode {
             self.zRotation = 0.0
             self.isStateLocked = false
             self.currentPetState = targetState
+            if !self.textures.isEmpty && self.spriteNode.action(forKey: "walkAnim") == nil {
+                let anim = SKAction.animate(with: self.textures, timePerFrame: 1.0 / self.character.framesPerSecond, resize: false, restore: false)
+                self.spriteNode.run(.repeatForever(anim), withKey: "walkAnim")
+            }
         }
 
         run(SKAction.sequence([
@@ -1408,6 +1414,15 @@ final class PetPlaygroundService: ObservableObject {
     private var localMouseMonitor: Any?
 
     private init() {}
+
+    deinit {
+        if let globalMouseMonitor {
+            NSEvent.removeMonitor(globalMouseMonitor)
+        }
+        if let localMouseMonitor {
+            NSEvent.removeMonitor(localMouseMonitor)
+        }
+    }
 
     func updateHUDPanelSize(isMinimized: Bool) {
         guard let hudPanel = hudPanels.first else { return }

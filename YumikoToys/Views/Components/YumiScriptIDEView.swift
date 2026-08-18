@@ -31,6 +31,10 @@ final class YumiScriptIDEManager: ObservableObject {
     
     private init() {}
     
+    func clearPanel() {
+        self.idePanel = nil
+    }
+    
     /// 打开独立 IDE 窗口
     func open(plugin: YumiPlugin?, isCreating: Bool = false) {
         self.isCreating = isCreating
@@ -60,6 +64,7 @@ final class YumiScriptIDEManager: ObservableObject {
     func close() {
         self.isPresented = false
         idePanel?.orderOut(nil)
+        self.idePanel = nil
     }
     
     private func showIDEPanel() {
@@ -81,6 +86,8 @@ final class YumiScriptIDEManager: ObservableObject {
             panel.isExcludedFromWindowsMenu = false
             panel.collectionBehavior = [.managed, .participatesInCycle, .fullScreenPrimary]
             panel.identifier = NSUserInterfaceItemIdentifier("YumiScriptIDEWindow")
+            panel.isReleasedWhenClosed = false
+            panel.delegate = YumiScriptIDEWindowDelegate.shared
             
             let hosting = FirstMouseHostingView(rootView: YumiScriptIDEView(manager: self))
             panel.contentView = hosting
@@ -95,9 +102,31 @@ final class YumiScriptIDEManager: ObservableObject {
     }
 }
 
-// MARK: - YumiScript 语法高亮引擎
+// MARK: - IDE 窗口生命周期委托
+
+@MainActor
+final class YumiScriptIDEWindowDelegate: NSObject, NSWindowDelegate {
+    static let shared = YumiScriptIDEWindowDelegate()
+    
+    func windowWillClose(_ notification: Notification) {
+        YumiScriptIDEManager.shared.isPresented = false
+        YumiScriptIDEManager.shared.clearPanel()
+    }
+}
+
+// MARK: - YumiScript 语法高亮引擎 (预编译正则缓存，大幅提升输入性能)
 
 enum YumiScriptSyntaxHighlighter {
+    private static let ipRegex = try? NSRegularExpression(pattern: #"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b|\b\d+(\.\d+)?\b"#)
+    private static let keywordRegex: NSRegularExpression? = {
+        let keywords = ["var", "let", "set", "sys", "system", "notify", "dialog", "toast", "hud", "launch", "open", "wait", "shell", "copy", "paste", "ping", "applescript", "osascript"]
+        let pattern = #"\b("# + keywords.joined(separator: "|") + #")\b"#
+        return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
+    }()
+    private static let varRegex = try? NSRegularExpression(pattern: #"\$[A-Za-z0-9_]+"#)
+    private static let stringRegex = try? NSRegularExpression(pattern: #""[^"\\]*(?:\\.[^"\\]*)*""#)
+    private static let commentRegex = try? NSRegularExpression(pattern: #"#.*$"#, options: .anchorsMatchLines)
+
     static func highlight(text: String, themePrimary: NSColor) -> NSAttributedString {
         let attr = NSMutableAttributedString(string: text)
         let fullRange = NSRange(location: 0, length: (text as NSString).length)
@@ -110,9 +139,8 @@ enum YumiScriptSyntaxHighlighter {
         attr.addAttribute(.foregroundColor, value: baseColor, range: fullRange)
         
         // 1. IP 地址、纯数字与浮点数 (明亮青蓝 / 霓虹青)
-        let ipPattern = #"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b|\b\d+(\.\d+)?\b"#
-        if let ipRegex = try? NSRegularExpression(pattern: ipPattern) {
-            ipRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+        if let regex = ipRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
                 if let r = match?.range {
                     attr.addAttribute(.foregroundColor, value: NSColor(red: 0.35, green: 0.85, blue: 0.95, alpha: 1.0), range: r)
                     attr.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13.5, weight: .medium), range: r)
@@ -121,10 +149,8 @@ enum YumiScriptSyntaxHighlighter {
         }
         
         // 2. 核心关键字 (主题高亮 / 活力紫粉)
-        let keywords = ["var", "let", "set", "sys", "system", "notify", "dialog", "toast", "hud", "launch", "open", "wait", "shell", "copy", "paste", "ping", "applescript", "osascript"]
-        let keywordPattern = #"\b("# + keywords.joined(separator: "|") + #")\b"#
-        if let keywordRegex = try? NSRegularExpression(pattern: keywordPattern, options: .caseInsensitive) {
-            keywordRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+        if let regex = keywordRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
                 if let r = match?.range {
                     attr.addAttribute(.foregroundColor, value: themePrimary, range: r)
                     attr.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13.5, weight: .bold), range: r)
@@ -133,9 +159,8 @@ enum YumiScriptSyntaxHighlighter {
         }
         
         // 3. 环境变量与系统变量 ($OUTPUT, $CLIPBOARD, $DATE, $TIME, $USER, $HOME 等)
-        let varPattern = #"\$[A-Za-z0-9_]+"#
-        if let varRegex = try? NSRegularExpression(pattern: varPattern) {
-            varRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+        if let regex = varRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
                 if let r = match?.range {
                     attr.addAttribute(.foregroundColor, value: NSColor(red: 1.0, green: 0.72, blue: 0.28, alpha: 1.0), range: r)
                     attr.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13.5, weight: .semibold), range: r)
@@ -144,9 +169,8 @@ enum YumiScriptSyntaxHighlighter {
         }
         
         // 4. 字符串常量 ("...") (温暖杏黄 / 蜜桃橙)
-        let stringPattern = #""[^"\\]*(?:\\.[^"\\]*)*""#
-        if let stringRegex = try? NSRegularExpression(pattern: stringPattern) {
-            stringRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+        if let regex = stringRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
                 if let r = match?.range {
                     attr.addAttribute(.foregroundColor, value: NSColor(red: 0.96, green: 0.65, blue: 0.42, alpha: 1.0), range: r)
                 }
@@ -154,9 +178,8 @@ enum YumiScriptSyntaxHighlighter {
         }
         
         // 5. 注释行 (# ...) (清新绿意 / 覆盖全行最高优先级)
-        let commentPattern = #"#.*$"#
-        if let commentRegex = try? NSRegularExpression(pattern: commentPattern, options: .anchorsMatchLines) {
-            commentRegex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
+        if let regex = commentRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { match, _, _ in
                 if let r = match?.range {
                     attr.addAttribute(.foregroundColor, value: NSColor(red: 0.45, green: 0.82, blue: 0.52, alpha: 1.0), range: r)
                 }
@@ -207,7 +230,7 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         if let textView = nsView.documentView as? NSTextView {
-            if textView.string != text {
+            if textView.string.trimmingCharacters(in: .newlines) != text.trimmingCharacters(in: .newlines) {
                 context.coordinator.applyHighlighting(text: text)
             }
         }
@@ -891,7 +914,7 @@ struct YumiScriptIDEView: View {
     private func runScriptTest() {
         isRunningTest = true
         isConsoleExpanded = true
-        Task {
+        Task { @MainActor in
             let logs = await YumiScriptEngine.execute(manager.editingPlugin.scriptContent)
             testLogs = logs
             isRunningTest = false
@@ -899,9 +922,10 @@ struct YumiScriptIDEView: View {
     }
     
     private func savePlugin() {
+        guard !manager.editingPlugin.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         pluginService.addOrUpdatePlugin(manager.editingPlugin)
         showSaveToast = true
-        Task {
+        Task { @MainActor in
             try? await Task.sleep(nanoseconds: 1_800_000_000)
             showSaveToast = false
         }

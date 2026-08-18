@@ -146,9 +146,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             Task {
                 var arguments: [String: Any] = [:]
-                if let data = argsStr.data(using: .utf8),
-                   let dict = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    arguments = dict
+                if let data = argsStr.data(using: .utf8) {
+                    if let dict = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                        arguments = dict
+                    } else if argsStr != "{}" && !argsStr.isEmpty {
+                        LoggerService.shared.warning("Skill arguments were provided but could not be parsed as [String: Any]: \(argsStr)")
+                    }
                 }
                 
                 let result = await SkillService.shared.executeSkill(name: name, arguments: arguments)
@@ -195,7 +198,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     nonisolated func applicationWillTerminate(_ notification: Notification) {
-        Task { @MainActor in
+        MainActor.assumeIsolated {
             GlobalHotkeyManager.shared.unregisterHotkey()
             DependencyContainer.shared.shutdown()
             LoggerService.shared.info("Application will terminate")

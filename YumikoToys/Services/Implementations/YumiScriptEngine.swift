@@ -63,20 +63,26 @@ final class YumiScriptEngine {
                 }
 
                 let allowMultiple = DependencyContainer.shared.settingsService.settings.allowMultipleInstances
-                let url = URL(fileURLWithPath: resolvedPath!)
+                guard let safeResolvedPath = resolvedPath else { continue }
+                let url = URL(fileURLWithPath: safeResolvedPath)
                 var success = false
 
                 if allowMultiple {
-                    // 多开模式：通过 macOS 原生 /usr/bin/open -n 分离进程实现真多开
+                    // 多开模式：通过 macOS 原生 /usr/bin/open -n 分离进程实现真多开（terminationHandler 避免阻塞主线程）
                     let process = Process()
                     process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-                    process.arguments = ["-n", resolvedPath!]
+                    process.arguments = ["-n", safeResolvedPath]
                     do {
-                        try process.run()
-                        process.waitUntilExit()
-                        success = (process.terminationStatus == 0)
-                    } catch {
-                        success = false
+                        success = try await withCheckedContinuation { continuation in
+                            process.terminationHandler = { p in
+                                continuation.resume(returning: p.terminationStatus == 0)
+                            }
+                            do {
+                                try process.run()
+                            } catch {
+                                continuation.resume(returning: false)
+                            }
+                        }
                     }
                 }
 
@@ -334,7 +340,7 @@ final class YumiScriptEngine {
         return logs.joined(separator: "\n")
     }
     
-    // MARK: - 原生无包装 Shell 执行 (避免 JSON 污染)
+    // MARK: - 原生无包装 Shell 执行 (避免 JSON 污染，采用非阻塞 terminationHandler)
     
     static func runRawShell(_ script: String) async -> String {
         let task = Process()
@@ -346,16 +352,15 @@ final class YumiScriptEngine {
         task.standardError = pipe
 
         return await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                do {
-                    try task.run()
-                    task.waitUntilExit()
-                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                    continuation.resume(returning: output)
-                } catch {
-                    continuation.resume(returning: "执行失败: \(error.localizedDescription)")
-                }
+            task.terminationHandler = { _ in
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                continuation.resume(returning: output)
+            }
+            do {
+                try task.run()
+            } catch {
+                continuation.resume(returning: "执行失败: \(error.localizedDescription)")
             }
         }
     }
@@ -377,7 +382,8 @@ final class YumiScriptEngine {
         let varName = String(str[..<eqIdx]).trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "$", with: "")
         let expr = String(str[str.index(after: eqIdx)...]).trimmingCharacters(in: .whitespacesAndNewlines)
         
-        guard !varName.isEmpty else { return nil }
+        // 校验变量名格式：仅允许字母、数字、下划线且不能包含空格
+        guard !varName.isEmpty, !varName.contains(" ") else { return nil }
         return (varName, expr)
     }
     
@@ -473,16 +479,17 @@ final class YumiScriptEngine {
     // MARK: - 系统锁屏
     
     private static func lockScreen() {
-        let libHandle = dlopen("/System/Library/PrivateFrameworks/login.framework/Versions/Current/login", RTLD_LAZY)
-        if let libHandle = libHandle {
-            let sym = dlsym(libHandle, "SACLockScreenImmediate")
-            if let sym = sym {
+        var locked = false
+        if let libHandle = dlopen("/System/Library/PrivateFrameworks/login.framework/Versions/Current/login", RTLD_LAZY) {
+            if let sym = dlsym(libHandle, "SACLockScreenImmediate") {
                 typealias Func = @convention(c) () -> Void
                 let fn = unsafeBitCast(sym, to: Func.self)
                 fn()
+                locked = true
             }
             dlclose(libHandle)
-        } else {
+        }
+        if !locked {
             let _ = Process.launchedProcess(launchPath: "/usr/bin/pmset", arguments: ["displaysleepnow"])
         }
     }
