@@ -107,6 +107,7 @@
 		FC6552D52FC373980093B726 /* APISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65522E2FC373980093B726 /* APISettings.swift */; };
 		FC6552D62FC373980093B726 /* EnhancedWebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65524B2FC373980093B726 /* EnhancedWebSearchService.swift */; };
 		FC6552D72FC373980093B726 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65528B2FC373980093B726 /* ToastView.swift */; };
+		FC9900022FC373980093B726 /* PluginResultHUDManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9900012FC373980093B726 /* PluginResultHUDManager.swift */; };
 		FC6552D82FC373980093B726 /* PersonaServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552652FC373980093B726 /* PersonaServiceProtocol.swift */; };
 		FC6552D92FC373980093B726 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6552932FC373980093B726 /* SettingsView.swift */; };
 		FC6552DA2FC373980093B726 /* AppHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC65526E2FC373980093B726 /* AppHeader.swift */; };
@@ -413,6 +414,7 @@
 		FC6552892FC373980093B726 /* ProviderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderPicker.swift; sourceTree = "<group>"; };
 		FC65528A2FC373980093B726 /* SearchSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSourcesView.swift; sourceTree = "<group>"; };
 		FC65528B2FC373980093B726 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		FC9900012FC373980093B726 /* PluginResultHUDManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginResultHUDManager.swift; sourceTree = "<group>"; };
 		FC65528D2FC373980093B726 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		FC65528E2FC373980093B726 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
 		FC65528F2FC373980093B726 /* AIChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatViewModel.swift; sourceTree = "<group>"; };
@@ -874,6 +876,7 @@
 				FC6552892FC373980093B726 /* ProviderPicker.swift */,
 				FC65528A2FC373980093B726 /* SearchSourcesView.swift */,
 				FC65528B2FC373980093B726 /* ToastView.swift */,
+				FC9900012FC373980093B726 /* PluginResultHUDManager.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -1295,6 +1298,7 @@
 				FC6552D52FC373980093B726 /* APISettings.swift in Sources */,
 				FC6552D62FC373980093B726 /* EnhancedWebSearchService.swift in Sources */,
 				FC6552D72FC373980093B726 /* ToastView.swift in Sources */,
+				FC9900022FC373980093B726 /* PluginResultHUDManager.swift in Sources */,
 				FC6552D82FC373980093B726 /* PersonaServiceProtocol.swift in Sources */,
 				FC6552D92FC373980093B726 /* SettingsView.swift in Sources */,
 				FC6552DA2FC373980093B726 /* AppHeader.swift in Sources */,

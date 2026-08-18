@@ -266,14 +266,26 @@ final class YumiScriptEngine {
                     logs.append(" 录屏失败：\(result.message)")
                 }
                 
-            case "notify", "toast", "hud":
+            case "notify", "toast", "hud", "dialog":
                 let (titleRaw, messageRaw) = parseNotificationArgs(rawArgs)
                 let title = interpolateVariables(titleRaw, variables: userVariables, lastOutput: lastOutput)
                 let message = interpolateVariables(messageRaw.isEmpty ? "$OUTPUT" : messageRaw, variables: userVariables, lastOutput: lastOutput)
 
+                let finalTitle = title.isEmpty ? "YumiScript" : title
+                let finalBody = message.isEmpty ? lastOutput : message
+
+                // 1. 弹出专属精美渲染悬浮 HUD 弹窗（支持超长文本、全格式滚动、一键复制，彻底解决通知截断）
+                PluginResultHUDManager.shared.show(
+                    title: finalTitle,
+                    message: finalBody,
+                    icon: "bolt.fill",
+                    isSuccess: !finalBody.contains("失败") && !finalBody.contains("错误")
+                )
+
+                // 2. 同时发送系统通知
                 let content = UNMutableNotificationContent()
-                content.title = title.isEmpty ? "YumiScript" : title
-                content.body = message.isEmpty ? lastOutput : message
+                content.title = finalTitle
+                content.body = finalBody
                 content.sound = .default
                 let request = UNNotificationRequest(
                     identifier: UUID().uuidString,
@@ -281,7 +293,7 @@ final class YumiScriptEngine {
                     trigger: nil
                 )
                 UNUserNotificationCenter.current().add(request) { _ in }
-                logs.append(" 发送通知: [\(content.title)] \(content.body)")
+                logs.append(" 发送通知/渲染弹窗: [\(finalTitle)] \(finalBody)")
                 
             case "shell":
                 let cmdToRun = interpolateVariables(rawArgs, variables: userVariables, lastOutput: lastOutput)

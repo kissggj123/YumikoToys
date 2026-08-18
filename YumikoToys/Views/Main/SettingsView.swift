@@ -3386,12 +3386,31 @@ struct PluginEditorSheet: View {
     let isCreating: Bool
     @ObservedObject var pluginService = PluginService.shared
     
+    enum EditorTab: String, CaseIterable {
+        case visual = "🧩 动作积木 (傻瓜式)"
+        case code = "📝 纯脚本代码"
+    }
+    
+    @State private var selectedTab: EditorTab = .visual
     @State private var plugin: YumiPlugin = YumiPlugin(id: "", name: "", icon: "star.fill", description: "", isEnabled: true, scriptContent: "")
     @State private var testLogs: String = ""
     @State private var isRunningTest = false
     
+    // 动作积木临时参数状态
+    @State private var blockAppName: String = "Safari"
+    @State private var blockSysAction: String = "ip"
+    @State private var blockNotifyTitle: String = "网络状态诊断"
+    @State private var blockNotifyMsg: String = "$OUTPUT"
+    @State private var blockOpenTarget: String = "https://github.com"
+    @State private var blockCopyText: String = "$OUTPUT"
+    @State private var blockShellCmd: String = "ping -c 1 223.5.5.5 | awk -F'/' 'END{print $5}'"
+    @State private var blockWaitSec: Double = 1.0
+    @State private var blockVarName: String = "custom_ip"
+    @State private var blockVarExpr: String = "shell ipconfig getifaddr en0"
+    
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
+            // 顶栏
             HStack {
                 Image(systemName: "puzzlepiece.extension.fill")
                     .foregroundStyle(AboutThemeConfig.current().primaryColor)
@@ -3406,10 +3425,20 @@ struct PluginEditorSheet: View {
             }
             .padding([.top, .horizontal])
             
+            // 模式切换 Picker
+            Picker("", selection: $selectedTab) {
+                ForEach(EditorTab.allCases, id: \.self) { tab in
+                    Text(tab.rawValue).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            
             Divider()
             
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 14) {
+                    // 基本信息区
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("插件名称")
@@ -3442,9 +3471,170 @@ struct PluginEditorSheet: View {
                             .textFieldStyle(.roundedBorder)
                     }
                     
+                    if selectedTab == .visual {
+                        // MARK: - 傻瓜式动作积木区
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("🧩 点击积木添加动作到脚本:")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                Spacer()
+                                Text("参数可随心修改后一键插入")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            
+                            // 1. 系统控制积木
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label("⚙️ 系统控制指令 (System Control)", systemImage: "macmini.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 6)], spacing: 6) {
+                                    sysBlockButton(title: "📶 网络诊断", cmd: "sys ip\nnotify \"网络状态诊断\" \"$OUTPUT\"")
+                                    sysBlockButton(title: "📊 CPU 负载", cmd: "sys cpu\nnotify \"系统负载速查\" \"$OUTPUT\"")
+                                    sysBlockButton(title: "💾 磁盘空间", cmd: "sys disk\nnotify \"主磁盘空间概览\" \"$OUTPUT\"")
+                                    sysBlockButton(title: "🔒 锁定屏幕", cmd: "sys lock")
+                                    sysBlockButton(title: "🗑️ 清空废纸篓", cmd: "sys emptytrash\nnotify \"废纸篓\" \"已清空\"")
+                                    sysBlockButton(title: "🌓 切换外观", cmd: "sys toggletheme\nnotify \"系统外观\" \"$OUTPUT\"")
+                                    sysBlockButton(title: "⚡ 释放内存", cmd: "sys purge\nnotify \"内存释放\" \"$OUTPUT\"")
+                                    sysBlockButton(title: "🔇 切换静音", cmd: "sys togglemute")
+                                }
+                            }
+                            .padding(10)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08), lineWidth: 1))
+                            
+                            // 2. 弹窗与通知积木
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label("🔔 弹窗与通知卡片 (Dialog & HUD)", systemImage: "bell.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                
+                                HStack(spacing: 8) {
+                                    TextField("通知标题 (如: 运行结果)", text: $blockNotifyTitle)
+                                        .textFieldStyle(.roundedBorder)
+                                        .frame(width: 130)
+                                    TextField("通知内容 (如: $OUTPUT 或固定文字)", text: $blockNotifyMsg)
+                                        .textFieldStyle(.roundedBorder)
+                                    Button("+ 插入弹窗") {
+                                        appendScriptLine("notify \"\(blockNotifyTitle)\" \"\(blockNotifyMsg)\"")
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .controlSize(.small)
+                                    .tint(AboutThemeConfig.current().primaryColor)
+                                }
+                            }
+                            .padding(10)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08), lineWidth: 1))
+                            
+                            // 3. 启动应用积木
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label("🚀 启动应用程序 (Launch App)", systemImage: "arrow.up.forward.app.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                
+                                HStack(spacing: 6) {
+                                    TextField("应用名称 (如: Safari, Terminal, 微信)", text: $blockAppName)
+                                        .textFieldStyle(.roundedBorder)
+                                    
+                                    Button("+ 插入启动") {
+                                        appendScriptLine("launch \"\(blockAppName)\"")
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .controlSize(.small)
+                                    .tint(AboutThemeConfig.current().primaryColor)
+                                }
+                                
+                                HStack(spacing: 4) {
+                                    Text("快捷选择:")
+                                        .font(.system(size: 9.5))
+                                        .foregroundStyle(.tertiary)
+                                    ForEach(["Safari", "Terminal", "Xcode", "Finder", "Notes", "Music"], id: \.self) { name in
+                                        Button(name) {
+                                            blockAppName = name
+                                            appendScriptLine("launch \"\(name)\"")
+                                        }
+                                        .buttonStyle(.plain)
+                                        .font(.system(size: 9.5))
+                                        .padding(.horizontal, 5)
+                                        .padding(.vertical, 2)
+                                        .background(Capsule().fill(Color.primary.opacity(0.06)))
+                                    }
+                                }
+                            }
+                            .padding(10)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08), lineWidth: 1))
+                            
+                            // 4. 自定义变量积木
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label("📝 自定义变量定义 (Custom Variables)", systemImage: "character.textbox")
+                                    .font(.system(size: 11, weight: .bold))
+                                
+                                HStack(spacing: 6) {
+                                    TextField("变量名", text: $blockVarName)
+                                        .textFieldStyle(.roundedBorder)
+                                        .frame(width: 90)
+                                    Text("=")
+                                        .font(.system(size: 12, weight: .bold))
+                                    TextField("变量值 / Shell / 表达式", text: $blockVarExpr)
+                                        .textFieldStyle(.roundedBorder)
+                                    Button("+ 插入变量") {
+                                        appendScriptLine("var \(blockVarName) = \(blockVarExpr)")
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .controlSize(.small)
+                                    .tint(AboutThemeConfig.current().primaryColor)
+                                }
+                            }
+                            .padding(10)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08), lineWidth: 1))
+                            
+                            // 5. 更多实用积木 (打开网址、延时等待)
+                            HStack(spacing: 8) {
+                                // 网址/路径
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("🌐 打开网址/目录 (open):")
+                                        .font(.system(size: 10, weight: .bold))
+                                    HStack(spacing: 4) {
+                                        TextField("网址/路径", text: $blockOpenTarget)
+                                            .textFieldStyle(.roundedBorder)
+                                        Button("+") {
+                                            appendScriptLine("open \"\(blockOpenTarget)\"")
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                    }
+                                }
+                                .padding(8)
+                                .frame(maxWidth: .infinity)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                                
+                                // 延时
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("⏱️ 等待延时 (wait):")
+                                        .font(.system(size: 10, weight: .bold))
+                                    HStack(spacing: 4) {
+                                        Stepper("\(String(format: "%.1f", blockWaitSec)) 秒", value: $blockWaitSec, in: 0.5...10.0, step: 0.5)
+                                            .font(.system(size: 11))
+                                        Button("+") {
+                                            appendScriptLine("wait \(String(format: "%.1f", blockWaitSec))")
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                    }
+                                }
+                                .padding(8)
+                                .frame(maxWidth: .infinity)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
+                            }
+                        }
+                    }
+                    
+                    // 实时脚本内容展示与微调
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text("YumiScript 脚本内容")
+                            Text("当前 YumiScript 完整脚本:")
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             Spacer()
@@ -3474,92 +3664,32 @@ struct PluginEditorSheet: View {
                             .disabled(isRunningTest)
                         }
                         
-                        // 常用变量快速插入栏
+                        // 变量快捷插入胶囊
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
-                                Text("快捷插入:")
+                                Text("快捷变量:")
                                     .font(.system(size: 9.5))
                                     .foregroundStyle(.tertiary)
                                 
-                                Button("+ $OUTPUT") {
-                                    plugin.scriptContent += (plugin.scriptContent.isEmpty ? "" : " ") + "$OUTPUT"
-                                }
-                                .buttonStyle(.plain)
-                                .font(.system(size: 9.5, design: .monospaced))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
-                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
-                                
-                                Button("+ $CLIPBOARD") {
-                                    plugin.scriptContent += (plugin.scriptContent.isEmpty ? "" : " ") + "$CLIPBOARD"
-                                }
-                                .buttonStyle(.plain)
-                                .font(.system(size: 9.5, design: .monospaced))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
-                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
-                                
-                                Button("+ $DATE $TIME") {
-                                    plugin.scriptContent += (plugin.scriptContent.isEmpty ? "" : " ") + "$DATE $TIME"
-                                }
-                                .buttonStyle(.plain)
-                                .font(.system(size: 9.5, design: .monospaced))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
-                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
-                                
-                                Button("+ var 变量") {
-                                    let snippet = "\nvar custom_val = \"Hello\"\nnotify \"变量测试\" \"当前值: $custom_val\""
-                                    plugin.scriptContent += snippet
-                                }
-                                .buttonStyle(.plain)
-                                .font(.system(size: 9.5, design: .monospaced))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
-                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
-                                
-                                Button("+ Shell 变量") {
-                                    let snippet = "\nvar my_ip = shell ipconfig getifaddr en0\nnotify \"本机IP\" \"内网地址: $my_ip\""
-                                    plugin.scriptContent += snippet
-                                }
-                                .buttonStyle(.plain)
-                                .font(.system(size: 9.5, design: .monospaced))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
-                                .foregroundStyle(AboutThemeConfig.current().primaryColor)
+                                quickChip("+ $OUTPUT") { appendText(" $OUTPUT") }
+                                quickChip("+ $CLIPBOARD") { appendText(" $CLIPBOARD") }
+                                quickChip("+ $DATE") { appendText(" $DATE") }
+                                quickChip("+ $TIME") { appendText(" $TIME") }
+                                quickChip("+ $USER") { appendText(" $USER") }
                             }
                             .padding(.vertical, 2)
                         }
                         
                         TextEditor(text: $plugin.scriptContent)
                             .font(.system(size: 12, design: .monospaced))
-                            .frame(height: 150)
+                            .frame(height: selectedTab == .visual ? 120 : 180)
                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.12), lineWidth: 1))
                     }
-                    
-                    // 指令与变量速查卡片
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("💡 YumiScript 变量与指令语法:")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(AboutThemeConfig.current().primaryColor)
-                        Text("• 自定义变量: var name = \"张三\" | let url = https://... | var ip = shell ipconfig getifaddr en0\n• 变量插值: notify \"提醒\" \"你好 $name, 你的IP是 $ip\" | open $url | copy $name\n• 内置变量: $OUTPUT (上一步输出), $CLIPBOARD (剪贴板), $DATE, $TIME, $DATETIME, $USER, $HOME\n• 系统控制: sys lock (锁屏) | emptytrash (清废纸篓) | toggletheme (深浅色) | purge (释放内存) | ip | cpu | disk\n• 动作执行: launch <应用名> (支持多开) | open <路径/网址> | shell <指令> | applescript <代码>")
-                            .font(.system(size: 9.5, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .lineSpacing(2)
-                    }
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.03)))
                     
                     // 测试输出日志
                     if !testLogs.isEmpty {
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("执行日志输出:")
+                            Text("执行日志与渲染输出:")
                                 .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             ScrollView {
@@ -3593,7 +3723,7 @@ struct PluginEditorSheet: View {
                 .padding(.horizontal)
             }
         }
-        .frame(width: 480, height: 560)
+        .frame(width: 530, height: 640)
         .onAppear {
             if let sel = selectedPlugin {
                 self.plugin = sel
@@ -3604,6 +3734,50 @@ struct PluginEditorSheet: View {
                 self.plugin = newPlugin
             }
         }
+    }
+    
+    // MARK: - 辅助子视图与方法
+    
+    private func sysBlockButton(title: String, cmd: String) -> some View {
+        Button {
+            appendScriptLine(cmd)
+        } label: {
+            HStack(spacing: 4) {
+                Text(title)
+                    .font(.system(size: 10, weight: .medium))
+                Spacer()
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 10))
+                    .foregroundStyle(AboutThemeConfig.current().primaryColor)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.04)))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.primary.opacity(0.08), lineWidth: 0.8))
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func quickChip(_ text: String, action: @escaping () -> Void) -> some View {
+        Button(text, action: action)
+            .buttonStyle(.plain)
+            .font(.system(size: 9.5, design: .monospaced))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(RoundedRectangle(cornerRadius: 4).fill(AboutThemeConfig.current().primaryColor.opacity(0.1)))
+            .foregroundStyle(AboutThemeConfig.current().primaryColor)
+    }
+    
+    private func appendScriptLine(_ line: String) {
+        if plugin.scriptContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            plugin.scriptContent = line
+        } else {
+            plugin.scriptContent += "\n" + line
+        }
+    }
+    
+    private func appendText(_ text: String) {
+        plugin.scriptContent += text
     }
 }
 
