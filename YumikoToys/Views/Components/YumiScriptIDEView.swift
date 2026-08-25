@@ -2,13 +2,14 @@
 //  YumiScriptIDEView.swift
 //  YumikoToys
 //
-//  全新重构：VS Code + 捷径 (Apple Shortcuts) 风格 YumiScript Studio 可视化 IDE
-//  重构亮点：
-//  1. 彻底解决文本渲染与插入空白问题，采用原生响应式双向数据流架构，秒级上屏
-//  2. 智能行号栏与等宽代码排版，支持原生拖拽释放 (Drag & Drop) 与光标精准插入
-//  3. 端侧 NPU 神经推理 Tab 键与快捷按键智能补全 (Smart Tab Autocomplete)
-//  4. 实时编译校验与错误诊断系统 (Real-time Linter & Diagnostics)
-//  5. 8 大模块化原子积木库与 10+ 套详尽逐行注释的场景示例库
+//  专业级 VS Code + 捷径 (Apple Shortcuts) 风格 YumiScript Studio 可视化 IDE
+//  重构升级：
+//  1. 专业级全彩语法高亮引擎 (Keywords, Subcommands, Strings, Variables, Comments, Numbers)
+//  2. 独立等宽行号栏与响应式极速双向数据流
+//  3. 点击 ➕、拖拽积木、场景模板秒级上屏并全彩高亮渲染
+//  4. 端侧 NPU 神经推理 Tab 智能代码补全
+//  5. 实时编译校验与错误诊断系统 (Real-time Linter & Diagnostics)
+//  6. 8 大分类超全模块化原子积木库与 10+ 套详尽逐行注释场景示例库
 //
 
 import SwiftUI
@@ -46,7 +47,7 @@ final class YumiScriptCompiler {
         var logs: [String] = []
         let lines = script.components(separatedBy: .newlines)
         
-        logs.append("▸ [阶段 1/3] 词法与语法分析...")
+        logs.append("▸ [阶段 1/3] 词法分词与语法结构分析...")
         var openDefs: [String] = []
         var definedMacros = Set<String>()
         var definedVariables = Set<String>(["OUTPUT", "CLIPBOARD", "DATE", "TIME", "DATETIME", "USER", "HOME"])
@@ -158,7 +159,7 @@ final class YumiScriptCompiler {
             }
         }
         
-        logs.append("▸ [阶段 2/3] 变量作用域与依赖链检测通过 (AST 节点: \(lines.count))")
+        logs.append("▸ [阶段 2/3] 变量依赖与语法树生成完成 (AST 节点: \(lines.count))")
         let errCount = diagnostics.filter { $0.severity == .error }.count
         let warnCount = diagnostics.filter { $0.severity == .warning }.count
         logs.append("▸ [阶段 3/3] 编译校验完成：发现 \(errCount) 个错误，\(warnCount) 个警告")
@@ -173,6 +174,281 @@ final class YumiScriptCompiler {
             elapsedMs: Double(round(elapsed * 10) / 10),
             logs: logs
         )
+    }
+}
+
+// MARK: - 专业级语法高亮预编译正则库 (Syntax Color Engine)
+
+enum YumiRegexes {
+    static let numberRegex = try? NSRegularExpression(pattern: #"\b\d+(\.\d+)?\b|\b0x[0-9a-fA-F]+\b"#)
+    static let keywordRegex: NSRegularExpression? = {
+        let kw = [
+            "file", "app", "yumiko", "sys", "system", "notify", "dialog", "toast", "hud",
+            "input", "prompt", "askinput", "alert", "choose", "select", "tts", "say", "speak",
+            "ocr", "ai", "ask", "glm", "http", "fetch", "def", "end", "call", "run",
+            "var", "let", "set", "wait", "sleep", "shell", "copy", "paste", "open", "launch", "ping"
+        ]
+        return try? NSRegularExpression(pattern: #"\b("# + kw.joined(separator: "|") + #")\b"#, options: .caseInsensitive)
+    }()
+    static let subcommandRegex: NSRegularExpression? = {
+        let subs = [
+            "write", "append", "read", "delete", "trash", "list", "mkdir", "exists",
+            "pet", "theme", "anniversary", "screenshot", "annotate",
+            "locksleep", "sleep", "lock", "emptytrash", "purge", "volume", "battery", "disk", "cpu", "toggletheme", "mute", "unmute",
+            "get", "post", "put"
+        ]
+        return try? NSRegularExpression(pattern: #"\b("# + subs.joined(separator: "|") + #")\b"#, options: .caseInsensitive)
+    }()
+    static let varRegex = try? NSRegularExpression(pattern: #"\$[A-Za-z0-9_]+"#)
+    static let stringRegex = try? NSRegularExpression(pattern: #""[^"\\]*(?:\\.[^"\\]*)*""#)
+    static let commentRegex = try? NSRegularExpression(pattern: #"(#|//).*$"#, options: .anchorsMatchLines)
+}
+
+// MARK: - 专业级彩色高亮 NSTextView 控件
+
+final class YumiColorfulTextView: NSTextView {
+    var onContentChanged: ((String) -> Void)?
+    var onTabRequested: (() -> Bool)?
+    private var isHighlighting = false
+    
+    override func keyDown(with event: NSEvent) {
+        // Tab 键触发神经补全 (KeyCode 48)
+        if event.keyCode == 48 {
+            if let handler = onTabRequested, handler() {
+                return
+            }
+            if shouldChangeText(in: selectedRange(), replacementString: "    ") {
+                replaceCharacters(in: selectedRange(), with: "    ")
+                didChangeText()
+                return
+            }
+        }
+        super.keyDown(with: event)
+    }
+    
+    override func didChangeText() {
+        super.didChangeText()
+        guard !isHighlighting else { return }
+        highlightSyntax()
+        onContentChanged?(string)
+    }
+    
+    func setEditorText(_ newText: String) {
+        guard string != newText else { return }
+        let prevSel = selectedRange()
+        string = newText
+        highlightSyntax()
+        if prevSel.location <= (newText as NSString).length {
+            setSelectedRange(prevSel)
+        }
+    }
+    
+    func highlightSyntax() {
+        guard let storage = textStorage else { return }
+        let text = storage.string
+        let fullRange = NSRange(location: 0, length: (text as NSString).length)
+        guard fullRange.length > 0 else { return }
+        
+        isHighlighting = true
+        storage.beginEditing()
+        
+        let fontSize: CGFloat = 13.5
+        let defaultFont = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        let boldFont = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .bold)
+        let baseColor = NSColor(white: 0.94, alpha: 1.0)
+        
+        // 1. 基础排版与文字前景色
+        storage.setAttributes([
+            .font: defaultFont,
+            .foregroundColor: baseColor
+        ], range: fullRange)
+        
+        // 2. 数字与十六进制数值 (青蓝色)
+        if let regex = YumiRegexes.numberRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+                if let r = m?.range {
+                    storage.addAttribute(.foregroundColor, value: NSColor(red: 0.40, green: 0.85, blue: 0.95, alpha: 1.0), range: r)
+                }
+            }
+        }
+        
+        // 3. 核心关键字与一级指令 (梦幻紫/品红色 + 粗体)
+        if let regex = YumiRegexes.keywordRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+                if let r = m?.range {
+                    storage.addAttribute(.foregroundColor, value: NSColor(red: 0.82, green: 0.48, blue: 1.0, alpha: 1.0), range: r)
+                    storage.addAttribute(.font, value: boldFont, range: r)
+                }
+            }
+        }
+        
+        // 4. 二级子命令操作符 (亮天蓝色 + 中粗体)
+        if let regex = YumiRegexes.subcommandRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+                if let r = m?.range {
+                    storage.addAttribute(.foregroundColor, value: NSColor(red: 0.35, green: 0.78, blue: 1.0, alpha: 1.0), range: r)
+                    storage.addAttribute(.font, value: boldFont, range: r)
+                }
+            }
+        }
+        
+        // 5. 系统环境变量与用户自定义变量 $OUTPUT, $DATETIME (暖金黄色)
+        if let regex = YumiRegexes.varRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+                if let r = m?.range {
+                    storage.addAttribute(.foregroundColor, value: NSColor(red: 1.0, green: 0.76, blue: 0.28, alpha: 1.0), range: r)
+                }
+            }
+        }
+        
+        // 6. 字符串文本常量 (温暖琥珀橙色)
+        if let regex = YumiRegexes.stringRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+                if let r = m?.range {
+                    storage.addAttribute(.foregroundColor, value: NSColor(red: 0.98, green: 0.65, blue: 0.38, alpha: 1.0), range: r)
+                }
+            }
+        }
+        
+        // 7. 注释代码行 # 与 // (清新翡翠绿色)
+        if let regex = YumiRegexes.commentRegex {
+            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+                if let r = m?.range {
+                    storage.addAttribute(.foregroundColor, value: NSColor(red: 0.45, green: 0.82, blue: 0.52, alpha: 1.0), range: r)
+                }
+            }
+        }
+        
+        storage.endEditing()
+        isHighlighting = false
+    }
+    
+    // 拖拽支持
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { .copy }
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { .copy }
+    
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let pb = sender.draggingPasteboard
+        var draggedStr: String? = pb.string(forType: .string)
+        if draggedStr == nil {
+            draggedStr = pb.string(forType: NSPasteboard.PasteboardType("public.utf8-plain-text"))
+        }
+        if draggedStr == nil {
+            if let items = pb.pasteboardItems {
+                for item in items {
+                    if let s = item.string(forType: .string) ?? item.string(forType: NSPasteboard.PasteboardType("public.utf8-plain-text")) {
+                        draggedStr = s
+                        break
+                    }
+                }
+            }
+        }
+        guard let pboard = draggedStr else { return false }
+        YumiScriptIDEManager.shared.insertSnippet(pboard)
+        return true
+    }
+}
+
+// MARK: - 专业级全彩高亮编辑器 Representable
+
+struct YumiColorfulCodeEditor: NSViewRepresentable {
+    @Binding var text: String
+    var fontSize: CGFloat
+    var themePrimary: Color
+    @Binding var suggestionToast: String
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
+        
+        let textView = YumiColorfulTextView()
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.isRichText = false
+        textView.allowsUndo = true
+        textView.font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        textView.textColor = NSColor(white: 0.94, alpha: 1.0)
+        textView.backgroundColor = NSColor(red: 0.11, green: 0.11, blue: 0.14, alpha: 1.0)
+        textView.insertionPointColor = NSColor(themePrimary)
+        textView.textContainerInset = NSSize(width: 14, height: 14)
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+        
+        textView.registerForDraggedTypes([
+            .string,
+            NSPasteboard.PasteboardType("public.utf8-plain-text"),
+            NSPasteboard.PasteboardType("public.plain-text"),
+            NSPasteboard.PasteboardType("NSStringPboardType")
+        ])
+        
+        let coordinator = context.coordinator
+        textView.onContentChanged = { [weak coordinator] newText in
+            coordinator?.parent.text = newText
+        }
+        
+        textView.onTabRequested = { [weak coordinator, weak textView] in
+            guard let tv = textView, let coord = coordinator else { return false }
+            return coord.handleTabCompletion(textView: tv)
+        }
+        
+        textView.setEditorText(text)
+        context.coordinator.textView = textView
+        
+        scrollView.documentView = textView
+        return scrollView
+    }
+    
+    func updateNSView(_ nsView: NSScrollView, context: Context) {
+        if let tv = nsView.documentView as? YumiColorfulTextView {
+            if tv.string != text {
+                tv.setEditorText(text)
+            }
+        }
+    }
+    
+    class Coordinator: NSObject {
+        var parent: YumiColorfulCodeEditor
+        weak var textView: YumiColorfulTextView?
+        
+        init(_ parent: YumiColorfulCodeEditor) {
+            self.parent = parent
+        }
+        
+        func handleTabCompletion(textView: YumiColorfulTextView) -> Bool {
+            let cursorLoc = textView.selectedRange().location != NSNotFound ? textView.selectedRange().location : (textView.string as NSString).length
+            let nsStr = textView.string as NSString
+            let lineRange = nsStr.lineRange(for: NSRange(location: cursorLoc, length: 0))
+            let currentLine = nsStr.substring(with: lineRange).trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            if let suggestion = YumiScriptNeuralEngine.shared.inferCompletion(for: currentLine) {
+                let completionWithNewline = suggestion.completion + "\n"
+                let newString = nsStr.replacingCharacters(in: lineRange, with: completionWithNewline)
+                let newCursorLoc = lineRange.location + (suggestion.completion as NSString).length + 1
+                
+                textView.setEditorText(newString)
+                textView.setSelectedRange(NSRange(location: newCursorLoc, length: 0))
+                parent.text = newString
+                
+                parent.suggestionToast = "⚡ Tab 神经补全: \(suggestion.description)"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if self.parent.suggestionToast.contains(suggestion.description) {
+                        self.parent.suggestionToast = ""
+                    }
+                }
+                return true
+            }
+            return false
+        }
     }
 }
 
@@ -268,7 +544,7 @@ final class YumiScriptIDEManager: ObservableObject {
         icon: "sparkles",
         description: "",
         isEnabled: true,
-        scriptContent: "" // 100% 绝对纯净空白
+        scriptContent: ""
     )
     @Published var isCreating: Bool = false
     
@@ -360,7 +636,6 @@ final class YumiScriptIDEManager: ObservableObject {
         }
     }
     
-    /// 核心可靠插入：直接修改响应式 scriptContent，100% 确保界面即刻秒级呈现
     func insertSnippet(_ snippet: String) {
         let cleanSnippet = snippet.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanSnippet.isEmpty else { return }
@@ -475,7 +750,7 @@ final class YumiScriptIDEWindowDelegate: NSObject, NSWindowDelegate {
     }
 }
 
-// MARK: - IDE 主界面视图 (全新响应式重构)
+// MARK: - IDE 主界面视图
 
 struct YumiScriptIDEView: View {
     @ObservedObject var manager: YumiScriptIDEManager
@@ -513,7 +788,6 @@ struct YumiScriptIDEView: View {
     @State private var fileSearchQuery: String = ""
     @State private var suggestionToast: String = ""
     @State private var selectedPresetCategory: String = "全部"
-    @State private var isDropTargeted: Bool = false
     
     // 编译与语法诊断状态
     @State private var compilationDiagnostics: [DiagnosticItem] = []
@@ -557,29 +831,19 @@ struct YumiScriptIDEView: View {
                 Divider()
             }
             
-            // MARK: - 3. 核心编辑区 (Tabs + Editor + Diagnostics + Console)
+            // MARK: - 3. 核心编辑区 (Tabs + Full-Color Editor + Console)
             VStack(spacing: 0) {
-                // 顶部文件标签栏
                 editorTabsBar
-                
-                // 编译状态诊断条
                 linterStatusBar
-                
                 Divider()
-                
-                // 代码编辑工作区 (高亮、行号、响应式双向绑定)
                 editorWorkspaceArea
                 
-                // 底部可折叠控制台
                 if isConsoleExpanded && !testLogs.isEmpty {
                     Divider()
-                    ideConsolePanel
-                        .frame(height: 160)
+                    ideConsolePanel.frame(height: 160)
                 }
                 
                 Divider()
-                
-                // 底部状态栏
                 ideStatusBar
             }
         }
@@ -587,8 +851,7 @@ struct YumiScriptIDEView: View {
         .overlay(alignment: .bottom) {
             if showSaveToast {
                 HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                     Text("脚本已成功保存！已实时同步至状态栏与系统扩展")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.white)
@@ -600,8 +863,7 @@ struct YumiScriptIDEView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             } else if !suggestionToast.isEmpty {
                 HStack(spacing: 6) {
-                    Image(systemName: "bolt.badge.clock.fill")
-                        .foregroundStyle(.yellow)
+                    Image(systemName: "bolt.badge.clock.fill").foregroundStyle(.yellow)
                     Text(suggestionToast)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.white)
@@ -626,66 +888,45 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 核心代码编辑工作区 (支持行号、拖拽上屏与快捷补全)
+    // MARK: - 核心全彩代码编辑器工作区
     
     private var editorWorkspaceArea: some View {
         HStack(spacing: 0) {
-            // 左侧行号栏 (Line Numbers Gutter)
+            // 左侧行号指示器
             let lineCount = max(1, manager.editingPlugin.scriptContent.components(separatedBy: .newlines).count)
-            VStack(alignment: .trailing, spacing: 5.5) {
+            VStack(alignment: .trailing, spacing: 4.8) {
                 ForEach(1...lineCount, id: \.self) { num in
                     Text("\(num)")
-                        .font(.system(size: editorFontSize - 1.5, weight: .medium, design: .monospaced))
-                        .foregroundStyle(Color.secondary.opacity(0.6))
+                        .font(.system(size: editorFontSize - 2.0, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.secondary.opacity(0.55))
                         .frame(height: 18)
                 }
                 Spacer()
             }
             .padding(.top, 14)
             .padding(.horizontal, 8)
-            .frame(width: 44)
+            .frame(width: 42)
             .background(Color(nsColor: .windowBackgroundColor).opacity(0.3))
             
             Divider()
             
-            // 核心原生响应式编辑器 (Native Reactive TextEditor)
+            // 专业级全彩高亮编辑器
             ZStack(alignment: .topTrailing) {
-                TextEditor(text: $manager.editingPlugin.scriptContent)
-                    .font(.system(size: editorFontSize, weight: .regular, design: .monospaced))
-                    .foregroundStyle(Color(white: 0.94))
-                    .lineSpacing(5.5)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 10)
-                    .scrollContentBackground(.hidden)
-                    .background(Color(red: 0.11, green: 0.11, blue: 0.14))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 0)
-                            .stroke(isDropTargeted ? theme.primaryColor : Color.clear, lineWidth: 2)
-                    )
-                    .onDrop(of: [.text, .plainText, .utf8PlainText], isTargeted: $isDropTargeted) { providers in
-                        guard let provider = providers.first else { return false }
-                        provider.loadItem(forTypeIdentifier: "public.utf8-plain-text", options: nil) { data, _ in
-                            if let data = data as? Data, let str = String(data: data, encoding: .utf8) {
-                                DispatchQueue.main.async {
-                                    manager.insertSnippet(str)
-                                }
-                            } else if let str = data as? String {
-                                DispatchQueue.main.async {
-                                    manager.insertSnippet(str)
-                                }
-                            }
-                        }
-                        return true
-                    }
+                YumiColorfulCodeEditor(
+                    text: $manager.editingPlugin.scriptContent,
+                    fontSize: editorFontSize,
+                    themePrimary: theme.primaryColor,
+                    suggestionToast: $suggestionToast
+                )
+                .background(Color(red: 0.11, green: 0.11, blue: 0.14))
                 
-                // 快捷语法操作小助手 (Quick Action Floating Pill)
+                // 顶部快捷按键助手
                 HStack(spacing: 6) {
                     Button(action: {
                         triggerQuickTabCompletion()
                     }) {
                         HStack(spacing: 4) {
-                            Image(systemName: "bolt.badge.clock.fill")
-                                .foregroundStyle(.yellow)
+                            Image(systemName: "bolt.badge.clock.fill").foregroundStyle(.yellow)
                             Text("⚡ Tab 补全")
                                 .font(.system(size: 10, weight: .semibold))
                         }
@@ -734,10 +975,7 @@ struct YumiScriptIDEView: View {
                             )
                         
                         if section == .diagnostics && !isCompileSuccess {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 7, height: 7)
-                                .padding(4)
+                            Circle().fill(Color.red).frame(width: 7, height: 7).padding(4)
                         }
                     }
                 }
@@ -747,9 +985,7 @@ struct YumiScriptIDEView: View {
             
             Spacer()
             
-            Button(action: {
-                runScriptTest()
-            }) {
+            Button(action: { runScriptTest() }) {
                 Image(systemName: isRunningTest ? "arrow.triangle.2.circlepath" : "play.fill")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.green)
@@ -770,19 +1006,14 @@ struct YumiScriptIDEView: View {
                 Text(activeSection.rawValue)
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundStyle(theme.primaryColor)
-                
                 Spacer()
-                
                 if activeSection == .explorer {
-                    Button(action: {
-                        manager.createNewBlankTab()
-                    }) {
+                    Button(action: { manager.createNewBlankTab() }) {
                         Image(systemName: "plus")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(theme.primaryColor)
                     }
                     .buttonStyle(.plain)
-                    .help("新建空白脚本")
                 } else if activeSection == .extensions {
                     Button(action: {
                         newExtTitle = ""
@@ -795,17 +1026,13 @@ struct YumiScriptIDEView: View {
                             .foregroundStyle(theme.primaryColor)
                     }
                     .buttonStyle(.plain)
-                    .help("新建自定义扩展积木")
                 } else if activeSection == .diagnostics {
-                    Button(action: {
-                        runCompileDiagnostics()
-                    }) {
+                    Button(action: { runCompileDiagnostics() }) {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 11))
                             .foregroundStyle(theme.primaryColor)
                     }
                     .buttonStyle(.plain)
-                    .help("重新编译诊断")
                 }
             }
             .padding(.horizontal, 12)
@@ -841,7 +1068,7 @@ struct YumiScriptIDEView: View {
     
     private var shortcutsToolboxView: some View {
         VStack(spacing: 12) {
-            Text("💡 提示：点击任意积木卡片或 ➕ 按钮，代码即刻插入代码框；也支持直接拖拽积木释放：")
+            Text("💡 提示：点击任意积木卡片或 ➕ 按钮，代码即刻插入代码框并呈现彩色高亮：")
                 .font(.system(size: 10))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 4)
@@ -903,8 +1130,6 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 可拖拽与点击积木项组件
-    
     private func draggableToolboxItem(_ title: String, code: String, icon: String) -> some View {
         Button(action: {
             insertCodeDirectly(code)
@@ -964,7 +1189,7 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 2. 一键场景示例库 (带逐行原理与为什么这么写的详细注释)
+    // MARK: - 2. 一键场景示例库 (全彩逐行注释)
     
     private let presetCategories = ["全部", "📁 文件备忘", "🤖 AI与视觉", "🐰 桌宠生态", "⚡ 系统维护", "🧩 进阶过程宏"]
     
@@ -1365,9 +1590,7 @@ struct YumiScriptIDEView: View {
             
             if compilationDiagnostics.isEmpty {
                 VStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.green)
+                    Image(systemName: "sparkles").font(.system(size: 20)).foregroundStyle(.green)
                     Text("代码语法结构规范，无任何错误或警告！")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
@@ -1396,13 +1619,10 @@ struct YumiScriptIDEView: View {
                             Spacer()
                         }
                         
-                        Text(item.message)
-                            .font(.system(size: 11, weight: .medium))
+                        Text(item.message).font(.system(size: 11, weight: .medium))
                         
                         if let sug = item.suggestion {
-                            Text("💡 建议: \(sug)")
-                                .font(.system(size: 9.5))
-                                .foregroundStyle(.secondary)
+                            Text("💡 建议: \(sug)").font(.system(size: 9.5)).foregroundStyle(.secondary)
                         }
                     }
                     .padding(8)
@@ -1412,15 +1632,11 @@ struct YumiScriptIDEView: View {
             
             Divider()
             
-            Text("编译日志")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.secondary)
+            Text("编译日志").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary)
             
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(compileLogs, id: \.self) { log in
-                    Text(log)
-                        .font(.system(size: 9.5, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                    Text(log).font(.system(size: 9.5, design: .monospaced)).foregroundStyle(.secondary)
                 }
             }
             .padding(6)
@@ -1433,9 +1649,7 @@ struct YumiScriptIDEView: View {
     private var explorerView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.secondary)
                 TextField("搜索脚本...", text: $fileSearchQuery)
                     .textFieldStyle(.plain)
                     .font(.system(size: 11))
@@ -1443,14 +1657,10 @@ struct YumiScriptIDEView: View {
             .padding(6)
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor).opacity(0.5)))
             
-            Button(action: {
-                manager.createNewBlankTab()
-            }) {
+            Button(action: { manager.createNewBlankTab() }) {
                 HStack(spacing: 6) {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(theme.primaryColor)
-                    Text("新建空白脚本 (.yumi)")
-                        .font(.system(size: 11, weight: .medium))
+                    Image(systemName: "plus.circle.fill").foregroundStyle(theme.primaryColor)
+                    Text("新建空白脚本 (.yumi)").font(.system(size: 11, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
@@ -1509,9 +1719,7 @@ struct YumiScriptIDEView: View {
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(theme.primaryColor.opacity(0.3), lineWidth: 1))
             
             HStack {
-                Button(action: {
-                    generateCodeWithAI()
-                }) {
+                Button(action: { generateCodeWithAI() }) {
                     HStack(spacing: 4) {
                         Image(systemName: isCopilotLoading ? "arrow.triangle.2.circlepath" : "sparkles")
                         Text(isCopilotLoading ? "AI 生成中..." : "一键生成脚本")
@@ -1528,10 +1736,7 @@ struct YumiScriptIDEView: View {
             
             if !copilotResponse.isEmpty {
                 Divider()
-                
-                Text("AI 生成结果：")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(theme.primaryColor)
+                Text("AI 生成结果：").font(.system(size: 10, weight: .bold)).foregroundStyle(theme.primaryColor)
                 
                 ScrollView {
                     Text(copilotResponse)
@@ -1543,25 +1748,19 @@ struct YumiScriptIDEView: View {
                 .frame(maxHeight: 180)
                 
                 HStack(spacing: 8) {
-                    Button("追加到编辑器") {
-                        manager.insertSnippet(copilotResponse)
-                    }
-                    .font(.system(size: 11))
-                    
-                    Button("替换全部代码") {
-                        manager.editingPlugin.scriptContent = copilotResponse
-                    }
-                    .font(.system(size: 11))
+                    Button("追加到编辑器") { manager.insertSnippet(copilotResponse) }
+                    Button("替换全部代码") { manager.editingPlugin.scriptContent = copilotResponse }
                 }
+                .font(.system(size: 11))
             }
         }
     }
     
-    // MARK: - 6. 自制扩展插件 (Extensions & Custom Blocks)
+    // MARK: - 6. 自制扩展插件 (Extensions)
     
     private var extensionsView: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("您可以在此开发属于自己的 YumiScript 插件扩展，注册后的扩展积木会直接出现在左侧 API 积木库中：")
+            Text("开发属于自己的 YumiScript 插件扩展，注册后会直接出现在左侧积木库中：")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
             
@@ -1573,8 +1772,7 @@ struct YumiScriptIDEView: View {
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "plus.circle.fill")
-                    Text("➕ 开发新扩展积木")
-                        .font(.system(size: 11, weight: .bold))
+                    Text("➕ 开发新扩展积木").font(.system(size: 11, weight: .bold))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 7)
@@ -1592,30 +1790,21 @@ struct YumiScriptIDEView: View {
             ForEach(manager.customUserBlocks) { block in
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Image(systemName: block.icon)
-                            .foregroundStyle(theme.primaryColor)
-                        Text(block.title)
-                            .font(.system(size: 11, weight: .bold))
+                        Image(systemName: block.icon).foregroundStyle(theme.primaryColor)
+                        Text(block.title).font(.system(size: 11, weight: .bold))
                         Spacer()
-                        Button(action: {
-                            manager.deleteCustomBlock(id: block.id)
-                        }) {
-                            Image(systemName: "trash")
-                                .font(.system(size: 10))
-                                .foregroundStyle(.red)
+                        Button(action: { manager.deleteCustomBlock(id: block.id) }) {
+                            Image(systemName: "trash").font(.system(size: 10)).foregroundStyle(.red)
                         }
                         .buttonStyle(.plain)
                     }
-                    
                     Text(block.description.isEmpty ? "无描述" : block.description)
                         .font(.system(size: 9.5))
                         .foregroundStyle(.secondary)
                     
-                    Button("插入此积木") {
-                        manager.insertSnippet(block.snippetCode)
-                    }
-                    .font(.system(size: 10))
-                    .padding(.top, 2)
+                    Button("插入此积木") { manager.insertSnippet(block.snippetCode) }
+                        .font(.system(size: 10))
+                        .padding(.top, 2)
                 }
                 .padding(8)
                 .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .controlBackgroundColor)))
@@ -1623,17 +1812,14 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 7. IDE 偏好设置 (Settings)
+    // MARK: - 7. 偏好设置 (Settings)
     
     private var settingsView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("编辑器外观与排版")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(theme.primaryColor)
+            Text("编辑器外观与排版").font(.system(size: 12, weight: .bold)).foregroundStyle(theme.primaryColor)
             
             HStack {
-                Text("字体大小 (\(Int(editorFontSize)) pt):")
-                    .font(.system(size: 11))
+                Text("字体大小 (\(Int(editorFontSize)) pt):").font(.system(size: 11))
                 Spacer()
                 Button("-") { if editorFontSize > 10 { editorFontSize -= 1 } }
                 Button("+") { if editorFontSize < 22 { editorFontSize += 1 } }
@@ -1642,8 +1828,7 @@ struct YumiScriptIDEView: View {
             Divider()
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("当前全局跟随主题:")
-                    .font(.system(size: 11))
+                Text("当前全局跟随主题:").font(.system(size: 11))
                 HStack(spacing: 6) {
                     Circle().fill(theme.primaryColor).frame(width: 12, height: 12)
                     Text("主色调已与状态栏/主界面全链路同频")
@@ -1659,9 +1844,7 @@ struct YumiScriptIDEView: View {
     private var linterStatusBar: some View {
         HStack(spacing: 8) {
             HStack(spacing: 4) {
-                Circle()
-                    .fill(isCompileSuccess ? Color.green : Color.red)
-                    .frame(width: 6, height: 6)
+                Circle().fill(isCompileSuccess ? Color.green : Color.red).frame(width: 6, height: 6)
                 Text(isCompileSuccess ? "编译校验通过" : "发现 \(compilationDiagnostics.filter { $0.severity == .error }.count) 个语法错误")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(isCompileSuccess ? .green : .red)
@@ -1683,10 +1866,8 @@ struct YumiScriptIDEView: View {
             Spacer()
             
             HStack(spacing: 4) {
-                Image(systemName: "bolt.badge.clock.fill")
-                    .font(.system(size: 9))
-                    .foregroundStyle(.yellow)
-                Text("端侧 NPU 神经代码补全引擎已激活")
+                Image(systemName: "bolt.badge.clock.fill").font(.system(size: 9)).foregroundStyle(.yellow)
+                Text("端侧 NPU 神经全彩代码补全已激活")
                     .font(.system(size: 9.5))
                     .foregroundStyle(.secondary)
             }
@@ -1701,30 +1882,23 @@ struct YumiScriptIDEView: View {
     private var newExtensionSheet: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("开发自制 IDE 插件扩展")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(theme.primaryColor)
+                Text("开发自制 IDE 插件扩展").font(.system(size: 14, weight: .bold)).foregroundStyle(theme.primaryColor)
                 Spacer()
                 Button("关闭") { showNewExtSheet = false }
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("扩展积木标题:")
-                    .font(.system(size: 11, weight: .semibold))
-                TextField("例如: 自动归档日志", text: $newExtTitle)
-                    .textFieldStyle(.roundedBorder)
+                Text("扩展积木标题:").font(.system(size: 11, weight: .semibold))
+                TextField("例如: 自动归档日志", text: $newExtTitle).textFieldStyle(.roundedBorder)
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("扩展积木描述:")
-                    .font(.system(size: 11, weight: .semibold))
-                TextField("简要说明功能", text: $newExtDesc)
-                    .textFieldStyle(.roundedBorder)
+                Text("扩展积木描述:").font(.system(size: 11, weight: .semibold))
+                TextField("简要说明功能", text: $newExtDesc).textFieldStyle(.roundedBorder)
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("底层 YumiScript 脚本代码:")
-                    .font(.system(size: 11, weight: .semibold))
+                Text("底层 YumiScript 脚本代码:").font(.system(size: 11, weight: .semibold))
                 TextEditor(text: $newExtCode)
                     .font(.system(size: 11, design: .monospaced))
                     .frame(height: 120)
@@ -1756,10 +1930,7 @@ struct YumiScriptIDEView: View {
     
     private func toolboxGroup<Content: View>(title: String, color: Color, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 10.5, weight: .bold, design: .rounded))
-                .foregroundStyle(color)
-            
+            Text(title).font(.system(size: 10.5, weight: .bold, design: .rounded)).foregroundStyle(color)
             content()
         }
         .padding(8)
@@ -1783,12 +1954,8 @@ struct YumiScriptIDEView: View {
                                 .font(.system(size: 11, weight: manager.activePluginId == plugin.id ? .semibold : .regular))
                                 .lineLimit(1)
                             
-                            Button(action: {
-                                manager.closeTab(id: plugin.id)
-                            }) {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 9))
-                                    .foregroundStyle(.secondary)
+                            Button(action: { manager.closeTab(id: plugin.id) }) {
+                                Image(systemName: "xmark").font(.system(size: 9)).foregroundStyle(.secondary)
                             }
                             .buttonStyle(.plain)
                         }
@@ -1800,14 +1967,10 @@ struct YumiScriptIDEView: View {
                             Color.clear
                         )
                         .contentShape(Rectangle())
-                        .onTapGesture {
-                            manager.switchToFile(plugin)
-                        }
+                        .onTapGesture { manager.switchToFile(plugin) }
                     }
                     
-                    Button(action: {
-                        manager.createNewBlankTab()
-                    }) {
+                    Button(action: { manager.createNewBlankTab() }) {
                         Image(systemName: "plus")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
@@ -1830,13 +1993,10 @@ struct YumiScriptIDEView: View {
                     .padding(.vertical, 3)
                     .background(RoundedRectangle(cornerRadius: 4).fill(Color(nsColor: .controlBackgroundColor)))
                 
-                Button(action: {
-                    runScriptTest()
-                }) {
+                Button(action: { runScriptTest() }) {
                     HStack(spacing: 4) {
                         Image(systemName: isRunningTest ? "arrow.triangle.2.circlepath" : "play.fill")
-                        Text("运行")
-                            .font(.system(size: 11, weight: .bold))
+                        Text("运行").font(.system(size: 11, weight: .bold))
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -1845,13 +2005,10 @@ struct YumiScriptIDEView: View {
                 }
                 .buttonStyle(.plain)
                 
-                Button(action: {
-                    savePlugin()
-                }) {
+                Button(action: { savePlugin() }) {
                     HStack(spacing: 4) {
                         Image(systemName: "square.and.arrow.down.fill")
-                        Text("保存")
-                            .font(.system(size: 11, weight: .bold))
+                        Text("保存").font(.system(size: 11, weight: .bold))
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -1871,9 +2028,7 @@ struct YumiScriptIDEView: View {
         VStack(spacing: 0) {
             HStack {
                 HStack(spacing: 6) {
-                    Circle()
-                        .fill(isRunningTest ? Color.orange : Color.green)
-                        .frame(width: 7, height: 7)
+                    Circle().fill(isRunningTest ? Color.orange : Color.green).frame(width: 7, height: 7)
                     Text("执行日志输出 (Console)")
                         .font(.system(size: 10.5, weight: .bold, design: .monospaced))
                         .foregroundStyle(theme.primaryColor)
@@ -1881,18 +2036,14 @@ struct YumiScriptIDEView: View {
                 
                 Spacer()
                 
-                Button("清空") {
-                    testLogs = ""
-                }
-                .font(.system(size: 10))
+                Button("清空") { testLogs = "" }.font(.system(size: 10))
                 
                 Button(action: {
                     let pb = NSPasteboard.general
                     pb.clearContents()
                     pb.setString(testLogs, forType: .string)
                 }) {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 10))
+                    Image(systemName: "doc.on.doc").font(.system(size: 10))
                 }
                 .buttonStyle(.plain)
                 .help("复制日志")
@@ -1918,7 +2069,7 @@ struct YumiScriptIDEView: View {
         HStack(spacing: 12) {
             HStack(spacing: 4) {
                 Circle().fill(Color.green).frame(width: 6, height: 6)
-                Text("YumiScript v6.3 (原生极速响应引擎)")
+                Text("YumiScript v6.4 (全彩语法高亮)")
                     .font(.system(size: 9.5, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
