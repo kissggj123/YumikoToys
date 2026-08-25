@@ -230,14 +230,11 @@ enum YumiRegexes {
 // MARK: - 专业级彩色高亮 NSTextView 控件
 
 final class YumiColorfulTextView: NSTextView {
-    var onContentChanged: ((String) -> Void)?
     var onTabRequested: (() -> Bool)?
-    private var isHighlighting = false
-    /// 程序化设置文本期间屏蔽 didChangeText 回调，打断 SwiftUI binding 死循环
+    /// 程序化设置文本时为 true，屏蔽 NSTextViewDelegate.textDidChange 回调防止死循环
     var isSettingText = false
     
     override func keyDown(with event: NSEvent) {
-        // Tab 键触发神经补全 (KeyCode 48)
         if event.keyCode == 48 {
             if let handler = onTabRequested, handler() { return }
             if shouldChangeText(in: selectedRange(), replacementString: "    ") {
@@ -249,36 +246,17 @@ final class YumiColorfulTextView: NSTextView {
         super.keyDown(with: event)
     }
     
-    override func didChangeText() {
-        super.didChangeText()
-        guard !isHighlighting else { return }
-        guard !isSettingText else { return }  // ← 屏蔽程序化设置期间的回调，终止死循环
-        highlightSyntax()
-        onContentChanged?(string)
-    }
-    
-    /// 程序化设置文本（从外部 binding 推入）
+    /// 程序化设置文本 — 使用 self.string= 确保 NSTextView 正确刷新布局和显示
     func setEditorText(_ newText: String) {
         guard string != newText else { return }
-        guard let storage = textStorage else { return }
-        
-        let prevSel = selectedRange()
-        let nsNew = newText as NSString
-        
-        // 开始设置期间屏蔽 didChangeText 回调
         isSettingText = true
-        storage.beginEditing()
-        storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: newText)
-        storage.endEditing()
+        string = newText   // AppKit 推荐的程序化设置方式，正确更新 TextContainer 布局
         isSettingText = false
-        
-        // 单独触发高亮（不通过 didChangeText）
-        highlightSyntax()
-        
-        // 恢复光标位置
-        let safeLoc = min(prevSel.location, nsNew.length)
-        let safeLen = min(prevSel.length, max(0, nsNew.length - safeLoc))
-        setSelectedRange(NSRange(location: safeLoc, length: safeLen))
+        highlightSyntax() // string= 会清除所有 attributed 属性，需要重新高亮
+        // 光标移到末尾
+        let end = (newText as NSString).length
+        setSelectedRange(NSRange(location: end, length: 0))
+        scrollToEndOfDocument(nil)
     }
     
     func highlightSyntax() {
@@ -287,72 +265,48 @@ final class YumiColorfulTextView: NSTextView {
         let fullRange = NSRange(location: 0, length: (text as NSString).length)
         guard fullRange.length > 0 else { return }
         
-        isHighlighting = true
         storage.beginEditing()
-        
-        let fontSize: CGFloat = 13.5
-        let defaultFont = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
-        let boldFont = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .bold)
-        let baseColor = NSColor(white: 0.94, alpha: 1.0)
-        
-        storage.setAttributes([.font: defaultFont, .foregroundColor: baseColor], range: fullRange)
-        
-        if let regex = YumiRegexes.numberRegex {
-            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
-                if let r = m?.range { storage.addAttribute(.foregroundColor, value: NSColor(red: 0.40, green: 0.85, blue: 0.95, alpha: 1.0), range: r) }
+        let sz: CGFloat = 13.5
+        let def = NSFont.monospacedSystemFont(ofSize: sz, weight: .regular)
+        let bold = NSFont.monospacedSystemFont(ofSize: sz, weight: .bold)
+        storage.setAttributes([.font: def, .foregroundColor: NSColor(white: 0.94, alpha: 1.0)], range: fullRange)
+        YumiRegexes.numberRegex?.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+            if let r = m?.range { storage.addAttribute(.foregroundColor, value: NSColor(red: 0.40, green: 0.85, blue: 0.95, alpha: 1.0), range: r) }
+        }
+        YumiRegexes.keywordRegex?.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+            if let r = m?.range {
+                storage.addAttribute(.foregroundColor, value: NSColor(red: 0.82, green: 0.48, blue: 1.0, alpha: 1.0), range: r)
+                storage.addAttribute(.font, value: bold, range: r)
             }
         }
-        if let regex = YumiRegexes.keywordRegex {
-            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
-                if let r = m?.range {
-                    storage.addAttribute(.foregroundColor, value: NSColor(red: 0.82, green: 0.48, blue: 1.0, alpha: 1.0), range: r)
-                    storage.addAttribute(.font, value: boldFont, range: r)
-                }
+        YumiRegexes.subcommandRegex?.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+            if let r = m?.range {
+                storage.addAttribute(.foregroundColor, value: NSColor(red: 0.35, green: 0.78, blue: 1.0, alpha: 1.0), range: r)
+                storage.addAttribute(.font, value: bold, range: r)
             }
         }
-        if let regex = YumiRegexes.subcommandRegex {
-            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
-                if let r = m?.range {
-                    storage.addAttribute(.foregroundColor, value: NSColor(red: 0.35, green: 0.78, blue: 1.0, alpha: 1.0), range: r)
-                    storage.addAttribute(.font, value: boldFont, range: r)
-                }
-            }
+        YumiRegexes.varRegex?.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+            if let r = m?.range { storage.addAttribute(.foregroundColor, value: NSColor(red: 1.0, green: 0.76, blue: 0.28, alpha: 1.0), range: r) }
         }
-        if let regex = YumiRegexes.varRegex {
-            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
-                if let r = m?.range { storage.addAttribute(.foregroundColor, value: NSColor(red: 1.0, green: 0.76, blue: 0.28, alpha: 1.0), range: r) }
-            }
+        YumiRegexes.stringRegex?.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+            if let r = m?.range { storage.addAttribute(.foregroundColor, value: NSColor(red: 0.98, green: 0.65, blue: 0.38, alpha: 1.0), range: r) }
         }
-        if let regex = YumiRegexes.stringRegex {
-            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
-                if let r = m?.range { storage.addAttribute(.foregroundColor, value: NSColor(red: 0.98, green: 0.65, blue: 0.38, alpha: 1.0), range: r) }
-            }
+        YumiRegexes.commentRegex?.enumerateMatches(in: text, range: fullRange) { m, _, _ in
+            if let r = m?.range { storage.addAttribute(.foregroundColor, value: NSColor(red: 0.45, green: 0.82, blue: 0.52, alpha: 1.0), range: r) }
         }
-        if let regex = YumiRegexes.commentRegex {
-            regex.enumerateMatches(in: text, range: fullRange) { m, _, _ in
-                if let r = m?.range { storage.addAttribute(.foregroundColor, value: NSColor(red: 0.45, green: 0.82, blue: 0.52, alpha: 1.0), range: r) }
-            }
-        }
-        
         storage.endEditing()
-        isHighlighting = false
     }
     
     // 拖拽支持
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { .copy }
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { .copy }
-    
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         let pb = sender.draggingPasteboard
-        var draggedStr = pb.string(forType: .string)
+        let code = pb.string(forType: .string)
             ?? pb.string(forType: NSPasteboard.PasteboardType("public.utf8-plain-text"))
-        if draggedStr == nil {
-            draggedStr = pb.pasteboardItems?.compactMap {
-                $0.string(forType: .string) ?? $0.string(forType: NSPasteboard.PasteboardType("public.utf8-plain-text"))
-            }.first
-        }
-        guard let code = draggedStr else { return false }
-        YumiScriptIDEManager.shared.insertSnippet(code)
+            ?? pb.pasteboardItems?.compactMap { $0.string(forType: .string) }.first
+        guard let c = code else { return false }
+        YumiScriptIDEManager.shared.insertSnippet(c)
         return true
     }
 }
@@ -370,7 +324,7 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
         scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = true
+        scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
         scrollView.drawsBackground = false
@@ -378,7 +332,7 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
         let textView = YumiColorfulTextView()
         textView.isEditable = true
         textView.isSelectable = true
-        textView.isRichText = false
+        textView.isRichText = true
         textView.allowsUndo = true
         textView.font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
         textView.textColor = NSColor(white: 0.94, alpha: 1.0)
@@ -389,51 +343,64 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
         textView.isAutomaticSpellingCorrectionEnabled = false
-        textView.registerForDraggedTypes([
-            .string,
-            NSPasteboard.PasteboardType("public.utf8-plain-text"),
-            NSPasteboard.PasteboardType("public.plain-text"),
-            NSPasteboard.PasteboardType("NSStringPboardType")
-        ])
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.registerForDraggedTypes([.string, NSPasteboard.PasteboardType("public.utf8-plain-text")])
         
-        let coord = context.coordinator
-        // 用户手动键入时：将 NSTextView 当前文本写回 SwiftUI binding
-        textView.onContentChanged = { [weak coord] newText in
-            coord?.isUpdatingFromBinding = false  // 确认此次是用户输入
-            coord?.parent.text = newText
-        }
-        textView.onTabRequested = { [weak coord, weak textView] in
-            guard let tv = textView, let c = coord else { return false }
+        // NSTextViewDelegate via Coordinator 处理用户输入同步
+        textView.delegate = context.coordinator
+        context.coordinator.textView = textView
+        
+        textView.onTabRequested = { [weak coord = context.coordinator, weak textView] in
+            guard let c = coord, let tv = textView ?? c.textView else { return false }
             return c.handleTabCompletion(textView: tv)
         }
         
-        coord.textView = textView
-        // 初始内容
-        if !text.isEmpty {
-            textView.setEditorText(text)
-        }
+        // 注册到 Manager 以便 insertSnippet 直接推送（绕过 SwiftUI updateNSView）
+        YumiScriptIDEManager.shared.activeTextView = textView
+        
+        if !text.isEmpty { textView.setEditorText(text) }
         
         scrollView.documentView = textView
         return scrollView
     }
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
-        // 直接使用 coordinator 中存储的强引用，同步推入，不用 async
-        // isSettingText 标志位已在 setEditorText 内部屏蔽了 didChangeText 回调，不会产生循环
+        // 保持 activeTextView 引用最新
+        if let tv = context.coordinator.textView {
+            if YumiScriptIDEManager.shared.activeTextView !== tv {
+                YumiScriptIDEManager.shared.activeTextView = tv
+            }
+        }
+        // 辅助路径：若 binding 与 NSTextView 不一致且非用户输入引起，则同步
         let newText = text
         guard let tv = context.coordinator.textView else { return }
         guard tv.string != newText else { return }
-        context.coordinator.isUpdatingFromBinding = true
+        guard !context.coordinator.isHandlingUserInput else { return }
         tv.setEditorText(newText)
-        context.coordinator.isUpdatingFromBinding = false
     }
     
-    class Coordinator: NSObject {
+    // MARK: Coordinator (NSTextViewDelegate)
+    class Coordinator: NSObject, NSTextViewDelegate {
         var parent: YumiColorfulCodeEditor
         weak var textView: YumiColorfulTextView?
-        var isUpdatingFromBinding = false
+        var isHandlingUserInput = false
         
         init(_ parent: YumiColorfulCodeEditor) { self.parent = parent }
+        
+        func textDidChange(_ notification: Notification) {
+            guard let tv = notification.object as? YumiColorfulTextView else { return }
+            guard !tv.isSettingText else { return }
+            isHandlingUserInput = true
+            tv.highlightSyntax()
+            parent.text = tv.string
+            isHandlingUserInput = false
+        }
         
         func handleTabCompletion(textView: YumiColorfulTextView) -> Bool {
             let cursorLoc = textView.selectedRange().location != NSNotFound
@@ -442,20 +409,14 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
             let nsStr = textView.string as NSString
             let lineRange = nsStr.lineRange(for: NSRange(location: cursorLoc, length: 0))
             let currentLine = nsStr.substring(with: lineRange).trimmingCharacters(in: .whitespacesAndNewlines)
-            
             guard let suggestion = YumiScriptNeuralEngine.shared.inferCompletion(
-                currentLine: currentLine,
-                fullScript: textView.string
+                currentLine: currentLine, fullScript: textView.string
             ) else { return false }
-            
             let newString = nsStr.replacingCharacters(in: lineRange, with: suggestion.completion + "\n")
-            let newCursorLoc = lineRange.location + (suggestion.completion as NSString).length + 1
-            
-            // 直接设置 NSTextView（已有 isSettingText 屏蔽），再同步写回 binding
+            let newCursorLoc = min(lineRange.location + (suggestion.completion as NSString).length + 1, (newString as NSString).length)
             textView.setEditorText(newString)
-            textView.setSelectedRange(NSRange(location: min(newCursorLoc, (newString as NSString).length), length: 0))
+            textView.setSelectedRange(NSRange(location: newCursorLoc, length: 0))
             parent.text = newString
-            
             parent.suggestionToast = "⚡ Tab 神经补全: \(suggestion.description)"
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
                 if self?.parent.suggestionToast.contains(suggestion.description) == true {
@@ -466,7 +427,6 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
         }
     }
 }
-
 
 // MARK: - 上下文感知端侧 NPU 神经代码补全推理引擎 (Context-Aware Neural Engine)
 
@@ -652,6 +612,9 @@ final class YumiScriptIDEManager: ObservableObject {
     private let customBlocksKey = "YumikoToys_UserCustomIDEBlocks_v1"
     private var idePanel: NSWindow?
     
+    /// 直接引用当前活跃的 NSTextView，insertSnippet 通过此引用绕过 SwiftUI binding 直接推送内容
+    weak var activeTextView: YumiColorfulTextView?
+    
     private init() {
         loadCustomBlocks()
     }
@@ -741,13 +704,15 @@ final class YumiScriptIDEManager: ObservableObject {
             editingPlugin.scriptContent = cleanSnippet + "\n"
         } else {
             var current = editingPlugin.scriptContent
-            if !current.hasSuffix("\n") {
-                current += "\n"
-            }
+            if !current.hasSuffix("\n") { current += "\n" }
             current += cleanSnippet + "\n"
             editingPlugin.scriptContent = current
         }
         syncCurrentEditingToOpenList()
+        
+        // 直接推送到 NSTextView，完全不依赖 SwiftUI updateNSView 的可靠性
+        let newContent = editingPlugin.scriptContent
+        activeTextView?.setEditorText(newContent)
     }
     
     func addCustomBlock(_ block: CustomIDEBlock) {
