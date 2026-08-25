@@ -2,16 +2,22 @@
 //  YumiScriptEngine.swift
 //  YumikoToys
 //
-//  自研 YumiScript 脚本编译与解析器（v1.0.0）
+//  自研 YumiScript 核心脚本编译与解析执行引擎（v5.0.0）
+//  支持：AI大模型调用、系统API深度控制、视觉OCR识别、语音合成TTS、HTTP网络请求、自制插件与宏过程
 //
 
 import Foundation
 import AppKit
 import UserNotifications
+import Vision
+import AVFoundation
 
 /// YumiScript 核心执行引擎
 @MainActor
 final class YumiScriptEngine {
+    
+    /// 自定义宏过程存储表：宏名称 -> 脚本行
+    private static var customMacros: [String: [String]] = [:]
     
     /// 执行一段 YumiScript 脚本并返回包含所有日志信息的输出文本
     static func execute(_ script: String) async -> String {
@@ -20,10 +26,14 @@ final class YumiScriptEngine {
         var lastOutput: String = ""
         var userVariables: [String: String] = [:]
         
-        logs.append("=== YumiScript Engine v3.0.0 (支持自定义变量) ===")
+        logs.append("=== YumiScript Engine v5.0 (AI Copilot & Advanced System APIs) ===")
         logs.append("开始执行脚本，总行数: \(lines.count)")
         
-        for (index, line) in lines.enumerated() {
+        var lineIndex = 0
+        while lineIndex < lines.count {
+            let line = lines[lineIndex]
+            lineIndex += 1
+            
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
             
             // 跳过空行和注释行
@@ -31,7 +41,26 @@ final class YumiScriptEngine {
                 continue
             }
             
-            logs.append("[\(index + 1)] 执行: \(trimmed)")
+            // 0. 支持定义宏 / 插件过程 (def my_action ... end)
+            if trimmed.lowercased().hasPrefix("def ") {
+                let macroName = String(trimmed.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    .replacingOccurrences(of: "{", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                var macroLines: [String] = []
+                while lineIndex < lines.count {
+                    let subLine = lines[lineIndex]
+                    lineIndex += 1
+                    let subTrim = subLine.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if subTrim == "end" || subTrim == "}" {
+                        break
+                    }
+                    macroLines.append(subLine)
+                }
+                customMacros[macroName] = macroLines
+                logs.append(" 注册自定义插件过程: [\(macroName)] (\(macroLines.count) 行)")
+                continue
+            }
+            
+            logs.append("[\(lineIndex)] 执行: \(trimmed)")
             
             // 1. 检查是否为变量赋值语句 (var a = 123, let b = "abc", set c = ..., key = value)
             if let (varName, varExpr) = parseVariableAssignment(trimmed) {
@@ -44,26 +73,131 @@ final class YumiScriptEngine {
             
             // 2. 解析指令与原始参数
             let parts = trimmed.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
-            guard let cmdToken = parts.first else { continue }
-            let command = cmdToken.lowercased()
-            let rawArgs = parts.count > 1 ? String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
+            guard let firstPart = parts.first else { continue }
+            let command = String(firstPart).lowercased()
+            let rawArgs = parts.count > 1 ? String(parts[1]) : ""
             
+            // 3. 分发指令执行
             switch command {
+            // MARK: - 调用自定义宏 / 插件过程 (call macro_name)
+            case "call", "run":
+                let macroName = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                if let macroBody = customMacros[macroName] {
+                    logs.append(" 正在调用插件过程 [\(macroName)]...")
+                    let subLogs = await execute(macroBody.joined(separator: "\n"))
+                    logs.append(" 过程 [\(macroName)] 执行完成:\n\(subLogs)")
+                } else {
+                    logs.append(" 错误: 未找到名为 \"\(macroName)\" 的自定义插件过程")
+                }
+                
+            // MARK: - AI 大模型指令 (ai / ask / glm)
+            case "ai", "ask", "glm":
+                let prompt = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                guard !prompt.isEmpty else {
+                    logs.append(" 错误: ai 命令缺少提示词参数")
+                    continue
+                }
+                logs.append(" 正在请求 AI 大模型分析处理...")
+                do {
+                    let aiResponse = try await DependencyContainer.shared.glmService.sendMessage(
+                        prompt,
+                        context: [],
+                        saveToHistory: false
+                    )
+                    let cleanResp = aiResponse.trimmingCharacters(in: .whitespacesAndNewlines)
+                    lastOutput = cleanResp
+                    logs.append(" 🤖 AI 响应成功 (共 \(cleanResp.count) 字):\n\(cleanResp)")
+                } catch {
+                    let fallbackMsg = "AI 服务响应异常: \(error.localizedDescription)"
+                    lastOutput = fallbackMsg
+                    logs.append(" ⚠️ \(fallbackMsg)")
+                }
+                
+            // MARK: - 语音合成 TTS (tts / say / speak)
+            case "tts", "say", "speak":
+                let textToSay = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                guard !textToSay.isEmpty else {
+                    logs.append(" 错误: tts 命令缺少朗读文本")
+                    continue
+                }
+                let synthesizer = NSSpeechSynthesizer()
+                synthesizer.startSpeaking(textToSay)
+                lastOutput = textToSay
+                logs.append(" 🗣️ 语音朗读: \"\(textToSay)\"")
+                
+            // MARK: - 视觉 OCR 文字识别 (ocr)
+            case "ocr":
+                let pathArg = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                var imageToProcess: NSImage? = nil
+                
+                if pathArg.isEmpty {
+                    // 默认截取当前主屏幕进行 OCR
+                    let screenRes = await ScreenMediaHelper.shared.captureFullscreenAsync(targetPath: nil)
+                    if let savedPath = screenRes.path {
+                        imageToProcess = NSImage(contentsOfFile: savedPath)
+                    }
+                } else {
+                    let expanded = (pathArg as NSString).expandingTildeInPath
+                    imageToProcess = NSImage(contentsOfFile: expanded)
+                }
+                
+                if let nsImg = imageToProcess, let cgImg = nsImg.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+                    let ocrResult = await performOCR(on: cgImg)
+                    lastOutput = ocrResult
+                    logs.append(" 👁️ OCR 识别结果:\n\(ocrResult)")
+                } else {
+                    lastOutput = "OCR 读取图像失败"
+                    logs.append(" ⚠️ OCR 处理失败：未获取到有效图像")
+                }
+                
+            // MARK: - HTTP 网络请求 (http get / http post)
+            case "http", "fetch":
+                let argStr = interpolateVariables(rawArgs, variables: userVariables, lastOutput: lastOutput)
+                let res = await performHttpRequest(argStr)
+                lastOutput = res
+                logs.append(" 🌐 HTTP 响应:\n\(res)")
+                
+            // MARK: - 交互式模态弹窗与输入 (alert / choose)
+            case "alert":
+                let (title, message) = parseNotificationArgs(rawArgs)
+                let finalTitle = interpolateVariables(title, variables: userVariables, lastOutput: lastOutput)
+                let finalMsg = interpolateVariables(message.isEmpty ? "$OUTPUT" : message, variables: userVariables, lastOutput: lastOutput)
+                let alert = NSAlert()
+                alert.messageText = finalTitle.isEmpty ? "YumiScript 提示" : finalTitle
+                alert.informativeText = finalMsg
+                alert.addButton(withTitle: "确定")
+                alert.addButton(withTitle: "取消")
+                let response = alert.runModal()
+                lastOutput = (response == .alertFirstButtonReturn) ? "确定" : "取消"
+                logs.append(" 💬 模态弹窗用户选择: \(lastOutput)")
+                
+            case "choose", "select":
+                let optionsRaw = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
+                let options = optionsRaw.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                if let chosen = await promptChoose(options: options) {
+                    lastOutput = chosen
+                    logs.append(" 📋 用户选择项: \"\(chosen)\"")
+                } else {
+                    lastOutput = "未选择"
+                    logs.append(" 📋 用户取消了选择")
+                }
+                
+            // MARK: - 启动应用
             case "launch":
                 let appName = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
                 guard !appName.isEmpty else {
-                    logs.append(" 错误: launch 命令缺少应用名称参数")
+                    logs.append(" 错误: launch 命令缺少应用名称")
                     continue
                 }
-                let resolvedPath = Self.resolveInstalledAppPath(named: appName)
-                if resolvedPath == nil {
+                
+                let resolvedPath = resolveInstalledAppPath(appName)
+                guard let safeResolvedPath = resolvedPath else {
                     logs.append(" 启动失败: 找不到应用 \"\(appName)\"（已搜索 /Applications、/System/Applications 和已安装的 bundle id）")
                     logs.append(" 提示: 请确认应用名拼写正确，且应用已安装")
                     continue
                 }
 
                 let allowMultiple = DependencyContainer.shared.settingsService.settings.allowMultipleInstances
-                guard let safeResolvedPath = resolvedPath else { continue }
                 let url = URL(fileURLWithPath: safeResolvedPath)
                 var success = false
 
@@ -72,16 +206,14 @@ final class YumiScriptEngine {
                     let process = Process()
                     process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
                     process.arguments = ["-n", safeResolvedPath]
-                    do {
-                        success = try await withCheckedContinuation { continuation in
-                            process.terminationHandler = { p in
-                                continuation.resume(returning: p.terminationStatus == 0)
-                            }
-                            do {
-                                try process.run()
-                            } catch {
-                                continuation.resume(returning: false)
-                            }
+                    success = await withCheckedContinuation { continuation in
+                        process.terminationHandler = { p in
+                            continuation.resume(returning: p.terminationStatus == 0)
+                        }
+                        do {
+                            try process.run()
+                        } catch {
+                            continuation.resume(returning: false)
                         }
                     }
                 }
@@ -104,7 +236,7 @@ final class YumiScriptEngine {
                 
                 if success {
                     lastOutput = "已启动 \(appName)"
-                    logs.append(" 启动应用 \"\(appName)\" 成功\(allowMultiple ? " [多开独立实例]" : "")（\(resolvedPath ?? "")）")
+                    logs.append(" 启动应用 \"\(appName)\" 成功\(allowMultiple ? " [多开独立实例]" : "")（\(safeResolvedPath)）")
                 } else {
                     logs.append(" 启动失败，改用 AppleScript 兜底…")
                     let appleScript = "tell application \"\(appName.replacingOccurrences(of: "\"", with: "\\\""))\" to activate"
@@ -154,9 +286,9 @@ final class YumiScriptEngine {
                 lastOutput = clip
                 logs.append(" 读取剪贴板内容（共 \(clip.count) 字）: \(clip.prefix(60))")
                 
+            // MARK: - 系统高级控制与硬件 API
             case "sys", "system", "ping":
                 var targetArg = interpolateVariables(rawArgs, variables: userVariables, lastOutput: lastOutput).trimmingCharacters(in: .whitespacesAndNewlines)
-                // 如果参数本身是一个变量名（未加 $），尝试从变量表中提取
                 if let varValue = userVariables[targetArg] {
                     targetArg = varValue
                 }
@@ -195,6 +327,53 @@ final class YumiScriptEngine {
                     let diskRes = await runRawShell("df -h / | awk 'NR==2 {print \"总量 \" $2 \", 已用 \" $3 \" (\" $5 \"), 可用 \" $4}'")
                     lastOutput = "主磁盘空间: " + diskRes
                     logs.append(" 磁盘空间: \(lastOutput)")
+                } else if lowerArg == "battery" {
+                    let battRes = await runRawShell("pmset -g batt | grep -o '[0-9]*%; [a-zA-Z]*' || pmset -g batt")
+                    lastOutput = "电池状态: " + battRes
+                    logs.append(" 🔋 \(lastOutput)")
+                } else if lowerArg.hasPrefix("volume") {
+                    let volArg = lowerArg.replacingOccurrences(of: "volume", with: "").trimmingCharacters(in: .whitespaces)
+                    if let volVal = Int(volArg) {
+                        let _ = await SkillService.shared.runAppleScript("set volume output volume \(max(0, min(100, volVal)))")
+                        lastOutput = "音量已设置为 \(volVal)%"
+                    } else if volArg == "mute" || volArg == "togglemute" {
+                        let _ = await SkillService.shared.runAppleScript("""
+                        set curMute to output muted of (get volume settings)
+                        set volume output muted (not curMute)
+                        """)
+                        lastOutput = "已切换系统静音状态 🔇"
+                    } else {
+                        let curVol = await SkillService.shared.runAppleScript("output volume of (get volume settings)")
+                        lastOutput = "当前音量: \(curVol.trimmingCharacters(in: .whitespacesAndNewlines))%"
+                    }
+                    logs.append(" 🔊 \(lastOutput)")
+                } else if lowerArg.hasPrefix("brightness") {
+                    let bArg = lowerArg.replacingOccurrences(of: "brightness", with: "").trimmingCharacters(in: .whitespaces)
+                    if let bVal = Double(bArg) {
+                        let percent = max(0.0, min(1.0, bVal / 100.0))
+                        let _ = await runRawShell("brightness \(percent) 2>/dev/null || true")
+                        lastOutput = "屏幕亮度已调至 \(Int(bVal))%"
+                    } else {
+                        lastOutput = "屏幕亮度调节完成"
+                    }
+                    logs.append(" 🔆 \(lastOutput)")
+                } else if lowerArg == "beep" {
+                    NSSound.beep()
+                    lastOutput = "已播放蜂鸣提示音 🔔"
+                    logs.append(" 🔔 \(lastOutput)")
+                } else if lowerArg.hasPrefix("finder") || lowerArg.hasPrefix("reveal") {
+                    let path = targetArg.replacingOccurrences(of: "finder", with: "").replacingOccurrences(of: "reveal", with: "").trimmingCharacters(in: .whitespaces)
+                    let expanded = (path as NSString).expandingTildeInPath
+                    NSWorkspace.shared.selectFile(expanded, inFileViewerRootedAtPath: "")
+                    lastOutput = "已在访达中定位: \(expanded)"
+                    logs.append(" 📁 \(lastOutput)")
+                } else if lowerArg.hasPrefix("trash") {
+                    let path = targetArg.replacingOccurrences(of: "trash", with: "").trimmingCharacters(in: .whitespaces)
+                    let expanded = (path as NSString).expandingTildeInPath
+                    let url = URL(fileURLWithPath: expanded)
+                    try? FileManager.default.trashItem(at: url, resultingItemURL: nil)
+                    lastOutput = "已移入废纸篓: \(expanded)"
+                    logs.append(" 🗑️ \(lastOutput)")
                 } else if lowerArg == "togglemute" || lowerArg == "mute" {
                     let _ = await SkillService.shared.runAppleScript("""
                     set curMute to output muted of (get volume settings)
@@ -291,7 +470,7 @@ final class YumiScriptEngine {
                 let finalTitle = title.isEmpty ? "YumiScript" : title
                 let finalBody = message.isEmpty ? lastOutput : message
 
-                // 1. 弹出专属精美渲染悬浮 HUD 弹窗（支持超长文本、全格式滚动、一键复制，彻底解决通知截断）
+                // 1. 弹出专属精美渲染悬浮 HUD 弹窗
                 PluginResultHUDManager.shared.show(
                     title: finalTitle,
                     message: finalBody,
@@ -338,6 +517,72 @@ final class YumiScriptEngine {
         
         logs.append("执行结束。")
         return logs.joined(separator: "\n")
+    }
+    
+    // MARK: - 视觉 OCR 文字识别引擎
+    
+    private static func performOCR(on cgImage: CGImage) async -> String {
+        await withCheckedContinuation { continuation in
+            let request = VNRecognizeTextRequest { (request, error) in
+                guard let observations = request.results as? [VNRecognizedTextObservation] else {
+                    continuation.resume(returning: "")
+                    return
+                }
+                let text = observations.compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+                continuation.resume(returning: text)
+            }
+            request.recognitionLevel = .accurate
+            request.recognitionLanguages = ["zh-Hans", "zh-Hant", "en-US"]
+            request.usesLanguageCorrection = true
+            
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            do {
+                try handler.perform([request])
+            } catch {
+                continuation.resume(returning: "OCR 识别出错: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // MARK: - HTTP 网络请求处理
+    
+    private static func performHttpRequest(_ raw: String) async -> String {
+        let parts = raw.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+        guard let first = parts.first else { return "HTTP 参数缺失" }
+        
+        let method = String(first).uppercased()
+        let rest = parts.count > 1 ? String(parts[1]) : ""
+        
+        var targetUrlStr = rest
+        var postData: String? = nil
+        
+        if method == "POST" {
+            let postParts = rest.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+            targetUrlStr = String(postParts.first ?? "")
+            postData = postParts.count > 1 ? cleanQuotes(String(postParts[1])) : nil
+        }
+        
+        guard let url = URL(string: cleanQuotes(targetUrlStr)) else {
+            return "无效的 URL: \(targetUrlStr)"
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = (method == "POST") ? "POST" : "GET"
+        request.timeoutInterval = 10.0
+        
+        if let postData = postData {
+            request.httpBody = postData.data(using: .utf8)
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 200
+            let body = String(data: data, encoding: .utf8) ?? "无法解析的二进制响应"
+            return "HTTP \(status):\n\(body)"
+        } catch {
+            return "HTTP 请求失败: \(error.localizedDescription)"
+        }
     }
     
     // MARK: - 原生无包装 Shell 执行 (避免 JSON 污染，采用非阻塞 terminationHandler)
@@ -457,7 +702,6 @@ final class YumiScriptEngine {
         
         // 如果以引号开头
         if trimmed.hasPrefix("\"") {
-            // 寻找第一个结束引号
             let restAfterFirstQuote = trimmed.dropFirst()
             if let endQuoteIdx = restAfterFirstQuote.firstIndex(of: "\"") {
                 let title = String(restAfterFirstQuote[..<endQuoteIdx])
@@ -467,13 +711,27 @@ final class YumiScriptEngine {
             }
         }
         
-        // 否则按第一个空格分割
         let parts = trimmed.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
         if parts.count >= 2 {
             return (cleanQuotes(String(parts[0])), cleanQuotes(String(parts[1])))
         } else {
             return ("YumiScript", cleanQuotes(trimmed))
         }
+    }
+    
+    // MARK: - 交互式菜单选择
+    
+    private static func promptChoose(options: [String]) async -> String? {
+        let joined = options.map { "\"\($0)\"" }.joined(separator: ", ")
+        let script = """
+        choose from list {\(joined)} with prompt "请选择要执行的项目:" default items {item 1 of {\(joined)}}
+        """
+        let res = await SkillService.shared.runAppleScript(script)
+        let trimmed = res.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed == "false" || trimmed.contains("error") || trimmed.isEmpty {
+            return nil
+        }
+        return trimmed
     }
     
     // MARK: - 系统锁屏
@@ -506,33 +764,32 @@ final class YumiScriptEngine {
         return trimmed
     }
 
-    // MARK: - App 启动辅助
-
-    /// 在标准安装目录里找 .app，找不到再用常见 bundle id 兜底。返回 .app 完整路径或 nil。
-    /// 给 launch 用——避免 AppleScript 在主线程弹"定位 App"对话框把整个 App 卡死。
-    private static func resolveInstalledAppPath(named appName: String) -> String? {
-        let trimmedName = appName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return nil }
-
-        // 1) 标准目录精确匹配 / 模糊匹配
-        let dirs = ["/Applications", "/System/Applications", "/System/Library/CoreServices", "/Library/CoreServices"]
-        // 用户家目录 ~/Applications
-        var allDirs = dirs
-        if let home = ProcessInfo.processInfo.environment["HOME"] {
-            allDirs.append("\(home)/Applications")
+    /// 解析已安装应用路径
+    private static func resolveInstalledAppPath(_ appName: String) -> String? {
+        let trimmedName = cleanQuotes(appName)
+        if trimmedName.hasPrefix("/") && FileManager.default.fileExists(atPath: trimmedName) {
+            return trimmedName
         }
+
+        let allDirs = [
+            "/Applications",
+            "/Applications/Utilities",
+            "/System/Applications",
+            "/System/Applications/Utilities",
+            "/System/Library/CoreServices",
+            "/System/Library/CoreServices/Applications",
+            (NSHomeDirectory() as NSString).appendingPathComponent("Applications")
+        ]
 
         for dir in allDirs {
             guard let items = try? FileManager.default.contentsOfDirectory(atPath: dir) else { continue }
             for item in items where item.hasSuffix(".app") {
                 let nameWithoutExt = (item as NSString).deletingPathExtension
-                // 精确匹配（不区分大小写）
                 if nameWithoutExt.caseInsensitiveCompare(trimmedName) == .orderedSame {
                     return (dir as NSString).appendingPathComponent(item)
                 }
             }
         }
-        // 模糊匹配（包含关系）
         for dir in allDirs {
             guard let items = try? FileManager.default.contentsOfDirectory(atPath: dir) else { continue }
             for item in items where item.hasSuffix(".app") {
@@ -544,7 +801,6 @@ final class YumiScriptEngine {
             }
         }
 
-        // 2) 常见 app 名 → bundle id 兜底（解决"Terminal"在 /System/Applications 里叫"终端"中文目录的奇葩情况）
         let knownBundleIds: [String: String] = [
             "Terminal": "com.apple.Terminal",
             "终端": "com.apple.Terminal",
@@ -578,20 +834,11 @@ final class YumiScriptEngine {
         return nil
     }
 
-    /// 把任意字符串 escape 成能塞进 /bin/zsh -c 的安全形式
-    /// 简单做法：单引号包裹 + 把字符串里的单引号替换成 '\''（经典的 shell escape 范式）
-    private static func shellEscape(_ str: String) -> String {
-        let escaped = str.replacingOccurrences(of: "'", with: "'\\''")
-        return "'\(escaped)'"
-    }
-
     /// 双协议混合测速（ICMP Ping + TCP 端口自适应握手，彻底消除超时假象）
     private static func measureNetworkLatency(to target: String) async -> (localIP: String, latency: Double?, isOnline: Bool) {
-        // 1. 获取本地局域网 IP
         let localIP = await runRawShell("ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || ipconfig getifaddr en2 2>/dev/null || echo \"127.0.0.1\"")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // 2. 尝试标准 ICMP Ping (发2次包，超时1.5s，不带 -t 限制)
         let pingRaw = await runRawShell("ping -c 2 -W 1500 \(target) 2>/dev/null")
         if let timeRange = pingRaw.range(of: #"time=([0-9.]+)\s*ms"#, options: .regularExpression) {
             let match = String(pingRaw[timeRange])
@@ -601,7 +848,6 @@ final class YumiScriptEngine {
             }
         }
         
-        // 3. 如果 ICMP 被服务商阻断（如 114.114.114.114 或特定公网 DNS），尝试 TCP 握手 (53 DNS, 80 HTTP, 443 HTTPS, 22 SSH)
         for port in [53, 80, 443, 22] {
             let start = Date()
             let ncRes = await runRawShell("nc -z -G 1.5 \(target) \(port) 2>/dev/null && echo OK")

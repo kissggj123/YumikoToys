@@ -1230,9 +1230,8 @@ struct StatusBarView: View {
                             onScreenshotTriggered?()
                             ScreenMediaHelper.shared.captureTouchBar()
                         })
-                        screenshotButton(title: "脚本 IDE", icon: "terminal.fill", action: {
-                            YumiScriptIDEManager.shared.open(plugin: nil)
-                        })
+                        Color.clear
+                            .frame(height: 1)
                     }
 
                     // TouchBar 截图机型提示（2020 以后机型自带 TouchBar 的不多，给个一键确认按钮）
