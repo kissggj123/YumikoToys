@@ -27,7 +27,7 @@ final class PluginResultHUDManager: ObservableObject {
     private init() {}
     
     /// 展示插件结果悬浮弹窗
-    func show(title: String, message: String, icon: String = "bolt.fill", isSuccess: Bool = true, autoDismissSeconds: Double = 12.0) {
+    func show(title: String, message: String, icon: String = "bolt.fill", isSuccess: Bool = true, autoDismissSeconds: Double = 16.0) {
         self.title = title
         self.message = message
         self.icon = icon
@@ -37,16 +37,21 @@ final class PluginResultHUDManager: ObservableObject {
         
         createOrUpdatePanel()
         
-        // 自动关闭倒计时
+        // 自动关闭倒计时（长文本延长到 30 秒）
+        let dismissTime = message.count > 120 ? max(25.0, autoDismissSeconds) : autoDismissSeconds
         autoDismissTask?.cancel()
-        if autoDismissSeconds > 0 {
+        if dismissTime > 0 {
             autoDismissTask = Task {
-                try? await Task.sleep(nanoseconds: UInt64(autoDismissSeconds * 1_000_000_000))
+                try? await Task.sleep(nanoseconds: UInt64(dismissTime * 1_000_000_000))
                 if !Task.isCancelled {
                     self.dismiss()
                 }
             }
         }
+    }
+    
+    func pauseAutoDismiss() {
+        autoDismissTask?.cancel()
     }
     
     /// 关闭弹窗
@@ -65,8 +70,8 @@ final class PluginResultHUDManager: ObservableObject {
     private func createOrUpdatePanel() {
         if hudPanel == nil {
             let panel = NSPanel(
-                contentRect: NSRect(x: 0, y: 0, width: 390, height: 270),
-                styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless],
+                contentRect: NSRect(x: 0, y: 0, width: 440, height: 380),
+                styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless, .resizable],
                 backing: .buffered,
                 defer: false
             )
@@ -78,6 +83,7 @@ final class PluginResultHUDManager: ObservableObject {
             panel.hasShadow = true
             panel.isMovableByWindowBackground = true
             panel.hidesOnDeactivate = false
+            panel.minSize = NSSize(width: 380, height: 260)
             
             let hostingView = NSHostingView(rootView: PluginResultHUDView(manager: self))
             panel.contentView = hostingView
@@ -89,10 +95,10 @@ final class PluginResultHUDManager: ObservableObject {
         // 定位到主屏幕右上角（状态栏下方）
         if let screen = NSScreen.main {
             let screenRect = screen.visibleFrame
-            let panelWidth: CGFloat = 390
-            let panelHeight: CGFloat = 280
+            let panelWidth: CGFloat = 440
+            let panelHeight: CGFloat = 360
             let x = screenRect.maxX - panelWidth - 20
-            let y = screenRect.maxY - panelHeight - 10
+            let y = screenRect.maxY - panelHeight - 12
             panel.setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
         }
         
@@ -177,33 +183,59 @@ struct PluginResultHUDView: View {
             Divider()
                 .background(Color.primary.opacity(0.08))
             
-            // 结果内容展示区（支持超长文本滚动）
-            ScrollView(.vertical, showsIndicators: true) {
-                Text(manager.message)
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(.primary)
-                    .lineSpacing(4)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(12)
-                    .textSelection(.enabled)
+            // 结果内容展示区（支持超长文本、数千字日志与文件全文查看）
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("行数: \(manager.message.components(separatedBy: .newlines).count) | 字符数: \(manager.message.count)")
+                        .font(.system(size: 9.5, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                    
+                    Spacer()
+                    
+                    if isHovered {
+                        Text("⏳ 已暂停自动关闭")
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(theme.primaryColor)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 6)
+                
+                ScrollView(.vertical, showsIndicators: true) {
+                    Text(manager.message)
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(.primary)
+                        .lineSpacing(4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .textSelection(.enabled)
+                }
+                .frame(minHeight: 120, maxHeight: 240)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.black.opacity(0.05))
+                )
+                .padding(.horizontal, 14)
             }
-            .frame(maxHeight: 150)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.black.opacity(0.04))
-            )
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
             
             // 底部操作栏
-            HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 9))
-                    Text("YumiScript 实时渲染")
-                        .font(.system(size: 10))
+            HStack(spacing: 8) {
+                // 导出为桌面文件按钮
+                Button {
+                    exportToDesktop(title: manager.title, content: manager.message)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 10))
+                        Text("导出到桌面")
+                            .font(.system(size: 10.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.06)))
                 }
-                .foregroundStyle(theme.primaryColor.opacity(0.8))
+                .buttonStyle(.plain)
+                .help("将当前弹窗结果保存为桌面 txt 文件")
                 
                 Spacer()
                 
@@ -219,7 +251,7 @@ struct PluginResultHUDView: View {
                     HStack(spacing: 5) {
                         Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
                             .font(.system(size: 10, weight: .semibold))
-                        Text(isCopied ? "已复制到剪贴板" : "复制完整结果")
+                        Text(isCopied ? "已复制" : "复制全部")
                             .font(.system(size: 11, weight: .semibold))
                     }
                     .foregroundStyle(.white)
@@ -232,14 +264,14 @@ struct PluginResultHUDView: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            .padding(.vertical, 10)
         }
         .background(
             ZStack {
                 VisualEffectBlurRepresentable(material: .hudWindow, blendingMode: .behindWindow)
                 
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(nsColor: .windowBackgroundColor).opacity(0.88))
+                    .fill(Color(nsColor: .windowBackgroundColor).opacity(0.92))
                 
                 // 动态主题渐变流光边框
                 RoundedRectangle(cornerRadius: 16)
@@ -249,13 +281,24 @@ struct PluginResultHUDView: View {
                     )
             }
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: Color.black.opacity(0.25), radius: 16, x: 0, y: 6)
+            .shadow(color: Color.black.opacity(0.28), radius: 18, x: 0, y: 8)
             .shadow(color: theme.primaryColor.opacity(0.25), radius: 10, x: 0, y: 2)
         )
         .padding(6)
         .onHover { hovering in
             isHovered = hovering
+            if hovering {
+                manager.pauseAutoDismiss()
+            }
         }
+    }
+    
+    private func exportToDesktop(title: String, content: String) {
+        let desktopUrl = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSHomeDirectory() + "/Desktop")
+        let filename = "YumiScript_\(title.replacingOccurrences(of: "/", with: "_"))_\(Int(Date().timeIntervalSince1970)).txt"
+        let fileUrl = desktopUrl.appendingPathComponent(filename)
+        try? content.write(to: fileUrl, atomically: true, encoding: .utf8)
+        NSWorkspace.shared.activateFileViewerSelecting([fileUrl])
     }
     
     private func formatTime(_ date: Date) -> String {

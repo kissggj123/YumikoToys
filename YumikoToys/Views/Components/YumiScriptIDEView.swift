@@ -3,20 +3,19 @@
 //  YumikoToys
 //
 //  专业级 VS Code + 捷径 (Apple Shortcuts) 风格 YumiScript Studio 可视化 IDE
-//  重构升级：
-//  1. 专业级全彩语法高亮引擎 (Keywords, Subcommands, Strings, Variables, Comments, Numbers)
-//  2. 独立等宽行号栏与响应式极速双向数据流
-//  3. 点击 ➕、拖拽积木、场景模板秒级上屏并全彩高亮渲染
-//  4. 端侧 NPU 神经推理 Tab 智能代码补全
-//  5. 实时编译校验与错误诊断系统 (Real-time Linter & Diagnostics)
-//  6. 8 大分类超全模块化原子积木库与 10+ 套详尽逐行注释场景示例库
+//  升级特性：
+//  1. 中文全角/智能引号智能预编译与容错归一化，修复引号闭合假阳性报错
+//  2. 上下文感知端侧 NPU 神经推理 Tab 智能补全（插入文件路径后 Tab 自动联想生成自绘制大容量 HUD 渲染预览、AI 总结、剪贴板复制等链路）
+//  3. 专属自绘制大容量通知与 HUD 独立视窗（超长文本无损滚动、一键导出桌面、行数统计、悬停暂停倒计时）
+//  4. 快速「📂 选取文件路径」与「📁 选取文件夹」原生选择器
+//  5. 全光谱专业语法高亮与实时毫秒级预编译诊断
 //
 
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-// MARK: - 实时编译诊断模型与编译器 (Linter & Diagnostic Engine)
+// MARK: - 实时编译诊断模型与预编译器 (Linter & Diagnostic Engine)
 
 struct DiagnosticItem: Identifiable, Equatable, Sendable {
     let id = UUID()
@@ -41,13 +40,34 @@ struct CompilationResult: Sendable {
 }
 
 final class YumiScriptCompiler {
+    /// 智能将中文引号/全角符号归一化为标准代码符号
+    static func normalizeSmartSymbols(_ text: String) -> String {
+        return text
+            .replacingOccurrences(of: "“", with: "\"")
+            .replacingOccurrences(of: "”", with: "\"")
+            .replacingOccurrences(of: "‘", with: "'")
+            .replacingOccurrences(of: "’", with: "'")
+            .replacingOccurrences(of: "：", with: ":")
+            .replacingOccurrences(of: "，", with: ",")
+    }
+    
+    /// 自动格式化并修复脚本中的中文引号等符号
+    static func autoFormatAndFixQuotes(script: String) -> String {
+        let lines = script.components(separatedBy: .newlines)
+        var fixedLines: [String] = []
+        for line in lines {
+            fixedLines.append(normalizeSmartSymbols(line))
+        }
+        return fixedLines.joined(separator: "\n")
+    }
+
     static func compile(script: String) -> CompilationResult {
         let start = Date()
         var diagnostics: [DiagnosticItem] = []
         var logs: [String] = []
         let lines = script.components(separatedBy: .newlines)
         
-        logs.append("▸ [阶段 1/3] 词法分词与语法结构分析...")
+        logs.append("▸ [阶段 1/3] 词法分词与预编译符号归一化分析...")
         var openDefs: [String] = []
         var definedMacros = Set<String>()
         var definedVariables = Set<String>(["OUTPUT", "CLIPBOARD", "DATE", "TIME", "DATETIME", "USER", "HOME"])
@@ -59,24 +79,27 @@ final class YumiScriptCompiler {
                 continue
             }
             
-            // 1. 引号匹配校验
-            let quoteCount = trimmed.filter { $0 == "\"" }.count
+            // 归一化中文与智能引号
+            let normalizedLine = normalizeSmartSymbols(trimmed)
+            
+            // 1. 引号匹配校验（基于归一化后的标准引号）
+            let quoteCount = normalizedLine.filter { $0 == "\"" }.count
             if quoteCount % 2 != 0 {
                 diagnostics.append(DiagnosticItem(
                     line: lineNum,
                     message: "字符串引号未闭合（双引号数量为奇数）",
                     severity: .error,
-                    suggestion: "请为字符串补全成对的英文双引号 \"\""
+                    suggestion: "请为字符串补全成对的双引号 \"\""
                 ))
             }
             
             // 2. 宏定义 (def ... end) 闭合校验
-            if trimmed.lowercased().hasPrefix("def ") {
-                let name = String(trimmed.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
+            if normalizedLine.lowercased().hasPrefix("def ") {
+                let name = String(normalizedLine.dropFirst(4)).trimmingCharacters(in: .whitespacesAndNewlines)
                     .replacingOccurrences(of: "{", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
                 openDefs.append(name)
                 definedMacros.insert(name)
-            } else if trimmed.lowercased() == "end" || trimmed == "}" {
+            } else if normalizedLine.lowercased() == "end" || normalizedLine == "}" {
                 if openDefs.isEmpty {
                     diagnostics.append(DiagnosticItem(
                         line: lineNum,
@@ -90,8 +113,8 @@ final class YumiScriptCompiler {
             }
             
             // 3. 变量赋值语法检测
-            if let eqIdx = trimmed.firstIndex(of: "=") {
-                var varPart = String(trimmed[..<eqIdx])
+            if let eqIdx = normalizedLine.firstIndex(of: "=") {
+                var varPart = String(normalizedLine[..<eqIdx])
                 if varPart.hasPrefix("var ") { varPart = String(varPart.dropFirst(4)) }
                 if varPart.hasPrefix("let ") { varPart = String(varPart.dropFirst(4)) }
                 if varPart.hasPrefix("set ") { varPart = String(varPart.dropFirst(4)) }
@@ -110,7 +133,7 @@ final class YumiScriptCompiler {
             }
             
             // 4. 指令合法性与参数检查
-            let parts = trimmed.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+            let parts = normalizedLine.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
             if let first = parts.first {
                 let cmd = String(first).lowercased()
                 let rest = parts.count > 1 ? String(parts[1]) : ""
@@ -183,7 +206,7 @@ enum YumiRegexes {
     static let numberRegex = try? NSRegularExpression(pattern: #"\b\d+(\.\d+)?\b|\b0x[0-9a-fA-F]+\b"#)
     static let keywordRegex: NSRegularExpression? = {
         let kw = [
-            "file", "app", "yumiko", "sys", "system", "notify", "dialog", "toast", "hud",
+            "file", "app", "yumiko", "sys", "system", "notify", "dialog", "toast", "hud", "preview",
             "input", "prompt", "askinput", "alert", "choose", "select", "tts", "say", "speak",
             "ocr", "ai", "ask", "glm", "http", "fetch", "def", "end", "call", "run",
             "var", "let", "set", "wait", "sleep", "shell", "copy", "paste", "open", "launch", "ping"
@@ -200,7 +223,7 @@ enum YumiRegexes {
         return try? NSRegularExpression(pattern: #"\b("# + subs.joined(separator: "|") + #")\b"#, options: .caseInsensitive)
     }()
     static let varRegex = try? NSRegularExpression(pattern: #"\$[A-Za-z0-9_]+"#)
-    static let stringRegex = try? NSRegularExpression(pattern: #""[^"\\]*(?:\\.[^"\\]*)*""#)
+    static let stringRegex = try? NSRegularExpression(pattern: #"("[^"\\]*(?:\\.[^"\\]*)*"|“[^”\\]*(?:\\.[^”\\]*)*”)"#)
     static let commentRegex = try? NSRegularExpression(pattern: #"(#|//).*$"#, options: .anchorsMatchLines)
 }
 
@@ -430,7 +453,7 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
             let lineRange = nsStr.lineRange(for: NSRange(location: cursorLoc, length: 0))
             let currentLine = nsStr.substring(with: lineRange).trimmingCharacters(in: .whitespacesAndNewlines)
             
-            if let suggestion = YumiScriptNeuralEngine.shared.inferCompletion(for: currentLine) {
+            if let suggestion = YumiScriptNeuralEngine.shared.inferCompletion(currentLine: currentLine, fullScript: textView.string) {
                 let completionWithNewline = suggestion.completion + "\n"
                 let newString = nsStr.replacingCharacters(in: lineRange, with: completionWithNewline)
                 let newCursorLoc = lineRange.location + (suggestion.completion as NSString).length + 1
@@ -440,7 +463,7 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
                 parent.text = newString
                 
                 parent.suggestionToast = "⚡ Tab 神经补全: \(suggestion.description)"
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                     if self.parent.suggestionToast.contains(suggestion.description) {
                         self.parent.suggestionToast = ""
                     }
@@ -452,7 +475,7 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
     }
 }
 
-// MARK: - 端侧 NPU 神经代码补全推理引擎
+// MARK: - 上下文感知端侧 NPU 神经代码补全推理引擎 (Context-Aware Neural Engine)
 
 struct NeuralCompletionSuggestion: Identifiable, Sendable, Equatable {
     let id = UUID()
@@ -466,14 +489,16 @@ struct NeuralCompletionSuggestion: Identifiable, Sendable, Equatable {
 final class YumiScriptNeuralEngine {
     static let shared = YumiScriptNeuralEngine()
     
-    private let templates: [NeuralCompletionSuggestion] = [
+    private let staticTemplates: [NeuralCompletionSuggestion] = [
         NeuralCompletionSuggestion(prefix: "fi", completion: "file write \"~/Desktop/demo.txt\" \"内容\"", fullTemplate: "file write \"~/Desktop/demo.txt\" \"内容\"", description: "覆盖写入文件", category: "文件系统"),
         NeuralCompletionSuggestion(prefix: "file w", completion: "file write \"~/Desktop/demo.txt\" \"内容\"", fullTemplate: "file write \"~/Desktop/demo.txt\" \"内容\"", description: "写入文件", category: "文件系统"),
         NeuralCompletionSuggestion(prefix: "file a", completion: "file append \"~/Desktop/log.txt\" \"[$DATETIME] $OUTPUT\"", fullTemplate: "file append \"~/Desktop/log.txt\" \"[$DATETIME] $OUTPUT\"", description: "追加写入日志", category: "文件系统"),
-        NeuralCompletionSuggestion(prefix: "file r", completion: "file read \"~/Desktop/demo.txt\"", fullTemplate: "file read \"~/Desktop/demo.txt\"", description: "读取文件文本", category: "文件系统"),
+        NeuralCompletionSuggestion(prefix: "file r", completion: "file read \"~/Desktop/demo.txt\"\nhud \"文件内容预览\" \"$OUTPUT\"", fullTemplate: "file read \"~/Desktop/demo.txt\"\nhud \"文件内容预览\" \"$OUTPUT\"", description: "读取文件并在大容量 HUD 中预览", category: "文件系统"),
         NeuralCompletionSuggestion(prefix: "file t", completion: "file trash \"~/Desktop/demo.txt\"", fullTemplate: "file trash \"~/Desktop/demo.txt\"", description: "移入废纸篓", category: "文件系统"),
-        NeuralCompletionSuggestion(prefix: "file l", completion: "file list \"~/Desktop\"", fullTemplate: "file list \"~/Desktop\"", description: "列出目录清单", category: "文件系统"),
+        NeuralCompletionSuggestion(prefix: "file l", completion: "file list \"~/Desktop\"\nhud \"桌面文件清单\" \"$OUTPUT\"", fullTemplate: "file list \"~/Desktop\"\nhud \"桌面文件清单\" \"$OUTPUT\"", description: "列出目录清单并在 HUD 中预览", category: "文件系统"),
         NeuralCompletionSuggestion(prefix: "file m", completion: "file mkdir \"~/Desktop/YumiBackup\"", fullTemplate: "file mkdir \"~/Desktop/YumiBackup\"", description: "创建多级文件夹", category: "文件系统"),
+        NeuralCompletionSuggestion(prefix: "hu", completion: "hud \"自绘制大容量预览\" \"$OUTPUT\"", fullTemplate: "hud \"自绘制大容量预览\" \"$OUTPUT\"", description: "自绘制超大容量弹窗视图", category: "通知交互"),
+        NeuralCompletionSuggestion(prefix: "hud", completion: "hud \"自绘制大容量预览\" \"$OUTPUT\"", fullTemplate: "hud \"自绘制大容量预览\" \"$OUTPUT\"", description: "自绘制超大容量弹窗视图", category: "通知交互"),
         NeuralCompletionSuggestion(prefix: "no", completion: "notify \"提示\" \"$OUTPUT\"", fullTemplate: "notify \"提示\" \"$OUTPUT\"", description: "系统横幅与HUD", category: "通知交互"),
         NeuralCompletionSuggestion(prefix: "in", completion: "input \"请输入内容:\" \"默认值\"", fullTemplate: "input \"请输入内容:\" \"默认值\"", description: "弹出文本输入框", category: "通知交互"),
         NeuralCompletionSuggestion(prefix: "al", completion: "alert \"确认执行\" \"是否立即开始自动化？\"", fullTemplate: "alert \"确认执行\" \"是否立即开始自动化？\"", description: "模态确认弹窗", category: "通知交互"),
@@ -482,7 +507,7 @@ final class YumiScriptNeuralEngine {
         NeuralCompletionSuggestion(prefix: "sy", completion: "sys locksleep", fullTemplate: "sys locksleep", description: "锁屏并低功耗休眠", category: "系统控制"),
         NeuralCompletionSuggestion(prefix: "sys l", completion: "sys locksleep", fullTemplate: "sys locksleep", description: "锁屏并休眠", category: "系统控制"),
         NeuralCompletionSuggestion(prefix: "sys v", completion: "sys volume 50", fullTemplate: "sys volume 50", description: "调节系统音量", category: "系统控制"),
-        NeuralCompletionSuggestion(prefix: "sys b", completion: "sys battery", fullTemplate: "sys battery", description: "查询电池状态", category: "系统控制"),
+        NeuralCompletionSuggestion(prefix: "sys b", completion: "sys battery\nhud \"电池健康体检\" \"$OUTPUT\"", fullTemplate: "sys battery\nhud \"电池健康体检\" \"$OUTPUT\"", description: "查询电池并在 HUD 中呈现", category: "系统控制"),
         NeuralCompletionSuggestion(prefix: "sys e", completion: "sys emptytrash", fullTemplate: "sys emptytrash", description: "清空废纸篓", category: "系统控制"),
         NeuralCompletionSuggestion(prefix: "sys p", completion: "sys purge", fullTemplate: "sys purge", description: "释放内存缓存", category: "系统控制"),
         NeuralCompletionSuggestion(prefix: "sys t", completion: "sys toggletheme", fullTemplate: "sys toggletheme", description: "切换系统深浅色外观", category: "系统控制"),
@@ -491,27 +516,106 @@ final class YumiScriptNeuralEngine {
         NeuralCompletionSuggestion(prefix: "app t", completion: "app theme cyber", fullTemplate: "app theme cyber", description: "切换二次元主题", category: "App控制"),
         NeuralCompletionSuggestion(prefix: "app a", completion: "app anniversary", fullTemplate: "app anniversary", description: "查询纪念日倒数", category: "App控制"),
         NeuralCompletionSuggestion(prefix: "app s", completion: "app screenshot area", fullTemplate: "app screenshot area", description: "触发屏幕截图", category: "App控制"),
-        NeuralCompletionSuggestion(prefix: "ai", completion: "ai \"请帮我分析以下内容：\\n$OUTPUT\"", fullTemplate: "ai \"请帮我分析以下内容：\\n$OUTPUT\"", description: "AI 大模型推理", category: "AI智能"),
-        NeuralCompletionSuggestion(prefix: "oc", completion: "ocr\ncopy \"$OUTPUT\"", fullTemplate: "ocr\ncopy \"$OUTPUT\"", description: "全屏文字 OCR 识别", category: "AI智能"),
-        NeuralCompletionSuggestion(prefix: "ht", completion: "http get \"https://api.github.com/zen\"", fullTemplate: "http get \"https://api.github.com/zen\"", description: "HTTP 网络 GET", category: "网络API"),
-        NeuralCompletionSuggestion(prefix: "de", completion: "def my_tool\n    # 过程逻辑\n    notify \"运行完成\" \"已就绪\"\nend", fullTemplate: "def my_tool\n    # 过程逻辑\n    notify \"运行完成\" \"已就绪\"\nend", description: "定义自制插件过程", category: "语法结构"),
+        NeuralCompletionSuggestion(prefix: "ai", completion: "ai \"请帮我分析以下内容：\\n$OUTPUT\"\nhud \"AI 深度分析结果\" \"$OUTPUT\"", fullTemplate: "ai \"请帮我分析以下内容：\\n$OUTPUT\"\nhud \"AI 深度分析结果\" \"$OUTPUT\"", description: "AI 大模型推理并在 HUD 预览", category: "AI智能"),
+        NeuralCompletionSuggestion(prefix: "oc", completion: "ocr\ncopy \"$OUTPUT\"\nhud \"OCR 识别结果\" \"$OUTPUT\"", fullTemplate: "ocr\ncopy \"$OUTPUT\"\nhud \"OCR 识别结果\" \"$OUTPUT\"", description: "全屏文字 OCR 识别并拷入剪贴板与 HUD", category: "AI智能"),
+        NeuralCompletionSuggestion(prefix: "ht", completion: "http get \"https://api.github.com/zen\"\nhud \"网络请求结果\" \"$OUTPUT\"", fullTemplate: "http get \"https://api.github.com/zen\"\nhud \"网络请求结果\" \"$OUTPUT\"", description: "HTTP 网络 GET", category: "网络API"),
+        NeuralCompletionSuggestion(prefix: "de", completion: "def my_tool\n    # 过程逻辑\n    hud \"运行完成\" \"已就绪\"\nend", fullTemplate: "def my_tool\n    # 过程逻辑\n    hud \"运行完成\" \"已就绪\"\nend", description: "定义自制插件过程", category: "语法结构"),
         NeuralCompletionSuggestion(prefix: "ca", completion: "call my_tool", fullTemplate: "call my_tool", description: "调用自制过程", category: "语法结构"),
         NeuralCompletionSuggestion(prefix: "va", completion: "var status = \"$OUTPUT\"", fullTemplate: "var status = \"$OUTPUT\"", description: "定义变量", category: "语法结构")
     ]
     
     private init() {}
     
-    func inferCompletion(for line: String) -> NeuralCompletionSuggestion? {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
+    /// 上下文深度联想推理
+    func inferCompletion(currentLine: String, fullScript: String) -> NeuralCompletionSuggestion? {
+        let trimmed = currentLine.trimmingCharacters(in: .whitespaces)
+        let lines = fullScript.components(separatedBy: .newlines)
+        
+        // 查找上一行有效指令
+        var previousLine: String = ""
+        if let currentIdx = lines.firstIndex(of: currentLine), currentIdx > 0 {
+            for i in stride(from: currentIdx - 1, through: 0, by: -1) {
+                let l = lines[i].trimmingCharacters(in: .whitespacesAndNewlines)
+                if !l.isEmpty && !l.hasPrefix("#") && !l.hasPrefix("//") {
+                    previousLine = l
+                    break
+                }
+            }
+        }
+        
+        // 1. 上下文联动：上一行如果是 file read，当前行补全自绘制大容量 HUD、通知或 AI 总结
+        if previousLine.lowercased().hasPrefix("file read") || previousLine.contains("/") && previousLine.contains(".txt") {
+            if trimmed.isEmpty || trimmed.hasPrefix("hu") || trimmed.hasPrefix("no") || trimmed.hasPrefix("co") {
+                return NeuralCompletionSuggestion(
+                    prefix: trimmed,
+                    completion: "hud \"文件内容预览\" \"$OUTPUT\"",
+                    fullTemplate: "hud \"文件内容预览\" \"$OUTPUT\"",
+                    description: "在大容量自绘制 HUD 弹窗中展示上一行读取的文件内容",
+                    category: "上下文感知"
+                )
+            } else if trimmed.hasPrefix("ai") {
+                return NeuralCompletionSuggestion(
+                    prefix: trimmed,
+                    completion: "ai \"请帮我总结分析以下文件内容：\\n$OUTPUT\"\nhud \"AI 文件总结报告\" \"$OUTPUT\"",
+                    fullTemplate: "ai \"请帮我总结分析以下文件内容：\\n$OUTPUT\"\nhud \"AI 文件总结报告\" \"$OUTPUT\"",
+                    description: "AI 总结文件内容并在 HUD 中渲染",
+                    category: "上下文感知"
+                )
+            } else if trimmed.hasPrefix("copy") || trimmed.hasPrefix("cp") {
+                return NeuralCompletionSuggestion(
+                    prefix: trimmed,
+                    completion: "copy \"$OUTPUT\"\nnotify \"复制成功\" \"文件内容已拷贝到剪贴板\"",
+                    fullTemplate: "copy \"$OUTPUT\"\nnotify \"复制成功\" \"文件内容已拷贝到剪贴板\"",
+                    description: "将读取的文件内容写入剪贴板",
+                    category: "上下文感知"
+                )
+            }
+        }
+        
+        // 2. 上下文联动：上一行如果是 file list
+        if previousLine.lowercased().hasPrefix("file list") {
+            return NeuralCompletionSuggestion(
+                prefix: trimmed,
+                completion: "hud \"目录文件清单\" \"$OUTPUT\"",
+                fullTemplate: "hud \"目录文件清单\" \"$OUTPUT\"",
+                description: "在大容量 HUD 中展示目录文件列表",
+                category: "上下文感知"
+            )
+        }
+        
+        // 3. 上下文联动：上一行如果是 ocr
+        if previousLine.lowercased().hasPrefix("ocr") {
+            return NeuralCompletionSuggestion(
+                prefix: trimmed,
+                completion: "copy \"$OUTPUT\"\nhud \"OCR 识别结果\" \"$OUTPUT\"",
+                fullTemplate: "copy \"$OUTPUT\"\nhud \"OCR 识别结果\" \"$OUTPUT\"",
+                description: "将 OCR 识别文字写入剪贴板并在 HUD 中完整查看",
+                category: "上下文感知"
+            )
+        }
+        
+        // 4. 当前行包含未加指令的裸文件路径（例如 /Users/.../demo.txt）
+        if trimmed.hasPrefix("/") && (trimmed.contains(".txt") || trimmed.contains(".json") || trimmed.contains(".md") || trimmed.contains(".log")) {
+            let cleanPath = trimmed.replacingOccurrences(of: "\"", with: "")
+            return NeuralCompletionSuggestion(
+                prefix: trimmed,
+                completion: "file read \"\(cleanPath)\"\nhud \"文件内容预览\" \"$OUTPUT\"",
+                fullTemplate: "file read \"\(cleanPath)\"\nhud \"文件内容预览\" \"$OUTPUT\"",
+                description: "读取该路径文件并在自绘制 HUD 中展示",
+                category: "智能文件路径"
+            )
+        }
+        
+        // 5. 静态模板库前缀匹配
         guard !trimmed.isEmpty else { return nil }
         let lower = trimmed.lowercased()
         
-        for item in templates {
+        for item in staticTemplates {
             if lower == item.prefix || lower.hasPrefix(item.prefix) {
                 return item
             }
         }
-        for item in templates {
+        for item in staticTemplates {
             if item.prefix.hasPrefix(lower) {
                 return item
             }
@@ -684,7 +788,7 @@ final class YumiScriptIDEManager: ObservableObject {
                     sys emptytrash
                     sys purge
                     tts "Mac 内存缓存与废纸篓已全面优化完毕！"
-                    notify "优化完成" "已清理垃圾并释放系统缓存"
+                    hud "优化完成" "已清理垃圾并释放系统缓存"
                     """
                 )
             ]
@@ -920,8 +1024,40 @@ struct YumiScriptIDEView: View {
                 )
                 .background(Color(red: 0.11, green: 0.11, blue: 0.14))
                 
-                // 顶部快捷按键助手
+                // 顶部快速路径选择器与 Tab 补全浮动工具栏
                 HStack(spacing: 6) {
+                    Button(action: {
+                        pickFileAndInsert()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "doc.badge.plus")
+                                .foregroundStyle(theme.primaryColor)
+                            Text("📂 选取文件")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.black.opacity(0.75)))
+                    }
+                    .buttonStyle(.plain)
+                    .help("选取 Mac 本地文件并自动生成读取与自绘制 HUD 预览代码")
+                    
+                    Button(action: {
+                        pickFolderAndInsert()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "folder.badge.plus")
+                                .foregroundStyle(.orange)
+                            Text("📁 选取目录")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.black.opacity(0.75)))
+                    }
+                    .buttonStyle(.plain)
+                    .help("选取本地文件夹并生成清单预览代码")
+                    
                     Button(action: {
                         triggerQuickTabCompletion()
                     }) {
@@ -935,9 +1071,49 @@ struct YumiScriptIDEView: View {
                         .background(Capsule().fill(Color.black.opacity(0.75)))
                     }
                     .buttonStyle(.plain)
-                    .help("根据光标末行内容自动补全代码模板")
+                    .help("根据上下文智能补全 HUD / 通知 / 复制操作")
                 }
                 .padding(10)
+            }
+        }
+    }
+    
+    // MARK: - 原生文件与目录选取器逻辑
+    
+    private func pickFileAndInsert() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "插入到编辑器"
+        panel.message = "请选择要在脚本中读取或操作的文件："
+        
+        if panel.runModal() == .OK, let url = panel.url {
+            let path = url.path
+            let code = "file read \"\(path)\"\nhud \"文件内容预览\" \"$OUTPUT\""
+            manager.insertSnippet(code)
+            suggestionToast = "📂 已插入文件读取与 HUD 预览代码"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                if suggestionToast.contains("已插入文件") { suggestionToast = "" }
+            }
+        }
+    }
+    
+    private func pickFolderAndInsert() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "插入到编辑器"
+        panel.message = "请选择要在脚本中列出或操作的文件夹目录："
+        
+        if panel.runModal() == .OK, let url = panel.url {
+            let path = url.path
+            let code = "file list \"\(path)\"\nhud \"目录清单预览\" \"$OUTPUT\""
+            manager.insertSnippet(code)
+            suggestionToast = "📁 已插入目录清单与 HUD 预览代码"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                if suggestionToast.contains("已插入目录") { suggestionToast = "" }
             }
         }
     }
@@ -1018,7 +1194,7 @@ struct YumiScriptIDEView: View {
                     Button(action: {
                         newExtTitle = ""
                         newExtDesc = ""
-                        newExtCode = "# 编写您的扩展插件代码\nnotify \"自制插件\" \"运行成功\""
+                        newExtCode = "# 自定义扩展过程\ndef my_tool\n    sys emptytrash\n    hud \"工具运行\" \"已完成\"\nend\n\ncall my_tool"
                         showNewExtSheet = true
                     }) {
                         Image(systemName: "plus")
@@ -1027,12 +1203,20 @@ struct YumiScriptIDEView: View {
                     }
                     .buttonStyle(.plain)
                 } else if activeSection == .diagnostics {
-                    Button(action: { runCompileDiagnostics() }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 11))
-                            .foregroundStyle(theme.primaryColor)
+                    Button(action: {
+                        let formatted = YumiScriptCompiler.autoFormatAndFixQuotes(script: manager.editingPlugin.scriptContent)
+                        manager.editingPlugin.scriptContent = formatted
+                        runCompileDiagnostics()
+                    }) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "wand.and.stars")
+                            Text("修复符号")
+                        }
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(theme.primaryColor)
                     }
                     .buttonStyle(.plain)
+                    .help("一键格式化并将全角智能引号替换为标准英文引号")
                 }
             }
             .padding(.horizontal, 12)
@@ -1075,20 +1259,21 @@ struct YumiScriptIDEView: View {
             
             // 📁 文件与磁盘管理
             toolboxGroup(title: "📁 文件与磁盘管理", color: .yellow) {
-                draggableToolboxItem("创建/覆盖写入文件", code: "file write \"~/Desktop/demo.txt\" \"你好，这是由 YumiScript 自动创建的文件！\\n创建时间: $DATETIME\"\nnotify \"文件已保存\" \"已写入 ~/Desktop/demo.txt\"", icon: "doc.badge.plus")
-                draggableToolboxItem("追加文本到文件", code: "file append \"~/Desktop/demo.txt\" \"[$DATETIME] 追加记录一条自动化日志\"\nnotify \"日志已记录\" \"已追加内容\"", icon: "doc.append")
-                draggableToolboxItem("读取文件内容到变量", code: "file read \"~/Desktop/demo.txt\"\nnotify \"文件内容预览\" \"$OUTPUT\"", icon: "doc.text.magnifyingglass")
+                draggableToolboxItem("创建/覆盖写入文件", code: "file write \"~/Desktop/demo.txt\" \"你好，这是由 YumiScript 自动创建的文件！\\n创建时间: $DATETIME\"\nhud \"文件已保存\" \"已写入 ~/Desktop/demo.txt\"", icon: "doc.badge.plus")
+                draggableToolboxItem("追加文本到文件", code: "file append \"~/Desktop/demo.txt\" \"[$DATETIME] 追加记录一条自动化日志\"\nhud \"日志已记录\" \"已追加内容\"", icon: "doc.append")
+                draggableToolboxItem("读取文件并在 HUD 中完整预览", code: "file read \"~/Desktop/demo.txt\"\nhud \"文件内容完整预览\" \"$OUTPUT\"", icon: "doc.text.magnifyingglass")
                 draggableToolboxItem("安全移入废纸篓", code: "file trash \"~/Desktop/demo.txt\"\nnotify \"已删除\" \"文件已移入废纸篓\"", icon: "trash")
-                draggableToolboxItem("列出目录内文件", code: "file list \"~/Desktop\"\nnotify \"桌面文件清单\" \"$OUTPUT\"", icon: "folder.badge.gearshape")
+                draggableToolboxItem("列出目录内文件并在 HUD 呈现", code: "file list \"~/Desktop\"\nhud \"桌面文件清单\" \"$OUTPUT\"", icon: "folder.badge.gearshape")
                 draggableToolboxItem("创建文件夹目录", code: "file mkdir \"~/Desktop/YumiBackup\"\nnotify \"目录创建成功\" \"~/Desktop/YumiBackup\"", icon: "folder.badge.plus")
             }
             
-            // 💬 通知与交互输入
-            toolboxGroup(title: "💬 通知与交互输入", color: .green) {
-                draggableToolboxItem("系统通知横幅 + HUD", code: "notify \"任务完成\" \"自动化流程已成功执行完毕！\"", icon: "bell.badge.fill")
-                draggableToolboxItem("弹出文本输入框", code: "input \"请输入您要记录的内容:\" \"默认备忘\"\nfile append \"~/Desktop/notes.txt\" \"[$DATETIME] $OUTPUT\"\nnotify \"记录成功\" \"内容已追加到备忘录\"", icon: "character.cursor.ibeam")
-                draggableToolboxItem("模态确认对话框", code: "alert \"确认执行\" \"是否立即开始自动化任务？\"\nnotify \"用户决策\" \"用户选择了: $OUTPUT\"", icon: "bubble.left.and.bubble.right.fill")
-                draggableToolboxItem("列表单选菜单", code: "choose \"启动 Safari,清空废纸篓,切换主题\"\nnotify \"选中的操作\" \"$OUTPUT\"", icon: "list.bullet.rectangle")
+            // 💬 自绘制大容量通知与交互输入
+            toolboxGroup(title: "💬 自绘制大容量通知与交互输入", color: .green) {
+                draggableToolboxItem("自绘制大容量 HUD 视图 (可滚动/导出)", code: "hud \"自绘制大容量结果展示\" \"$OUTPUT\"", icon: "macwindow.on.rectangle")
+                draggableToolboxItem("系统标准横幅通知", code: "notify \"任务完成\" \"自动化流程已成功执行完毕！\"", icon: "bell.badge.fill")
+                draggableToolboxItem("弹出文本输入框", code: "input \"请输入您要记录的内容:\" \"默认备忘\"\nfile append \"~/Desktop/notes.txt\" \"[$DATETIME] $OUTPUT\"\nhud \"记录成功\" \"内容已追加到备忘录:\\n$OUTPUT\"", icon: "character.cursor.ibeam")
+                draggableToolboxItem("模态确认对话框", code: "alert \"确认执行\" \"是否立即开始自动化任务？\"\nhud \"用户决策\" \"用户选择了: $OUTPUT\"", icon: "bubble.left.and.bubble.right.fill")
+                draggableToolboxItem("列表单选菜单", code: "choose \"启动 Safari,清空废纸篓,切换主题\"\nhud \"选中的操作\" \"$OUTPUT\"", icon: "list.bullet.rectangle")
                 draggableToolboxItem("语音合成播报 TTS", code: "tts \"主人您好，今日系统任务已全部自动化就绪。\"", icon: "speaker.wave.3.fill")
             }
             
@@ -1096,7 +1281,7 @@ struct YumiScriptIDEView: View {
             toolboxGroup(title: "🐰 操控 YumikoToys 自身", color: .pink) {
                 draggableToolboxItem("召唤 / 隐藏桌面桌宠", code: "app pet toggle\nnotify \"桌宠状态\" \"$OUTPUT\"", icon: "pawprint.fill")
                 draggableToolboxItem("切换二次元主题风格", code: "app theme toggle\nnotify \"主题切换\" \"$OUTPUT\"", icon: "paintpalette.fill")
-                draggableToolboxItem("查询置顶纪念日倒数", code: "app anniversary\ntts \"$OUTPUT\"\nnotify \"纪念日提醒\" \"$OUTPUT\"", icon: "calendar.badge.clock")
+                draggableToolboxItem("查询置顶纪念日倒数", code: "app anniversary\ntts \"$OUTPUT\"\nhud \"纪念日提醒\" \"$OUTPUT\"", icon: "calendar.badge.clock")
                 draggableToolboxItem("触发区域 / 全屏截图", code: "app screenshot area\nnotify \"截图已触发\" \"请框选屏幕区域\"", icon: "viewfinder")
                 draggableToolboxItem("启动截图标注工具", code: "app screenshot annotate", icon: "pencil.tip.crop.circle")
             }
@@ -1106,7 +1291,7 @@ struct YumiScriptIDEView: View {
                 draggableToolboxItem("锁屏并睡眠 (休眠省电)", code: "sys locksleep", icon: "moon.stars.fill")
                 draggableToolboxItem("仅锁定 Mac 屏幕", code: "sys lock", icon: "lock.fill")
                 draggableToolboxItem("调节系统音量 (50%)", code: "sys volume 50\nnotify \"音量调节\" \"音量已调至 50%\"", icon: "speaker.wave.2.fill")
-                draggableToolboxItem("查询电池状态", code: "sys battery\nnotify \"电池健康\" \"$OUTPUT\"", icon: "battery.100")
+                draggableToolboxItem("查询电池状态", code: "sys battery\nhud \"电池健康报告\" \"$OUTPUT\"", icon: "battery.100")
                 draggableToolboxItem("一键清空废纸篓", code: "sys emptytrash\nnotify \"系统清理\" \"废纸篓已安全清空\"", icon: "trash.fill")
                 draggableToolboxItem("释放内存缓存", code: "sys purge\nnotify \"内存加速\" \"缓存已极速释放\"", icon: "bolt.fill")
                 draggableToolboxItem("切换深浅色外观", code: "sys toggletheme", icon: "circle.righthalf.filled")
@@ -1114,9 +1299,9 @@ struct YumiScriptIDEView: View {
             
             // 🤖 AI 大模型与 OCR 视觉
             toolboxGroup(title: "🤖 AI 大模型 & OCR 视觉", color: .purple) {
-                draggableToolboxItem("AI 智能文本生成", code: "ai \"请帮我写一段关于今日工作的温馨激励语\"\nnotify \"AI 寄语\" \"$OUTPUT\"", icon: "sparkles")
-                draggableToolboxItem("屏幕原生 OCR 识别提取", code: "ocr\ncopy \"$OUTPUT\"\nnotify \"OCR 识别完成\" \"识别到的文字已写入剪贴板\"", icon: "text.viewfinder")
-                draggableToolboxItem("HTTP 网络 GET 请求", code: "http get \"https://api.github.com/zen\"\nnotify \"GitHub 格言\" \"$OUTPUT\"", icon: "network")
+                draggableToolboxItem("AI 智能文本生成", code: "ai \"请帮我写一段关于今日工作的温馨激励语\"\nhud \"AI 寄语\" \"$OUTPUT\"", icon: "sparkles")
+                draggableToolboxItem("屏幕原生 OCR 识别提取", code: "ocr\ncopy \"$OUTPUT\"\nhud \"OCR 识别结果\" \"$OUTPUT\"", icon: "text.viewfinder")
+                draggableToolboxItem("HTTP 网络 GET 请求", code: "http get \"https://api.github.com/zen\"\nhud \"GitHub 格言\" \"$OUTPUT\"", icon: "network")
             }
             
             // 🔌 用户自制扩展积木
@@ -1178,10 +1363,10 @@ struct YumiScriptIDEView: View {
         let lines = manager.editingPlugin.scriptContent.components(separatedBy: .newlines)
         guard let lastLine = lines.last(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) else { return }
         
-        if let suggestion = YumiScriptNeuralEngine.shared.inferCompletion(for: lastLine) {
+        if let suggestion = YumiScriptNeuralEngine.shared.inferCompletion(currentLine: lastLine, fullScript: manager.editingPlugin.scriptContent) {
             manager.insertSnippet(suggestion.completion)
             suggestionToast = "⚡ Tab 神经补全: \(suggestion.description)"
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                 if suggestionToast.contains(suggestion.description) {
                     suggestionToast = ""
                 }
@@ -1225,7 +1410,7 @@ struct YumiScriptIDEView: View {
                 presetCard(
                     category: "📁 文件备忘",
                     title: "📝 每日工作日志与待办备忘归档",
-                    desc: "弹出交互框输入今日要点，自动带当前时间戳追加至桌面日志文件，绝不覆盖历史记录",
+                    desc: "弹出交互框输入今日要点，自动带当前时间戳追加至桌面日志文件并在 HUD 呈现",
                     icon: "square.and.pencil",
                     code: """
                     # ============================================================
@@ -1234,38 +1419,32 @@ struct YumiScriptIDEView: View {
                     # ============================================================
 
                     # 第一步：弹出原生交互输入框，获取用户键入的日报要点
-                    # 【为什么这么写】：相比硬编码文字，input 指令让脚本拥有动态交互能力，第二参数为默认提示值
                     input "请输入今日已完成的重要工作内容:" "完成核心功能模块开发与自测"
 
                     # 第二步：将用户输入的文本内容 ($OUTPUT) 追加到桌面日志文件末尾
-                    # 【为什么这么写】：使用 file append 而不是 file write，确保以往的历史日志不会被覆盖
-                    # 【为什么这么写】：内置变量 $DATETIME 会自动格式化为当前 年-月-日 时:分:秒
                     file append "~/Desktop/每日工作日志.txt" "[$DATETIME] $OUTPUT"
 
-                    # 第三步：弹出系统级通知横幅与居中精美 HUD 卡片
-                    # 【为什么这么写】：为用户提供明确的执行成功视觉反馈，双重保障通知
-                    notify "日志归档成功" "已安全追加至 ~/Desktop/每日工作日志.txt"
+                    # 第三步：弹出自绘制大容量 HUD 卡片展示最新日志
+                    hud "日志归档成功" "已安全追加至 ~/Desktop/每日工作日志.txt\\n记录内容: $OUTPUT"
                     """
                 )
                 
                 presetCard(
                     category: "📁 文件备忘",
-                    title: "📊 Mac 全面硬件健康体检并导出报告",
-                    desc: "分别查询电池、磁盘、CPU 负载并暂存变量，格式化为结构化报告写入桌面并用访达定位",
+                    title: "📊 Mac 全面硬件健康体检并在 HUD 呈现报告",
+                    desc: "分别查询电池、磁盘、CPU 负载并暂存变量，格式化为结构化报告并在大容量 HUD 中展示",
                     icon: "doc.text.magnifyingglass",
                     code: """
                     # ============================================================
-                    # 📊 示例：Mac 硬件与电池健康全面体检并导出报告
-                    # 💡 适用场景：一键查询电池寿命、CPU 负载与主磁盘剩余空间，并导出到桌面
+                    # 📊 示例：Mac 硬件与电池健康全面体检并在 HUD 中呈现
+                    # 💡 适用场景：一键查询电池寿命、CPU 负载与主磁盘剩余空间，可滚动查看与导出
                     # ============================================================
 
-                    # 第一步：查询电池健康与电量百分比，保存到自定义变量 $batt
-                    # 【为什么这么写】：sys battery 返回当前电量与充电状态，$OUTPUT 暂存到变量中方便后续多字段拼接
+                    # 第一步：查询电池健康与电量百分比
                     sys battery
                     var batt = $OUTPUT
 
                     # 第二步：查询主磁盘可用容量
-                    # 【为什么这么写】：sys disk 自动计算 macOS 启动盘可用空间与百分比
                     sys disk
                     var disk = $OUTPUT
 
@@ -1274,12 +1453,10 @@ struct YumiScriptIDEView: View {
                     var cpu_load = $OUTPUT
 
                     # 第四步：格式化整合成结构化体检报告，并覆盖写入桌面文件
-                    # 【为什么这么写】：使用 file write 可以生成全新的体检报告，支持多行排版
                     file write "~/Desktop/Mac体检报告.txt" "=== Mac 硬件体检报告 ===\\n体检时间: $DATETIME\\n电池状态: $batt\\n磁盘空间: $disk\\nCPU 状态: $cpu_load\\n体检结论: 状态良好，各项硬件运行平稳！"
 
-                    # 第五步：居中弹出精美 HUD 渲染弹窗，并在访达中打开生成的文件
-                    notify "体检报告已生成" "已保存至桌面 Mac体检报告.txt\\n$batt | $disk"
-                    open "~/Desktop/Mac体检报告.txt"
+                    # 第五步：在自绘制大容量 HUD 窗口中完整预览，支持一键导出到桌面
+                    hud "Mac 硬件体检报告" "=== 体检结果 ===\\n电池状态: $batt\\n磁盘空间: $disk\\nCPU 负载: $cpu_load"
                     """
                 )
             }
@@ -1287,8 +1464,8 @@ struct YumiScriptIDEView: View {
             if selectedPresetCategory == "全部" || selectedPresetCategory == "🤖 AI与视觉" {
                 presetCard(
                     category: "🤖 AI与视觉",
-                    title: "👁️ 屏幕 OCR 识字 + AI 提炼总结 + 剪贴板",
-                    desc: "调用 Apple 神经引擎提取屏幕文字，AI 提炼 3 点核心纪要并直接拷入剪贴板",
+                    title: "👁️ 屏幕 OCR 识字 + AI 提炼总结 + 自绘制 HUD",
+                    desc: "调用 Apple 神经引擎提取屏幕文字，AI 提炼 3 点核心纪要并在大容量 HUD 中查看",
                     icon: "text.viewfinder",
                     code: """
                     # ============================================================
@@ -1297,47 +1474,16 @@ struct YumiScriptIDEView: View {
                     # ============================================================
 
                     # 第一步：调用 Apple 神经引擎进行全屏幕高精度 OCR 文字提取
-                    # 【为什么这么写】：ocr 指令无感扫描当前屏幕所有文字，无需手动截图标注，极速输出到 $OUTPUT
                     ocr
 
                     # 第二步：将识别到的全屏文字交给端侧/云端 AI 大模型进行提炼
-                    # 【为什么这么写】：直接提取的 OCR 文本可能包含冗余排版，借助 AI 可以智能提取关键摘要与待办项
                     ai "请提炼以下屏幕提取文字的核心要点与待办事项，分三点简短列出：\\n$OUTPUT"
 
                     # 第三步：将 AI 总结后的精简结果同步写入系统剪贴板
-                    # 【为什么这么写】：copy 指令可直接将文本放入 Pasteboard，方便用户立即 Cmd+V 粘贴到飞书/微信/邮件
                     copy "$OUTPUT"
 
-                    # 第四步：弹出通知提示用户已完成提取
-                    notify "AI 智能提取完成" "提炼纪要已写入剪贴板，可随时粘贴！"
-                    """
-                )
-                
-                presetCard(
-                    category: "🤖 AI与视觉",
-                    title: "🌐 剪贴板多语言 AI 智能翻译与代码解读",
-                    desc: "一键读取剪贴板外文或代码片段，AI 智能翻译为地道中文并弹出半透明 HUD 卡片",
-                    icon: "character.bubble.fill",
-                    code: """
-                    # ============================================================
-                    # 🌐 示例：剪贴板内容一键 AI 智能翻译与代码解读
-                    # 💡 适用场景：复制外文文档或代码后，一键翻译并给出专业中文解读
-                    # ============================================================
-
-                    # 第一步：从系统剪贴板中直接读取最新复制的内容
-                    # 【为什么这么写】：paste 指令直接获取用户刚才 Cmd+C 的文本放入 $OUTPUT
-                    paste
-                    var clip_content = $OUTPUT
-
-                    # 第二步：调用大模型进行信达雅中英互译与润色
-                    # 【为什么这么写】：如果是代码则解释作用，如果是英文则翻译为地道中文
-                    ai "请将以下内容翻译为优雅的中文，若是代码请简要说明功能：\\n$clip_content"
-
-                    # 第三步：将润色后的结果再次更新回剪贴板
-                    copy "$OUTPUT"
-
-                    # 第四步：屏幕居中弹出半透明 HUD 卡片展示翻译结果
-                    notify "AI 翻译结果" "$OUTPUT"
+                    # 第四步：在自绘制大容量 HUD 窗口中完整预览
+                    hud "AI 智能提炼报告" "$OUTPUT"
                     """
                 )
             }
@@ -1355,24 +1501,20 @@ struct YumiScriptIDEView: View {
                     # ============================================================
 
                     # 第一步：在桌面召唤唤醒 YumikoToys 治愈系桌宠
-                    # 【为什么这么写】：app pet on 确保桌宠处于活跃互动状态，随时在屏幕上陪伴
                     app pet on
 
                     # 第二步：切换为治愈系粉嫩二次元动漫主题
-                    # 【为什么这么写】：app theme healing 立即联动状态栏、主面板与桌宠特效全链路变色
                     app theme healing
 
                     # 第三步：查询当前置顶的恋爱/重要纪念日天数
-                    # 【为什么这么写】：app anniversary 读取置顶纪念日标题与剩余/已过天数
                     app anniversary
                     var anni = $OUTPUT
 
                     # 第四步：调用系统原生语音合成器进行早安语音朗读
-                    # 【为什么这么写】：tts 能够用自然人声将温馨问候与纪念日播报给主人，免去低头看屏幕
                     tts "主人早安！今天也是元气满满的一天，$anni，桌宠随时陪伴在您身边！"
 
-                    # 第五步：右上方弹出系统横幅确认
-                    notify "早安问候" "$anni\\n主题已切换为治愈系，祝工作顺利！"
+                    # 第五步：在 HUD 中弹出提示
+                    hud "早安问候" "$anni\\n主题已切换为治愈系，祝工作顺利！"
                     """
                 )
                 
@@ -1388,11 +1530,9 @@ struct YumiScriptIDEView: View {
                     # ============================================================
 
                     # 第一步：切换为炫酷赛博朋克二次元夜间主题
-                    # 【为什么这么写】：app theme cyber 降低屏幕刺眼白光，进入暗色夜间模式
                     app theme cyber
 
-                    # 第二步：将系统多媒体音量调至 20% 并静音，防止下班后外放打扰他人
-                    # 【为什么这么写】：sys volume 20 将音量调至合适范围，接着 sys volume mute 实现静音
+                    # 第二步：将系统多媒体音量调至 20% 并静音
                     sys volume 20
                     sys volume mute
 
@@ -1400,11 +1540,9 @@ struct YumiScriptIDEView: View {
                     tts "主人辛苦了，正在为您锁定屏幕并进入低功耗睡眠，明天见！"
 
                     # 第四步：延时 1 秒等待语音播报完毕
-                    # 【为什么这么写】：wait 1.0 避免屏幕锁定后语音合成进程被系统立即挂起
                     wait 1.0
 
                     # 第五步：立即锁定 Mac 屏幕并进入低功耗休眠 (Sleep)
-                    # 【为什么这么写】：sys locksleep 结合了 macOS 安全锁屏与硬件级休眠省电
                     sys locksleep
                     """
                 )
@@ -1414,7 +1552,7 @@ struct YumiScriptIDEView: View {
                 presetCard(
                     category: "⚡ 系统维护",
                     title: "🧹 Mac 极速大扫除：清空废纸篓 + 释放内存缓存",
-                    desc: "安全清空废纸篓，极速释放系统 inactive 内存缓存，分析 CPU 负载并弹出 HUD",
+                    desc: "安全清空废纸篓，极速释放系统 inactive 内存缓存，分析 CPU 负载并在 HUD 呈现",
                     icon: "sparkle",
                     code: """
                     # ============================================================
@@ -1423,45 +1561,18 @@ struct YumiScriptIDEView: View {
                     # ============================================================
 
                     # 第一步：安全清空系统废纸篓
-                    # 【为什么这么写】：sys emptytrash 调用 macOS 原生 AppleScript 安全清空废纸篓
                     sys emptytrash
 
-                    # 第二步：释放操作系统未使用的内存缓存 (Purge Memory)
-                    # 【为什么这么写】：sys purge 清理系统磁盘缓存与非活跃内存，提升多任务流畅度
+                    # 第二步：释放操作系统未使用的内存缓存
                     sys purge
 
                     # 第三步：查询当前 CPU 负载与前台高消耗进程
                     sys cpu
                     var cpu_status = $OUTPUT
 
-                    # 第四步：居中弹出精美 HUD 渲染弹窗，并用语音告知主人
-                    notify "深度优化完成" "废纸篓已清空，系统内存缓存已释放！\\n$cpu_status"
+                    # 第四步：在大容量 HUD 弹窗中展示体检与优化细节
+                    hud "深度优化完成" "废纸篓已清空，系统内存缓存已释放！\\n$cpu_status"
                     tts "Mac 深度优化完成，系统运行已加速！"
-                    """
-                )
-                
-                presetCard(
-                    category: "⚡ 系统维护",
-                    title: "🔐 高强度随机安全密码生成器并写入剪贴板",
-                    desc: "调用系统 /dev/urandom 生成 16 位包含字母数字符号的安全随机密码并复制",
-                    icon: "key.fill",
-                    code: """
-                    # ============================================================
-                    # 🔐 示例：高强度随机安全密码生成器
-                    # 💡 适用场景：注册新账号时，一键生成 16 位包含字母数字符号的高强度密码
-                    # ============================================================
-
-                    # 第一步：调用底层 Shell 生成 16 位高强度随机安全密码
-                    # 【为什么这么写】：利用 macOS 原生 /dev/urandom 结合 base64 生成真随机密码
-                    shell LC_ALL=C tr -dc 'A-Za-z0-9!@#$%^&*' < /dev/urandom | head -c 16
-                    var new_pwd = $OUTPUT
-
-                    # 第二步：将新生成的密码自动写入剪贴板
-                    # 【为什么这么写】：copy 指令让用户可以直接 Cmd+V 粘贴到密码框
-                    copy "$new_pwd"
-
-                    # 第三步：弹出通知告知用户
-                    notify "随机密码已生成" "密码已复制到剪贴板：\\n$new_pwd"
                     """
                 )
             }
@@ -1479,22 +1590,16 @@ struct YumiScriptIDEView: View {
                     # ============================================================
 
                     # 第一步：使用 def 定义一个名为 mac_quick_tune 的自制过程宏
-                    # 【为什么这么写】：def ... end 语法支持将多行指令打包为一个原子模块
                     def mac_quick_tune
                         sys emptytrash
                         sys purge
                         sys volume 40
-                        notify "快捷优化" "废纸篓与内存缓存已清理，音量调至 40%"
+                        hud "快捷优化" "废纸篓与内存缓存已清理，音量调至 40%"
                     end
 
                     # 第二步：在主脚本逻辑中，随时使用 call 指令调用该过程
-                    # 【为什么这么写】：call 指令会按顺序执行过程宏内部的所有指令
-                    notify "开始执行工作流" "正在调用优化过程..."
                     call mac_quick_tune
-
-                    # 第三步：执行后续任务
                     app theme kawaii
-                    notify "工作流完成" "已切换为萌系主题"
                     """
                 )
             }
@@ -1585,6 +1690,28 @@ struct YumiScriptIDEView: View {
             }
             .padding(8)
             .background(RoundedRectangle(cornerRadius: 6).fill((isCompileSuccess ? Color.green : Color.red).opacity(0.12)))
+            
+            // 一键智能修复符号快捷条
+            Button(action: {
+                let formatted = YumiScriptCompiler.autoFormatAndFixQuotes(script: manager.editingPlugin.scriptContent)
+                manager.editingPlugin.scriptContent = formatted
+                runCompileDiagnostics()
+                suggestionToast = "⚡ 已自动归一化全角与中文智能引号"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if suggestionToast.contains("已自动归一化") { suggestionToast = "" }
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "wand.and.stars")
+                        .foregroundStyle(theme.primaryColor)
+                    Text("⚡ 一键智能格式化与归一化引号")
+                        .font(.system(size: 11, weight: .medium))
+                    Spacer()
+                }
+                .padding(7)
+                .background(RoundedRectangle(cornerRadius: 6).fill(theme.primaryColor.opacity(0.12)))
+            }
+            .buttonStyle(.plain)
             
             Divider()
             
@@ -1767,7 +1894,7 @@ struct YumiScriptIDEView: View {
             Button(action: {
                 newExtTitle = ""
                 newExtDesc = ""
-                newExtCode = "# 自定义扩展过程\ndef my_tool\n    sys emptytrash\n    notify \"工具运行\" \"已完成\"\nend\n\ncall my_tool"
+                newExtCode = "# 自定义扩展过程\ndef my_tool\n    sys emptytrash\n    hud \"工具运行\" \"已完成\"\nend\n\ncall my_tool"
                 showNewExtSheet = true
             }) {
                 HStack(spacing: 6) {
@@ -2069,7 +2196,7 @@ struct YumiScriptIDEView: View {
         HStack(spacing: 12) {
             HStack(spacing: 4) {
                 Circle().fill(Color.green).frame(width: 6, height: 6)
-                Text("YumiScript v6.4 (全彩语法高亮)")
+                Text("YumiScript v6.5 (智能上下文感知引擎)")
                     .font(.system(size: 9.5, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
@@ -2141,17 +2268,18 @@ struct YumiScriptIDEView: View {
               * file read "路径" (读取文件内容到 $OUTPUT)
               * file delete "路径" (移入废纸篓)
               * file list "目录路径" (列出文件列表)
+            - 自绘制大容量通知与系统通知：
+              * hud "标题" "内容" (弹出自绘制大容量独立 HUD 窗口，支持超长文本、导出桌面与复制)
+              * notify "标题" "内容" (发送 macOS 系统标准横幅通知)
+              * input "提示文字" "默认值" (弹出输入框获取用户输入)
+              * alert "标题" "内容" (弹出确认对话框)
+              * choose "选项1,选项2" (弹出单选框)
+              * tts "要播报的语音文本" (语音朗读)
             - YumikoToys 自身控制：
               * app pet on / off / toggle (召唤/收回桌宠)
               * app theme toggle / cyber / healing / kawaii (切换二次元主题)
               * app anniversary (查询置顶纪念日)
               * app screenshot area / annotate (截图/标注)
-            - 交互与通知：
-              * notify "标题" "内容" (发送横幅通知 + HUD)
-              * input "提示文字" "默认值" (弹出输入框获取用户输入)
-              * alert "标题" "内容" (弹出确认对话框)
-              * choose "选项1,选项2" (弹出单选框)
-              * tts "要播报的语音文本" (语音朗读)
             - AI 与视觉：
               * ai "提示词" (大模型问答)
               * ocr (全屏文字提取)
@@ -2171,7 +2299,7 @@ struct YumiScriptIDEView: View {
                     .replacingOccurrences(of: "```", with: "")
                     .trimmingCharacters(in: .whitespacesAndNewlines)
             } catch {
-                copilotResponse = "# AI 生成失败: \(error.localizedDescription)\nnotify \"AI 异常\" \"请检查网络或 API 设置\""
+                copilotResponse = "# AI 生成失败: \(error.localizedDescription)\nhud \"AI 异常\" \"请检查网络或 API 设置\""
             }
             isCopilotLoading = false
         }
