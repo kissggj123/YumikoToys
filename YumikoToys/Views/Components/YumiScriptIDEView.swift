@@ -2,13 +2,24 @@
 //  YumiScriptIDEView.swift
 //  YumikoToys
 //
-//  VS Code 风格的专业级 YumiScript Studio 可视化 IDE 开发套件
-//  支持：新建空白脚本、多标签文件管理、AI Copilot 智能编写与诊断、丰富系统 API 与 OCR/TTS 积木库、自制扩展插件
+//  VS Code 架构的专业级 YumiScript Studio 可视化 IDE 套件
+//  支持：新建 100% 空白脚本、多标签文件管理、AI Copilot 智能编写与诊断、自制 IDE 插件扩展包开发、丰富系统 API 与 OCR/TTS
 //
 
 import SwiftUI
 import AppKit
 import Combine
+
+// MARK: - 自制 IDE 插件扩展模型 (Custom Extension Block)
+
+struct CustomIDEBlock: Codable, Identifiable, Sendable, Equatable {
+    var id: String
+    var title: String
+    var icon: String
+    var category: String
+    var description: String
+    var snippetCode: String
+}
 
 // MARK: - IDE 独立窗口与工程文档管理器
 
@@ -18,12 +29,12 @@ final class YumiScriptIDEManager: ObservableObject {
     
     @Published var isPresented: Bool = false
     @Published var editingPlugin: YumiPlugin = YumiPlugin(
-        id: "",
-        name: "",
-        icon: "bolt.fill",
+        id: "plugin_blank",
+        name: "新建空白脚本",
+        icon: "sparkles",
         description: "",
         isEnabled: true,
-        scriptContent: ""
+        scriptContent: "" // 始终保证初始为空白
     )
     @Published var isCreating: Bool = false
     
@@ -31,9 +42,15 @@ final class YumiScriptIDEManager: ObservableObject {
     @Published var openPlugins: [YumiPlugin] = []
     @Published var activePluginId: String = ""
     
+    /// 用户自制 IDE 插件扩展积木表
+    @Published var customUserBlocks: [CustomIDEBlock] = []
+    
+    private let customBlocksKey = "YumikoToys_UserCustomIDEBlocks_v1"
     private var idePanel: NSWindow?
     
-    private init() {}
+    private init() {
+        loadCustomBlocks()
+    }
     
     func clearPanel() {
         self.idePanel = nil
@@ -50,35 +67,39 @@ final class YumiScriptIDEManager: ObservableObject {
             }
             activePluginId = p.id
         } else {
-            // 新建完全空白的纯净脚本
+            // 新建完全空白的纯净脚本 (100% Blank Canvas)
             let newId = "plugin_\(UUID().uuidString.prefix(6).lowercased())"
             let newPlugin = YumiPlugin(
                 id: newId,
-                name: isCreating ? "新建空白脚本" : "新自动化插件",
-                icon: "sparkles",
-                description: "自制 YumiScript 自动化脚本",
+                name: "新建空白脚本",
+                icon: "doc.badge.plus",
+                description: "",
                 isEnabled: true,
-                scriptContent: "" // 100% 空白，不预设杂乱代码
+                scriptContent: "" // 100% 绝对纯净空白，不填任何杂质代码
             )
             self.editingPlugin = newPlugin
-            openPlugins.append(newPlugin)
-            activePluginId = newId
+            self.openPlugins = [newPlugin]
+            self.activePluginId = newId
         }
         
         self.isPresented = true
         showIDEPanel()
     }
     
-    /// 新建一个空白文件标签
+    /// 新建一个纯净空白文件标签
     func createNewBlankTab() {
+        // 先同步当前正在编辑的内容
+        syncCurrentEditingToOpenList()
+        
         let newId = "plugin_\(UUID().uuidString.prefix(6).lowercased())"
+        let count = openPlugins.count + 1
         let newPlugin = YumiPlugin(
             id: newId,
-            name: "未命名脚本-\(openPlugins.count + 1)",
-            icon: "doc.badge.plus",
+            name: "未命名脚本-\(count)",
+            icon: "doc.text",
             description: "",
             isEnabled: true,
-            scriptContent: ""
+            scriptContent: "" // 100% 空白
         )
         self.editingPlugin = newPlugin
         self.openPlugins.append(newPlugin)
@@ -87,16 +108,14 @@ final class YumiScriptIDEManager: ObservableObject {
     
     /// 切换当前激活的文件
     func switchToFile(_ plugin: YumiPlugin) {
-        // 先同步当前正在编辑的内容
-        if let idx = openPlugins.firstIndex(where: { $0.id == editingPlugin.id }) {
-            openPlugins[idx] = editingPlugin
-        }
+        syncCurrentEditingToOpenList()
         self.editingPlugin = plugin
         self.activePluginId = plugin.id
     }
     
     /// 关闭指定文件标签
     func closeTab(id: String) {
+        syncCurrentEditingToOpenList()
         guard let idx = openPlugins.firstIndex(where: { $0.id == id }) else { return }
         openPlugins.remove(at: idx)
         
@@ -105,9 +124,62 @@ final class YumiScriptIDEManager: ObservableObject {
                 self.editingPlugin = next
                 self.activePluginId = next.id
             } else {
-                // 如果标签全关了，自动创建一个空白文档
                 createNewBlankTab()
             }
+        }
+    }
+    
+    /// 同步当前编辑内容到标签列表
+    func syncCurrentEditingToOpenList() {
+        if let idx = openPlugins.firstIndex(where: { $0.id == editingPlugin.id }) {
+            openPlugins[idx] = editingPlugin
+        }
+    }
+    
+    // MARK: - 自制 IDE 插件扩展持久化
+    
+    func addCustomBlock(_ block: CustomIDEBlock) {
+        if let idx = customUserBlocks.firstIndex(where: { $0.id == block.id }) {
+            customUserBlocks[idx] = block
+        } else {
+            customUserBlocks.append(block)
+        }
+        saveCustomBlocks()
+    }
+    
+    func deleteCustomBlock(id: String) {
+        customUserBlocks.removeAll { $0.id == id }
+        saveCustomBlocks()
+    }
+    
+    private func loadCustomBlocks() {
+        if let data = UserDefaults.standard.data(forKey: customBlocksKey),
+           let blocks = try? JSONDecoder().decode([CustomIDEBlock].self, from: data) {
+            self.customUserBlocks = blocks
+        } else {
+            // 默认内置一个自制扩展示例
+            self.customUserBlocks = [
+                CustomIDEBlock(
+                    id: "ext_clean_mac",
+                    title: "一键深度优化 Mac",
+                    icon: "wand.and.stars",
+                    category: "自制系统扩展",
+                    description: "清空废纸篓、释放内存缓存并朗读语音汇报",
+                    snippetCode: """
+                    # 自制扩展：一键深度优化 Mac
+                    sys emptytrash
+                    sys purge
+                    tts "Mac 内存缓存与废纸篓已全面优化完毕！"
+                    notify "优化完成" "已清理垃圾并释放系统缓存"
+                    """
+                )
+            ]
+        }
+    }
+    
+    private func saveCustomBlocks() {
+        if let data = try? JSONEncoder().encode(customUserBlocks) {
+            UserDefaults.standard.set(data, forKey: customBlocksKey)
         }
     }
     
@@ -287,7 +359,7 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         if let textView = nsView.documentView as? NSTextView {
-            if textView.string.trimmingCharacters(in: .newlines) != text.trimmingCharacters(in: .newlines) {
+            if textView.string != text {
                 context.coordinator.applyHighlighting(text: text)
             }
         }
@@ -333,9 +405,9 @@ struct YumiScriptIDEView: View {
     /// VS Code 风格活动栏视图切换
     enum ActivitySection: String, CaseIterable {
         case explorer = "资源管理器"
-        case toolbox = "动作积木"
-        case copilot = "AI 助手"
-        case extensions = "插件扩展"
+        case toolbox = "系统 API & 积木"
+        case copilot = "AI Copilot"
+        case extensions = "自制插件扩展"
         case settings = "偏好设置"
         
         var icon: String {
@@ -363,9 +435,13 @@ struct YumiScriptIDEView: View {
     @State private var copilotResponse: String = ""
     @State private var isCopilotLoading: Bool = false
     
-    // 自定义扩展插件状态
-    @State private var newMacroName: String = ""
-    @State private var newMacroSnippet: String = ""
+    // 自制扩展插件创建弹窗
+    @State private var showNewExtSheet: Bool = false
+    @State private var newExtTitle: String = ""
+    @State private var newExtDesc: String = ""
+    @State private var newExtIcon: String = "bolt.circle.fill"
+    @State private var newExtCategory: String = "我的自制扩展"
+    @State private var newExtCode: String = ""
     
     private var theme: AboutThemeConfig {
         AboutThemeConfig.current()
@@ -383,7 +459,7 @@ struct YumiScriptIDEView: View {
             // MARK: - 2. 侧边功能栏 (Sidebar)
             if isSidebarVisible {
                 sidebarPanel
-                    .frame(width: 280)
+                    .frame(width: 300)
                     .background(Color(nsColor: .controlBackgroundColor).opacity(0.45))
                 
                 Divider()
@@ -391,7 +467,7 @@ struct YumiScriptIDEView: View {
             
             // MARK: - 3. 核心编辑工作区 (Editor & Tabs)
             VStack(spacing: 0) {
-                // 顶部文件标签栏 (VS Code Editor Tabs)
+                // 顶部快捷 AI 辅助条与文件标签栏 (VS Code Editor Tabs)
                 editorTabsBar
                 
                 Divider()
@@ -418,7 +494,7 @@ struct YumiScriptIDEView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                    Text("插件保存成功！已实时同步至状态栏与系统扩展")
+                    Text("脚本已成功保存！已实时同步至状态栏")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.white)
                 }
@@ -428,6 +504,9 @@ struct YumiScriptIDEView: View {
                 .padding(.bottom, 36)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+        }
+        .sheet(isPresented: $showNewExtSheet) {
+            newExtensionSheet
         }
         .animation(.spring(response: 0.28), value: showSaveToast)
     }
@@ -509,6 +588,19 @@ struct YumiScriptIDEView: View {
                     }
                     .buttonStyle(.plain)
                     .help("新建空白脚本")
+                } else if activeSection == .extensions {
+                    Button(action: {
+                        newExtTitle = ""
+                        newExtDesc = ""
+                        newExtCode = "# 编写您的扩展插件代码\nnotify \"自制插件\" \"运行成功\""
+                        showNewExtSheet = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(theme.primaryColor)
+                    }
+                    .buttonStyle(.plain)
+                    .help("新建自定义扩展积木")
                 }
             }
             .padding(.horizontal, 12)
@@ -610,7 +702,7 @@ struct YumiScriptIDEView: View {
         VStack(spacing: 10) {
             // 🤖 AI 大模型 API
             toolboxGroup(title: "🤖 AI 大模型 Copilot", color: .purple) {
-                toolboxItem("AI 智能生成文本", code: "ai \"请帮我写一段关于早安的问候语\"\nnotify \"AI 问候\" \"$OUTPUT\"", icon: "sparkles")
+                toolboxItem("AI 智能生成文本", code: "ai \"请帮我写一段关于早安的温馨问候\"\nnotify \"AI 问候\" \"$OUTPUT\"", icon: "sparkles")
                 toolboxItem("AI 总结剪贴板内容", code: "paste\nai \"请帮我简要总结以下内容：\\n$OUTPUT\"\nnotify \"AI 总结报告\" \"$OUTPUT\"", icon: "doc.text.magnifyingglass")
             }
             
@@ -642,6 +734,15 @@ struct YumiScriptIDEView: View {
                 toolboxItem("精美 HUD 渲染弹窗", code: "notify \"任务完成\" \"所有流程执行成功！\"", icon: "app.badge")
                 toolboxItem("模态确认弹窗", code: "alert \"确认执行\" \"是否立即开始自动化？\"\nnotify \"用户选择\" \"用户点击了：$OUTPUT\"", icon: "bubble.left.and.bubble.right.fill")
                 toolboxItem("列表单选菜单", code: "choose \"选项A,选项B,选项C\"\nnotify \"选中项目\" \"$OUTPUT\"", icon: "list.bullet.rectangle")
+            }
+            
+            // 🔌 用户自制扩展积木库
+            if !manager.customUserBlocks.isEmpty {
+                toolboxGroup(title: "🔌 我的自制扩展积木", color: .pink) {
+                    ForEach(manager.customUserBlocks) { block in
+                        toolboxItem(block.title, code: block.snippetCode, icon: block.icon)
+                    }
+                }
             }
         }
     }
@@ -710,39 +811,69 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 4. 自制扩展插件 (Extensions)
+    // MARK: - 4. 自制扩展插件 (Extensions & Custom Blocks)
     
     private var extensionsView: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("YumiScript 支持使用 `def <宏名>` 自制 IDE 插件扩展函数，并可在任何脚本中通过 `call <宏名>` 极速调用：")
+            Text("您可以在此开发属于自己的 YumiScript 插件扩展，注册后的扩展积木会直接出现在左侧 API 积木库中：")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text("插件名称:")
-                    .font(.system(size: 10, weight: .bold))
-                TextField("例如: clean_mac", text: $newMacroName)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 11))
+            Button(action: {
+                newExtTitle = ""
+                newExtDesc = ""
+                newExtCode = "# 自定义扩展过程\ndef my_tool\n    sys emptytrash\n    notify \"工具运行\" \"已完成\"\nend\n\ncall my_tool"
+                showNewExtSheet = true
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("➕ 开发新扩展积木")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 7)
+                .background(RoundedRectangle(cornerRadius: 6).fill(theme.primaryColor))
+                .foregroundStyle(.white)
             }
+            .buttonStyle(.plain)
             
-            Button("插入自定义过程模板") {
-                let name = newMacroName.isEmpty ? "my_custom_plugin" : newMacroName
-                let template = """
-                # 自制扩展过程: \(name)
-                def \(name)
-                    sys emptytrash
-                    sys purge
-                    notify "\(name) 执行完成" "内存与垃圾已彻底清理"
-                end
-                
-                # 调用自制过程
-                call \(name)
-                """
-                smartInsert(template)
+            Divider()
+            
+            Text("已安装的自制扩展 (\(manager.customUserBlocks.count))")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.secondary)
+            
+            ForEach(manager.customUserBlocks) { block in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Image(systemName: block.icon)
+                            .foregroundStyle(theme.primaryColor)
+                        Text(block.title)
+                            .font(.system(size: 11, weight: .bold))
+                        Spacer()
+                        Button(action: {
+                            manager.deleteCustomBlock(id: block.id)
+                        }) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    Text(block.description.isEmpty ? "无描述" : block.description)
+                        .font(.system(size: 9.5))
+                        .foregroundStyle(.secondary)
+                    
+                    Button("插入此积木") {
+                        smartInsert(block.snippetCode)
+                    }
+                    .font(.system(size: 10))
+                    .padding(.top, 2)
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .controlBackgroundColor)))
             }
-            .buttonStyle(.borderedProminent)
-            .font(.system(size: 11))
         }
     }
     
@@ -775,6 +906,64 @@ struct YumiScriptIDEView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - 自定义扩展创建表单弹窗
+    
+    private var newExtensionSheet: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("开发自制 IDE 插件扩展")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(theme.primaryColor)
+                Spacer()
+                Button("关闭") { showNewExtSheet = false }
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("扩展积木标题:")
+                    .font(.system(size: 11, weight: .semibold))
+                TextField("例如: 快速清理与备份", text: $newExtTitle)
+                    .textFieldStyle(.roundedBorder)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("扩展积木描述:")
+                    .font(.system(size: 11, weight: .semibold))
+                TextField("简要说明功能", text: $newExtDesc)
+                    .textFieldStyle(.roundedBorder)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("底层 YumiScript 脚本代码:")
+                    .font(.system(size: 11, weight: .semibold))
+                TextEditor(text: $newExtCode)
+                    .font(.system(size: 11, design: .monospaced))
+                    .frame(height: 120)
+                    .background(Color(nsColor: .textBackgroundColor))
+                    .border(Color.secondary.opacity(0.3))
+            }
+            
+            HStack {
+                Spacer()
+                Button("保存并注册到积木库") {
+                    guard !newExtTitle.isEmpty else { return }
+                    let block = CustomIDEBlock(
+                        id: "ext_\(UUID().uuidString.prefix(6).lowercased())",
+                        title: newExtTitle,
+                        icon: newExtIcon,
+                        category: newExtCategory,
+                        description: newExtDesc,
+                        snippetCode: newExtCode
+                    )
+                    manager.addCustomBlock(block)
+                    showNewExtSheet = false
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(18)
+        .frame(width: 440, height: 380)
     }
     
     // MARK: - 辅助积木组件
