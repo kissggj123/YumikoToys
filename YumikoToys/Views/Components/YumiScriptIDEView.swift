@@ -394,6 +394,10 @@ final class YumiScriptIDEManager: ObservableObject {
     /// 向当前编辑器光标位置插入代码
     func insertSnippet(_ snippet: String) {
         insertCodeSubject.send(snippet)
+        if editingPlugin.scriptContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            editingPlugin.scriptContent = snippet + "\n"
+            syncCurrentEditingToOpenList()
+        }
     }
     
     // MARK: - 自制 IDE 插件扩展持久化
@@ -586,7 +590,7 @@ final class YumiScriptCustomTextView: NSTextView {
     override func keyDown(with event: NSEvent) {
         // Tab 键触发神经补全 (KeyCode 48)
         if event.keyCode == 48 {
-            let cursorLoc = selectedRange().location
+            let cursorLoc = selectedRange().location != NSNotFound ? selectedRange().location : (string as NSString).length
             let nsStr = string as NSString
             let lineRange = nsStr.lineRange(for: NSRange(location: cursorLoc, length: 0))
             let currentLine = nsStr.substring(with: lineRange)
@@ -602,18 +606,60 @@ final class YumiScriptCustomTextView: NSTextView {
         return .copy
     }
     
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        let point = convert(sender.draggingLocation, from: nil)
+        if let lm = layoutManager, let tc = textContainer {
+            let glyphIndex = lm.glyphIndex(for: point, in: tc)
+            let charIndex = lm.characterIndexForGlyph(at: glyphIndex)
+            setSelectedRange(NSRange(location: charIndex, length: 0))
+        }
+        return .copy
+    }
+    
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        guard let pboard = sender.draggingPasteboard.string(forType: .string) else { return false }
-        let charIndex = selectedRange().location
+        let pb = sender.draggingPasteboard
+        var draggedStr: String? = pb.string(forType: .string)
+        if draggedStr == nil {
+            draggedStr = pb.string(forType: NSPasteboard.PasteboardType("public.utf8-plain-text"))
+        }
+        if draggedStr == nil {
+            draggedStr = pb.string(forType: NSPasteboard.PasteboardType("public.plain-text"))
+        }
+        if draggedStr == nil {
+            if let items = pb.pasteboardItems {
+                for item in items {
+                    if let s = item.string(forType: .string) ?? item.string(forType: NSPasteboard.PasteboardType("public.utf8-plain-text")) {
+                        draggedStr = s
+                        break
+                    }
+                }
+            }
+        }
+        
+        guard let pboard = draggedStr else { return false }
+        let point = convert(sender.draggingLocation, from: nil)
+        let charIndex: Int
+        if let lm = layoutManager, let tc = textContainer {
+            let glyphIndex = lm.glyphIndex(for: point, in: tc)
+            charIndex = lm.characterIndexForGlyph(at: glyphIndex)
+        } else {
+            charIndex = selectedRange().location != NSNotFound ? selectedRange().location : (string as NSString).length
+        }
         
         let newRange = NSRange(location: charIndex, length: 0)
-        if shouldChangeText(in: newRange, replacementString: pboard) {
-            replaceCharacters(in: newRange, with: pboard)
+        let textToInsert = pboard.hasSuffix("\n") ? pboard : (pboard + "\n")
+        
+        if shouldChangeText(in: newRange, replacementString: textToInsert) {
+            replaceCharacters(in: newRange, with: textToInsert)
             didChangeText()
-            setSelectedRange(NSRange(location: charIndex + (pboard as NSString).length, length: 0))
+            setSelectedRange(NSRange(location: charIndex + (textToInsert as NSString).length, length: 0))
+            window?.makeFirstResponder(self)
+            return true
+        } else {
+            string = string.isEmpty ? textToInsert : (string + "\n" + textToInsert)
+            didChangeText()
             return true
         }
-        return false
     }
 }
 
@@ -650,8 +696,13 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
         textView.textContainerInset = NSSize(width: 14, height: 14)
         textView.delegate = context.coordinator
         
-        // 注册拖拽格式
-        textView.registerForDraggedTypes([.string])
+        // 注册丰富拖拽格式支持
+        textView.registerForDraggedTypes([
+            .string,
+            NSPasteboard.PasteboardType("public.utf8-plain-text"),
+            NSPasteboard.PasteboardType("public.plain-text"),
+            NSPasteboard.PasteboardType("NSStringPboardType")
+        ])
         
         // 绑定 Tab 键神经补全处理
         let coordinator = context.coordinator
@@ -697,8 +748,12 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
         
         func insertSnippetAtCursor(_ snippet: String) {
             guard let tv = textView else { return }
-            let sel = tv.selectedRange()
+            var sel = tv.selectedRange()
             let nsStr = tv.string as NSString
+            
+            if sel.location == NSNotFound || sel.location > nsStr.length {
+                sel = NSRange(location: nsStr.length, length: 0)
+            }
             
             var textToInsert = snippet
             if sel.location > 0 && sel.location <= nsStr.length {
@@ -707,13 +762,22 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
                     textToInsert = "\n" + snippet
                 }
             }
+            if !textToInsert.hasSuffix("\n") {
+                textToInsert += "\n"
+            }
             
             if tv.shouldChangeText(in: sel, replacementString: textToInsert) {
                 tv.replaceCharacters(in: sel, with: textToInsert)
                 tv.didChangeText()
                 let newLoc = sel.location + (textToInsert as NSString).length
                 tv.setSelectedRange(NSRange(location: newLoc, length: 0))
+            } else {
+                tv.string = tv.string.isEmpty ? textToInsert : (tv.string + "\n" + textToInsert)
+                tv.didChangeText()
             }
+            
+            parent.text = tv.string
+            tv.window?.makeFirstResponder(tv)
         }
         
         func handleTabCompletion(currentLine: String) -> Bool {
@@ -1134,31 +1198,53 @@ struct YumiScriptIDEView: View {
     private func draggableToolboxItem(_ title: String, code: String, icon: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 10))
+                .font(.system(size: 11))
                 .foregroundStyle(theme.primaryColor)
             Text(title)
-                .font(.system(size: 11))
+                .font(.system(size: 11, weight: .medium))
                 .lineLimit(1)
             Spacer()
             
             Button(action: {
-                manager.insertSnippet(code)
+                insertCodeToActiveEditor(code)
             }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(3)
-                    .background(Circle().fill(theme.primaryColor))
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(theme.primaryColor)
             }
             .buttonStyle(.plain)
-            .help("插入到光标位置")
+            .help("点击插入到编辑器")
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 5).fill(Color(nsColor: .controlBackgroundColor).opacity(0.8)))
+        .padding(.vertical, 6)
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .controlBackgroundColor).opacity(0.85)))
         .contentShape(Rectangle())
+        .onTapGesture {
+            insertCodeToActiveEditor(code)
+        }
         .onDrag {
-            NSItemProvider(object: code as NSString)
+            let provider = NSItemProvider(object: code as NSString)
+            provider.suggestedName = title
+            return provider
+        }
+    }
+    
+    private func insertCodeToActiveEditor(_ code: String) {
+        manager.insertSnippet(code)
+        
+        // 确保直接同步给 editingPlugin
+        if manager.editingPlugin.scriptContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            manager.editingPlugin.scriptContent = code + "\n"
+        } else if !manager.editingPlugin.scriptContent.contains(code) {
+            manager.editingPlugin.scriptContent += "\n" + code + "\n"
+        }
+        manager.syncCurrentEditingToOpenList()
+        
+        suggestionToast = "✅ 积木已插入代码框"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            if suggestionToast == "✅ 积木已插入代码框" {
+                suggestionToast = ""
+            }
         }
     }
     
