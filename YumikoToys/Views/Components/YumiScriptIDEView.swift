@@ -988,6 +988,7 @@ struct YumiScriptIDEView: View {
     @State private var compileElapsedMs: Double = 0.0
     @State private var compileNodeCount: Int = 0
     @State private var compileLogs: [String] = []
+    @State private var diagnosticDebounceTask: Task<Void, Never>?
     
     // AI Copilot 交互状态
     @State private var copilotPrompt: String = ""
@@ -1074,10 +1075,10 @@ struct YumiScriptIDEView: View {
         .animation(.spring(response: 0.28), value: showSaveToast)
         .animation(.spring(response: 0.28), value: suggestionToast)
         .onAppear {
-            runCompileDiagnostics()
+            runCompileDiagnostics(debounced: false)
         }
         .onChange(of: manager.editingPlugin.scriptContent) { _ in
-            runCompileDiagnostics()
+            runCompileDiagnostics(debounced: true)
         }
     }
     
@@ -2293,13 +2294,27 @@ struct YumiScriptIDEView: View {
     
     // MARK: - 辅助操作逻辑
     
-    private func runCompileDiagnostics() {
-        let result = YumiScriptCompiler.compile(script: manager.editingPlugin.scriptContent)
-        self.compilationDiagnostics = result.diagnostics
-        self.isCompileSuccess = result.isSuccess
-        self.compileElapsedMs = result.elapsedMs
-        self.compileNodeCount = result.astNodeCount
-        self.compileLogs = result.logs
+    private func runCompileDiagnostics(debounced: Bool = false) {
+        diagnosticDebounceTask?.cancel()
+        if debounced {
+            diagnosticDebounceTask = Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                guard !Task.isCancelled else { return }
+                let result = YumiScriptCompiler.compile(script: manager.editingPlugin.scriptContent)
+                self.compilationDiagnostics = result.diagnostics
+                self.isCompileSuccess = result.isSuccess
+                self.compileElapsedMs = result.elapsedMs
+                self.compileNodeCount = result.astNodeCount
+                self.compileLogs = result.logs
+            }
+        } else {
+            let result = YumiScriptCompiler.compile(script: manager.editingPlugin.scriptContent)
+            self.compilationDiagnostics = result.diagnostics
+            self.isCompileSuccess = result.isSuccess
+            self.compileElapsedMs = result.elapsedMs
+            self.compileNodeCount = result.astNodeCount
+            self.compileLogs = result.logs
+        }
     }
     
     private func runScriptTest() {
