@@ -808,6 +808,7 @@ struct YumiScriptIDEView: View {
     @State private var editorFontSize: CGFloat = 13.5
     @State private var fileSearchQuery: String = ""
     @State private var suggestionToast: String = ""
+    @State private var selectedPresetCategory: String = "全部"
     
     // 编译与语法诊断状态
     @State private var compilationDiagnostics: [DiagnosticItem] = []
@@ -1161,128 +1162,435 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 2. 一键场景工作流 (Preset Workflows)
+    // MARK: - 2. 一键场景示例库 (Preset Workflows & Samples With Full Explanations)
+    
+    private let presetCategories = ["全部", "📁 文件备忘", "🤖 AI与视觉", "🐰 桌宠生态", "⚡ 系统维护", "🧩 进阶过程宏"]
     
     private var presetWorkflowsView: some View {
         VStack(spacing: 10) {
-            Text("精选开箱即用的一键自动化工作流，点击即可装载到编辑器：")
+            Text("精选开箱即用自动化示例，每段代码附带详细的「原理与为什么这么写」注释：")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
             
-            presetCard(
-                title: "📝 每日工作日志快速记录",
-                desc: "弹出输入框让您输入今日日志，自动带时间戳追加到桌面工作日志文件，并横幅通知确认",
-                icon: "square.and.pencil",
-                code: """
-                # 每日工作日志记录器
-                input "请输入今日已完成的重要工作内容:" "完成功能模块开发与自测"
-                file append "~/Desktop/每日工作日志.txt" "[$DATETIME] $OUTPUT"
-                notify "日志记录成功" "已保存至 ~/Desktop/每日工作日志.txt"
-                """
-            )
+            // 分类筛选 Pills
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(presetCategories, id: \.self) { cat in
+                        Button(action: {
+                            selectedPresetCategory = cat
+                        }) {
+                            Text(cat)
+                                .font(.system(size: 10, weight: selectedPresetCategory == cat ? .bold : .medium))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(selectedPresetCategory == cat ? theme.primaryColor : Color(nsColor: .controlBackgroundColor))
+                                )
+                                .foregroundStyle(selectedPresetCategory == cat ? .white : .primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.bottom, 2)
             
-            presetCard(
-                title: "🐰 桌宠早安问候与状态体检",
-                desc: "唤醒桌面桌宠，查询 Mac 电池与磁盘剩余空间，组织早安汇报并通过原生语音播报",
-                icon: "sun.max.fill",
-                code: """
-                # 桌宠早安互动与体检
-                app pet on
-                sys battery
-                var batt = $OUTPUT
-                sys disk
-                var disk = $OUTPUT
-                tts "主人早安！桌宠已就绪，当前$batt，$disk"
-                notify "桌宠早安" "电量与磁盘状态正常，随时听候调遣！"
-                """
-            )
+            // 示例 1：每日工作日志与待办备忘安全归档
+            if selectedPresetCategory == "全部" || selectedPresetCategory == "📁 文件备忘" {
+                presetCard(
+                    category: "📁 文件备忘",
+                    title: "📝 每日工作日志与待办备忘归档",
+                    desc: "弹出交互框输入今日要点，自动带当前时间戳追加至桌面日志文件，绝不覆盖历史记录",
+                    icon: "square.and.pencil",
+                    code: """
+                    # ============================================================
+                    # 📝 示例：每日工作日志与待办备忘自动归档
+                    # 💡 适用场景：下班或写日报时，快速弹出交互框输入今日要点，自动归档存盘
+                    # ============================================================
+
+                    # 第一步：弹出原生交互输入框，获取用户键入的日报要点
+                    # 【为什么这么写】：相比硬编码文字，input 指令让脚本拥有动态交互能力，第二参数为默认提示值
+                    input "请输入今日已完成的重要工作内容:" "完成核心功能模块开发与自测"
+
+                    # 第二步：将用户输入的文本内容 ($OUTPUT) 追加到桌面日志文件末尾
+                    # 【为什么这么写】：使用 file append 而不是 file write，确保以往的历史日志不会被覆盖
+                    # 【为什么这么写】：内置变量 $DATETIME 会自动格式化为当前 年-月-日 时:分:秒
+                    file append "~/Desktop/每日工作日志.txt" "[$DATETIME] $OUTPUT"
+
+                    # 第三步：弹出系统级通知横幅与居中精美 HUD 卡片
+                    # 【为什么这么写】：为用户提供明确的执行成功视觉反馈，双重保障通知
+                    notify "日志归档成功" "已安全追加至 ~/Desktop/每日工作日志.txt"
+                    """
+                )
+                
+                presetCard(
+                    category: "📁 文件备忘",
+                    title: "📊 Mac 全面硬件健康体检并导出报告",
+                    desc: "分别查询电池、磁盘、CPU 负载并暂存变量，格式化为结构化报告写入桌面并用访达定位",
+                    icon: "doc.text.magnifyingglass",
+                    code: """
+                    # ============================================================
+                    # 📊 示例：Mac 硬件与电池健康全面体检并导出报告
+                    # 💡 适用场景：一键查询电池寿命、CPU 负载与主磁盘剩余空间，并导出到桌面
+                    # ============================================================
+
+                    # 第一步：查询电池健康与电量百分比，保存到自定义变量 $batt
+                    # 【为什么这么写】：sys battery 返回当前电量与充电状态，$OUTPUT 暂存到变量中方便后续多字段拼接
+                    sys battery
+                    var batt = $OUTPUT
+
+                    # 第二步：查询主磁盘可用容量
+                    # 【为什么这么写】：sys disk 自动计算 macOS 启动盘可用空间与百分比
+                    sys disk
+                    var disk = $OUTPUT
+
+                    # 第三步：查询当前 CPU 负载与前台高消耗进程
+                    sys cpu
+                    var cpu_load = $OUTPUT
+
+                    # 第四步：格式化整合成结构化体检报告，并覆盖写入桌面文件
+                    # 【为什么这么写】：使用 file write 可以生成全新的体检报告，支持多行排版
+                    file write "~/Desktop/Mac体检报告.txt" "=== Mac 硬件体检报告 ===\\n体检时间: $DATETIME\\n电池状态: $batt\\n磁盘空间: $disk\\nCPU 状态: $cpu_load\\n体检结论: 状态良好，各项硬件运行平稳！"
+
+                    # 第五步：居中弹出精美 HUD 渲染弹窗，并在访达中打开生成的文件
+                    notify "体检报告已生成" "已保存至桌面 Mac体检报告.txt\\n$batt | $disk"
+                    open "~/Desktop/Mac体检报告.txt"
+                    """
+                )
+            }
             
-            presetCard(
-                title: "🧹 Mac 极速大扫除与体检",
-                desc: "一键清空废纸篓、极速释放内存缓存、查询系统负载，居中弹出 HUD 报告",
-                icon: "sparkle",
-                code: """
-                # Mac 一键极速体检与清理
-                sys emptytrash
-                sys purge
-                sys cpu
-                var cpu_load = $OUTPUT
-                notify "系统清理与体检完毕" "废纸篓已清空，内存缓存已释放\\n$cpu_load"
-                """
-            )
+            // 示例 2：AI 与视觉智能
+            if selectedPresetCategory == "全部" || selectedPresetCategory == "🤖 AI与视觉" {
+                presetCard(
+                    category: "🤖 AI与视觉",
+                    title: "👁️ 屏幕 OCR 识字 + AI 提炼总结 + 剪贴板",
+                    desc: "调用 Apple 神经引擎提取屏幕文字，AI 提炼 3 点核心纪要并直接拷入剪贴板",
+                    icon: "text.viewfinder",
+                    code: """
+                    # ============================================================
+                    # 👁️ 示例：屏幕文字 OCR 识别与 AI 智能会议纪要提取
+                    # 💡 适用场景：网页/图片/PDF 无法直接复制文字时，一键提取并由大模型总结
+                    # ============================================================
+
+                    # 第一步：调用 Apple 神经引擎进行全屏幕高精度 OCR 文字提取
+                    # 【为什么这么写】：ocr 指令无感扫描当前屏幕所有文字，无需手动截图标注，极速输出到 $OUTPUT
+                    ocr
+
+                    # 第二步：将识别到的全屏文字交给端侧/云端 AI 大模型进行提炼
+                    # 【为什么这么写】：直接提取的 OCR 文本可能包含冗余排版，借助 AI 可以智能提取关键摘要与待办项
+                    ai "请提炼以下屏幕提取文字的核心要点与待办事项，分三点简短列出：\\n$OUTPUT"
+
+                    # 第三步：将 AI 总结后的精简结果同步写入系统剪贴板
+                    # 【为什么这么写】：copy 指令可直接将文本放入 Pasteboard，方便用户立即 Cmd+V 粘贴到飞书/微信/邮件
+                    copy "$OUTPUT"
+
+                    # 第四步：弹出通知提示用户已完成提取
+                    notify "AI 智能提取完成" "提炼纪要已写入剪贴板，可随时粘贴！"
+                    """
+                )
+                
+                presetCard(
+                    category: "🤖 AI与视觉",
+                    title: "🌐 剪贴板多语言 AI 智能翻译与代码解读",
+                    desc: "一键读取剪贴板外文或代码片段，AI 智能翻译为地道中文并弹出半透明 HUD 卡片",
+                    icon: "character.bubble.fill",
+                    code: """
+                    # ============================================================
+                    # 🌐 示例：剪贴板内容一键 AI 智能翻译与代码解读
+                    # 💡 适用场景：复制外文文档或代码后，一键翻译并给出专业中文解读
+                    # ============================================================
+
+                    # 第一步：从系统剪贴板中直接读取最新复制的内容
+                    # 【为什么这么写】：paste 指令直接获取用户刚才 Cmd+C 的文本放入 $OUTPUT
+                    paste
+                    var clip_content = $OUTPUT
+
+                    # 第二步：调用大模型进行信达雅中英互译与润色
+                    # 【为什么这么写】：如果是代码则解释作用，如果是英文则翻译为地道中文
+                    ai "请将以下内容翻译为优雅的中文，若是代码请简要说明功能：\\n$clip_content"
+
+                    # 第三步：将润色后的结果再次更新回剪贴板
+                    copy "$OUTPUT"
+
+                    # 第四步：屏幕居中弹出半透明 HUD 卡片展示翻译结果
+                    notify "AI 翻译结果" "$OUTPUT"
+                    """
+                )
+                
+                presetCard(
+                    category: "🤖 AI与视觉",
+                    title: "✨ GitHub 灵感格言 + AI 诗意翻译 + 语音晨报",
+                    desc: "异步 HTTP GET 抓取 GitHub 禅意格言，由 AI 进行诗意信达雅润色并通过语音朗读",
+                    icon: "sparkles.rectangle.stack",
+                    code: """
+                    # ============================================================
+                    # ✨ 示例：GitHub 每日灵感早报与 AI 诗意解读
+                    # 💡 适用场景：每天获取一条 GitHub 官方禅意格言，由 AI 诗意翻译并朗读
+                    # ============================================================
+
+                    # 第一步：发送异步 HTTP GET 网络请求，获取 GitHub Zen API 格言
+                    # 【为什么这么写】：http get 能够抓取任意开放 API 接口的实时数据
+                    http get "https://api.github.com/zen"
+                    var raw_quote = $OUTPUT
+
+                    # 第二步：交由 AI 大模型进行诗意翻译与深度解读
+                    # 【为什么这么写】：将英文禅语转化为富有中文哲理的金句
+                    ai "请将这句英文编程格言翻译成富有诗意的中文金句：\\n$raw_quote"
+                    var cn_quote = $OUTPUT
+
+                    # 第三步：居中弹出精美 HUD 并进行语音朗读
+                    notify "今日灵感早报" "$cn_quote"
+                    tts "$cn_quote"
+                    """
+                )
+            }
             
-            presetCard(
-                title: "👁️ 屏幕 OCR 识字并写入文件",
-                desc: "调用 Apple 神经引擎识别屏幕所有文字，自动写入桌面 ocr_result.txt 并复制到剪贴板",
-                icon: "text.badge.plus",
-                code: """
-                # 屏幕 OCR 识字并存盘
-                ocr
-                file write "~/Desktop/ocr_result.txt" "$OUTPUT"
-                copy "$OUTPUT"
-                notify "OCR 提取完成" "已保存至桌面 ocr_result.txt 并同步复制到剪贴板"
-                """
-            )
+            // 示例 3：桌宠与二次元生态
+            if selectedPresetCategory == "全部" || selectedPresetCategory == "🐰 桌宠生态" {
+                presetCard(
+                    category: "🐰 桌宠生态",
+                    title: "🐰 清晨唤醒：桌宠召唤 + 治愈主题 + 纪念日播报",
+                    desc: "唤醒桌宠，全链路联动治愈粉嫩主题，查询置顶相伴天数并通过自然人声语音朗读",
+                    icon: "sun.max.fill",
+                    code: """
+                    # ============================================================
+                    # 🐰 示例：清晨唤醒工作流（桌宠 + 主题 + 纪念日语音播报）
+                    # 💡 适用场景：早晨开机或开始工作时，一键进入元气满满的专注状态
+                    # ============================================================
+
+                    # 第一步：在桌面召唤唤醒 YumikoToys 治愈系桌宠
+                    # 【为什么这么写】：app pet on 确保桌宠处于活跃互动状态，随时在屏幕上陪伴
+                    app pet on
+
+                    # 第二步：切换为治愈系粉嫩二次元动漫主题
+                    # 【为什么这么写】：app theme healing 立即联动状态栏、主面板与桌宠特效全链路变色
+                    app theme healing
+
+                    # 第三步：查询当前置顶的恋爱/重要纪念日天数
+                    # 【为什么这么写】：app anniversary 读取置顶纪念日标题与剩余/已过天数
+                    app anniversary
+                    var anni = $OUTPUT
+
+                    # 第四步：调用系统原生语音合成器进行早安语音朗读
+                    # 【为什么这么写】：tts 能够用自然人声将温馨问候与纪念日播报给主人，免去低头看屏幕
+                    tts "主人早安！今天也是元气满满的一天，$anni，桌宠随时陪伴在您身边！"
+
+                    # 第五步：右上方弹出系统横幅确认
+                    notify "早安问候" "$anni\\n主题已切换为治愈系，祝工作顺利！"
+                    """
+                )
+                
+                presetCard(
+                    category: "🐰 桌宠生态",
+                    title: "🌙 下班离座沉浸休息：夜间主题 + 降音量 + 锁屏睡眠",
+                    desc: "切换赛博夜间主题，自动降音量并静音，语音告别并延时 1 秒锁定 Mac 低功耗休眠",
+                    icon: "moon.stars.fill",
+                    code: """
+                    # ============================================================
+                    # 🌙 示例：下班/离座安全休眠自动化
+                    # 💡 适用场景：下班或离开工位时，一键调低音量、告别播报并锁定 Mac 睡眠
+                    # ============================================================
+
+                    # 第一步：切换为炫酷赛博朋克二次元夜间主题
+                    # 【为什么这么写】：app theme cyber 降低屏幕刺眼白光，进入暗色夜间模式
+                    app theme cyber
+
+                    # 第二步：将系统多媒体音量调至 20% 并静音，防止下班后外放打扰他人
+                    # 【为什么这么写】：sys volume 20 将音量调至合适范围，接着 sys volume mute 实现静音
+                    sys volume 20
+                    sys volume mute
+
+                    # 第三步：语音向主人告别
+                    tts "主人辛苦了，正在为您锁定屏幕并进入低功耗睡眠，明天见！"
+
+                    # 第四步：延时 1 秒等待语音播报完毕
+                    # 【为什么这么写】：wait 1.0 避免屏幕锁定后语音合成进程被系统立即挂起
+                    wait 1.0
+
+                    # 第五步：立即锁定 Mac 屏幕并进入低功耗休眠 (Sleep)
+                    # 【为什么这么写】：sys locksleep 结合了 macOS 安全锁屏与硬件级休眠省电
+                    sys locksleep
+                    """
+                )
+            }
             
-            presetCard(
-                title: "🌙 下班锁屏与系统睡眠",
-                desc: "切换赛博二次元主题，将音量调至 20% 并静音，最后锁定 Mac 屏幕并进入睡眠",
-                icon: "moon.stars.fill",
-                code: """
-                # 下班休息自动化
-                app theme cyber
-                sys volume 20
-                sys volume mute
-                tts "主人辛苦了，正在为您锁屏并进入睡眠"
-                wait 1.0
-                sys locksleep
-                """
-            )
+            // 示例 4：系统维护与优化
+            if selectedPresetCategory == "全部" || selectedPresetCategory == "⚡ 系统维护" {
+                presetCard(
+                    category: "⚡ 系统维护",
+                    title: "🧹 Mac 极速大扫除：清空废纸篓 + 释放内存缓存",
+                    desc: "安全清空废纸篓，极速释放系统 inactive 内存缓存，分析 CPU 负载并弹出 HUD",
+                    icon: "sparkle",
+                    code: """
+                    # ============================================================
+                    # 🧹 示例：Mac 一键深度极速优化与大扫除
+                    # 💡 适用场景：电脑卡顿时，一键清理无用垃圾、释放 inactive 内存缓存
+                    # ============================================================
+
+                    # 第一步：安全清空系统废纸篓
+                    # 【为什么这么写】：sys emptytrash 调用 macOS 原生 AppleScript 安全清空废纸篓
+                    sys emptytrash
+
+                    # 第二步：释放操作系统未使用的内存缓存 (Purge Memory)
+                    # 【为什么这么写】：sys purge 清理系统磁盘缓存与非活跃内存，提升多任务流畅度
+                    sys purge
+
+                    # 第三步：查询当前 CPU 负载与前台高消耗进程
+                    sys cpu
+                    var cpu_status = $OUTPUT
+
+                    # 第四步：居中弹出精美 HUD 渲染弹窗，并用语音告知主人
+                    notify "深度优化完成" "废纸篓已清空，系统内存缓存已释放！\\n$cpu_status"
+                    tts "Mac 深度优化完成，系统运行已加速！"
+                    """
+                )
+                
+                presetCard(
+                    category: "⚡ 系统维护",
+                    title: "🔐 高强度随机安全密码生成器并写入剪贴板",
+                    desc: "调用系统 /dev/urandom 生成 16 位包含字母数字符号的安全随机密码并复制",
+                    icon: "key.fill",
+                    code: """
+                    # ============================================================
+                    # 🔐 示例：高强度随机安全密码生成器
+                    # 💡 适用场景：注册新账号时，一键生成 16 位包含字母数字符号的高强度密码
+                    # ============================================================
+
+                    # 第一步：调用底层 Shell 生成 16 位高强度随机安全密码
+                    # 【为什么这么写】：利用 macOS 原生 /dev/urandom 结合 base64 生成真随机密码
+                    shell LC_ALL=C tr -dc 'A-Za-z0-9!@#$%^&*' < /dev/urandom | head -c 16
+                    var new_pwd = $OUTPUT
+
+                    # 第二步：将新生成的密码自动写入剪贴板
+                    # 【为什么这么写】：copy 指令让用户可以直接 Cmd+V 粘贴到密码框
+                    copy "$new_pwd"
+
+                    # 第三步：弹出通知告知用户
+                    notify "随机密码已生成" "密码已复制到剪贴板：\\n$new_pwd"
+                    """
+                )
+            }
             
-            presetCard(
-                title: "🌐 GitHub 灵感与每日格言",
-                desc: "调用 GitHub 开放接口获取禅意格言，由 AI 进行润色并居中弹出精美 HUD",
-                icon: "sparkles.rectangle.stack",
-                code: """
-                # 每日灵感早报
-                http get "https://api.github.com/zen"
-                var quote = $OUTPUT
-                ai "请将这句英文格言翻译成富有诗意中文金句：$quote"
-                notify "今日灵感" "$OUTPUT"
-                tts "$OUTPUT"
-                """
-            )
+            // 示例 5：进阶过程宏
+            if selectedPresetCategory == "全部" || selectedPresetCategory == "🧩 进阶过程宏" {
+                presetCard(
+                    category: "🧩 进阶过程宏",
+                    title: "🔌 模块化过程宏：定义可复用插件并随处调用",
+                    desc: "使用 def ... end 封装多步操作为独立过程宏，使用 call 指令在不同地方快速复用",
+                    icon: "puzzlepiece.fill",
+                    code: """
+                    # ============================================================
+                    # 🔌 示例：模块化编程（定义过程宏 def 与 call 调用）
+                    # 💡 适用场景：将常用的多步操作封装成独立函数，在脚本各处随时复用
+                    # ============================================================
+
+                    # 第一步：使用 def 定义一个名为 mac_quick_tune 的自制过程宏
+                    # 【为什么这么写】：def ... end 语法支持将多行指令打包为一个原子模块
+                    def mac_quick_tune
+                        sys emptytrash
+                        sys purge
+                        sys volume 40
+                        notify "快捷优化" "废纸篓与内存缓存已清理，音量调至 40%"
+                    end
+
+                    # 第二步：在主脚本逻辑中，随时使用 call 指令调用该过程
+                    # 【为什么这么写】：call 指令会按顺序执行过程宏内部的所有指令
+                    notify "开始执行工作流" "正在调用优化过程..."
+                    call mac_quick_tune
+
+                    # 第三步：执行后续任务
+                    app theme kawaii
+                    notify "工作流完成" "已切换为萌系主题"
+                    """
+                )
+                
+                presetCard(
+                    category: "🧩 进阶过程宏",
+                    title: "💬 多分支交互决策自动化菜单",
+                    desc: "弹出 choose 单选列表让用户做选择，根据用户决策执行不同自动化任务",
+                    icon: "list.bullet.rectangle.portrait",
+                    code: """
+                    # ============================================================
+                    # 💬 示例：多分支交互决策自动化菜单
+                    # 💡 适用场景：需要根据用户临时的选择，执行不同的工作流程
+                    # ============================================================
+
+                    # 第一步：弹出多选项单选菜单
+                    # 【为什么这么写】：choose 指令以逗号分隔选项，用户点击后选项文本存入 $OUTPUT
+                    choose "深度清理垃圾,召唤桌面桌宠,锁屏睡眠休眠"
+                    var choice = $OUTPUT
+
+                    # 第二步：记录用户选择并给出反馈
+                    notify "用户选择" "您刚才选择了: $choice"
+
+                    # 第三步：执行通用安全收尾
+                    tts "已收到您的指令：$choice"
+                    """
+                )
+            }
         }
     }
     
-    private func presetCard(title: String, desc: String, icon: String, code: String) -> some View {
-        Button(action: {
-            manager.editingPlugin.scriptContent = code
-            showSaveToast = true
-        }) {
-            VStack(alignment: .leading, spacing: 5) {
-                HStack {
-                    Image(systemName: icon)
-                        .foregroundStyle(theme.primaryColor)
-                        .font(.system(size: 13, weight: .bold))
-                    Text(title)
-                        .font(.system(size: 11.5, weight: .bold))
-                        .foregroundStyle(Color.primary)
-                    Spacer()
-                    Image(systemName: "arrow.down.doc.fill")
-                        .font(.system(size: 10))
-                        .foregroundStyle(theme.primaryColor)
-                }
-                Text(desc)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
+    private func presetCard(category: String, title: String, desc: String, icon: String, code: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundStyle(theme.primaryColor)
+                    .font(.system(size: 13, weight: .bold))
+                Text(title)
+                    .font(.system(size: 11.5, weight: .bold))
+                    .foregroundStyle(Color.primary)
+                Spacer()
+                Text(category)
+                    .font(.system(size: 9))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(theme.primaryColor.opacity(0.12)))
+                    .foregroundStyle(theme.primaryColor)
             }
-            .padding(9)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .controlBackgroundColor)))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.primaryColor.opacity(0.2), lineWidth: 1))
+            
+            Text(desc)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            
+            HStack(spacing: 8) {
+                Button(action: {
+                    manager.editingPlugin.scriptContent = code
+                    showSaveToast = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.down")
+                        Text("📥 载入编辑器")
+                    }
+                    .font(.system(size: 10, weight: .semibold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 5).fill(theme.primaryColor))
+                    .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+                
+                Button(action: {
+                    manager.insertSnippet(code)
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                        Text("➕ 插入光标")
+                    }
+                    .font(.system(size: 10, weight: .semibold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 5).fill(Color(nsColor: .controlBackgroundColor)))
+                    .foregroundStyle(theme.primaryColor)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 2)
         }
-        .buttonStyle(.plain)
+        .padding(9)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .controlBackgroundColor)))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.primaryColor.opacity(0.2), lineWidth: 1))
     }
     
     // MARK: - 3. 实时编译与语法诊断面板 (Diagnostics View)
