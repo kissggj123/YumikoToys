@@ -23,11 +23,15 @@ final class PluginResultHUDManager: ObservableObject {
     
     private var hudPanel: NSPanel?
     private var autoDismissTask: Task<Void, Never>?
+    private var dismissTask: Task<Void, Never>?
     
     private init() {}
     
     /// 展示插件结果悬浮弹窗
     func show(title: String, message: String, icon: String = "bolt.fill", isSuccess: Bool = true, autoDismissSeconds: Double = 16.0) {
+        dismissTask?.cancel()
+        dismissTask = nil
+        
         self.title = title
         self.message = message
         self.icon = icon
@@ -41,11 +45,10 @@ final class PluginResultHUDManager: ObservableObject {
         let dismissTime = message.count > 120 ? max(25.0, autoDismissSeconds) : autoDismissSeconds
         autoDismissTask?.cancel()
         if dismissTime > 0 {
-            autoDismissTask = Task {
+            autoDismissTask = Task { @MainActor in
                 try? await Task.sleep(nanoseconds: UInt64(dismissTime * 1_000_000_000))
-                if !Task.isCancelled {
-                    self.dismiss()
-                }
+                guard !Task.isCancelled else { return }
+                self.dismiss()
             }
         }
     }
@@ -54,21 +57,33 @@ final class PluginResultHUDManager: ObservableObject {
         autoDismissTask?.cancel()
     }
     
+    func resumeAutoDismiss(seconds: Double = 6.0) {
+        autoDismissTask?.cancel()
+        autoDismissTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            self.dismiss()
+        }
+    }
+    
     /// 关闭弹窗
     func dismiss() {
         autoDismissTask?.cancel()
+        dismissTask?.cancel()
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             self.isShowing = false
         }
-        Task {
+        dismissTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: 300_000_000)
+            guard !Task.isCancelled else { return }
             self.hudPanel?.orderOut(nil)
             self.hudPanel = nil
         }
     }
     
     private func createOrUpdatePanel() {
-        if hudPanel == nil {
+        let isInitial = (hudPanel == nil)
+        if isInitial {
             let panel = NSPanel(
                 contentRect: NSRect(x: 0, y: 0, width: 440, height: 380),
                 styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless, .resizable],
@@ -88,21 +103,19 @@ final class PluginResultHUDManager: ObservableObject {
             let hostingView = NSHostingView(rootView: PluginResultHUDView(manager: self))
             panel.contentView = hostingView
             self.hudPanel = panel
+            
+            // 仅在首次创建时定位到主屏幕右上角（状态栏下方），避免冲掉用户手动拖拽/缩放后的尺寸
+            if let screen = NSScreen.main {
+                let screenRect = screen.visibleFrame
+                let panelWidth: CGFloat = 440
+                let panelHeight: CGFloat = 360
+                let x = screenRect.maxX - panelWidth - 20
+                let y = screenRect.maxY - panelHeight - 12
+                panel.setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
+            }
         }
         
-        guard let panel = hudPanel else { return }
-        
-        // 定位到主屏幕右上角（状态栏下方）
-        if let screen = NSScreen.main {
-            let screenRect = screen.visibleFrame
-            let panelWidth: CGFloat = 440
-            let panelHeight: CGFloat = 360
-            let x = screenRect.maxX - panelWidth - 20
-            let y = screenRect.maxY - panelHeight - 12
-            panel.setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
-        }
-        
-        panel.orderFrontRegardless()
+        hudPanel?.orderFrontRegardless()
     }
 }
 
@@ -210,7 +223,7 @@ struct PluginResultHUDView: View {
                         .padding(12)
                         .textSelection(.enabled)
                 }
-                .frame(minHeight: 120, maxHeight: 240)
+                .frame(minHeight: 120, maxHeight: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.black.opacity(0.05))
@@ -289,16 +302,23 @@ struct PluginResultHUDView: View {
             isHovered = hovering
             if hovering {
                 manager.pauseAutoDismiss()
+            } else {
+                manager.resumeAutoDismiss(seconds: 6.0)
             }
         }
     }
     
     private func exportToDesktop(title: String, content: String) {
         let desktopUrl = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSHomeDirectory() + "/Desktop")
-        let filename = "YumiScript_\(title.replacingOccurrences(of: "/", with: "_"))_\(Int(Date().timeIntervalSince1970)).txt"
+        let sanitized = title.components(separatedBy: CharacterSet(charactersIn: "/:\\?%*|\"<>")).joined(separator: "_")
+        let filename = "YumiScript_\(sanitized)_\(Int(Date().timeIntervalSince1970)).txt"
         let fileUrl = desktopUrl.appendingPathComponent(filename)
-        try? content.write(to: fileUrl, atomically: true, encoding: .utf8)
-        NSWorkspace.shared.activateFileViewerSelecting([fileUrl])
+        do {
+            try content.write(to: fileUrl, atomically: true, encoding: .utf8)
+            NSWorkspace.shared.activateFileViewerSelecting([fileUrl])
+        } catch {
+            print("Failed to export HUD to desktop: \(error)")
+        }
     }
     
     private func formatTime(_ date: Date) -> String {

@@ -82,8 +82,22 @@ final class YumiScriptCompiler {
             // 归一化中文与智能引号
             let normalizedLine = normalizeSmartSymbols(trimmed)
             
-            // 1. 引号匹配校验（基于归一化后的标准引号）
-            let quoteCount = normalizedLine.filter { $0 == "\"" }.count
+            // 1. 引号匹配校验（剥离注释段再计数，避免 # 后的引号误报）
+            let lineForQuote: String = {
+                // 去掉行尾注释（# 或 // 开头的部分，但需在引号外）
+                var inQ = false
+                var stripped = ""
+                var i = normalizedLine.startIndex
+                while i < normalizedLine.endIndex {
+                    let c = normalizedLine[i]
+                    if c == "\"" { inQ.toggle() }
+                    if !inQ && (c == "#" || (c == "/" && normalizedLine[i...].hasPrefix("//"))) { break }
+                    stripped.append(c)
+                    i = normalizedLine.index(after: i)
+                }
+                return stripped
+            }()
+            let quoteCount = lineForQuote.filter { $0 == "\"" }.count
             if quoteCount % 2 != 0 {
                 diagnostics.append(DiagnosticItem(
                     line: lineNum,
@@ -112,23 +126,25 @@ final class YumiScriptCompiler {
                 }
             }
             
-            // 3. 变量赋值语法检测
-            if let eqIdx = normalizedLine.firstIndex(of: "=") {
-                var varPart = String(normalizedLine[..<eqIdx])
-                if varPart.hasPrefix("var ") { varPart = String(varPart.dropFirst(4)) }
-                if varPart.hasPrefix("let ") { varPart = String(varPart.dropFirst(4)) }
-                if varPart.hasPrefix("set ") { varPart = String(varPart.dropFirst(4)) }
-                varPart = varPart.replacingOccurrences(of: "$", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                if varPart.contains(" ") {
-                    diagnostics.append(DiagnosticItem(
-                        line: lineNum,
-                        message: "变量名 \"\(varPart)\" 包含非法空格",
-                        severity: .error,
-                        suggestion: "变量名仅允许使用字母、数字和下划线，如: var user_name = ..."
-                    ))
-                } else if !varPart.isEmpty {
-                    definedVariables.insert(varPart)
+            // 3. 变量赋值语法检测（只检查明确以 var/let/set/$ 开头的赋值行，避免 URL 或文本中 = 误报）
+            let lower3 = normalizedLine.lowercased()
+            if lower3.hasPrefix("var ") || lower3.hasPrefix("let ") || lower3.hasPrefix("set ") || normalizedLine.hasPrefix("$") {
+                if let eqIdx = normalizedLine.firstIndex(of: "=") {
+                    var varPart = String(normalizedLine[..<eqIdx])
+                    if varPart.lowercased().hasPrefix("var ") { varPart = String(varPart.dropFirst(4)) }
+                    else if varPart.lowercased().hasPrefix("let ") { varPart = String(varPart.dropFirst(4)) }
+                    else if varPart.lowercased().hasPrefix("set ") { varPart = String(varPart.dropFirst(4)) }
+                    varPart = varPart.replacingOccurrences(of: "$", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    if varPart.contains(" ") {
+                        diagnostics.append(DiagnosticItem(
+                            line: lineNum,
+                            message: "变量名 \"\(varPart)\" 包含非法空格",
+                            severity: .error,
+                            suggestion: "变量名仅允许使用字母、数字和下划线，如: var user_name = ..."
+                        ))
+                    } else if !varPart.isEmpty {
+                        definedVariables.insert(varPart)
+                    }
                 }
             }
             
@@ -227,18 +243,101 @@ enum YumiRegexes {
     static let commentRegex = try? NSRegularExpression(pattern: #"(#|//).*$"#, options: .anchorsMatchLines)
 }
 
+// MARK: - 专业级行号标尺 (VS Code 级同帧精准滚动同步)
+
+final class YumiLineNumberRulerView: NSRulerView {
+    init(scrollView: NSScrollView, textView: NSTextView) {
+        super.init(scrollView: scrollView, orientation: .verticalRuler)
+        self.clientView = textView
+        self.ruleThickness = 42
+    }
+    
+    required init(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func drawHashMarksAndLabels(in rect: NSRect) {
+        // 背景色
+        NSColor(red: 0.08, green: 0.08, blue: 0.11, alpha: 1.0).setFill()
+        rect.fill()
+        
+        // 分界线
+        NSColor(white: 0.20, alpha: 0.5).setFill()
+        NSRect(x: bounds.maxX - 1, y: bounds.minY, width: 1, height: bounds.height).fill()
+        
+        guard let textView = clientView as? NSTextView,
+              let layoutManager = textView.layoutManager,
+              let textContainer = textView.textContainer else { return }
+        
+        let visibleRect = textView.visibleRect
+        let glyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
+        let charRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
+        
+        let string = textView.string as NSString
+        let ptSize = (textView.font?.pointSize ?? 13.5) - 2.0
+        let font = NSFont.monospacedSystemFont(ofSize: ptSize, weight: .medium)
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.secondaryLabelColor.withAlphaComponent(0.45)
+        ]
+        
+        guard string.length > 0 else {
+            let s = "1" as NSString
+            let sz = s.size(withAttributes: attrs)
+            s.draw(at: NSPoint(x: ruleThickness - sz.width - 8, y: textView.textContainerInset.height), withAttributes: attrs)
+            return
+        }
+        
+        var lineNumber = 1
+        string.enumerateSubstrings(in: NSRange(location: 0, length: min(charRange.location, string.length)), options: [.byLines, .substringNotRequired]) { _, _, _, _ in
+            lineNumber += 1
+        }
+        
+        var charIdx = charRange.location
+        while charIdx < (charRange.location + charRange.length) && charIdx < string.length {
+            let lineRange = string.lineRange(for: NSRange(location: charIdx, length: 0))
+            let glyphIdx = layoutManager.glyphIndexForCharacter(at: lineRange.location)
+            let lineRect = layoutManager.lineFragmentRect(forGlyphAt: glyphIdx, effectiveRange: nil)
+            
+            let y = lineRect.origin.y + textView.textContainerInset.height
+            let numStr = "\(lineNumber)" as NSString
+            let numSize = numStr.size(withAttributes: attrs)
+            let drawPoint = NSPoint(x: ruleThickness - numSize.width - 8, y: y + (lineRect.height - numSize.height) / 2)
+            numStr.draw(at: drawPoint, withAttributes: attrs)
+            
+            lineNumber += 1
+            let nextChar = lineRange.location + lineRange.length
+            if nextChar <= charIdx { break }
+            charIdx = nextChar
+        }
+        
+        if string.hasSuffix("\n") {
+            let glyphIdx = layoutManager.glyphIndexForCharacter(at: max(0, string.length - 1))
+            let lineRect = layoutManager.lineFragmentRect(forGlyphAt: glyphIdx, effectiveRange: nil)
+            let y = lineRect.origin.y + lineRect.height + textView.textContainerInset.height
+            let numStr = "\(lineNumber)" as NSString
+            let numSize = numStr.size(withAttributes: attrs)
+            let drawPoint = NSPoint(x: ruleThickness - numSize.width - 8, y: y + (lineRect.height - numSize.height) / 2)
+            numStr.draw(at: drawPoint, withAttributes: attrs)
+        }
+    }
+}
+
 // MARK: - 专业级彩色高亮 NSTextView 控件
 
 final class YumiColorfulTextView: NSTextView {
     var onTabRequested: (() -> Bool)?
     /// 程序化设置文本时为 true，屏蔽 NSTextViewDelegate.textDidChange 回调防止死循环
     var isSettingText = false
+    /// 动态字体大小（跟随用户设置）
+    var fontSize: CGFloat = 13.5
     
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 48 {
             if let handler = onTabRequested, handler() { return }
-            if shouldChangeText(in: selectedRange(), replacementString: "    ") {
-                replaceCharacters(in: selectedRange(), with: "    ")
+            let sel = selectedRange()
+            if sel.location != NSNotFound && shouldChangeText(in: sel, replacementString: "    ") {
+                replaceCharacters(in: sel, with: "    ")
                 didChangeText()
                 return
             }
@@ -253,10 +352,10 @@ final class YumiColorfulTextView: NSTextView {
         string = newText   // AppKit 推荐的程序化设置方式，正确更新 TextContainer 布局
         isSettingText = false
         highlightSyntax() // string= 会清除所有 attributed 属性，需要重新高亮
-        // 光标移到末尾
+        // 光标移到末尾（不强制滚动，避免 Tab 补全时跳屏）
         let end = (newText as NSString).length
         setSelectedRange(NSRange(location: end, length: 0))
-        scrollToEndOfDocument(nil)
+        enclosingScrollView?.verticalRulerView?.needsDisplay = true
     }
     
     func highlightSyntax() {
@@ -266,7 +365,7 @@ final class YumiColorfulTextView: NSTextView {
         guard fullRange.length > 0 else { return }
         
         storage.beginEditing()
-        let sz: CGFloat = 13.5
+        let sz: CGFloat = fontSize
         let def = NSFont.monospacedSystemFont(ofSize: sz, weight: .regular)
         let bold = NSFont.monospacedSystemFont(ofSize: sz, weight: .bold)
         storage.setAttributes([.font: def, .foregroundColor: NSColor(white: 0.94, alpha: 1.0)], range: fullRange)
@@ -334,6 +433,7 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
         textView.isSelectable = true
         textView.isRichText = true
         textView.allowsUndo = true
+        textView.fontSize = fontSize
         textView.font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
         textView.textColor = NSColor(white: 0.94, alpha: 1.0)
         textView.backgroundColor = NSColor(red: 0.11, green: 0.11, blue: 0.14, alpha: 1.0)
@@ -367,14 +467,30 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
         if !text.isEmpty { textView.setEditorText(text) }
         
         scrollView.documentView = textView
+        
+        // 启用专业级垂直行号标尺 (VS Code 风格行号)
+        scrollView.hasVerticalRuler = true
+        scrollView.rulersVisible = true
+        let ruler = YumiLineNumberRulerView(scrollView: scrollView, textView: textView)
+        scrollView.verticalRulerView = ruler
+        
         return scrollView
     }
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
+        // 始终更新 coordinator.parent，防止 SwiftUI 重建 struct 后 binding 过期
+        context.coordinator.parent = self
         // 保持 activeTextView 引用最新
         if let tv = context.coordinator.textView {
             if YumiScriptIDEManager.shared.activeTextView !== tv {
                 YumiScriptIDEManager.shared.activeTextView = tv
+            }
+            // 动态响应字体大小变化
+            if tv.fontSize != fontSize {
+                tv.fontSize = fontSize
+                tv.font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+                tv.highlightSyntax()
+                nsView.verticalRulerView?.needsDisplay = true
             }
         }
         // 辅助路径：若 binding 与 NSTextView 不一致且非用户输入引起，则同步
@@ -398,6 +514,7 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
             guard !tv.isSettingText else { return }
             isHandlingUserInput = true
             tv.highlightSyntax()
+            tv.enclosingScrollView?.verticalRulerView?.needsDisplay = true
             parent.text = tv.string
             isHandlingUserInput = false
         }
@@ -409,8 +526,10 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
             let nsStr = textView.string as NSString
             let lineRange = nsStr.lineRange(for: NSRange(location: cursorLoc, length: 0))
             let currentLine = nsStr.substring(with: lineRange).trimmingCharacters(in: .whitespacesAndNewlines)
+            let prefixStr = nsStr.substring(to: lineRange.location)
+            let lineIdx = prefixStr.components(separatedBy: .newlines).count - 1
             guard let suggestion = YumiScriptNeuralEngine.shared.inferCompletion(
-                currentLine: currentLine, fullScript: textView.string
+                lineIndex: lineIdx, currentLine: currentLine, fullScript: textView.string
             ) else { return false }
             let newString = nsStr.replacingCharacters(in: lineRange, with: suggestion.completion + "\n")
             let newCursorLoc = min(lineRange.location + (suggestion.completion as NSString).length + 1, (newString as NSString).length)
@@ -480,13 +599,14 @@ final class YumiScriptNeuralEngine {
     private init() {}
     
     /// 上下文深度联想推理
-    func inferCompletion(currentLine: String, fullScript: String) -> NeuralCompletionSuggestion? {
+    func inferCompletion(lineIndex: Int = -1, currentLine: String, fullScript: String) -> NeuralCompletionSuggestion? {
         let trimmed = currentLine.trimmingCharacters(in: .whitespaces)
         let lines = fullScript.components(separatedBy: .newlines)
         
-        // 查找上一行有效指令
+        // 查找上一行有效指令（精准基于当前光标所在行索引，解决空白行与重复行定位失效）
         var previousLine: String = ""
-        if let currentIdx = lines.firstIndex(of: currentLine), currentIdx > 0 {
+        let currentIdx = (lineIndex >= 0 && lineIndex < lines.count) ? lineIndex : (lines.firstIndex(of: currentLine) ?? 0)
+        if currentIdx > 0 {
             for i in stride(from: currentIdx - 1, through: 0, by: -1) {
                 let l = lines[i].trimmingCharacters(in: .whitespacesAndNewlines)
                 if !l.isEmpty && !l.hasPrefix("#") && !l.hasPrefix("//") {
@@ -671,8 +791,14 @@ final class YumiScriptIDEManager: ObservableObject {
     
     func switchToFile(_ plugin: YumiPlugin) {
         syncCurrentEditingToOpenList()
+        // 确保目标文件在 openPlugins 中（否则编辑不会被保存）
+        if !openPlugins.contains(where: { $0.id == plugin.id }) {
+            openPlugins.append(plugin)
+        }
         self.editingPlugin = plugin
         self.activePluginId = plugin.id
+        // 直接推送内容到 NSTextView
+        activeTextView?.setEditorText(plugin.scriptContent)
     }
     
     func closeTab(id: String) {
@@ -959,25 +1085,7 @@ struct YumiScriptIDEView: View {
     
     private var editorWorkspaceArea: some View {
         HStack(spacing: 0) {
-            // 左侧行号指示器
-            let lineCount = max(1, manager.editingPlugin.scriptContent.components(separatedBy: .newlines).count)
-            VStack(alignment: .trailing, spacing: 4.8) {
-                ForEach(1...lineCount, id: \.self) { num in
-                    Text("\(num)")
-                        .font(.system(size: editorFontSize - 2.0, weight: .medium, design: .monospaced))
-                        .foregroundStyle(Color.secondary.opacity(0.55))
-                        .frame(height: 18)
-                }
-                Spacer()
-            }
-            .padding(.top, 14)
-            .padding(.horizontal, 8)
-            .frame(width: 42)
-            .background(Color(nsColor: .windowBackgroundColor).opacity(0.3))
-            
-            Divider()
-            
-            // 专业级全彩高亮编辑器
+            // 专业级全彩高亮编辑器（内置 AppKit 同步垂直行号标尺，支持无缝跟随滚动）
             ZStack(alignment: .topTrailing) {
                 YumiColorfulCodeEditor(
                     text: $manager.editingPlugin.scriptContent,
@@ -2195,6 +2303,7 @@ struct YumiScriptIDEView: View {
     }
     
     private func runScriptTest() {
+        guard !isRunningTest else { return }
         isRunningTest = true
         isConsoleExpanded = true
         runCompileDiagnostics()
@@ -2206,12 +2315,21 @@ struct YumiScriptIDEView: View {
     }
     
     private func savePlugin() {
-        guard !manager.editingPlugin.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        var name = manager.editingPlugin.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if name.isEmpty {
+            name = "自定脚本_\(Int(Date().timeIntervalSince1970))"
+            manager.editingPlugin.name = name
+        }
+        manager.syncCurrentEditingToOpenList()
         pluginService.addOrUpdatePlugin(manager.editingPlugin)
         showSaveToast = true
+        suggestionToast = "✅ 脚本 \"\(name)\" 保存成功！"
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 1_800_000_000)
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
             showSaveToast = false
+            if suggestionToast.contains("保存成功") {
+                suggestionToast = ""
+            }
         }
     }
     
