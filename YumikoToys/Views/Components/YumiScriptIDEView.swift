@@ -686,14 +686,21 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
         let textView = YumiScriptCustomTextView()
         textView.isEditable = true
         textView.isSelectable = true
-        textView.isRichText = true
+        textView.isRichText = false
         textView.allowsUndo = true
+        textView.font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        textView.textColor = NSColor(white: 0.94, alpha: 1.0)
+        textView.insertionPointColor = NSColor(themePrimary)
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.backgroundColor = NSColor(red: 0.11, green: 0.11, blue: 0.14, alpha: 1.0)
         textView.textContainerInset = NSSize(width: 14, height: 14)
+        textView.typingAttributes = [
+            .font: NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular),
+            .foregroundColor: NSColor(white: 0.94, alpha: 1.0)
+        ]
         textView.delegate = context.coordinator
         
         // 注册丰富拖拽格式支持
@@ -748,8 +755,11 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
         
         func insertSnippetAtCursor(_ snippet: String) {
             guard let tv = textView else { return }
+            isUpdating = true
+            
             var sel = tv.selectedRange()
-            let nsStr = tv.string as NSString
+            let currentStr = tv.string
+            let nsStr = currentStr as NSString
             
             if sel.location == NSNotFound || sel.location > nsStr.length {
                 sel = NSRange(location: nsStr.length, length: 0)
@@ -758,7 +768,7 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
             var textToInsert = snippet
             if sel.location > 0 && sel.location <= nsStr.length {
                 let prevChar = nsStr.substring(with: NSRange(location: sel.location - 1, length: 1))
-                if prevChar != "\n" && !tv.string.isEmpty {
+                if prevChar != "\n" && !currentStr.isEmpty {
                     textToInsert = "\n" + snippet
                 }
             }
@@ -766,18 +776,31 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
                 textToInsert += "\n"
             }
             
-            if tv.shouldChangeText(in: sel, replacementString: textToInsert) {
-                tv.replaceCharacters(in: sel, with: textToInsert)
-                tv.didChangeText()
-                let newLoc = sel.location + (textToInsert as NSString).length
-                tv.setSelectedRange(NSRange(location: newLoc, length: 0))
-            } else {
-                tv.string = tv.string.isEmpty ? textToInsert : (tv.string + "\n" + textToInsert)
-                tv.didChangeText()
-            }
+            let newString = (currentStr as NSString).replacingCharacters(in: sel, with: textToInsert)
+            let newCursorLoc = sel.location + (textToInsert as NSString).length
             
-            parent.text = tv.string
+            // 1. 更新底层文本存储与高亮
+            let nsColor = NSColor(parent.themePrimary)
+            let highlighted = YumiScriptSyntaxHighlighter.highlight(
+                text: newString,
+                themePrimary: nsColor,
+                fontSize: parent.fontSize
+            )
+            tv.textStorage?.setAttributedString(highlighted)
+            
+            // 2. 强制刷新布局与光标
+            if let lm = tv.layoutManager, let tc = tv.textContainer {
+                lm.ensureLayout(for: tc)
+            }
+            tv.setSelectedRange(NSRange(location: newCursorLoc, length: 0))
+            tv.needsDisplay = true
+            tv.displayIfNeeded()
+            
+            // 3. 同步回 SwiftUI 状态
+            parent.text = newString
             tv.window?.makeFirstResponder(tv)
+            
+            isUpdating = false
         }
         
         func handleTabCompletion(currentLine: String) -> Bool {
@@ -789,19 +812,30 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
                 let nsStr = tv.string as NSString
                 let lineRange = nsStr.lineRange(for: NSRange(location: sel.location, length: 0))
                 
-                if tv.shouldChangeText(in: lineRange, replacementString: suggestion.completion + "\n") {
-                    tv.replaceCharacters(in: lineRange, with: suggestion.completion + "\n")
-                    tv.didChangeText()
-                    tv.setSelectedRange(NSRange(location: lineRange.location + (suggestion.completion as NSString).length + 1, length: 0))
-                    
-                    parent.suggestionToast = "⚡ Tab 神经补全: \(suggestion.description)"
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                        if self.parent.suggestionToast.contains(suggestion.description) {
-                            self.parent.suggestionToast = ""
-                        }
-                    }
-                    return true
+                let completionWithNewline = suggestion.completion + "\n"
+                let newString = (tv.string as NSString).replacingCharacters(in: lineRange, with: completionWithNewline)
+                let newCursorLoc = lineRange.location + (suggestion.completion as NSString).length + 1
+                
+                isUpdating = true
+                let nsColor = NSColor(parent.themePrimary)
+                let highlighted = YumiScriptSyntaxHighlighter.highlight(text: newString, themePrimary: nsColor, fontSize: parent.fontSize)
+                tv.textStorage?.setAttributedString(highlighted)
+                if let lm = tv.layoutManager, let tc = tv.textContainer {
+                    lm.ensureLayout(for: tc)
                 }
+                tv.setSelectedRange(NSRange(location: newCursorLoc, length: 0))
+                tv.needsDisplay = true
+                tv.displayIfNeeded()
+                parent.text = newString
+                isUpdating = false
+                
+                parent.suggestionToast = "⚡ Tab 神经补全: \(suggestion.description)"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if self.parent.suggestionToast.contains(suggestion.description) {
+                        self.parent.suggestionToast = ""
+                    }
+                }
+                return true
             }
             
             if tv.shouldChangeText(in: tv.selectedRange(), replacementString: "    ") {
@@ -828,6 +862,13 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
             let nsColor = NSColor(parent.themePrimary)
             let highlighted = YumiScriptSyntaxHighlighter.highlight(text: text, themePrimary: nsColor, fontSize: parent.fontSize)
             tv.textStorage?.setAttributedString(highlighted)
+            
+            if let lm = tv.layoutManager, let tc = tv.textContainer {
+                lm.ensureLayout(for: tc)
+            }
+            tv.needsDisplay = true
+            tv.displayIfNeeded()
+            
             isUpdating = false
         }
     }
