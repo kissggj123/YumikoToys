@@ -321,6 +321,12 @@ final class YumiScriptEngine {
                     lockScreen()
                     lastOutput = "屏幕已锁定"
                     logs.append(" 已锁定 Mac 屏幕 🔒")
+                } else if lowerArg == "sleep" || lowerArg == "locksleep" || lowerArg == "lockandsleep" {
+                    lockScreen()
+                    try? await Task.sleep(nanoseconds: 200_000_000)
+                    let _ = await SkillService.shared.runAppleScript("tell application \"System Events\" to sleep")
+                    lastOutput = "已锁定屏幕并进入系统休眠"
+                    logs.append(" 已锁定屏幕并进入休眠 🌙💤")
                 } else if lowerArg == "emptytrash" {
                     let _ = await SkillService.shared.runAppleScript("tell application \"Finder\" to empty trash")
                     lastOutput = "废纸篓已清空"

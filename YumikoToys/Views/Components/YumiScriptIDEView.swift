@@ -670,7 +670,8 @@ struct YumiScriptIDEView: View {
                 toolboxItem("查询电池状态", code: "sys battery\nnotify \"电池健康\" \"$OUTPUT\"", icon: "battery.100")
                 toolboxItem("一键清空废纸篓", code: "sys emptytrash\nnotify \"系统清理\" \"废纸篓已安全清空\"", icon: "trash.fill")
                 toolboxItem("释放内存缓存", code: "sys purge\nnotify \"内存加速\" \"缓存已极速释放\"", icon: "bolt.fill")
-                toolboxItem("一键锁定 Mac 屏幕", code: "sys lock", icon: "lock.fill")
+                toolboxItem("锁屏并睡眠 (休眠省电)", code: "sys locksleep", icon: "moon.stars.fill")
+                toolboxItem("仅锁定 Mac 屏幕", code: "sys lock", icon: "lock.fill")
                 toolboxItem("切换深浅色外观", code: "sys toggletheme", icon: "circle.righthalf.filled")
             }
             
@@ -756,17 +757,17 @@ struct YumiScriptIDEView: View {
             )
             
             presetCard(
-                title: "🌙 下班专注与息屏休眠",
-                desc: "切换赛博二次元主题，将音量调至 20% 并静音，最后锁定 Mac 屏幕",
+                title: "🌙 下班锁屏与系统睡眠",
+                desc: "切换赛博二次元主题，将音量调至 20% 并静音，最后锁定 Mac 屏幕并进入睡眠",
                 icon: "moon.stars.fill",
                 code: """
                 # 下班休息自动化
                 app theme cyber
                 sys volume 20
                 sys volume mute
-                tts "主人辛苦了，正在为您锁定屏幕"
+                tts "主人辛苦了，正在为您锁屏并进入睡眠"
                 wait 1.0
-                sys lock
+                sys locksleep
                 """
             )
         }

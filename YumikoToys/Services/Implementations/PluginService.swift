@@ -77,13 +77,13 @@ final class PluginService: ObservableObject {
             ),
             YumiPlugin(
                 id: "lock_screen",
-                name: "一键锁定屏幕",
-                icon: "lock.shield.fill",
-                description: "立即快速锁定 Mac 屏幕，离开座位时保护隐私",
+                name: "锁屏并睡眠",
+                icon: "moon.stars.fill",
+                description: "立即锁定 Mac 屏幕并进入低功耗休眠，离开座位时保护隐私并省电",
                 isEnabled: true,
                 scriptContent: """
-                # 立即锁定屏幕
-                sys lock
+                # 锁定屏幕并进入系统休眠
+                sys locksleep
                 """
             ),
             YumiPlugin(
@@ -217,6 +217,19 @@ final class PluginService: ObservableObject {
             for preset in defaultPresetPlugins {
                 if !list.contains(where: { $0.id == preset.id }) {
                     list.append(preset)
+                }
+            }
+            
+            // 自动将旧版 "一键锁定屏幕" 升级为 "锁屏并睡眠"
+            if let idx = list.firstIndex(where: { $0.id == "lock_screen" }) {
+                if list[idx].name == "一键锁定屏幕" {
+                    list[idx].name = "锁屏并睡眠"
+                    list[idx].icon = "moon.stars.fill"
+                    list[idx].description = "立即锁定 Mac 屏幕并进入低功耗休眠，离开座位时保护隐私并省电"
+                    list[idx].scriptContent = """
+                    # 锁定屏幕并进入系统休眠
+                    sys locksleep
+                    """
                 }
             }
             
