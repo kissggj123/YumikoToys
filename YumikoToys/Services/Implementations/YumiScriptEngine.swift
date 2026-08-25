@@ -2,8 +2,8 @@
 //  YumiScriptEngine.swift
 //  YumikoToys
 //
-//  自研 YumiScript 核心脚本编译与解析执行引擎（v5.0.0）
-//  支持：AI大模型调用、系统API深度控制、视觉OCR识别、语音合成TTS、HTTP网络请求、自制插件与宏过程
+//  自研 YumiScript 核心脚本编译与解析执行引擎（v6.0.0 快捷指令原子能力版）
+//  支持：文件全套管理(读/写/追加/复制/移动/删)、YumikoToys本体操控(桌宠/主题/截图/录屏/纪念日)、AI大模型、系统API、TTS语音与模态输入
 //
 
 import Foundation
@@ -26,7 +26,7 @@ final class YumiScriptEngine {
         var lastOutput: String = ""
         var userVariables: [String: String] = [:]
         
-        logs.append("=== YumiScript Engine v5.0 (AI Copilot & Advanced System APIs) ===")
+        logs.append("=== YumiScript Engine v6.0 (捷径原子能力 & YumikoToys控制) ===")
         logs.append("开始执行脚本，总行数: \(lines.count)")
         
         var lineIndex = 0
@@ -79,6 +79,28 @@ final class YumiScriptEngine {
             
             // 3. 分发指令执行
             switch command {
+            // MARK: - 文件与磁盘原子操作 (file write / append / read / delete / copy / move / mkdir / list / exists)
+            case "file":
+                let fileLog = await handleFileCommand(rawArgs: rawArgs, userVariables: userVariables, lastOutput: lastOutput)
+                lastOutput = fileLog.output
+                logs.append(" 📁 \(fileLog.message)")
+                
+            // MARK: - 操控 YumikoToys 本身 (app pet / theme / anniversary / screenshot / record)
+            case "app", "yumiko":
+                let appLog = await handleAppCommand(rawArgs: rawArgs, userVariables: userVariables, lastOutput: lastOutput)
+                lastOutput = appLog.output
+                logs.append(" 🐰 \(appLog.message)")
+                
+            // MARK: - 交互式输入框 (input "提示文本" ["默认值"])
+            case "input", "prompt", "askinput":
+                let (promptText, defaultVal) = parseNotificationArgs(rawArgs)
+                let finalPrompt = interpolateVariables(promptText.isEmpty ? "请输入内容:" : promptText, variables: userVariables, lastOutput: lastOutput)
+                let finalDef = interpolateVariables(defaultVal, variables: userVariables, lastOutput: lastOutput)
+                
+                let inputRes = await promptUserTextInput(prompt: finalPrompt, defaultValue: finalDef)
+                lastOutput = inputRes
+                logs.append(" ✍️ 用户输入结果: \"\(inputRes)\"")
+                
             // MARK: - 调用自定义宏 / 插件过程 (call macro_name)
             case "call", "run":
                 let macroName = interpolateVariables(cleanQuotes(rawArgs), variables: userVariables, lastOutput: lastOutput)
@@ -202,7 +224,7 @@ final class YumiScriptEngine {
                 var success = false
 
                 if allowMultiple {
-                    // 多开模式：通过 macOS 原生 /usr/bin/open -n 分离进程实现真多开（terminationHandler 避免阻塞主线程）
+                    // 多开模式：通过 macOS 原生 /usr/bin/open -n 分离进程实现真多开
                     let process = Process()
                     process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
                     process.arguments = ["-n", safeResolvedPath]
@@ -390,7 +412,6 @@ final class YumiScriptEngine {
                     }
                     logs.append(" 网络诊断结果: \(lastOutput)")
                 } else {
-                    // 支持 sys <ip/host>、sys ip <ip/host>、sys ping <ip/host> 或直接 ping <ip/host>
                     var pingTarget = targetArg
                     if pingTarget.lowercased().hasPrefix("ip ") {
                         pingTarget = String(pingTarget.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -517,6 +538,232 @@ final class YumiScriptEngine {
         
         logs.append("执行结束。")
         return logs.joined(separator: "\n")
+    }
+    
+    // MARK: - 文件与磁盘原子操作处理器 (File Operations)
+    
+    private static func handleFileCommand(rawArgs: String, userVariables: [String: String], lastOutput: String) async -> (output: String, message: String) {
+        let parts = rawArgs.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+        guard let first = parts.first else {
+            return ("", "错误: file 指令缺少子操作 (write/read/append/delete/copy/move/mkdir/list/exists)")
+        }
+        
+        let op = String(first).lowercased()
+        let rest = parts.count > 1 ? String(parts[1]) : ""
+        let fileManager = FileManager.default
+        
+        switch op {
+        case "write", "save":
+            // file write "路径" "内容"
+            let (pathRaw, contentRaw) = parseNotificationArgs(rest)
+            let path = (interpolateVariables(cleanQuotes(pathRaw), variables: userVariables, lastOutput: lastOutput) as NSString).expandingTildeInPath
+            let content = interpolateVariables(contentRaw.isEmpty ? lastOutput : contentRaw, variables: userVariables, lastOutput: lastOutput)
+            
+            guard !path.isEmpty else { return ("", "错误: file write 缺少目标路径") }
+            
+            let dirUrl = URL(fileURLWithPath: path).deletingLastPathComponent()
+            try? fileManager.createDirectory(at: dirUrl, withIntermediateDirectories: true)
+            
+            do {
+                try content.write(toFile: path, atomically: true, encoding: .utf8)
+                return (path, "成功写入文件: \(path) (共 \(content.count) 字符)")
+            } catch {
+                return ("", "写入文件失败: \(error.localizedDescription)")
+            }
+            
+        case "append":
+            // file append "路径" "内容"
+            let (pathRaw, contentRaw) = parseNotificationArgs(rest)
+            let path = (interpolateVariables(cleanQuotes(pathRaw), variables: userVariables, lastOutput: lastOutput) as NSString).expandingTildeInPath
+            let content = interpolateVariables(contentRaw.isEmpty ? lastOutput : contentRaw, variables: userVariables, lastOutput: lastOutput)
+            
+            guard !path.isEmpty else { return ("", "错误: file append 缺少目标路径") }
+            
+            let fileUrl = URL(fileURLWithPath: path)
+            let dirUrl = fileUrl.deletingLastPathComponent()
+            try? fileManager.createDirectory(at: dirUrl, withIntermediateDirectories: true)
+            
+            if !fileManager.fileExists(atPath: path) {
+                try? content.write(toFile: path, atomically: true, encoding: .utf8)
+                return (content, "文件不存在，已新建并写入: \(path)")
+            } else {
+                if let fileHandle = try? FileHandle(forWritingTo: fileUrl) {
+                    fileHandle.seekToEndOfFile()
+                    if let data = ("\n" + content).data(using: .utf8) {
+                        fileHandle.write(data)
+                    }
+                    try? fileHandle.close()
+                    return (content, "成功追加内容到文件: \(path)")
+                } else {
+                    return ("", "无法打开文件进行追加")
+                }
+            }
+            
+        case "read":
+            // file read "路径"
+            let path = (interpolateVariables(cleanQuotes(rest), variables: userVariables, lastOutput: lastOutput) as NSString).expandingTildeInPath
+            guard !path.isEmpty else { return ("", "错误: file read 缺少路径") }
+            
+            do {
+                let content = try String(contentsOfFile: path, encoding: .utf8)
+                return (content, "读取文件成功 (\(content.count) 字符): \(path)")
+            } catch {
+                return ("", "读取文件失败: \(error.localizedDescription)")
+            }
+            
+        case "delete", "trash", "remove":
+            // file delete "路径"
+            let path = (interpolateVariables(cleanQuotes(rest), variables: userVariables, lastOutput: lastOutput) as NSString).expandingTildeInPath
+            guard !path.isEmpty else { return ("", "错误: file delete 缺少路径") }
+            let url = URL(fileURLWithPath: path)
+            
+            do {
+                try fileManager.trashItem(at: url, resultingItemURL: nil)
+                return (path, "已将文件安全移入废纸篓: \(path)")
+            } catch {
+                do {
+                    try fileManager.removeItem(at: url)
+                    return (path, "已永久删除文件: \(path)")
+                } catch {
+                    return ("", "删除文件失败: \(error.localizedDescription)")
+                }
+            }
+            
+        case "mkdir":
+            // file mkdir "目录路径"
+            let path = (interpolateVariables(cleanQuotes(rest), variables: userVariables, lastOutput: lastOutput) as NSString).expandingTildeInPath
+            guard !path.isEmpty else { return ("", "错误: file mkdir 缺少目录路径") }
+            do {
+                try fileManager.createDirectory(atPath: path, withIntermediateDirectories: true)
+                return (path, "成功创建目录: \(path)")
+            } catch {
+                return ("", "创建目录失败: \(error.localizedDescription)")
+            }
+            
+        case "list":
+            // file list "目录路径"
+            let path = (interpolateVariables(cleanQuotes(rest), variables: userVariables, lastOutput: lastOutput) as NSString).expandingTildeInPath
+            guard !path.isEmpty else { return ("", "错误: file list 缺少目录路径") }
+            if let files = try? fileManager.contentsOfDirectory(atPath: path) {
+                let joined = files.joined(separator: ", ")
+                return (joined, "目录内共有 \(files.count) 个文件: \(joined)")
+            } else {
+                return ("", "读取目录文件清单失败")
+            }
+            
+        case "exists":
+            // file exists "路径"
+            let path = (interpolateVariables(cleanQuotes(rest), variables: userVariables, lastOutput: lastOutput) as NSString).expandingTildeInPath
+            let exists = fileManager.fileExists(atPath: path)
+            return (exists ? "true" : "false", "检查路径存在性: \(path) -> \(exists ? "存在" : "不存在")")
+            
+        default:
+            return ("", "未知 file 子指令 \"\(op)\"")
+        }
+    }
+    
+    // MARK: - 操控 YumikoToys 本身原子处理器 (YumikoToys Internal App Controls)
+    
+    private static func handleAppCommand(rawArgs: String, userVariables: [String: String], lastOutput: String) async -> (output: String, message: String) {
+        let parts = rawArgs.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+        guard let domain = parts.first?.lowercased() else {
+            return ("", "错误: app 指令缺少功能域 (pet/theme/anniversary/screenshot/record/hud)")
+        }
+        
+        let subArg = parts.count > 1 ? String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines).lowercased() : ""
+        
+        switch domain {
+        // MARK: 🐶 桌面桌宠控制
+        case "pet":
+            if subArg == "on" || subArg == "start" || subArg == "summon" {
+                PetPlaygroundService.shared.setEnabled(true)
+                return ("桌宠已开启", "桌宠已就绪并降临桌面 🐾")
+            } else if subArg == "off" || subArg == "stop" || subArg == "dismiss" {
+                PetPlaygroundService.shared.setEnabled(false)
+                return ("桌宠已隐藏", "桌宠已安全收回休息 💤")
+            } else if subArg == "toggle" || subArg.isEmpty {
+                let current = PetPlaygroundService.shared.isEnabled
+                PetPlaygroundService.shared.setEnabled(!current)
+                return (!current ? "桌宠已开启" : "桌宠已隐藏", "已切换桌宠状态 -> \(!current ? "显示 🐾" : "隐藏 💤")")
+            } else if subArg == "status" {
+                let st = PetPlaygroundService.shared.isEnabled ? "正在运行" : "已休眠"
+                return (st, "当前桌宠状态: \(st)")
+            } else {
+                return ("", "未知 pet 指令: \(subArg) (支持: on, off, toggle, status)")
+            }
+            
+        // MARK: 🎨 二次元主题控制
+        case "theme":
+            if subArg == "toggle" || subArg.isEmpty {
+                AnimeThemeService.shared.isEnabled.toggle()
+                let cur = AnimeThemeService.shared.isEnabled
+                return (cur ? "二次元主题已开启" : "二次元主题已关闭", "已切换二次元主题 -> \(cur ? "开启 🌸" : "关闭")")
+            } else if subArg == "healing" {
+                AnimeThemeService.shared.isEnabled = true
+                AnimeThemeService.shared.currentStyle = .healing
+                return ("日系治愈", "已切换为【日系治愈风】主题 🌸")
+            } else if subArg == "cyber" {
+                AnimeThemeService.shared.isEnabled = true
+                AnimeThemeService.shared.currentStyle = .cyber
+                return ("赛博二次元", "已切换为【赛博朋克】主题 ⚡")
+            } else if subArg == "kawaii" {
+                AnimeThemeService.shared.isEnabled = true
+                AnimeThemeService.shared.currentStyle = .kawaii
+                return ("软萌可爱", "已切换为【软萌可爱】主题 🎀")
+            } else if subArg == "makoto" {
+                AnimeThemeService.shared.isEnabled = true
+                AnimeThemeService.shared.currentStyle = .makoto
+                return ("新海诚写实", "已切换为【新海诚精致写实】主题 ☁️")
+            } else {
+                return ("", "未知 theme 风格: \(subArg) (支持: toggle, healing, cyber, kawaii, makoto)")
+            }
+            
+        // MARK: 📅 纪念日查询
+        case "anniversary":
+            let annivService = DependencyContainer.shared.anniversaryService
+            let info = annivService.activeAnniversaryInfo
+            if let target = annivService.activeAnniversary {
+                let days = info?.calculation.days ?? 0
+                let text = "\(target.title): \(days) 天"
+                return (text, "置顶纪念日 -> \(text)")
+            } else {
+                return ("无置顶纪念日", "当前未设置置顶纪念日")
+            }
+            
+        // MARK: 📸 触发截图与录屏
+        case "screenshot":
+            if subArg == "area" {
+                ScreenMediaHelper.shared.captureArea()
+                return ("区域截图已触发", "已开启区域截图")
+            } else if subArg == "annotate" {
+                ScreenMediaHelper.shared.openScreenshotAnnotation()
+                return ("截图标注已打开", "已启动截图标注工具")
+            } else if subArg == "touchbar" {
+                ScreenMediaHelper.shared.captureTouchBar()
+                return ("TouchBar截图已触发", "已触发 TouchBar 截图")
+            } else {
+                ScreenMediaHelper.shared.captureFullscreen()
+                return ("全屏截图已触发", "已截取全屏并复制到剪贴板")
+            }
+            
+        default:
+            return ("", "未知 app 子指令 \"\(domain)\"")
+        }
+    }
+    
+    // MARK: - 交互式文本输入提示框
+    
+    private static func promptUserTextInput(prompt: String, defaultValue: String) async -> String {
+        let script = """
+        display dialog "\(prompt.replacingOccurrences(of: "\"", with: "\\\""))" default answer "\(defaultValue.replacingOccurrences(of: "\"", with: "\\\""))" with title "YumiScript 用户输入" buttons {"确定", "取消"} default button "确定"
+        text returned of result
+        """
+        let res = await SkillService.shared.runAppleScript(script)
+        let trimmed = res.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed == "false" || trimmed.contains("error") {
+            return defaultValue
+        }
+        return trimmed
     }
     
     // MARK: - 视觉 OCR 文字识别引擎
@@ -834,7 +1081,7 @@ final class YumiScriptEngine {
         return nil
     }
 
-    /// 双协议混合测速（ICMP Ping + TCP 端口自适应握手，彻底消除超时假象）
+    /// 双协议混合测速（ICMP Ping + TCP 端口自适应握手）
     private static func measureNetworkLatency(to target: String) async -> (localIP: String, latency: Double?, isOnline: Bool) {
         let localIP = await runRawShell("ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || ipconfig getifaddr en2 2>/dev/null || echo \"127.0.0.1\"")
             .trimmingCharacters(in: .whitespacesAndNewlines)

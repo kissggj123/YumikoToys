@@ -2,8 +2,8 @@
 //  YumiScriptIDEView.swift
 //  YumikoToys
 //
-//  VS Code 架构的专业级 YumiScript Studio 可视化 IDE 套件
-//  支持：新建 100% 空白脚本、多标签文件管理、AI Copilot 智能编写与诊断、自制 IDE 插件扩展包开发、丰富系统 API 与 OCR/TTS
+//  VS Code + 捷径 (Apple Shortcuts) 风格的专业级 YumiScript Studio 可视化 IDE 套件
+//  支持：新建 100% 空白画布、捷径原子能力积木库、一键场景工作流、文件读写/系统通知/YumikoToys自身控制、AI Copilot、自制插件扩展开发
 //
 
 import SwiftUI
@@ -34,7 +34,7 @@ final class YumiScriptIDEManager: ObservableObject {
         icon: "sparkles",
         description: "",
         isEnabled: true,
-        scriptContent: "" // 始终保证初始为空白
+        scriptContent: "" // 100% 保证绝对纯净空白
     )
     @Published var isCreating: Bool = false
     
@@ -75,7 +75,7 @@ final class YumiScriptIDEManager: ObservableObject {
                 icon: "doc.badge.plus",
                 description: "",
                 isEnabled: true,
-                scriptContent: "" // 100% 绝对纯净空白，不填任何杂质代码
+                scriptContent: "" // 100% 绝对纯净空白
             )
             self.editingPlugin = newPlugin
             self.openPlugins = [newPlugin]
@@ -88,7 +88,6 @@ final class YumiScriptIDEManager: ObservableObject {
     
     /// 新建一个纯净空白文件标签
     func createNewBlankTab() {
-        // 先同步当前正在编辑的内容
         syncCurrentEditingToOpenList()
         
         let newId = "plugin_\(UUID().uuidString.prefix(6).lowercased())"
@@ -157,7 +156,6 @@ final class YumiScriptIDEManager: ObservableObject {
            let blocks = try? JSONDecoder().decode([CustomIDEBlock].self, from: data) {
             self.customUserBlocks = blocks
         } else {
-            // 默认内置一个自制扩展示例
             self.customUserBlocks = [
                 CustomIDEBlock(
                     id: "ext_clean_mac",
@@ -193,7 +191,7 @@ final class YumiScriptIDEManager: ObservableObject {
     private func showIDEPanel() {
         if idePanel == nil {
             let panel = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 1040, height: 680),
+                contentRect: NSRect(x: 0, y: 0, width: 1080, height: 700),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
@@ -202,7 +200,7 @@ final class YumiScriptIDEManager: ObservableObject {
             panel.titleVisibility = .hidden
             panel.titlebarAppearsTransparent = true
             panel.level = .normal
-            panel.minSize = NSSize(width: 820, height: 560)
+            panel.minSize = NSSize(width: 860, height: 580)
             panel.isMovableByWindowBackground = true
             panel.backgroundColor = NSColor.windowBackgroundColor
             panel.hasShadow = true
@@ -244,6 +242,7 @@ enum YumiScriptSyntaxHighlighter {
     private static let keywordRegex: NSRegularExpression? = {
         let keywords = [
             "ai", "ask", "glm", "tts", "say", "speak", "ocr", "http", "fetch",
+            "file", "app", "yumiko", "input", "prompt", "askinput",
             "alert", "choose", "select", "def", "call", "run", "var", "let", "set",
             "sys", "system", "notify", "dialog", "toast", "hud", "launch", "open",
             "wait", "sleep", "shell", "copy", "paste", "ping", "applescript", "osascript"
@@ -395,7 +394,7 @@ struct YumiScriptCodeEditorRepresentable: NSViewRepresentable {
     }
 }
 
-// MARK: - IDE 主界面 (VS Code 风格架构)
+// MARK: - IDE 主界面 (VS Code + 捷径风格架构)
 
 struct YumiScriptIDEView: View {
     @ObservedObject var manager: YumiScriptIDEManager
@@ -404,16 +403,18 @@ struct YumiScriptIDEView: View {
     
     /// VS Code 风格活动栏视图切换
     enum ActivitySection: String, CaseIterable {
+        case toolbox = "捷径动作库"
+        case presets = "一键场景模板"
         case explorer = "资源管理器"
-        case toolbox = "系统 API & 积木"
         case copilot = "AI Copilot"
         case extensions = "自制插件扩展"
         case settings = "偏好设置"
         
         var icon: String {
             switch self {
-            case .explorer: return "folder.fill"
             case .toolbox: return "puzzlepiece.extension.fill"
+            case .presets: return "wand.and.stars"
+            case .explorer: return "folder.fill"
             case .copilot: return "sparkles"
             case .extensions: return "square.grid.2x2.fill"
             case .settings: return "gearshape.fill"
@@ -459,7 +460,7 @@ struct YumiScriptIDEView: View {
             // MARK: - 2. 侧边功能栏 (Sidebar)
             if isSidebarVisible {
                 sidebarPanel
-                    .frame(width: 300)
+                    .frame(width: 320)
                     .background(Color(nsColor: .controlBackgroundColor).opacity(0.45))
                 
                 Divider()
@@ -467,7 +468,7 @@ struct YumiScriptIDEView: View {
             
             // MARK: - 3. 核心编辑工作区 (Editor & Tabs)
             VStack(spacing: 0) {
-                // 顶部快捷 AI 辅助条与文件标签栏 (VS Code Editor Tabs)
+                // 顶部文件标签栏 (VS Code Editor Tabs)
                 editorTabsBar
                 
                 Divider()
@@ -488,13 +489,13 @@ struct YumiScriptIDEView: View {
                 ideStatusBar
             }
         }
-        .frame(minWidth: 820, minHeight: 560)
+        .frame(minWidth: 860, minHeight: 580)
         .overlay(alignment: .bottom) {
             if showSaveToast {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                    Text("脚本已成功保存！已实时同步至状态栏")
+                    Text("脚本已成功保存！已实时同步至状态栏与系统扩展")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.white)
                 }
@@ -612,10 +613,12 @@ struct YumiScriptIDEView: View {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 12) {
                     switch activeSection {
+                    case .toolbox:
+                        shortcutsToolboxView
+                    case .presets:
+                        presetWorkflowsView
                     case .explorer:
                         explorerView
-                    case .toolbox:
-                        toolboxView
                     case .copilot:
                         copilotView
                     case .extensions:
@@ -629,11 +632,180 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 1. 资源管理器 (Explorer)
+    // MARK: - 1. 捷径原子动作积木库 (Shortcuts Toolbox)
+    
+    private var shortcutsToolboxView: some View {
+        VStack(spacing: 12) {
+            // 📁 文件与系统磁盘操作
+            toolboxGroup(title: "📁 文件与磁盘管理", color: .yellow) {
+                toolboxItem("创建/覆盖写入文件", code: "file write \"~/Desktop/demo.txt\" \"你好，这是由 YumiScript 自动创建的文件！\\n创建时间: $DATETIME\"\nnotify \"文件已保存\" \"已写入 ~/Desktop/demo.txt\"", icon: "doc.badge.plus")
+                toolboxItem("追加文本到文件", code: "file append \"~/Desktop/demo.txt\" \"[$DATETIME] 追加记录一条自动化日志\"\nnotify \"日志已记录\" \"已追加内容\"", icon: "doc.append")
+                toolboxItem("读取文件内容到变量", code: "file read \"~/Desktop/demo.txt\"\nnotify \"文件内容预览\" \"$OUTPUT\"", icon: "doc.text.magnifyingglass")
+                toolboxItem("安全移入废纸篓", code: "file trash \"~/Desktop/demo.txt\"\nnotify \"已删除\" \"文件已移入废纸篓\"", icon: "trash")
+                toolboxItem("列出目录内文件", code: "file list \"~/Desktop\"\nnotify \"桌面文件清单\" \"$OUTPUT\"", icon: "folder.badge.gearshape")
+                toolboxItem("创建文件夹目录", code: "file mkdir \"~/Desktop/YumiBackup\"\nnotify \"目录创建成功\" \"~/Desktop/YumiBackup\"", icon: "folder.badge.plus")
+            }
+            
+            // 💬 通知、弹窗与交互输入
+            toolboxGroup(title: "💬 通知与交互输入", color: .green) {
+                toolboxItem("系统通知横幅 + HUD", code: "notify \"任务完成\" \"自动化流程已成功执行完毕！\"", icon: "bell.badge.fill")
+                toolboxItem("弹出文本输入框", code: "input \"请输入您要记录的内容:\" \"默认备忘\"\nfile append \"~/Desktop/notes.txt\" \"[$DATETIME] $OUTPUT\"\nnotify \"记录成功\" \"内容已追加到备忘录\"", icon: "character.cursor.ibeam")
+                toolboxItem("模态确认对话框", code: "alert \"确认执行\" \"是否立即开始自动化任务？\"\nnotify \"用户决策\" \"用户选择了: $OUTPUT\"", icon: "bubble.left.and.bubble.right.fill")
+                toolboxItem("列表单选菜单", code: "choose \"启动 Safari,清空废纸篓,切换主题\"\nnotify \"选中的操作\" \"$OUTPUT\"", icon: "list.bullet.rectangle")
+                toolboxItem("语音合成播报 TTS", code: "tts \"主人您好，今日系统任务已全部自动化就绪。\"", icon: "speaker.wave.3.fill")
+            }
+            
+            // 🐰 操控 YumikoToys 本身
+            toolboxGroup(title: "🐰 操控 YumikoToys 自身", color: .pink) {
+                toolboxItem("召唤 / 隐藏桌面桌宠", code: "app pet toggle\nnotify \"桌宠状态\" \"$OUTPUT\"", icon: "pawprint.fill")
+                toolboxItem("切换二次元主题风格", code: "app theme toggle\nnotify \"主题切换\" \"$OUTPUT\"", icon: "paintpalette.fill")
+                toolboxItem("查询置顶纪念日倒数", code: "app anniversary\ntts \"$OUTPUT\"\nnotify \"纪念日提醒\" \"$OUTPUT\"", icon: "calendar.badge.clock")
+                toolboxItem("触发区域 / 全屏截图", code: "app screenshot area\nnotify \"截图已触发\" \"请框选屏幕区域\"", icon: "viewfinder")
+                toolboxItem("启动截图标注工具", code: "app screenshot annotate", icon: "pencil.tip.crop.circle")
+            }
+            
+            // ⚡ 硬件与系统控制
+            toolboxGroup(title: "⚡ 硬件与系统深度控制", color: .blue) {
+                toolboxItem("调节系统音量 (50%)", code: "sys volume 50\nnotify \"音量调节\" \"音量已调至 50%\"", icon: "speaker.wave.2.fill")
+                toolboxItem("查询电池状态", code: "sys battery\nnotify \"电池健康\" \"$OUTPUT\"", icon: "battery.100")
+                toolboxItem("一键清空废纸篓", code: "sys emptytrash\nnotify \"系统清理\" \"废纸篓已安全清空\"", icon: "trash.fill")
+                toolboxItem("释放内存缓存", code: "sys purge\nnotify \"内存加速\" \"缓存已极速释放\"", icon: "bolt.fill")
+                toolboxItem("一键锁定 Mac 屏幕", code: "sys lock", icon: "lock.fill")
+                toolboxItem("切换深浅色外观", code: "sys toggletheme", icon: "circle.righthalf.filled")
+            }
+            
+            // 🤖 AI 大模型与 OCR 视觉
+            toolboxGroup(title: "🤖 AI 大模型 & OCR 视觉", color: .purple) {
+                toolboxItem("AI 智能文本生成", code: "ai \"请帮我写一段关于今日工作的温馨激励语\"\nnotify \"AI 寄语\" \"$OUTPUT\"", icon: "sparkles")
+                toolboxItem("屏幕原生 OCR 识别提取", code: "ocr\ncopy \"$OUTPUT\"\nnotify \"OCR 识别完成\" \"识别到的文字已写入剪贴板\"", icon: "text.viewfinder")
+                toolboxItem("HTTP 网络 GET 请求", code: "http get \"https://api.github.com/zen\"\nnotify \"GitHub 格言\" \"$OUTPUT\"", icon: "network")
+            }
+            
+            // 🔌 用户自制扩展积木
+            if !manager.customUserBlocks.isEmpty {
+                toolboxGroup(title: "🔌 我的自制扩展积木", color: .orange) {
+                    ForEach(manager.customUserBlocks) { block in
+                        toolboxItem(block.title, code: block.snippetCode, icon: block.icon)
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - 2. 一键场景工作流 (Preset Workflows)
+    
+    private var presetWorkflowsView: some View {
+        VStack(spacing: 10) {
+            Text("精选开箱即用的一键自动化工作流，点击即可装载到编辑器：")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+            
+            presetCard(
+                title: "📝 每日工作日志快速记录",
+                desc: "弹出输入框让您输入今日日志，自动带时间戳追加到桌面工作日志文件，并横幅通知确认",
+                icon: "square.and.pencil",
+                code: """
+                # 每日工作日志记录器
+                input "请输入今日已完成的重要工作内容:" "完成功能模块开发与自测"
+                file append "~/Desktop/每日工作日志.txt" "[$DATETIME] $OUTPUT"
+                notify "日志记录成功" "已保存至 ~/Desktop/每日工作日志.txt"
+                """
+            )
+            
+            presetCard(
+                title: "🐰 桌宠早安问候与状态体检",
+                desc: "唤醒桌面桌宠，查询 Mac 电池与磁盘剩余空间，组织早安汇报并通过原生语音播报",
+                icon: "sun.max.fill",
+                code: """
+                # 桌宠早安互动与体检
+                app pet on
+                sys battery
+                var batt = $OUTPUT
+                sys disk
+                var disk = $OUTPUT
+                tts "主人早安！桌宠已就绪，当前$batt，$disk"
+                notify "桌宠早安" "电量与磁盘状态正常，随时听候调遣！"
+                """
+            )
+            
+            presetCard(
+                title: "🧹 Mac 极速大扫除与体检",
+                desc: "一键清空废纸篓、极速释放内存缓存、查询系统负载，居中弹出 HUD 报告",
+                icon: "sparkle",
+                code: """
+                # Mac 一键极速体检与清理
+                sys emptytrash
+                sys purge
+                sys cpu
+                var cpu_load = $OUTPUT
+                notify "系统清理与体检完毕" "废纸篓已清空，内存缓存已释放\\n$cpu_load"
+                """
+            )
+            
+            presetCard(
+                title: "👁️ 屏幕 OCR 识字并写入文件",
+                desc: "调用 Apple 神经引擎识别屏幕所有文字，自动写入桌面 ocr_result.txt 并复制到剪贴板",
+                icon: "text.badge.plus",
+                code: """
+                # 屏幕 OCR 识字并存盘
+                ocr
+                file write "~/Desktop/ocr_result.txt" "$OUTPUT"
+                copy "$OUTPUT"
+                notify "OCR 提取完成" "已保存至桌面 ocr_result.txt 并同步复制到剪贴板"
+                """
+            )
+            
+            presetCard(
+                title: "🌙 下班专注与息屏休眠",
+                desc: "切换赛博二次元主题，将音量调至 20% 并静音，最后锁定 Mac 屏幕",
+                icon: "moon.stars.fill",
+                code: """
+                # 下班休息自动化
+                app theme cyber
+                sys volume 20
+                sys volume mute
+                tts "主人辛苦了，正在为您锁定屏幕"
+                wait 1.0
+                sys lock
+                """
+            )
+        }
+    }
+    
+    private func presetCard(title: String, desc: String, icon: String, code: String) -> some View {
+        Button(action: {
+            manager.editingPlugin.scriptContent = code
+            showSaveToast = true
+        }) {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack {
+                    Image(systemName: icon)
+                        .foregroundStyle(theme.primaryColor)
+                        .font(.system(size: 13, weight: .bold))
+                    Text(title)
+                        .font(.system(size: 11.5, weight: .bold))
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    Image(systemName: "arrow.down.doc.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(theme.primaryColor)
+                }
+                Text(desc)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            .padding(9)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .controlBackgroundColor)))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.primaryColor.opacity(0.2), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+    
+    // MARK: - 3. 资源管理器 (Explorer)
     
     private var explorerView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 搜索过滤框
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 11))
@@ -645,7 +817,6 @@ struct YumiScriptIDEView: View {
             .padding(6)
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor).opacity(0.5)))
             
-            // 快捷新建大按钮
             Button(action: {
                 manager.createNewBlankTab()
             }) {
@@ -696,68 +867,17 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 2. 动作积木与 API 手册 (Toolbox)
-    
-    private var toolboxView: some View {
-        VStack(spacing: 10) {
-            // 🤖 AI 大模型 API
-            toolboxGroup(title: "🤖 AI 大模型 Copilot", color: .purple) {
-                toolboxItem("AI 智能生成文本", code: "ai \"请帮我写一段关于早安的温馨问候\"\nnotify \"AI 问候\" \"$OUTPUT\"", icon: "sparkles")
-                toolboxItem("AI 总结剪贴板内容", code: "paste\nai \"请帮我简要总结以下内容：\\n$OUTPUT\"\nnotify \"AI 总结报告\" \"$OUTPUT\"", icon: "doc.text.magnifyingglass")
-            }
-            
-            // 👁️ 视觉 OCR 与 🗣️ 语音合成
-            toolboxGroup(title: "👁️ 视觉 OCR & 🗣️ 语音", color: .orange) {
-                toolboxItem("屏幕原生 OCR 识别", code: "ocr\ncopy \"$OUTPUT\"\nnotify \"OCR 识别完成\" \"已复制识别文字至剪贴板\"", icon: "text.viewfinder")
-                toolboxItem("系统语音朗读 TTS", code: "tts \"主人您好，今日任务已全部自动化处理完毕。\"", icon: "speaker.wave.3.fill")
-                toolboxItem("蜂鸣提示音", code: "sys beep", icon: "bell.fill")
-            }
-            
-            // 🌐 网络与 HTTP API
-            toolboxGroup(title: "🌐 HTTP 网络请求", color: .cyan) {
-                toolboxItem("HTTP GET 请求", code: "http get \"https://api.github.com/zen\"\nnotify \"GitHub Zen\" \"$OUTPUT\"", icon: "network")
-                toolboxItem("网络连通与延迟诊断", code: "sys ip\nnotify \"网络诊断\" \"$OUTPUT\"", icon: "wifi")
-            }
-            
-            // ⚡ 系统控制与硬件 API
-            toolboxGroup(title: "⚡ 硬件与系统控制", color: .blue) {
-                toolboxItem("调节音量 (50%)", code: "sys volume 50", icon: "speaker.wave.2.fill")
-                toolboxItem("查看电池状态", code: "sys battery\nnotify \"电池健康\" \"$OUTPUT\"", icon: "battery.100")
-                toolboxItem("一键清空废纸篓", code: "sys emptytrash\nnotify \"系统清理\" \"废纸篓已清空\"", icon: "trash.fill")
-                toolboxItem("释放内存缓存", code: "sys purge\nnotify \"内存加速\" \"内存缓存已极速释放\"", icon: "bolt.fill")
-                toolboxItem("一键锁屏", code: "sys lock", icon: "lock.fill")
-                toolboxItem("切换深浅色外观", code: "sys toggletheme", icon: "circle.righthalf.filled")
-            }
-            
-            // 💬 交互式弹窗与通知
-            toolboxGroup(title: "💬 弹窗与交互", color: .green) {
-                toolboxItem("精美 HUD 渲染弹窗", code: "notify \"任务完成\" \"所有流程执行成功！\"", icon: "app.badge")
-                toolboxItem("模态确认弹窗", code: "alert \"确认执行\" \"是否立即开始自动化？\"\nnotify \"用户选择\" \"用户点击了：$OUTPUT\"", icon: "bubble.left.and.bubble.right.fill")
-                toolboxItem("列表单选菜单", code: "choose \"选项A,选项B,选项C\"\nnotify \"选中项目\" \"$OUTPUT\"", icon: "list.bullet.rectangle")
-            }
-            
-            // 🔌 用户自制扩展积木库
-            if !manager.customUserBlocks.isEmpty {
-                toolboxGroup(title: "🔌 我的自制扩展积木", color: .pink) {
-                    ForEach(manager.customUserBlocks) { block in
-                        toolboxItem(block.title, code: block.snippetCode, icon: block.icon)
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - 3. Yumi AI 智能助手 (AI Copilot)
+    // MARK: - 4. Yumi AI 智能助手 (AI Copilot)
     
     private var copilotView: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("输入您的需求，AI 将自动生成合法的 YumiScript 代码：")
+            Text("输入您的自然语言需求，AI 将自动生成完整的 YumiScript 原子脚本：")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
             
             TextEditor(text: $copilotPrompt)
                 .font(.system(size: 12))
-                .frame(height: 70)
+                .frame(height: 75)
                 .padding(4)
                 .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor).opacity(0.5)))
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(theme.primaryColor.opacity(0.3), lineWidth: 1))
@@ -811,7 +931,7 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 4. 自制扩展插件 (Extensions & Custom Blocks)
+    // MARK: - 5. 自制扩展插件 (Extensions & Custom Blocks)
     
     private var extensionsView: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -877,7 +997,7 @@ struct YumiScriptIDEView: View {
         }
     }
     
-    // MARK: - 5. IDE 偏好设置 (Settings)
+    // MARK: - 6. IDE 偏好设置 (Settings)
     
     private var settingsView: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -923,7 +1043,7 @@ struct YumiScriptIDEView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("扩展积木标题:")
                     .font(.system(size: 11, weight: .semibold))
-                TextField("例如: 快速清理与备份", text: $newExtTitle)
+                TextField("例如: 自动归档日志", text: $newExtTitle)
                     .textFieldStyle(.roundedBorder)
             }
             
@@ -1064,7 +1184,7 @@ struct YumiScriptIDEView: View {
                 TextField("插件名称", text: $manager.editingPlugin.name)
                     .textFieldStyle(.plain)
                     .font(.system(size: 11, weight: .semibold))
-                    .frame(width: 110)
+                    .frame(width: 120)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(RoundedRectangle(cornerRadius: 4).fill(Color(nsColor: .controlBackgroundColor)))
@@ -1170,7 +1290,7 @@ struct YumiScriptIDEView: View {
         HStack(spacing: 12) {
             HStack(spacing: 4) {
                 Circle().fill(Color.green).frame(width: 6, height: 6)
-                Text("YumiScript v5.0")
+                Text("YumiScript v6.0 (捷径原子版)")
                     .font(.system(size: 9.5, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
@@ -1235,11 +1355,27 @@ struct YumiScriptIDEView: View {
             YumiScript 语法规范：
             - 注释：# 注释文字
             - 变量：var name = value 或 $OUTPUT
-            - AI 大模型：ai "提示词"
-            - 语音朗读：tts "要播报的语音文本"
-            - 视觉文字识别：ocr 或 ocr "/path/to/img.png"
-            - 网络请求：http get "url" 或 http post "url" "json"
-            - 系统通知/弹窗：notify "标题" "内容" 或 alert "标题" "内容"
+            - 文件操作：
+              * file write "路径" "内容" (创建并覆盖写入文件)
+              * file append "路径" "内容" (追加内容到文件)
+              * file read "路径" (读取文件内容到 $OUTPUT)
+              * file delete "路径" (移入废纸篓)
+              * file list "目录路径" (列出文件列表)
+            - YumikoToys 自身控制：
+              * app pet on / off / toggle (召唤/收回桌宠)
+              * app theme toggle / cyber / healing / kawaii (切换二次元主题)
+              * app anniversary (查询置顶纪念日)
+              * app screenshot area / annotate (截图/标注)
+            - 交互与通知：
+              * notify "标题" "内容" (发送横幅通知 + HUD)
+              * input "提示文字" "默认值" (弹出输入框获取用户输入)
+              * alert "标题" "内容" (弹出确认对话框)
+              * choose "选项1,选项2" (弹出单选框)
+              * tts "要播报的语音文本" (语音朗读)
+            - AI 与视觉：
+              * ai "提示词" (大模型问答)
+              * ocr (全屏文字提取)
+              * http get "url" (网络请求)
             - 系统硬件控制：sys volume 50, sys battery, sys lock, sys emptytrash, sys purge, sys toggletheme
             - 启动应用：launch "应用名" 或 open "URL或路径"
             - 剪贴板：copy "内容" 或 paste
