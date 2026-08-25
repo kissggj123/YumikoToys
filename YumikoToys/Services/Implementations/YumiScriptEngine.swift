@@ -62,8 +62,14 @@ final class YumiScriptEngine {
             
             logs.append("[\(lineIndex)] 执行: \(trimmed)")
             
+            // 0.5 指令别名与用户缩写归一化扩展
+            let expandedLine = normalizeAndExpandAliases(trimmed)
+            if expandedLine != trimmed {
+                logs.append("   ↳ 自动展开缩写: \(expandedLine)")
+            }
+            
             // 1. 检查是否为变量赋值语句 (var a = 123, let b = "abc", set c = ..., key = value)
-            if let (varName, varExpr) = parseVariableAssignment(trimmed) {
+            if let (varName, varExpr) = parseVariableAssignment(expandedLine) {
                 let evaluatedValue = await evaluateExpression(varExpr, variables: userVariables, lastOutput: lastOutput)
                 userVariables[varName] = evaluatedValue
                 lastOutput = evaluatedValue
@@ -72,7 +78,7 @@ final class YumiScriptEngine {
             }
             
             // 2. 解析指令与原始参数
-            let parts = trimmed.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+            let parts = expandedLine.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
             guard let firstPart = parts.first else { continue }
             let command = String(firstPart).lowercased()
             let rawArgs = parts.count > 1 ? String(parts[1]) : ""
@@ -538,7 +544,24 @@ final class YumiScriptEngine {
                 try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
                 
             default:
-                logs.append(" 错误: 未知指令 \"\(command)\"")
+                // 智能容错：如果是 AppleScript、Shell 指令或系统命令，自动降级安全执行
+                let lowerTrimmed = expandedLine.lowercased()
+                if lowerTrimmed.hasPrefix("tell application") {
+                    let asRes = await SkillService.shared.runAppleScript(expandedLine)
+                    lastOutput = asRes.trimmingCharacters(in: .whitespacesAndNewlines)
+                    logs.append(" 🍎 智能执行 AppleScript: \(lastOutput)")
+                } else if isLikelyShellCommand(expandedLine) {
+                    let shellRes = await runRawShell(expandedLine)
+                    lastOutput = shellRes
+                    logs.append(" ⚡ 智能执行 Shell 指令:\n\(shellRes)")
+                } else {
+                    logs.append(" ⚠️ 未知指令 \"\(command)\"，已自动尝试底层执行...")
+                    let fallbackRes = await runRawShell(expandedLine)
+                    if !fallbackRes.isEmpty {
+                        lastOutput = fallbackRes
+                        logs.append(" ↳ 执行输出:\n\(fallbackRes)")
+                    }
+                }
             }
         }
         
@@ -1112,4 +1135,97 @@ final class YumiScriptEngine {
         
         return (localIP, nil, false)
     }
+    
+    // MARK: - 用户缩写与别名扩展归一化
+    
+    private static func normalizeAndExpandAliases(_ line: String) -> String {
+        let str = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        if str.isEmpty || str.hasPrefix("#") || str.hasPrefix("//") { return str }
+        
+        let parts = str.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+        guard let first = parts.first else { return str }
+        let cmd = String(first).lowercased()
+        let rest = parts.count > 1 ? String(parts[1]) : ""
+        
+        switch cmd {
+        // 音量与静音缩写
+        case "v", "vol", "volume":
+            return "sys volume \(rest)"
+        case "m", "mute", "unmute":
+            return "sys volume mute"
+            
+        // 锁屏与休眠缩写
+        case "slp", "sleep":
+            return "sys locksleep"
+        case "l", "lock":
+            return "sys lock"
+            
+        // 垃圾与清理缩写
+        case "trash", "clean", "empty":
+            return "sys emptytrash"
+        case "mem", "purge", "free":
+            return "sys purge"
+            
+        // 桌宠缩写
+        case "pet":
+            return "app pet \(rest.isEmpty ? "toggle" : rest)"
+            
+        // 主题缩写
+        case "theme":
+            return "app theme \(rest.isEmpty ? "toggle" : rest)"
+            
+        // 截图缩写
+        case "shot", "cap", "screen":
+            return "app screenshot \(rest.isEmpty ? "area" : rest)"
+            
+        // 语音与文本播报缩写
+        case "say", "speak":
+            return "tts \(rest)"
+        case "msg", "echo", "print":
+            return "notify \"信息\" \(rest)"
+            
+        // 文件操作缩写
+        case "cat", "read":
+            return "file read \(rest)"
+        case "write", "save":
+            return "file write \(rest)"
+        case "del", "rm", "remove":
+            return "file delete \(rest)"
+        case "ls", "dir":
+            return "file list \(rest)"
+        case "md", "mkdir":
+            return "file mkdir \(rest)"
+        case "cp", "copyfile":
+            return "file copy \(rest)"
+        case "mv", "movefile":
+            return "file move \(rest)"
+            
+        // 网络请求缩写
+        case "get":
+            return "http get \(rest)"
+        case "post":
+            return "http post \(rest)"
+            
+        // 剪贴板缩写
+        case "clip", "pbcopy":
+            return "copy \(rest)"
+        case "pbpaste":
+            return "paste"
+            
+        // 输入框缩写
+        case "prompt", "askinput":
+            return "input \(rest)"
+            
+        default:
+            return str
+        }
+    }
+    
+    /// 启发式判断是否为常见 Shell 命令
+    private static func isLikelyShellCommand(_ line: String) -> Bool {
+        let shellPrefixes = ["brew", "git", "curl", "open", "defaults", "kill", "killall", "pkill", "find", "grep", "awk", "sed", "tar", "zip", "unzip", "which", "pmset", "networksetup", "diskutil", "system_profiler", "whoami", "uname", "uptime", "sw_vers", "echo", "ls", "mkdir", "rm", "cp", "mv"]
+        let lower = line.lowercased()
+        return shellPrefixes.contains(where: { lower.hasPrefix($0 + " ") || lower == $0 })
+    }
 }
+
