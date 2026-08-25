@@ -258,13 +258,26 @@ final class YumiColorfulTextView: NSTextView {
     
     func setEditorText(_ newText: String) {
         guard string != newText else { return }
+        guard let storage = textStorage else { return }
+        
+        // 保存光标位置
         let prevSel = selectedRange()
-        string = newText
+        
+        // 用 textStorage 替换而非直接赋 string，避免 attributed attributes 丢失与 SwiftUI binding 脱钩
+        let nsNew = newText as NSString
+        storage.beginEditing()
+        storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: newText)
+        storage.endEditing()
+        
+        // 触发高亮重绘
         highlightSyntax()
-        if prevSel.location <= (newText as NSString).length {
-            setSelectedRange(prevSel)
-        }
+        
+        // 恢复光标，不超过新文本末尾
+        let safeEnd = min(prevSel.location + prevSel.length, nsNew.length)
+        let safeLoc = min(prevSel.location, nsNew.length)
+        setSelectedRange(NSRange(location: safeLoc, length: max(0, safeEnd - safeLoc)))
     }
+
     
     func highlightSyntax() {
         guard let storage = textStorage else { return }
@@ -432,9 +445,13 @@ struct YumiColorfulCodeEditor: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
-        if let tv = nsView.documentView as? YumiColorfulTextView {
-            if tv.string != text {
-                tv.setEditorText(text)
+        // 必须异步推延，避免 SwiftUI 在 view update 过程中同步触发 NSTextView 修改引发递归死锁
+        // 同时 tv.string 读取的是 NSAttributedString 的 plain string，可安全比较
+        let newText = text
+        DispatchQueue.main.async {
+            guard let tv = nsView.documentView as? YumiColorfulTextView else { return }
+            if tv.string != newText {
+                tv.setEditorText(newText)
             }
         }
     }
@@ -816,7 +833,9 @@ final class YumiScriptIDEManager: ObservableObject {
                 defer: false
             )
             panel.title = "YumiScript Studio IDE"
-            panel.titleVisibility = .hidden
+            // 保留 titleVisibility 可见，让系统能正确响应双击标题栏最大化手势
+            panel.titleVisibility = .visible
+            // 标题栏背景透明（视觉透明但标题栏区域仍然存在，双击才能生效）
             panel.titlebarAppearsTransparent = true
             panel.level = .normal
             panel.minSize = NSSize(width: 900, height: 600)
@@ -824,7 +843,10 @@ final class YumiScriptIDEManager: ObservableObject {
             panel.backgroundColor = NSColor.windowBackgroundColor
             panel.hasShadow = true
             panel.isExcludedFromWindowsMenu = false
+            // fullScreenPrimary 确保全屏手势与标题栏绿灯可用，tabbingMode 禁止双击被误判为新建标签
             panel.collectionBehavior = [.managed, .participatesInCycle, .fullScreenPrimary]
+            // 禁用标签页模式，避免双击被误判为新建标签页
+            panel.tabbingMode = .disallowed
             panel.identifier = NSUserInterfaceItemIdentifier("YumiScriptIDEWindow")
             panel.isReleasedWhenClosed = false
             panel.delegate = YumiScriptIDEWindowDelegate.shared
