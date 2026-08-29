@@ -223,6 +223,15 @@ xcodebuild test -scheme YumikoToys -destination 'platform=macOS'
 
 ---
 
+## 🙏 致谢与灵感来源 (Acknowledgements)
+
+蔚来车况看板模块在接口逆向、数据模型与车况监控逻辑上深受以下开源项目启发，在此致以诚挚的感谢：
+
+- [real3841/NIO-Dash](https://github.com/real3841/NIO-Dash) - 优秀的蔚来车况仪表板与数据可视化方案
+- [genelee26/ha-nio](https://github.com/genelee26/ha-nio) - 蔚来车辆 Home Assistant 集成插件与 API 协议参考
+
+---
+
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
