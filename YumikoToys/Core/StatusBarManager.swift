@@ -96,8 +96,8 @@ final class StatusBarManager: NSObject {
         }
         
         let popover = NSPopover()
-        // 初始宽度设为 340，高度交由 AdaptiveHostingController 运行时根据 SwiftUI 内容动态自适应
-        popover.contentSize = NSSize(width: 340, height: 100)
+        // 初始宽度设为 384，高度交由 AdaptiveHostingController 运行时根据 SwiftUI 内容动态自适应
+        popover.contentSize = NSSize(width: 384, height: 100)
         popover.behavior = .transient
         popover.animates = true
         popover.delegate = self

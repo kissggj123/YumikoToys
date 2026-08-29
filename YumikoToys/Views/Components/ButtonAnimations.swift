@@ -306,14 +306,6 @@ struct ClickEffectModifier: ViewModifier {
                                         particleContext.draw(resolved, at: .zero)
                                     }
                                 }
-                                
-                                // 自动清理已过期的粒子，防止内存和计算泄漏
-                                Task { @MainActor in
-                                    let activeParticles = particles.filter { now.timeIntervalSince($0.spawnTime) < $0.lifetime }
-                                    if activeParticles.count != particles.count {
-                                        particles = activeParticles
-                                    }
-                                }
                             }
                             .allowsHitTesting(false)
                         }
@@ -423,8 +415,13 @@ struct ClickEffectModifier: ViewModifier {
         }
         
         particles.append(contentsOf: newParticles)
-        if particles.count > 150 {
-            particles.removeFirst(particles.count - 150)
+        if particles.count > 100 {
+            particles.removeFirst(particles.count - 100)
+        }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64((lifetime + 0.1) * 1_000_000_000))
+            let cur = Date()
+            particles.removeAll(where: { cur.timeIntervalSince($0.spawnTime) >= $0.lifetime })
         }
     }
 }

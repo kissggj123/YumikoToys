@@ -657,6 +657,27 @@ struct AppSettings: Codable, Sendable {
     // MARK: - 睡眠守护 AI 与开发工具白名单
     var sleepGuardWhitelist: [String]
 
+    // MARK: - 蔚来 NIO 车辆看板配置
+    var nioEnabled: Bool
+    var nioVehicleApiMode: String
+    var nioVehicleApiURL: String
+    var nioVehicleAccessToken: String
+    var nioVehicleId: String
+    var nioDeviceId: String
+    var nioVehicleSignSecret: String
+    var nioVehicleSignAlgo: String
+    var nioChangeApiURL: String
+    var nioChangeAccessToken: String
+    var nioCheckinApiURL: String
+    var nioCheckinAccessToken: String
+    var nioPollDrivingSec: Int
+    var nioPollDaySec: Int
+    var nioPollNightSec: Int
+    var nioChangePollIntervalSec: Int
+    var nioTrayDisplayFields: [NIODisplayField]
+    var nioHiddenCards: [String]
+    var nioPreferActualRange: Bool
+
     init(
         currentMode: AppMode = .normal,
         isBackgroundLearningEnabled: Bool = false,
@@ -734,7 +755,26 @@ struct AppSettings: Codable, Sendable {
         proactiveAutoExecuteTasks: Bool = false,
         proactiveEnabledTriggers: [String] = ["health", "performance", "emotion", "workspace"],
         proactiveAutoConfigured: Bool = false,
-        sleepGuardWhitelist: [String] = ["antigravity", "trae", "xcodebuild", "code", "git", "ffmpeg", "rsync"]
+        sleepGuardWhitelist: [String] = ["antigravity", "trae", "xcodebuild", "code", "git", "ffmpeg", "rsync"],
+        nioEnabled: Bool = false,
+        nioVehicleApiMode: String = "url",
+        nioVehicleApiURL: String = "",
+        nioVehicleAccessToken: String = "",
+        nioVehicleId: String = "",
+        nioDeviceId: String = "",
+        nioVehicleSignSecret: String = "",
+        nioVehicleSignAlgo: String = "md5_append",
+        nioChangeApiURL: String = "",
+        nioChangeAccessToken: String = "",
+        nioCheckinApiURL: String = "",
+        nioCheckinAccessToken: String = "",
+        nioPollDrivingSec: Int = 300,
+        nioPollDaySec: Int = 300,
+        nioPollNightSec: Int = 300,
+        nioChangePollIntervalSec: Int = 600,
+        nioTrayDisplayFields: [NIODisplayField] = [.soc, .range],
+        nioHiddenCards: [String] = [],
+        nioPreferActualRange: Bool = false
     ) {
         self.currentMode = currentMode
         self.isBackgroundLearningEnabled = isBackgroundLearningEnabled
@@ -813,6 +853,26 @@ struct AppSettings: Codable, Sendable {
         self.proactiveAutoExecuteTasks = proactiveAutoExecuteTasks
         self.proactiveEnabledTriggers = proactiveEnabledTriggers
         self.proactiveAutoConfigured = proactiveAutoConfigured
+
+        self.nioEnabled = nioEnabled
+        self.nioVehicleApiMode = nioVehicleApiMode
+        self.nioVehicleApiURL = nioVehicleApiURL
+        self.nioVehicleAccessToken = nioVehicleAccessToken
+        self.nioVehicleId = nioVehicleId
+        self.nioDeviceId = nioDeviceId
+        self.nioVehicleSignSecret = nioVehicleSignSecret
+        self.nioVehicleSignAlgo = nioVehicleSignAlgo
+        self.nioChangeApiURL = nioChangeApiURL
+        self.nioChangeAccessToken = nioChangeAccessToken
+        self.nioCheckinApiURL = nioCheckinApiURL
+        self.nioCheckinAccessToken = nioCheckinAccessToken
+        self.nioPollDrivingSec = nioPollDrivingSec
+        self.nioPollDaySec = nioPollDaySec
+        self.nioPollNightSec = nioPollNightSec
+        self.nioChangePollIntervalSec = nioChangePollIntervalSec
+        self.nioTrayDisplayFields = nioTrayDisplayFields
+        self.nioHiddenCards = nioHiddenCards
+        self.nioPreferActualRange = nioPreferActualRange
     }
 
     static let `default` = AppSettings()
@@ -908,6 +968,26 @@ struct AppSettings: Codable, Sendable {
         proactiveAutoExecuteTasks = try container.decodeIfPresent(Bool.self, forKey: .proactiveAutoExecuteTasks) ?? false
         proactiveEnabledTriggers = try container.decodeIfPresent([String].self, forKey: .proactiveEnabledTriggers) ?? ["health", "performance", "emotion", "workspace"]
         proactiveAutoConfigured = try container.decodeIfPresent(Bool.self, forKey: .proactiveAutoConfigured) ?? false
+
+        nioEnabled = try container.decodeIfPresent(Bool.self, forKey: .nioEnabled) ?? false
+        nioVehicleApiMode = try container.decodeIfPresent(String.self, forKey: .nioVehicleApiMode) ?? "url"
+        nioVehicleApiURL = try container.decodeIfPresent(String.self, forKey: .nioVehicleApiURL) ?? ""
+        nioVehicleAccessToken = try container.decodeIfPresent(String.self, forKey: .nioVehicleAccessToken) ?? ""
+        nioVehicleId = try container.decodeIfPresent(String.self, forKey: .nioVehicleId) ?? ""
+        nioDeviceId = try container.decodeIfPresent(String.self, forKey: .nioDeviceId) ?? ""
+        nioVehicleSignSecret = try container.decodeIfPresent(String.self, forKey: .nioVehicleSignSecret) ?? ""
+        nioVehicleSignAlgo = try container.decodeIfPresent(String.self, forKey: .nioVehicleSignAlgo) ?? "md5_append"
+        nioChangeApiURL = try container.decodeIfPresent(String.self, forKey: .nioChangeApiURL) ?? ""
+        nioChangeAccessToken = try container.decodeIfPresent(String.self, forKey: .nioChangeAccessToken) ?? ""
+        nioCheckinApiURL = try container.decodeIfPresent(String.self, forKey: .nioCheckinApiURL) ?? ""
+        nioCheckinAccessToken = try container.decodeIfPresent(String.self, forKey: .nioCheckinAccessToken) ?? ""
+        nioPollDrivingSec = try container.decodeIfPresent(Int.self, forKey: .nioPollDrivingSec) ?? 300
+        nioPollDaySec = try container.decodeIfPresent(Int.self, forKey: .nioPollDaySec) ?? 300
+        nioPollNightSec = try container.decodeIfPresent(Int.self, forKey: .nioPollNightSec) ?? 300
+        nioChangePollIntervalSec = try container.decodeIfPresent(Int.self, forKey: .nioChangePollIntervalSec) ?? 600
+        nioTrayDisplayFields = container.decodeIsolated([NIODisplayField].self, forKey: .nioTrayDisplayFields, fallback: [.soc, .range])
+        nioHiddenCards = try container.decodeIfPresent([String].self, forKey: .nioHiddenCards) ?? []
+        nioPreferActualRange = try container.decodeIfPresent(Bool.self, forKey: .nioPreferActualRange) ?? false
     }
 }
 

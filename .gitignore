@@ -82,3 +82,15 @@ ThirdParty/**/xcuserdata
 ThirdParty/**/DerivedData
 ThirdParty/**/build
 *.orig
+
+# Scratch & Sniff Scripts
+*.bak
+__pycache__/
+*.pyc
+auto_sniff.py
+sniff.sh
+diagnose.sh
+ha-nio/
+NIO-Dash/
+/ET5_CleanPark.png
+/NIO_brand.png

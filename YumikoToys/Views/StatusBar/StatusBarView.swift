@@ -742,6 +742,7 @@ struct StatusBarView: View {
         case plugins = "plugins"
         case screenshot = "screenshot"
         case ide = "ide"
+        case nio = "nio"
 
         var title: String {
             switch self {
@@ -749,6 +750,7 @@ struct StatusBarView: View {
             case .plugins: return "插件"
             case .screenshot: return "截图"
             case .ide: return "IDE"
+            case .nio: return "蔚来"
             }
         }
 
@@ -758,6 +760,7 @@ struct StatusBarView: View {
             case .plugins: return "puzzlepiece.extension.fill"
             case .screenshot: return "camera.viewfinder"
             case .ide: return "terminal.fill"
+            case .nio: return "car.fill"
             }
         }
     }
@@ -790,9 +793,11 @@ struct StatusBarView: View {
                     screenshotTabContent
                 case .ide:
                     ideTabContent
+                case .nio:
+                    nioTabContent
                 }
             }
-            .frame(height: 330)
+            .frame(height: tabContentHeight)
             .animation(.easeInOut(duration: 0.2), value: selectedTab)
 
             Divider().padding(.horizontal, 16)
@@ -809,7 +814,7 @@ struct StatusBarView: View {
                     .transition(.opacity)
             }
         }
-        .frame(width: 340)
+        .frame(width: 384)
         .background(themeColor.animeOrBackground)
         .preferredColorScheme(themeColor.animeOrIsDark ? .dark : .light)
         .tint(themeColor.animeOrAccent)
@@ -829,6 +834,21 @@ struct StatusBarView: View {
         .interactiveClickEffect()
     }
 
+    private var tabContentHeight: CGFloat {
+        switch selectedTab {
+        case .anniversary:
+            return 285
+        case .plugins:
+            return 360
+        case .screenshot:
+            return 290
+        case .ide:
+            return 320
+        case .nio:
+            return 480
+        }
+    }
+
     // MARK: - Tab 导航栏
 
     private var tabNavigationBar: some View {
@@ -840,8 +860,17 @@ struct StatusBarView: View {
                     }
                 }) {
                     HStack(spacing: 4) {
-                        Image(systemName: tab.icon)
-                            .font(.system(size: 10))
+                        if tab == .nio {
+                            Image("NIO_brand")
+                                .resizable()
+                                .interpolation(.high)
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 14, height: 14)
+                                .clipShape(Circle())
+                        } else {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 10))
+                        }
                         Text(tab.title)
                             .font(.system(size: 11, weight: .medium, design: .rounded))
                             .lineLimit(1)
@@ -854,8 +883,10 @@ struct StatusBarView: View {
                         Capsule()
                             .fill(selectedTab == tab ? themeColor.animeOrAccent : themeColor.animeOrButton)
                     )
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .contentShape(Rectangle())
             }
             Spacer()
         }
@@ -865,14 +896,15 @@ struct StatusBarView: View {
 
     private var anniversaryTabContent: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 0) {
+            VStack(spacing: 8) {
                 if let info = viewModel.anniversaryInfo {
                     daysPreview(info: info, countdown: viewModel.shortCountdown)
-                        .padding(12)
-                    Divider().padding(.horizontal, 12)
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
                 }
                 preventSleepSection
-                    .padding(12)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 6)
             }
         }
     }
@@ -1368,6 +1400,12 @@ struct StatusBarView: View {
             }
             .padding(12)
         }
+    }
+
+    // MARK: - 蔚来 NIO Tab
+
+    private var nioTabContent: some View {
+        NIODashboardView(themeColor: themeColor)
     }
 
     // MARK: - IDE Tab

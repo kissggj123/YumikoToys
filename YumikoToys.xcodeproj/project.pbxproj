@@ -7,6 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C8B4D2E5F60718293A4B5C6D /* NIOConfigWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A3C1D4E5F60718293A4B5C /* NIOConfigWindowManager.swift */; };
+		8934709B6E43E3156110D064 /* NIOModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B7A1473AE44A08AEAA94AC /* NIOModels.swift */; };
+		B3C7D88693C7B3EA2D884125 /* NIOVehicleLib.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590D38122A8BF669DBE99DEC /* NIOVehicleLib.swift */; };
+		FBD8E62DBF97FAC29B154FF4 /* NIOOrderLib.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66EEF0B65C95200DC60973FF /* NIOOrderLib.swift */; };
+		379C0D6754C29A9017E1A137 /* NIOCheckinLib.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE61C51ADFFC82F378D410C9 /* NIOCheckinLib.swift */; };
+		F01111DEA5C7F23988A62F41 /* NIOService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F089A82CB744E72B145733 /* NIOService.swift */; };
+		2883CFF6D123E83DD3D18488 /* NIODashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B5DEB3F0B49CFD1AD6EC4B6 /* NIODashboardView.swift */; };
+		FACC51AD354073D95556B91D /* NIOConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49ADED3FBC30C52633DBBA3B /* NIOConfigView.swift */; };
+		AD866C74EB6A7372D95E0F95 /* NIOFetchLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D08CB20F2536EA83357D78D /* NIOFetchLogView.swift */; };
+		38721C9A70EC6311FA4BB696 /* NIO_brand.png in Resources */ = {isa = PBXBuildFile; fileRef = D5B26EF98507374847F0F26D /* NIO_brand.png */; };
+		FAFD9FB2B804F681B98A7BEE /* ET5_CleanPark.png in Resources */ = {isa = PBXBuildFile; fileRef = A0732508409EA781BA8F4F50 /* ET5_CleanPark.png */; };
 		B414C02628AEB64BF98011E2 /* AppleNeuralVisionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4AA6FC98866A946E38B5BBE /* AppleNeuralVisionDetector.swift */; };
 		B46B03060DC8464612AE7D61 /* DesktopWindowDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F47FB8ECFF779A4B7F9E56CB /* DesktopWindowDetector.swift */; };
 		B4E029FDF6099541BFAAE133 /* PetPerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49B9DD63A0BD843B290C3D8 /* PetPerformanceMonitor.swift */; };
@@ -257,6 +268,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B7A3C1D4E5F60718293A4B5C /* NIOConfigWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/StatusBar/NIO/NIOConfigWindowManager.swift; sourceTree = "<group>"; };
+		F7B7A1473AE44A08AEAA94AC /* NIOModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/NIO/NIOModels.swift; sourceTree = "<group>"; };
+		590D38122A8BF669DBE99DEC /* NIOVehicleLib.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/NIO/NIOVehicleLib.swift; sourceTree = "<group>"; };
+		66EEF0B65C95200DC60973FF /* NIOOrderLib.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/NIO/NIOOrderLib.swift; sourceTree = "<group>"; };
+		DE61C51ADFFC82F378D410C9 /* NIOCheckinLib.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/NIO/NIOCheckinLib.swift; sourceTree = "<group>"; };
+		19F089A82CB744E72B145733 /* NIOService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/Implementations/NIOService.swift; sourceTree = "<group>"; };
+		3B5DEB3F0B49CFD1AD6EC4B6 /* NIODashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/StatusBar/NIO/NIODashboardView.swift; sourceTree = "<group>"; };
+		49ADED3FBC30C52633DBBA3B /* NIOConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/StatusBar/NIO/NIOConfigView.swift; sourceTree = "<group>"; };
+		2D08CB20F2536EA83357D78D /* NIOFetchLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/StatusBar/NIO/NIOFetchLogView.swift; sourceTree = "<group>"; };
+		D5B26EF98507374847F0F26D /* NIO_brand.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Resources/NIO_brand.png; sourceTree = "<group>"; };
+		A0732508409EA781BA8F4F50 /* ET5_CleanPark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Resources/ET5_CleanPark.png; sourceTree = "<group>"; };
 		F4AA6FC98866A946E38B5BBE /* AppleNeuralVisionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleNeuralVisionDetector.swift; sourceTree = "<group>"; };
 		F47FB8ECFF779A4B7F9E56CB /* DesktopWindowDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopWindowDetector.swift; sourceTree = "<group>"; };
 		F49B9DD63A0BD843B290C3D8 /* PetPerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPerformanceMonitor.swift; sourceTree = "<group>"; };
@@ -972,6 +994,17 @@
 				FC6552A02FC373980093B726 /* SplashFix.md */,
 				FC6552A12FC373980093B726 /* SplashLocalFix.md */,
 				FC6552A22FC373980093B726 /* YumikoToysApp.swift */,
+				F7B7A1473AE44A08AEAA94AC /* NIOModels.swift */,
+				590D38122A8BF669DBE99DEC /* NIOVehicleLib.swift */,
+				66EEF0B65C95200DC60973FF /* NIOOrderLib.swift */,
+				DE61C51ADFFC82F378D410C9 /* NIOCheckinLib.swift */,
+				19F089A82CB744E72B145733 /* NIOService.swift */,
+				3B5DEB3F0B49CFD1AD6EC4B6 /* NIODashboardView.swift */,
+				49ADED3FBC30C52633DBBA3B /* NIOConfigView.swift */,
+				2D08CB20F2536EA83357D78D /* NIOFetchLogView.swift */,
+				B7A3C1D4E5F60718293A4B5C /* NIOConfigWindowManager.swift */,
+				D5B26EF98507374847F0F26D /* NIO_brand.png */,
+				A0732508409EA781BA8F4F50 /* ET5_CleanPark.png */,
 			);
 			path = YumikoToys;
 			sourceTree = "<group>";
@@ -1193,7 +1226,11 @@
 				FC6552AF2FC373980093B726 /* 2026-05-21-mlx-model-management.md in Resources */,
 				FC6552B12FC373980093B726 /* 2026-05-22-ai-assistant-mode-implementation.md in Resources */,
 				FC6552B22FC373980093B726 /* AaGXLZGKADS.ttf in Resources */,
-				FC6552B32FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md in Resources */,
+								38721C9A70EC6311FA4BB696 /* NIO_brand.png in Resources */,
+				FAFD9FB2B804F681B98A7BEE /* ET5_CleanPark.png in Resources */,
+FC6552B32FC373980093B726 /* 2026-05-22-ai-assistant-mode-design.md in Resources */,
+				38721C9A70EC6311FA4BB696 /* NIO_brand.png in Resources */,
+				FAFD9FB2B804F681B98A7BEE /* ET5_CleanPark.png in Resources */,
 			);
 		};
 		FC3FCE182CB69C52008D8C7B /* Resources */ = {
@@ -1270,6 +1307,15 @@
 				FC6552BB2FC373980093B726 /* ModelCompatibilityManager.swift in Sources */,
 				FC6552BC2FC373980093B726 /* ButtonAnimations.swift in Sources */,
 				FC6552BD2FC373980093B726 /* AppSettings.swift in Sources */,
+				8934709B6E43E3156110D064 /* NIOModels.swift in Sources */,
+				B3C7D88693C7B3EA2D884125 /* NIOVehicleLib.swift in Sources */,
+				FBD8E62DBF97FAC29B154FF4 /* NIOOrderLib.swift in Sources */,
+				379C0D6754C29A9017E1A137 /* NIOCheckinLib.swift in Sources */,
+				F01111DEA5C7F23988A62F41 /* NIOService.swift in Sources */,
+				2883CFF6D123E83DD3D18488 /* NIODashboardView.swift in Sources */,
+				FACC51AD354073D95556B91D /* NIOConfigView.swift in Sources */,
+				AD866C74EB6A7372D95E0F95 /* NIOFetchLogView.swift in Sources */,
+				C8B4D2E5F60718293A4B5C6D /* NIOConfigWindowManager.swift in Sources */,
 				FC6553B12FD000010093B726 /* Theme.swift in Sources */,
 				FC6552BE2FC373980093B726 /* PromptTemplatePicker.swift in Sources */,
 				FC6552BF2FC373980093B726 /* MLXModelLoader.swift in Sources */,

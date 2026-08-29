@@ -116,8 +116,14 @@ final class SettingsService: SettingsServiceProtocol {
     }
     
     private func loadSettings() {
-        let loaded: AppSettings = storageService.loadWithFallback(forKey: settingsKey, fallback: .default)
+        var loaded: AppSettings = storageService.loadWithFallback(forKey: settingsKey, fallback: .default)
+        // 自动迁移旧版本默认轮询时间为 300 秒 (5 分钟)
+        if loaded.nioPollDrivingSec == 900 { loaded.nioPollDrivingSec = 300 }
+        if loaded.nioPollDaySec == 1800 { loaded.nioPollDaySec = 300 }
+        if loaded.nioPollNightSec == 3600 { loaded.nioPollNightSec = 300 }
+        if loaded.nioChangePollIntervalSec == 3600 { loaded.nioChangePollIntervalSec = 600 }
         settings = loaded
+        storageService.save(settings, forKey: settingsKey)
         settingsSubject.send(settings)
         LoggerService.shared.debug("Settings loaded from storage")
         

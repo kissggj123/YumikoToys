@@ -14,6 +14,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case godMode = "godMode"
     case ai = "ai"
     case proactive = "proactive"
+    case nio = "nio"
     case system = "system"
     
     var id: String { rawValue }
@@ -24,6 +25,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .godMode: return "上帝模式"
         case .ai: return "心智与 AI"
         case .proactive: return "智能助理"
+        case .nio: return "蔚来看板"
         case .system: return "系统与数据"
         }
     }
@@ -34,6 +36,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .godMode: return "wand.and.stars"
         case .ai: return "brain.headset"
         case .proactive: return "sparkles"
+        case .nio: return "car.fill"
         case .system: return "cpu"
         }
     }
@@ -41,10 +44,14 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
-    @State private var selectedTab: SettingsTab = .appearance
+    @State private var selectedTab: SettingsTab
     @State private var expandedComponentId: String? = nil
     @State private var customHexInput: String = ""
     @State private var customMainHexInput: String = ""
+
+    init(initialTab: SettingsTab = .appearance) {
+        _selectedTab = State(initialValue: initialTab)
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -70,10 +77,20 @@ struct SettingsView: View {
                         }
                     }) {
                         HStack(spacing: 10) {
-                            Image(systemName: tab.iconName)
-                                .font(.system(size: 12, weight: .semibold))
-                                .frame(width: 18, height: 18)
-                                .foregroundStyle(selectedTab == tab ? .white : .secondary)
+                            if tab == .nio {
+                                Image("NIO_brand")
+                                    .resizable()
+                                    .interpolation(.high)
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 15, height: 15)
+                                    .clipShape(Circle())
+                                    .frame(width: 18, height: 18)
+                            } else {
+                                Image(systemName: tab.iconName)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .frame(width: 18, height: 18)
+                                    .foregroundStyle(selectedTab == tab ? .white : .secondary)
+                            }
                             
                             Text(tab.displayName)
                                 .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
@@ -132,6 +149,8 @@ struct SettingsView: View {
                         proHumanSettingsSection
                     case .proactive:
                         proactiveSettingsSection
+                    case .nio:
+                        NIOSettingsSectionView()
                     case .system:
                         preventSleepSection
                         petPlaygroundSection
@@ -6380,6 +6399,709 @@ private struct PetMetricPill: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - 蔚来看板专属设置模块 (全主题玻璃拟态适配)
+
+struct NIOSettingsSectionView: View {
+    @ObservedObject private var service = NIOService.shared
+    
+    // 配置临时编辑状态
+    @State private var nioEnabled: Bool = false
+    @State private var apiMode: String = "url"
+    @State private var vehicleApiURL: String = ""
+    @State private var vehicleToken: String = ""
+    @State private var vehicleId: String = ""
+    @State private var deviceId: String = ""
+    @State private var signSecret: String = ""
+    @State private var signAlgo: String = "md5_append"
+    @State private var changeApiURL: String = ""
+    @State private var changeToken: String = ""
+    @State private var checkinApiURL: String = ""
+    @State private var checkinToken: String = ""
+    @State private var hiddenCards: Set<String> = []
+    @State private var drivingSec: String = "900"
+    @State private var daySec: String = "1800"
+    @State private var nightSec: String = "3600"
+    @State private var changeInterval: String = "3600"
+    @State private var trayFields: Set<NIODisplayField> = [.soc, .range]
+
+    // 智能解析与诊断
+    @State private var smartInputText: String = ""
+    @State private var smartParseNotice: String? = nil
+    @State private var diagnosticReport: NIODiagnosticReport? = nil
+    @State private var isDiagnosing: Bool = false
+    @State private var showSavedToast: Bool = false
+
+    private var theme: AboutThemeConfig { AboutThemeConfig.current() }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // 车辆 Hero 展台
+            vehicleHeroHeader
+
+            // 1. 基础服务开关
+            baseServiceSection
+
+            // 2. ⚡️ 智能解析抓包内容 (推荐)
+            smartParseSection
+
+            // 3. 车辆数据 API 配置 (直连 / 动态签名)
+            vehicleAPISection
+
+            // 4. 服务订单与签到配置
+            serviceAndCheckinSection
+
+            // 5. 看板卡片显隐个性化定制
+            cardDisplayCustomizationSection
+
+            // 6. 刷新策略与状态栏托盘
+            pollAndTraySection
+
+            // 7. 连通性与 403 专项诊断
+            diagnosticSection
+
+            // 8. 底部保存操作栏
+            saveBar
+        }
+        .onAppear {
+            loadSettings()
+        }
+    }
+
+    // MARK: - 车辆 Hero 展台
+
+    private var vehicleHeroHeader: some View {
+        ZStack(alignment: .bottomLeading) {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            LinearGradient(
+                                colors: [theme.primaryColor.opacity(0.3), .white.opacity(0.08)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+
+            HStack(spacing: 16) {
+                Image("ET5_CleanPark")
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 140, height: 75)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.04)))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Image("NIO_brand")
+                            .resizable()
+                            .interpolation(.high)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 18, height: 18)
+                            .clipShape(Circle())
+
+                        Text("NIO ET5 智能互联看板")
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.primary)
+
+                        Spacer()
+
+                        Text(apiMode == "widget" ? "⚡️ 动态签名模式" : "🔗 直连 URL 模式")
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Capsule().fill(theme.primaryColor.opacity(0.15)))
+                            .foregroundStyle(theme.primaryColor)
+                    }
+
+                    if let snap = service.vehicleData?.data?.status {
+                        HStack(spacing: 12) {
+                            if let st = snap.exteriorStatus?.vehicleState {
+                                badgeLabel(icon: "car.side.fill", text: NIOVehicleLib.vehicleStateLabel(st))
+                            }
+                            if let mileage = snap.exteriorStatus?.mileage {
+                                badgeLabel(icon: "speedometer", text: "\(Int(mileage)) km")
+                            }
+                            if let soc = snap.socStatus?.remainingRange {
+                                badgeLabel(icon: "battery.75", text: "\(soc) km")
+                            }
+                        }
+                    } else {
+                        Text("当前未连接车辆，保存配置后将自动同步数据")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.secondary)
+                    }
+                }
+                .padding(.trailing, 8)
+            }
+            .padding(14)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func badgeLabel(icon: String, text: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 10))
+                .foregroundStyle(theme.primaryColor)
+            Text(text)
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.primary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(Color.primary.opacity(0.06)))
+    }
+
+    // MARK: - 1. 基础服务开关
+
+    private var baseServiceSection: some View {
+        settingsSectionBox(title: "基础服务开关", icon: "car.fill", color: "007AFF") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.blue.opacity(0.12))
+                            .frame(width: 34, height: 34)
+                        Image(systemName: "power")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Color.blue)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("启用蔚来看板功能")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Color.primary)
+                        Text("在状态栏面板中显示车辆电量、车门车窗、胎压、行驶轨迹等信息")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.secondary)
+                    }
+
+                    Spacer()
+
+                    Toggle("", isOn: $nioEnabled)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .tint(theme.primaryColor)
+                }
+            }
+        }
+    }
+
+    // MARK: - 2. ⚡️ 智能解析抓包内容
+
+    private var smartParseSection: some View {
+        settingsSectionBox(title: "⚡️ 智能抓包一键解析", icon: "wand.and.stars", color: "FF9500") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("直接粘贴抓包工具（Proxyman / Charles / mitmproxy / Thor）复制的完整 URL、cURL 或 Token，自动识别提取 Vehicle ID、Device ID、Token 与签名参数：")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.secondary)
+
+                TextEditor(text: $smartInputText)
+                    .font(.system(size: 11, design: .monospaced))
+                    .scrollContentBackground(.hidden)
+                    .foregroundStyle(Color.primary)
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.primary.opacity(0.04))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(theme.primaryColor.opacity(0.2), lineWidth: 1)
+                    )
+                    .frame(height: 70)
+
+                HStack(spacing: 12) {
+                    Button(action: runSmartParse) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 12, weight: .bold))
+                            Text("一键识别并填充")
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(
+                            Capsule()
+                                .fill(theme.linearGradient)
+                        )
+                        .foregroundStyle(Color.white)
+                    }
+                    .buttonStyle(.plain)
+
+                    if let notice = smartParseNotice {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.green)
+                            Text(notice)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(Color.green)
+                        }
+                        .transition(.opacity)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - 3. 车辆数据 API 配置
+
+    private var vehicleAPISection: some View {
+        settingsSectionBox(title: "车辆数据 API 配置", icon: "key.fill", color: "5856D6") {
+            VStack(alignment: .leading, spacing: 14) {
+                // 模式选择
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("请求工作模式")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.secondary)
+
+                    Picker("", selection: $apiMode) {
+                        Text("🔗 直连抓包 URL 模式").tag("url")
+                        Text("⚡️ Widget 动态签名模式 (推荐，永不 403)").tag("widget")
+                    }
+                    .pickerStyle(.segmented)
+
+                    Text(apiMode == "widget"
+                         ? "💡 动态签名模式：输入 Vehicle ID、Device ID、Token 和 Sign Secret，应用每次向蔚来网关请求时自动生成最新签名，永久杜绝 403 过期。"
+                         : "⚠️ 直连 URL 模式：直接填入抓到的完整 URL，URL 里的 sign/timestamp 在数小时后会过期报 403。建议切换为动态签名模式。")
+                        .font(.system(size: 10))
+                        .foregroundStyle(apiMode == "widget" ? Color.secondary : Color.orange)
+                        .padding(.top, 2)
+                }
+
+                Divider()
+
+                if apiMode == "widget" {
+                    customTextField(label: "Vehicle ID (车辆唯一识别码)", placeholder: "例如: 1000000000000000", text: $vehicleId)
+                    customTextField(label: "Device ID (设备识别码)", placeholder: "例如: 2c19e...", text: $deviceId)
+                    customTextField(label: "Sign Secret (签名私钥，用于防 403 动态计算)", placeholder: "从 Widget 抓包中获取的密钥 (可选)", text: $signSecret, isSecure: false)
+                    customTextField(label: "Access Token (Bearer Token)", placeholder: "Bearer 后面的 Token 字符串", text: $vehicleToken, isSecure: true)
+                } else {
+                    customTextField(label: "车辆状态 API 完整 URL", placeholder: "https://icar.nio.com/api/2/rvs/vehicle/.../status?...", text: $vehicleApiURL)
+                    customTextField(label: "Access Token (Bearer Token)", placeholder: "Bearer 后面的 Token 字符串", text: $vehicleToken, isSecure: true)
+                }
+            }
+        }
+    }
+
+    // MARK: - 4. 服务订单与签到配置
+
+    private var serviceAndCheckinSection: some View {
+        settingsSectionBox(title: "服务订单与每日签到 API", icon: "bolt.batteryblock.fill", color: "34C759") {
+            VStack(alignment: .leading, spacing: 14) {
+                customTextField(label: "换电 / 服务订单 API URL (可选)", placeholder: "https://gateway-front-external.nio.com/service-order/app/order/list?...", text: $changeApiURL)
+                customTextField(label: "换电 / 服务订单 Access Token (留空则复用车辆 Token)", placeholder: "例如: Bearer xxx", text: $changeToken, isSecure: true)
+                customTextField(label: "每日签到 API URL (可选)", placeholder: "https://.../checkin", text: $checkinApiURL)
+                customTextField(label: "每日签到 Access Token (留空则复用车辆 Token)", placeholder: "例如: Bearer xxx", text: $checkinToken, isSecure: true)
+            }
+        }
+    }
+
+    // MARK: - 5. 看板卡片显隐个性化定制
+
+    private var cardDisplayCustomizationSection: some View {
+        settingsSectionBox(title: "看板卡片显隐定制", icon: "square.grid.2x2.fill", color: "AF52DE") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("勾选需要在状态栏看板中展示的功能卡片：")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.secondary)
+
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                    ForEach(NIOCardRegistry.allCards) { card in
+                        Button(action: { toggleCard(card.id) }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: !hiddenCards.contains(card.id) ? "checkmark.square.fill" : "square")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(!hiddenCards.contains(card.id) ? theme.primaryColor : Color.secondary)
+
+                                Text(card.label)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(Color.primary)
+
+                                Spacer()
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.primary.opacity(0.04))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - 6. 刷新策略与状态栏托盘
+
+    private var pollAndTraySection: some View {
+        settingsSectionBox(title: "刷新策略与状态栏托盘指标", icon: "clock.arrow.2.circlepath", color: "007AFF") {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 12) {
+                    intervalField("行驶中 (秒)", text: $drivingSec)
+                    intervalField("白天 (秒)", text: $daySec)
+                    intervalField("夜间 (秒)", text: $nightSec)
+                    intervalField("换电订单 (秒)", text: $changeInterval)
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("状态栏常驻显示指标 (按顺序组合)")
+                        .font(.system(size: 12, weight: .medium))
+
+                    HStack(spacing: 16) {
+                        ForEach(NIODisplayField.allCases) { field in
+                            trayToggle(field: field)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func intervalField(_ label: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundStyle(Color.secondary)
+            TextField("", text: text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 10, design: .monospaced))
+                .padding(6)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.04)))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.1), lineWidth: 0.5))
+        }
+    }
+
+    // MARK: - 7. 连通性与 403 专项诊断
+
+    private var diagnosticSection: some View {
+        settingsSectionBox(title: "网络连通与鉴权 403 诊断", icon: "stethoscope", color: "FF2D55") {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("一键测试网络与签名有效性")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("检测 URL 结构、Bearer Token、动态签名与 app.nio.com 连通状态")
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.secondary)
+                    }
+                    Spacer()
+                    Button(action: runDiagnostic) {
+                        HStack(spacing: 4) {
+                            if isDiagnosing {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                Image(systemName: "bolt.horizontal.fill")
+                            }
+                            Text(isDiagnosing ? "正在诊断..." : "运行诊断测试")
+                        }
+                        .font(.system(size: 11, weight: .semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(Color.blue.opacity(0.12)))
+                        .foregroundStyle(Color.blue)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isDiagnosing)
+                }
+
+                if let rep = diagnosticReport {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(rep.steps) { step in
+                            HStack(spacing: 6) {
+                                stepIcon(step.status)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(step.name)
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundStyle(Color.primary)
+                                    Text(step.detail)
+                                        .font(.system(size: 9))
+                                        .foregroundStyle(Color.secondary)
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
+
+                        if !rep.summary.isEmpty {
+                            Text(rep.summary)
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(rep.is403Detected ? Color.orange : Color.green)
+                                .padding(.top, 4)
+                        }
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
+                }
+            }
+        }
+    }
+
+    private func stepIcon(_ status: NIODiagnosticStep.StepStatus) -> some View {
+        switch status {
+        case .pending:
+            return Image(systemName: "circle").foregroundStyle(Color.secondary).font(.system(size: 11))
+        case .running:
+            return Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(theme.primaryColor).font(.system(size: 11))
+        case .success:
+            return Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.green).font(.system(size: 11))
+        case .warning:
+            return Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.orange).font(.system(size: 11))
+        case .failure:
+            return Image(systemName: "xmark.circle.fill").foregroundStyle(Color.red).font(.system(size: 11))
+        }
+    }
+
+    // MARK: - 8. 底部保存操作栏
+
+    private var saveBar: some View {
+        HStack {
+            if showSavedToast {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.green)
+                    Text("设置已保存并同步，蔚来看板正在重新拉取最新数据")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color.green)
+                }
+                .transition(.opacity)
+            }
+
+            Spacer()
+
+            Button(action: saveSettings) {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                        .font(.system(size: 13, weight: .bold))
+                    Text("保存并立即同步配置")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 9)
+                .background(
+                    Capsule()
+                        .fill(theme.linearGradient)
+                )
+                .foregroundStyle(Color.white)
+                .shadow(color: theme.primaryColor.opacity(0.35), radius: 6, x: 0, y: 2)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.top, 4)
+    }
+
+    // MARK: - 通用组件与逻辑
+
+    private func customTextField(label: String, placeholder: String, text: Binding<String>, isSecure: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Color.secondary)
+
+            HStack {
+                if isSecure {
+                    SecureField(placeholder, text: text)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 11, design: .monospaced))
+                } else {
+                    TextField(placeholder, text: text)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 11, design: .monospaced))
+                }
+
+                if !text.wrappedValue.isEmpty {
+                    Button(action: { text.wrappedValue = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(8)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.1), lineWidth: 0.5))
+        }
+    }
+
+    private func trayToggle(field: NIODisplayField) -> some View {
+        let isSelected = trayFields.contains(field)
+        return Button(action: {
+            if isSelected {
+                if trayFields.count > 1 { trayFields.remove(field) }
+            } else {
+                trayFields.insert(field)
+            }
+        }) {
+            HStack(spacing: 6) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 12))
+                    .foregroundStyle(isSelected ? theme.primaryColor : Color.secondary)
+                Text(field.label)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.primary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggleCard(_ id: String) {
+        if hiddenCards.contains(id) {
+            hiddenCards.remove(id)
+        } else {
+            hiddenCards.insert(id)
+        }
+    }
+
+    private func settingsSectionBox<Content: View>(title: String, icon: String, color: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(theme.primaryColor)
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.secondary)
+                Spacer()
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                content()
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [theme.primaryColor.opacity(0.18), .white.opacity(0.05)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+            )
+        }
+    }
+
+    // MARK: - 数据读取与保存
+
+    private func loadSettings() {
+        let s = DependencyContainer.shared.settingsService.settings
+        nioEnabled = s.nioEnabled
+        apiMode = s.nioVehicleApiMode
+        vehicleApiURL = s.nioVehicleApiURL
+        vehicleToken = s.nioVehicleAccessToken
+        vehicleId = s.nioVehicleId
+        deviceId = s.nioDeviceId
+        signSecret = s.nioVehicleSignSecret
+        signAlgo = s.nioVehicleSignAlgo
+        changeApiURL = s.nioChangeApiURL
+        changeToken = s.nioChangeAccessToken
+        checkinApiURL = s.nioCheckinApiURL
+        checkinToken = s.nioCheckinAccessToken
+        let d = s.nioPollDrivingSec == 900 ? 300 : s.nioPollDrivingSec
+        let day = s.nioPollDaySec == 1800 ? 300 : s.nioPollDaySec
+        let night = s.nioPollNightSec == 3600 ? 300 : s.nioPollNightSec
+        let chg = s.nioChangePollIntervalSec == 3600 ? 600 : s.nioChangePollIntervalSec
+        drivingSec = String(d)
+        daySec = String(day)
+        nightSec = String(night)
+        changeInterval = String(chg)
+        trayFields = Set(s.nioTrayDisplayFields)
+        hiddenCards = Set(s.nioHiddenCards)
+    }
+
+    private func saveSettings() {
+        var s = DependencyContainer.shared.settingsService.settings
+        s.nioEnabled = nioEnabled
+        s.nioVehicleApiMode = apiMode
+        s.nioVehicleApiURL = vehicleApiURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioVehicleAccessToken = vehicleToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioVehicleId = vehicleId.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioDeviceId = deviceId.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioVehicleSignSecret = signSecret.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioVehicleSignAlgo = signAlgo
+        s.nioChangeApiURL = changeApiURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioChangeAccessToken = changeToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioCheckinApiURL = checkinApiURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioCheckinAccessToken = checkinToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioPollDrivingSec = Int(drivingSec) ?? 300
+        s.nioPollDaySec = Int(daySec) ?? 300
+        s.nioPollNightSec = Int(nightSec) ?? 300
+        s.nioChangePollIntervalSec = Int(changeInterval) ?? 600
+        s.nioTrayDisplayFields = NIODisplayField.allCases.filter { trayFields.contains($0) }
+        s.nioHiddenCards = Array(hiddenCards)
+
+        DependencyContainer.shared.settingsService.updateSettings(s)
+        service.stopScheduling()
+        service.startScheduling()
+        service.refreshAll()
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            showSavedToast = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showSavedToast = false
+            }
+        }
+    }
+
+    private func runSmartParse() {
+        let res = NIOVehicleLib.smartParseInput(smartInputText)
+        var hitCount = 0
+        if let vId = res.vehicleId, !vId.isEmpty { vehicleId = vId; hitCount += 1 }
+        if let dId = res.deviceId, !dId.isEmpty { deviceId = dId; hitCount += 1 }
+        if let tok = res.vehicleToken, !tok.isEmpty { vehicleToken = tok; hitCount += 1 }
+        if let url = res.vehicleURL, !url.isEmpty { vehicleApiURL = url; hitCount += 1 }
+        if let curl = res.changeURL, !curl.isEmpty { changeApiURL = curl; hitCount += 1 }
+        if let kurl = res.checkinURL, !kurl.isEmpty { checkinApiURL = kurl; hitCount += 1 }
+        if let mode = res.mode { apiMode = mode }
+
+        if hitCount > 0 {
+            smartParseNotice = "成功识别并提取 \(hitCount) 个关键参数！"
+        } else {
+            smartParseNotice = "未能识别出有效参数，请确认抓包内容格式。"
+        }
+    }
+
+    private func runDiagnostic() {
+        // 先临时写入内存配置，以便执行诊断测试
+        var s = DependencyContainer.shared.settingsService.settings
+        s.nioEnabled = nioEnabled
+        s.nioVehicleApiMode = apiMode
+        s.nioVehicleApiURL = vehicleApiURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioVehicleAccessToken = vehicleToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioVehicleId = vehicleId.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioDeviceId = deviceId.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioVehicleSignSecret = signSecret.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.nioVehicleSignAlgo = signAlgo
+        DependencyContainer.shared.settingsService.updateSettings(s)
+
+        isDiagnosing = true
+        Task {
+            let res = await service.runDiagnostic()
+            await MainActor.run {
+                self.diagnosticReport = res
+                self.isDiagnosing = false
+            }
+        }
     }
 }
 
