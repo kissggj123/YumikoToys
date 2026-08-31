@@ -1103,7 +1103,7 @@ struct NIODashboardView: View {
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundStyle(Color.black)
                         } else if position {
-                            Image(systemName: "headlight.daytime.running.fill")
+                            Image(systemName: "headlight.daytime.running")
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundStyle(Color.white)
                             Text("示廓位置灯点亮")
@@ -1128,7 +1128,7 @@ struct NIODashboardView: View {
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 6) {
                         macLightTile(name: "近光大灯", icon: "headlight.low.beam.fill", isOn: dipped, activeColor: themeColor.animeOrAccent)
                         macLightTile(name: "远光大灯", icon: "headlight.high.beam.fill", isOn: main, activeColor: .yellow)
-                        macLightTile(name: "示廓位置灯", icon: "headlight.daytime.running.fill", isOn: position, activeColor: .purple)
+                        macLightTile(name: "示廓位置灯", icon: "headlight.daytime.running", isOn: position, activeColor: .purple)
                         macLightTile(name: "危险报警双闪", icon: "exclamationmark.triangle.fill", isOn: hazard, activeColor: .red)
                     }
                 }
