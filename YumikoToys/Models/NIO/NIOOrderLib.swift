@@ -264,4 +264,64 @@ enum NIOOrderLib {
 
         return results.sorted { $0.monthKey > $1.monthKey }
     }
+
+    /// 从蔚来签到 API 响应（含 gateway / award / square 等多层嵌套）中提取 checkedIn 与 continuousDays
+    static func extractCheckinData(from rawJson: Any) -> NIOCheckinData? {
+        var checkedIn: Bool?
+        var days: Int?
+
+        func parseBool(_ val: Any?) -> Bool? {
+            if let b = val as? Bool { return b }
+            if let num = val as? NSNumber { return num.boolValue }
+            if let s = val as? String {
+                if s == "1" || s.lowercased() == "true" { return true }
+                if s == "0" || s.lowercased() == "false" { return false }
+            }
+            return nil
+        }
+
+        func parseInt(_ val: Any?) -> Int? {
+            if let i = val as? Int { return i }
+            if let num = val as? NSNumber { return num.intValue }
+            if let s = val as? String, let i = Int(s.trimmingCharacters(in: .whitespacesAndNewlines)) { return i }
+            return nil
+        }
+
+        func visit(_ obj: Any, depth: Int = 0) {
+            guard depth <= 8 else { return }
+            if let dict = obj as? [String: Any] {
+                if checkedIn == nil {
+                    if let direct = parseBool(dict["checked_in"] ?? dict["checkedIn"] ?? dict["is_check_in"] ?? dict["isCheckIn"] ?? dict["check_in"]) {
+                        checkedIn = direct
+                    } else if let subDict = dict["checked_in"] as? [String: Any] ?? dict["check_in"] as? [String: Any] {
+                        if let legacy = parseBool(subDict["checked"] ?? subDict["status"]) {
+                            checkedIn = legacy
+                        }
+                        if let legacyDays = parseInt(subDict["days"] ?? subDict["continuous_days"]) {
+                            days = legacyDays
+                        }
+                    }
+                }
+                if days == nil {
+                    if let d = parseInt(dict["continuous_days"] ?? dict["continuousDays"] ?? dict["continuous_check_in_days"] ?? dict["days"]) {
+                        days = d
+                    }
+                }
+                if checkedIn != nil && days != nil { return }
+                for val in dict.values {
+                    visit(val, depth: depth + 1)
+                    if checkedIn != nil && days != nil { return }
+                }
+            } else if let arr = obj as? [Any] {
+                for item in arr {
+                    visit(item, depth: depth + 1)
+                    if checkedIn != nil && days != nil { return }
+                }
+            }
+        }
+
+        visit(rawJson)
+        if checkedIn == nil && days == nil { return nil }
+        return NIOCheckinData(checkedIn: checkedIn ?? false, continuousDays: days ?? 0, serverTime: nil, requestId: nil)
+    }
 }

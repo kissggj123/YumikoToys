@@ -262,6 +262,88 @@ enum NIOVehicleLib {
         return nil
     }
 
+    /// 对抓包的完整 RVS URL 动态重签名（与 Widget 模式同一套密钥体系）：
+    /// 先用 secret/algo 对抓包参数（含原 timestamp、不含 sign）重算签名，与 URL 内 sign 比对自校验；
+    /// 校验通过说明该密钥适用于 RVS 接口，随后每次拉取都换新 timestamp 并重算 sign——
+    /// 既保留 field=tyre 等完整状态块参数（胎压不丢），又不会再因 sign/timestamp 过期而失效。
+    /// 校验不通过（未配置密钥或算法/拼串方式不符）返回 nil，调用方回退为原样重放抓包 URL。
+    static func autoResignRvsURL(_ urlString: String, secret: String, algo: String) -> String? {
+        let sec = secret.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !sec.isEmpty, let qStart = urlString.firstIndex(of: "?") else { return nil }
+
+        let base = String(urlString[..<qStart])
+        let query = String(urlString[urlString.index(after: qStart)...])
+
+        var pairs: [(key: String, value: String)] = []
+        var capturedSign: String? = nil
+        for pair in query.split(separator: "&") {
+            let kv = pair.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+            guard let first = kv.first else { continue }
+            let key = String(first)
+            let value = kv.count > 1 ? String(kv[1]) : ""
+            if key == "sign" {
+                capturedSign = value
+            } else {
+                pairs.append((key, value))
+            }
+        }
+        guard let originSign = capturedSign?.lowercased(), !pairs.isEmpty else { return nil }
+
+        func canonicalSorted(_ list: [(key: String, value: String)]) -> String {
+            list.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: "&")
+        }
+        // 服务端签名可能覆盖参数的抓包原始顺序（ha-nio 注释确认 field 顺序参与签名），因此同时尝试原始顺序拼串
+        func canonicalRaw(_ list: [(key: String, value: String)]) -> String {
+            list.map { "\($0.key)=\($0.value)" }.joined(separator: "&")
+        }
+        func compute(_ canonical: String, _ algoName: String) -> String {
+            switch algoName {
+            case "md5_prepend": return md5(sec + canonical)
+            case "md5_append_key": return md5("\(canonical)&key=\(sec)")
+            default: return md5(canonical + sec)
+            }
+        }
+
+        // 依次尝试配置的算法与三种常见变体 × 排序/原始顺序两种拼串，命中抓包 sign 即确认密钥与拼串方式
+        let candidates = [algo, "md5_append", "md5_prepend", "md5_append_key"]
+        var seen = Set<String>()
+        var verifiedName: String? = nil
+        var verifiedRaw = false
+        for a in candidates {
+            let name = a.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty, seen.insert(name).inserted else { continue }
+            if compute(canonicalSorted(pairs), name) == originSign {
+                verifiedName = name; verifiedRaw = false
+                break
+            }
+            if compute(canonicalRaw(pairs), name) == originSign {
+                verifiedName = name; verifiedRaw = true
+                break
+            }
+        }
+        guard let useName = verifiedName else { return nil }
+
+        // 换新 timestamp 重算 sign；其余参数（field= 等）保持逐字节不变，避免重新编码破坏签名。
+        // timestamp 位数沿用抓包原值（10 位秒级 / 13 位毫秒级），防止格式不一致被判过期。
+        let now: String
+        let originalTs = pairs.first(where: { $0.key == "timestamp" })?.value ?? ""
+        if originalTs.count >= 13 {
+            now = String(Int(Date().timeIntervalSince1970 * 1000))
+        } else {
+            now = String(Int(Date().timeIntervalSince1970))
+        }
+        var fresh = pairs
+        if let idx = fresh.firstIndex(where: { $0.key == "timestamp" }) {
+            fresh[idx].value = now
+        } else {
+            fresh.append(("timestamp", now))
+        }
+        let canonical = verifiedRaw ? canonicalRaw(fresh) : canonicalSorted(fresh)
+        let newSign = compute(canonical, useName)
+        let newQuery = fresh.map { "\($0.key)=\($0.value)" }.joined(separator: "&") + "&sign=\(newSign)"
+        return "\(base)?\(newQuery)"
+    }
+
     // MARK: - 路径测距与按天轨迹计算
 
     static func segmentMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double) -> Double {

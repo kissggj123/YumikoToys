@@ -203,8 +203,26 @@ final class NIOService: ObservableObject {
         var targetURL: URL?
         var requestMethod = "GET"
 
-        // 1. 判断是否使用 Widget 动态签名模式（有 sign_secret 或 vehicle_id + device_id）
-        if s.nioVehicleApiMode == "widget" || (!s.nioVehicleId.isEmpty && !s.nioDeviceId.isEmpty && !s.nioVehicleSignSecret.isEmpty) {
+        // 1. 与 Electron 版 loadFetchConfig 一致的获取策略：优先原样重放抓包的完整 RVS URL。
+        //    该 URL 的 field= 参数覆盖 tyre_status（胎压）等全部状态块；
+        //    Widget 接口是桌面小组件的精简数据源，不含胎压块，仅作未配置 URL 时的回退。
+        if !s.nioVehicleApiURL.isEmpty {
+            let rawUrlStr = s.nioVehicleApiURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            var fullUrl = rawUrlStr
+            if !rawUrlStr.lowercased().hasPrefix("http://") && !rawUrlStr.lowercased().hasPrefix("https://") {
+                fullUrl = "https://\(rawUrlStr)"
+            }
+            if let resigned = NIOVehicleLib.autoResignRvsURL(fullUrl, secret: s.nioVehicleSignSecret, algo: s.nioVehicleSignAlgo) {
+                targetURL = URL(string: resigned)
+            }
+            if targetURL == nil {
+                targetURL = URL(string: fullUrl)
+            }
+        }
+
+        // 2. 未配置 URL 且具备完整的 Widget 参数时，动态生成带当前时间戳和签名的 URL 回退
+        if targetURL == nil,
+           s.nioVehicleApiMode == "widget" || (!s.nioVehicleId.isEmpty && !s.nioDeviceId.isEmpty && !s.nioVehicleSignSecret.isEmpty) {
             if let built = NIOVehicleLib.buildWidgetURL(
                 vehicleId: s.nioVehicleId,
                 deviceId: s.nioDeviceId,
@@ -215,11 +233,6 @@ final class NIOService: ObservableObject {
             }
         }
 
-        // 2. 若不是动态 Widget 模式，使用配置的 URL
-        if targetURL == nil && !s.nioVehicleApiURL.isEmpty {
-            targetURL = URL(string: s.nioVehicleApiURL)
-        }
-
         guard let url = targetURL else { return }
 
         isLoadingVehicle = true
@@ -228,13 +241,7 @@ final class NIOService: ObservableObject {
             scheduleVehiclePoll()
         }
 
-        var finalURL = url
-        let rawUrlStr = s.nioVehicleApiURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !rawUrlStr.lowercased().hasPrefix("http://") && !rawUrlStr.lowercased().hasPrefix("https://") {
-            if let fixed = URL(string: "https://\(rawUrlStr)") {
-                finalURL = fixed
-            }
-        }
+        let finalURL = url
 
         var req = URLRequest(url: finalURL)
         req.httpMethod = requestMethod
@@ -374,17 +381,22 @@ final class NIOService: ObservableObject {
 
     func fetchChange() async {
         let s = settings
-        guard !s.nioChangeApiURL.isEmpty else { return }
+        var changeURLStr = s.nioChangeApiURL
+        if changeURLStr.contains("app.nio.com/app/api/service_charge") {
+            changeURLStr = "https://gateway-front-external.nio.com/moat/1100367/api/v1/otd/car/ext/general/serviceOrder/getTabOrder?offset=0&limit=200&orderTypes=pe_shaman,pe_shaman_change,service_pe_discharge,battery_flexible_upgrade,nsom_so_maintenance,nsom_so_chauffeur,chauffeur_vehicle_delivery,so_case_accident&hash_type=sha256&lang=zh&region=US&tz_offset=28800&app_ver=6.5.3"
+        }
+        guard !changeURLStr.isEmpty else { return }
         guard !isLoadingChange else { return }
         isLoadingChange = true
         defer { isLoadingChange = false }
 
         do {
-            let url = try URL(string: s.nioChangeApiURL) ?? { throw NIOError.configError("换电 API URL 无效") }()
+            let url = try URL(string: changeURLStr) ?? { throw NIOError.configError("换电 API URL 无效") }()
             var req = URLRequest(url: url)
             req.httpMethod = "POST"
             req.setValue("application/json", forHTTPHeaderField: "Accept")
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.setValue("VehicleWidgetExtension/6.5.3 (com.do1.WeiLaiApp.NIOVehicleWidget; build:2612; iOS 26.5.0) Alamofire/5.9.1", forHTTPHeaderField: "User-Agent")
             let token = normalizeBearer(s.nioChangeAccessToken.isEmpty ? s.nioVehicleAccessToken : s.nioChangeAccessToken)
             if !token.isEmpty {
                 req.setValue(token, forHTTPHeaderField: "Authorization")
@@ -394,7 +406,7 @@ final class NIOService: ObservableObject {
                 category: "change", level: "info",
                 message: "换电 · 开始拉取…",
                 detail: nil, timestamp: Date(),
-                requestURL: s.nioChangeApiURL, requestMethod: "POST",
+                requestURL: changeURLStr, requestMethod: "POST",
                 requestBody: nil, responsePreview: nil, statusCode: nil
             ))
 
@@ -440,16 +452,21 @@ final class NIOService: ObservableObject {
 
     func fetchCheckin() async {
         let s = settings
-        guard !s.nioCheckinApiURL.isEmpty else { return }
+        var checkinURLStr = s.nioCheckinApiURL
+        if checkinURLStr.contains("app.nio.com/app/api/users/checkin") {
+            checkinURLStr = "https://gateway-front-external.nio.com/moat/10086//n/c/award/square?event=checkin&collection_id=1843940587332317185"
+        }
+        guard !checkinURLStr.isEmpty else { return }
         guard !isLoadingCheckin else { return }
         isLoadingCheckin = true
         defer { isLoadingCheckin = false }
 
         do {
-            let url = try URL(string: s.nioCheckinApiURL) ?? { throw NIOError.configError("签到 API URL 无效") }()
+            let url = try URL(string: checkinURLStr) ?? { throw NIOError.configError("签到 API URL 无效") }()
             var req = URLRequest(url: url)
             req.httpMethod = "GET"
             req.setValue("application/json", forHTTPHeaderField: "Accept")
+            req.setValue("VehicleWidgetExtension/6.5.3 (com.do1.WeiLaiApp.NIOVehicleWidget; build:2612; iOS 26.5.0) Alamofire/5.9.1", forHTTPHeaderField: "User-Agent")
             let token = normalizeBearer(s.nioCheckinAccessToken.isEmpty ? s.nioVehicleAccessToken : s.nioCheckinAccessToken)
             if !token.isEmpty {
                 req.setValue(token, forHTTPHeaderField: "Authorization")
@@ -459,7 +476,7 @@ final class NIOService: ObservableObject {
                 category: "checkin", level: "info",
                 message: "签到 · 开始拉取…",
                 detail: nil, timestamp: Date(),
-                requestURL: s.nioCheckinApiURL, requestMethod: "GET",
+                requestURL: checkinURLStr, requestMethod: "GET",
                 requestBody: nil, responsePreview: nil, statusCode: nil
             ))
 
@@ -559,15 +576,25 @@ final class NIOService: ObservableObject {
 
         // 步骤 4：网络请求与 403 鉴权检测
         var targetURL: URL?
-        if s.nioVehicleApiMode == "widget" || (hasWidgetParams && !s.nioVehicleSignSecret.isEmpty) {
+        if hasUrl {
+            let rawUrlStr = s.nioVehicleApiURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            var fullUrl = rawUrlStr
+            if !rawUrlStr.lowercased().hasPrefix("http://") && !rawUrlStr.lowercased().hasPrefix("https://") {
+                fullUrl = "https://\(rawUrlStr)"
+            }
+            if let resigned = NIOVehicleLib.autoResignRvsURL(fullUrl, secret: s.nioVehicleSignSecret, algo: s.nioVehicleSignAlgo) {
+                targetURL = URL(string: resigned)
+            }
+            if targetURL == nil {
+                targetURL = URL(string: fullUrl)
+            }
+        } else if s.nioVehicleApiMode == "widget" || (hasWidgetParams && !s.nioVehicleSignSecret.isEmpty) {
             targetURL = NIOVehicleLib.buildWidgetURL(
                 vehicleId: s.nioVehicleId,
                 deviceId: s.nioDeviceId,
                 secret: s.nioVehicleSignSecret,
                 algo: s.nioVehicleSignAlgo.isEmpty ? "md5_append" : s.nioVehicleSignAlgo
             )?.url
-        } else if hasUrl {
-            targetURL = URL(string: s.nioVehicleApiURL)
         }
 
         guard let testURL = targetURL else {
