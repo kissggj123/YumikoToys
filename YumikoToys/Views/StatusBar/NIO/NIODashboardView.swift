@@ -49,7 +49,10 @@ struct NIODashboardView: View {
                         if !hiddenCards.contains("doors_visual") { doorsVisualCard }
                         if !hiddenCards.contains("tyre") { tyreGridCard }
                         if !hiddenCards.contains("cockpit") { cockpitGridCard }
+                        seatComfortCard
+                        keySensorsCard
                         if !hiddenCards.contains("special") { specialStatesCard }
+                        lightsCard
 
                         ordersSection
                         checkinCard
@@ -896,6 +899,173 @@ struct NIODashboardView: View {
                 }
             }
         }
+    }
+
+    // MARK: - 5.1 🪑 座椅舒适与方向盘加热
+
+    @ViewBuilder
+    private var seatComfortCard: some View {
+        let heat = status?.heatingStatus ?? [:]
+        let steer = heat["steer_wheel_heat_sts"]?.intValue ?? heat["steer_wheel_heating_sts"]?.intValue ?? 0
+        let flHeat = heat["seat_heat_frnt_le_sts"]?.intValue ?? heat["seat_heat_front_left"]?.intValue ?? 0
+        let frHeat = heat["seat_heat_frnt_ri_sts"]?.intValue ?? heat["seat_heat_front_right"]?.intValue ?? 0
+        let rlHeat = heat["seat_heat_re_le_sts"]?.intValue ?? heat["seat_heat_rear_left"]?.intValue ?? 0
+        let rrHeat = heat["seat_heat_re_ri_sts"]?.intValue ?? heat["seat_heat_rear_right"]?.intValue ?? 0
+        let flVent = heat["seat_vent_frnt_le_sts"]?.intValue ?? heat["seat_vent_front_left"]?.intValue ?? 0
+        let frVent = heat["seat_vent_frnt_ri_sts"]?.intValue ?? heat["seat_vent_front_right"]?.intValue ?? 0
+        let battPre = heat["hv_batt_pre_sts"]?.intValue == 1
+        let battWarm = heat["btry_warm_up_sts"]?.intValue == 1
+
+        let hasAny = steer > 0 || flHeat > 0 || frHeat > 0 || rlHeat > 0 || rrHeat > 0 || flVent > 0 || frVent > 0 || battPre || battWarm || !heat.isEmpty
+
+        if hasAny {
+            card(title: "🪑 座椅舒适与方向盘加热", rawData: status?.heatingStatus.flatMap { try? JSONEncoder().encode($0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) }) {
+                VStack(spacing: 6) {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 6) {
+                        macSeatTile("主驾座椅", heat: flHeat, vent: flVent)
+                        macSeatTile("副驾座椅", heat: frHeat, vent: frVent)
+                        macSeatTile("二排左座", heat: rlHeat, vent: 0)
+                        macSeatTile("二排右座", heat: rrHeat, vent: 0)
+                    }
+                    HStack(spacing: 4) {
+                        badgeView("方向盘加热" + (steer > 0 ? " \(steer)档" : ""), active: steer > 0, activeColor: .orange)
+                        badgeView("电池预热", active: battPre, activeColor: .red)
+                        badgeView("电池保温", active: battWarm, activeColor: themeColor.animeOrAccent)
+                    }
+                }
+            }
+        }
+    }
+
+    private func macSeatTile(_ name: String, heat: Int, vent: Int) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: (heat > 0 || vent > 0) ? "chair.lounge.fill" : "chair.lounge")
+                .font(.system(size: 9))
+                .foregroundStyle((heat > 0) ? Color.orange : ((vent > 0) ? themeColor.animeOrAccent : themeColor.animeOrTextSecondary.opacity(0.5)))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(name).font(.system(size: 8, weight: .medium)).foregroundStyle(themeColor.animeOrTextPrimary)
+                HStack(spacing: 2) {
+                    if heat > 0 { Text("\(heat)档加热").font(.system(size: 7, weight: .bold)).foregroundStyle(.orange) }
+                    if vent > 0 { Text("\(vent)档通风").font(.system(size: 7, weight: .bold)).foregroundStyle(themeColor.animeOrAccent) }
+                    if heat == 0 && vent == 0 { Text("未开启").font(.system(size: 7)).foregroundStyle(themeColor.animeOrTextSecondary.opacity(0.5)) }
+                }
+            }
+            Spacer()
+        }
+        .padding(4)
+        .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.animeOrButton.opacity(0.4)))
+    }
+
+    // MARK: - 5.2 🔑 钥匙感知与12V电瓶
+
+    @ViewBuilder
+    private var keySensorsCard: some View {
+        let key = status?.keyStatus ?? [:]
+        let lvBatt = status?.lvBattStatus ?? [:]
+        let peUnlock = key["pe_unlock_status"]?.intValue == 1 || key["smart_key_near"]?.intValue == 1
+        let handleSensor = key["handle_sensor_status"]?.intValue == 1 || key["door_handle_sensor"]?.intValue == 1
+        let lvSoc = lvBatt["lv_batt_soc"]?.intValue
+        let lvVolt = lvBatt["lv_batt_volt"]?.numberValue
+
+        if !key.isEmpty || !lvBatt.isEmpty {
+            card(title: "🔑 钥匙感知与低压电瓶", rawData: status?.keyStatus.flatMap { try? JSONEncoder().encode($0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) }) {
+                HStack(spacing: 6) {
+                    badgeView(peUnlock ? "蓝牙靠近: 已感应" : "蓝牙靠近: 待命", active: peUnlock, activeColor: themeColor.animeOrAccent)
+                    badgeView(handleSensor ? "门把手: 感应伸出" : "门把手: 收纳", active: handleSensor, activeColor: .orange)
+                    if let soc = lvSoc {
+                        badgeView("12V: \(soc)%" + (lvVolt != nil ? " (\(String(format: "%.1f", lvVolt!))V)" : ""), active: soc > 40, activeColor: soc > 40 ? .green : .red)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - 5.5 💡 车外灯光与照明系统
+
+    @ViewBuilder
+    private var lightsCard: some View {
+        let lights = status?.lightStatus ?? [:]
+        if !lights.isEmpty {
+            let dipped = lights["dipped_beam_status"]?.intValue == 1
+            let main = lights["main_beam_status"]?.intValue == 1
+            let position = lights["position_light_status"]?.intValue == 1
+            let hazard = lights["hazard_light_status"]?.intValue == 1
+            let anyOn = dipped || main || position || hazard
+
+            card(title: "💡 车外灯光与照明系统", rawData: status?.lightStatus.flatMap { try? JSONEncoder().encode($0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) }) {
+                VStack(spacing: 6) {
+                    // 全局灯光状态胶囊
+                    HStack {
+                        if hazard {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Color.white)
+                            Text("危险警报双闪开启")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Color.white)
+                        } else if main {
+                            Image(systemName: "headlight.high.beam.fill")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Color.black)
+                            Text("远光大灯照明中")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Color.black)
+                        } else if dipped {
+                            Image(systemName: "headlight.low.beam.fill")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Color.black)
+                            Text("近光大灯照明中")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Color.black)
+                        } else if position {
+                            Image(systemName: "headlight.daytime.running.fill")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Color.white)
+                            Text("示廓位置灯点亮")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Color.white)
+                        } else {
+                            Image(systemName: "moon.stars.fill")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(themeColor.animeOrAccent)
+                            Text("全车灯光已熄灭 · 安全驻车")
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundStyle(themeColor.animeOrTextPrimary.opacity(0.85))
+                        }
+                        Spacer()
+                        badgeView(anyOn ? "开启中" : "全部熄灭", active: anyOn, activeColor: hazard ? .red : (main ? .yellow : .green))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(hazard ? Color.red.opacity(0.8) : (main ? Color.yellow.opacity(0.8) : (dipped ? themeColor.animeOrAccent.opacity(0.8) : themeColor.animeOrButton))))
+
+                    // 2x2 网格
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 6) {
+                        macLightTile(name: "近光大灯", icon: "headlight.low.beam.fill", isOn: dipped, activeColor: themeColor.animeOrAccent)
+                        macLightTile(name: "远光大灯", icon: "headlight.high.beam.fill", isOn: main, activeColor: .yellow)
+                        macLightTile(name: "示廓位置灯", icon: "headlight.daytime.running.fill", isOn: position, activeColor: .purple)
+                        macLightTile(name: "危险报警双闪", icon: "exclamationmark.triangle.fill", isOn: hazard, activeColor: .red)
+                    }
+                }
+            }
+        }
+    }
+
+    private func macLightTile(name: String, icon: String, isOn: Bool, activeColor: Color) -> some View {
+        HStack(spacing: 6) {
+            ZStack {
+                Circle().fill(isOn ? activeColor : themeColor.animeOrButton).frame(width: 22, height: 22)
+                Image(systemName: icon).font(.system(size: 9, weight: .bold)).foregroundStyle(isOn ? (activeColor == .yellow ? Color.black : Color.white) : themeColor.animeOrTextSecondary)
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(name).font(.system(size: 8, weight: .bold)).foregroundStyle(isOn ? themeColor.animeOrTextPrimary : themeColor.animeOrTextSecondary)
+                Text(isOn ? "已开启" : "已熄灭").font(.system(size: 7)).foregroundStyle(isOn ? activeColor : themeColor.animeOrTextSecondary.opacity(0.6))
+            }
+            Spacer()
+        }
+        .padding(4)
+        .background(RoundedRectangle(cornerRadius: 6).fill(isOn ? activeColor.opacity(0.12) : themeColor.animeOrButton.opacity(0.4)))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(isOn ? activeColor.opacity(0.3) : Color.clear, lineWidth: 0.5))
     }
 
     // MARK: - 换电与服务订单区
