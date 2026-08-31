@@ -1,0 +1,68 @@
+{
+  "id": "yumikotoys.nio.subscription",
+  "name": "🐰 蔚来看板 · YumikoToys 专属订阅",
+  "author": "@kissggj123",
+  "icon": "https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/wheater/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+  "repo": "https://github.com/kissggj123/NIO-Dash-iOS",
+  "apps": [
+    {
+      "id": "YumikoToysNIO",
+      "name": "🐰 蔚来看板 (YumikoToys / YumikoToysRR)",
+      "keys": [
+        "nio_sniff_data",
+        "nio_vehicle_token",
+        "nio_vehicle_id",
+        "nio_device_id",
+        "nio_vehicle_url"
+      ],
+      "settings": [
+        {
+          "id": "nio_sniff_data",
+          "name": "全量车况 JSON 配置（一键复制专用）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 8,
+          "desc": "抓包脚本自动写入的完整车况配置 JSON（含 4 轮胎压与鉴权凭证）。长按全选复制后在 YumikoToys App 设置点击「剪贴板读取并识别」即可。"
+        },
+        {
+          "id": "nio_vehicle_token",
+          "name": "Bearer 访问令牌 (Token)",
+          "val": "",
+          "type": "text",
+          "desc": "蔚来 App 当前登录会话的 Bearer Token"
+        },
+        {
+          "id": "nio_vehicle_id",
+          "name": "Vehicle ID (车辆唯一标识)",
+          "val": "",
+          "type": "text",
+          "desc": "当前爱车在蔚来云端的唯一标识 ID"
+        },
+        {
+          "id": "nio_device_id",
+          "name": "Device ID (设备标识)",
+          "val": "",
+          "type": "text",
+          "desc": "手机设备指纹标识"
+        },
+        {
+          "id": "nio_vehicle_url",
+          "name": "车辆 RVS 状态全量 URL",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 3,
+          "desc": "抓取到的 RVS 全量状态查询 URL（含 4 轮胎压参数）"
+        }
+      ],
+      "author": "@kissggj123",
+      "repo": "https://github.com/kissggj123/NIO-Dash-iOS",
+      "icons": [
+        "https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/wheater/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+        "https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/docs/screenshots/dynamic_island.png"
+      ],
+      "desc": "专为 YumikoToys & YumikoToysRR 打造的免电脑车况提取、4 轮胎压与鉴权凭证管理面板。"
+    }
+  ]
+}

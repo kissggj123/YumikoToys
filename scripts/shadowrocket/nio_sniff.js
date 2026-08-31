@@ -146,7 +146,12 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
         }
     }
 
-    $persistentStore.write(JSON.stringify(stored), "nio_sniff_data");
+    const prettyJson = JSON.stringify(stored, null, 2);
+    $persistentStore.write(prettyJson, "nio_sniff_data");
+    if (stored.vehicle_token) $persistentStore.write(stored.vehicle_token, "nio_vehicle_token");
+    if (stored.vehicle_id) $persistentStore.write(stored.vehicle_id, "nio_vehicle_id");
+    if (stored.device_id) $persistentStore.write(stored.device_id, "nio_device_id");
+    if (stored.vehicle_url) $persistentStore.write(stored.vehicle_url, "nio_vehicle_url");
 
     // 尝试发送通知
     try {
