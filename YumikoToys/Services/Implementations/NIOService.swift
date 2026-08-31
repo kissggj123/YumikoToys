@@ -59,6 +59,13 @@ final class NIOService: ObservableObject {
 
     private var vehicleFile: URL { dataDir.appendingPathComponent("vehicle.json") }
     private var cachedTyreFile: URL { dataDir.appendingPathComponent("cached-tyre.json") }
+    private var cachedLvBattFile: URL { dataDir.appendingPathComponent("cached-lv-batt.json") }
+    private var cachedKeyFile: URL { dataDir.appendingPathComponent("cached-key.json") }
+    private var cachedHeatingFile: URL { dataDir.appendingPathComponent("cached-heating.json") }
+    private var cachedWindowFile: URL { dataDir.appendingPathComponent("cached-window.json") }
+    private var cachedFrdgFile: URL { dataDir.appendingPathComponent("cached-frdg.json") }
+    private var cachedBoxFile: URL { dataDir.appendingPathComponent("cached-box.json") }
+    private var cachedLightFile: URL { dataDir.appendingPathComponent("cached-light.json") }
     private var changeFile: URL { dataDir.appendingPathComponent("change.json") }
     private var checkinFile: URL { dataDir.appendingPathComponent("checkin.json") }
     private var checkinMetaFile: URL { dataDir.appendingPathComponent("checkin-meta.json") }
@@ -66,6 +73,13 @@ final class NIOService: ObservableObject {
     private var fetchLogFile: URL { dataDir.appendingPathComponent("fetch-log.json") }
 
     private var cachedTyreStatus: [String: NIOJSONValue]? = nil
+    private var cachedLvBattStatus: [String: NIOJSONValue]? = nil
+    private var cachedKeyStatus: [String: NIOJSONValue]? = nil
+    private var cachedHeatingStatus: [String: NIOJSONValue]? = nil
+    private var cachedWindowStatus: [String: NIOJSONValue]? = nil
+    private var cachedFrdgStatus: [String: NIOJSONValue]? = nil
+    private var cachedBoxStatus: [String: NIOJSONValue]? = nil
+    private var cachedLightStatus: [String: NIOJSONValue]? = nil
 
     static let shared = NIOService()
 
@@ -367,7 +381,8 @@ final class NIOService: ObservableObject {
             let decoded = try JSONDecoder().decode(NIOVehicleResponse.self, from: normalizedData)
             var finalDecoded = decoded
 
-            // 智能胎压继承与落盘缓存：当车辆休眠或接口未返回胎压时，自动继承上一轮有效胎压
+            // 智能数据继承与落盘缓存：当车辆驻车休眠或使用精简 Widget 接口时，若未包含有效字段，自动继承与落盘全量有效数据
+            // 1. 胎压
             if NIOVehicleLib.extractTyreInfo(finalDecoded.data?.status?.tyreStatus).hasData {
                 if let newTyre = finalDecoded.data?.status?.tyreStatus {
                     self.cachedTyreStatus = newTyre
@@ -381,7 +396,89 @@ final class NIOService: ObservableObject {
                 }
             }
 
-            // 智能座舱温差继承
+            // 2. 12V 辅助蓄电池
+            if let newLv = finalDecoded.data?.status?.lvBattStatus, !newLv.isEmpty {
+                self.cachedLvBattStatus = newLv
+                saveJSONAsync(newLv, to: cachedLvBattFile)
+            } else {
+                if let oldLv = self.vehicleData?.data?.status?.lvBattStatus, !oldLv.isEmpty {
+                    finalDecoded.data?.status?.lvBattStatus = oldLv
+                } else if let cached = self.cachedLvBattStatus, !cached.isEmpty {
+                    finalDecoded.data?.status?.lvBattStatus = cached
+                }
+            }
+
+            // 3. 智能钥匙感应
+            if let newKey = finalDecoded.data?.status?.keyStatus, !newKey.isEmpty {
+                self.cachedKeyStatus = newKey
+                saveJSONAsync(newKey, to: cachedKeyFile)
+            } else {
+                if let oldKey = self.vehicleData?.data?.status?.keyStatus, !oldKey.isEmpty {
+                    finalDecoded.data?.status?.keyStatus = oldKey
+                } else if let cached = self.cachedKeyStatus, !cached.isEmpty {
+                    finalDecoded.data?.status?.keyStatus = cached
+                }
+            }
+
+            // 4. 座椅舒适与方向盘加热
+            if let newHeat = finalDecoded.data?.status?.heatingStatus, !newHeat.isEmpty {
+                self.cachedHeatingStatus = newHeat
+                saveJSONAsync(newHeat, to: cachedHeatingFile)
+            } else {
+                if let oldHeat = self.vehicleData?.data?.status?.heatingStatus, !oldHeat.isEmpty {
+                    finalDecoded.data?.status?.heatingStatus = oldHeat
+                } else if let cached = self.cachedHeatingStatus, !cached.isEmpty {
+                    finalDecoded.data?.status?.heatingStatus = cached
+                }
+            }
+
+            // 5. 车窗开度
+            if let newWin = finalDecoded.data?.status?.windowStatus, !newWin.isEmpty {
+                self.cachedWindowStatus = newWin
+                saveJSONAsync(newWin, to: cachedWindowFile)
+            } else {
+                if let oldWin = self.vehicleData?.data?.status?.windowStatus, !oldWin.isEmpty {
+                    finalDecoded.data?.status?.windowStatus = oldWin
+                } else if let cached = self.cachedWindowStatus, !cached.isEmpty {
+                    finalDecoded.data?.status?.windowStatus = cached
+                }
+            }
+
+            // 6. 车载冰箱与储物
+            if let newFrdg = finalDecoded.data?.status?.frdgStatus, !newFrdg.isEmpty {
+                self.cachedFrdgStatus = newFrdg
+                saveJSONAsync(newFrdg, to: cachedFrdgFile)
+            } else {
+                if let oldFrdg = self.vehicleData?.data?.status?.frdgStatus, !oldFrdg.isEmpty {
+                    finalDecoded.data?.status?.frdgStatus = oldFrdg
+                } else if let cached = self.cachedFrdgStatus, !cached.isEmpty {
+                    finalDecoded.data?.status?.frdgStatus = cached
+                }
+            }
+            if let newBox = finalDecoded.data?.status?.boxStatus, !newBox.isEmpty {
+                self.cachedBoxStatus = newBox
+                saveJSONAsync(newBox, to: cachedBoxFile)
+            } else {
+                if let oldBox = self.vehicleData?.data?.status?.boxStatus, !oldBox.isEmpty {
+                    finalDecoded.data?.status?.boxStatus = oldBox
+                } else if let cached = self.cachedBoxStatus, !cached.isEmpty {
+                    finalDecoded.data?.status?.boxStatus = cached
+                }
+            }
+
+            // 7. 车外灯光
+            if let newLight = finalDecoded.data?.status?.lightStatus, !newLight.isEmpty {
+                self.cachedLightStatus = newLight
+                saveJSONAsync(newLight, to: cachedLightFile)
+            } else {
+                if let oldLight = self.vehicleData?.data?.status?.lightStatus, !oldLight.isEmpty {
+                    finalDecoded.data?.status?.lightStatus = oldLight
+                } else if let cached = self.cachedLightStatus, !cached.isEmpty {
+                    finalDecoded.data?.status?.lightStatus = cached
+                }
+            }
+
+            // 8. 空调与座舱温度
             if finalDecoded.data?.status?.hvacStatus?.temperature == nil {
                 if let oldTemp = self.vehicleData?.data?.status?.hvacStatus?.temperature {
                     if finalDecoded.data?.status?.hvacStatus != nil {
@@ -910,18 +1007,47 @@ final class NIOService: ObservableObject {
     // MARK: - 从磁盘加载（仅在初始化时加载一次进内存）
 
     private func loadAllFromDisk() {
-        if FileManager.default.fileExists(atPath: cachedTyreFile.path),
-           let data = try? Data(contentsOf: cachedTyreFile),
-           let tyre = try? JSONDecoder().decode([String: NIOJSONValue].self, from: data) {
-            cachedTyreStatus = tyre
+        func readDict(_ url: URL) -> [String: NIOJSONValue]? {
+            guard FileManager.default.fileExists(atPath: url.path),
+                  let data = try? Data(contentsOf: url) else { return nil }
+            return try? JSONDecoder().decode([String: NIOJSONValue].self, from: data)
         }
+
+        cachedTyreStatus = readDict(cachedTyreFile)
+        cachedLvBattStatus = readDict(cachedLvBattFile)
+        cachedKeyStatus = readDict(cachedKeyFile)
+        cachedHeatingStatus = readDict(cachedHeatingFile)
+        cachedWindowStatus = readDict(cachedWindowFile)
+        cachedFrdgStatus = readDict(cachedFrdgFile)
+        cachedBoxStatus = readDict(cachedBoxFile)
+        cachedLightStatus = readDict(cachedLightFile)
+
         if FileManager.default.fileExists(atPath: vehicleFile.path),
            let data = try? Data(contentsOf: vehicleFile) {
             vehicleData = try? JSONDecoder().decode(NIOVehicleResponse.self, from: data)
             if vehicleData?.data?.status?.tyreStatus == nil || !NIOVehicleLib.extractTyreInfo(vehicleData?.data?.status?.tyreStatus).hasData {
-                if let cached = cachedTyreStatus {
-                    vehicleData?.data?.status?.tyreStatus = cached
-                }
+                if let cached = cachedTyreStatus { vehicleData?.data?.status?.tyreStatus = cached }
+            }
+            if vehicleData?.data?.status?.lvBattStatus == nil || vehicleData?.data?.status?.lvBattStatus?.isEmpty == true {
+                if let cached = cachedLvBattStatus { vehicleData?.data?.status?.lvBattStatus = cached }
+            }
+            if vehicleData?.data?.status?.keyStatus == nil || vehicleData?.data?.status?.keyStatus?.isEmpty == true {
+                if let cached = cachedKeyStatus { vehicleData?.data?.status?.keyStatus = cached }
+            }
+            if vehicleData?.data?.status?.heatingStatus == nil || vehicleData?.data?.status?.heatingStatus?.isEmpty == true {
+                if let cached = cachedHeatingStatus { vehicleData?.data?.status?.heatingStatus = cached }
+            }
+            if vehicleData?.data?.status?.windowStatus == nil || vehicleData?.data?.status?.windowStatus?.isEmpty == true {
+                if let cached = cachedWindowStatus { vehicleData?.data?.status?.windowStatus = cached }
+            }
+            if vehicleData?.data?.status?.frdgStatus == nil || vehicleData?.data?.status?.frdgStatus?.isEmpty == true {
+                if let cached = cachedFrdgStatus { vehicleData?.data?.status?.frdgStatus = cached }
+            }
+            if vehicleData?.data?.status?.boxStatus == nil || vehicleData?.data?.status?.boxStatus?.isEmpty == true {
+                if let cached = cachedBoxStatus { vehicleData?.data?.status?.boxStatus = cached }
+            }
+            if vehicleData?.data?.status?.lightStatus == nil || vehicleData?.data?.status?.lightStatus?.isEmpty == true {
+                if let cached = cachedLightStatus { vehicleData?.data?.status?.lightStatus = cached }
             }
         }
         if FileManager.default.fileExists(atPath: changeFile.path),

@@ -559,9 +559,10 @@ enum NIOVehicleLib {
 
     static func chargerTypeLabel(_ type: Int) -> String {
         switch type {
-        case 1: return "直流快充"
-        case 2: return "交流慢充"
-        case 3: return "超充桩"
+        case 1: return "交流慢充"
+        case 2: return "直流快充"
+        case 3: return "换电中"
+        case 4: return "超充桩"
         default: return type > 0 ? "充电类型\(type)" : "未接入"
         }
     }
@@ -578,12 +579,15 @@ enum NIOVehicleLib {
 
     static func vehlModeLabel(_ val: Int) -> String {
         switch val {
-        case 1: return "运动"
-        case 2: return "经济"
-        case 3: return "舒适"
+        case 1: return "舒适"
+        case 2: return "节能"
+        case 3: return "运动"
         case 4: return "运动+"
-        case 5: return "自定义"
-        default: return "标准"
+        case 5: return "个性化"
+        case 6: return "雪地"
+        case 7: return "沙地"
+        case 8: return "湿地"
+        default: return "标准舒适"
         }
     }
 

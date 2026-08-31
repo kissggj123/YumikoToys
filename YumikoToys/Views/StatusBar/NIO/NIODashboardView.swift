@@ -47,6 +47,8 @@ struct NIODashboardView: View {
                         efficiencyCard
                         maintenanceCard
                         if !hiddenCards.contains("doors_visual") { doorsVisualCard }
+                        windowsCard
+                        drivingParkingCard
                         if !hiddenCards.contains("tyre") { tyreGridCard }
                         if !hiddenCards.contains("cockpit") { cockpitGridCard }
                         seatComfortCard
@@ -758,6 +760,83 @@ struct NIODashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(closed ? Color.clear : Color.red.opacity(0.3), lineWidth: 0.5))
     }
 
+    // MARK: - 2.5 🪟 车窗与天窗开度透视
+
+    @ViewBuilder
+    private var windowsCard: some View {
+        let win = status?.windowStatus ?? [:]
+        let fl = win["win_posn_fl"]?.intValue ?? 0
+        let fr = win["win_posn_fr"]?.intValue ?? 0
+        let rl = win["win_posn_rl"]?.intValue ?? 0
+        let rr = win["win_posn_rr"]?.intValue ?? 0
+        let sunRoof = win["sun_roof_posn"]?.intValue ?? 0
+        let mirrorFold = win["rearview_mirror_fold"]?.intValue == 1
+
+        card(title: "🪟 车窗与天窗开度", rawData: status?.windowStatus.flatMap { try? JSONEncoder().encode($0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) }) {
+            VStack(spacing: 5) {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 6) {
+                    macWinTile("左前车窗", pos: fl)
+                    macWinTile("右前车窗", pos: fr)
+                    macWinTile("左后车窗", pos: rl)
+                    macWinTile("右后车窗", pos: rr)
+                }
+                HStack {
+                    badgeView(sunRoof > 0 ? "天窗开启 \(sunRoof)%" : "天窗关闭", active: sunRoof > 0, activeColor: .orange)
+                    Spacer()
+                    badgeView(mirrorFold ? "后视镜已折叠 🔒" : "后视镜展开", active: mirrorFold, activeColor: themeColor.animeOrAccent)
+                }
+            }
+        }
+    }
+
+    private func macWinTile(_ name: String, pos: Int) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(name).font(.system(size: 8, weight: .medium)).foregroundStyle(themeColor.animeOrTextSecondary)
+                Spacer()
+                Text(pos > 0 ? "\(pos)%" : "关严").font(.system(size: 8, weight: .bold)).foregroundStyle(pos > 0 ? Color.orange : themeColor.animeOrAccent)
+            }
+            GeometryReader { g in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(themeColor.animeOrButton)
+                    if pos > 0 {
+                        Capsule().fill(themeColor.animeOrAccent).frame(width: max(3, g.size.width * CGFloat(min(100, pos)) / 100.0))
+                    }
+                }
+            }
+            .frame(height: 2.5)
+        }
+        .padding(4)
+        .background(RoundedRectangle(cornerRadius: 6).fill(themeColor.animeOrButton.opacity(0.4)))
+    }
+
+    // MARK: - 2.6 🚗 驾驶模式与行车泊车
+
+    @ViewBuilder
+    private var drivingParkingCard: some View {
+        let ext = status?.exteriorStatus
+        let vehlMode = ext?.vehlMode ?? 0
+        let vehlState = ext?.vehicleState ?? 0
+        let tripShare = status?.tripShareStatus?["trip_share_status"]?.intValue ?? 0
+        let isRpa = (status?.specialStatus?["rvs_rpa_out"]?.intValue == 1) || (vehlState == 5)
+
+        card(title: "🚗 驾驶模式与行车详情", rawData: status?.exteriorStatus.flatMap { try? JSONEncoder().encode($0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) }) {
+            VStack(spacing: 4) {
+                HStack {
+                    infoRow("驾驶模式", vehlState == 2 ? "上次设定: \(NIOVehicleLib.vehlModeLabel(vehlMode))" : NIOVehicleLib.vehlModeLabel(vehlMode), highlight: true)
+                }
+                HStack {
+                    infoRow("车辆状态", NIOVehicleLib.vehicleStateLabel(vehlState))
+                }
+                HStack(spacing: 4) {
+                    badgeView(isRpa ? "遥控泊车进行中 🅿️" : "遥控泊车待命", active: isRpa, activeColor: .orange)
+                    Spacer()
+                    badgeView(tripShare > 0 ? "行程分享中 📍" : "行程分享关闭", active: tripShare > 0, activeColor: .orange)
+                }
+            }
+        }
+    }
+
     // MARK: - 3. 轮胎胎压胎温卡片 (4 轮网格)
 
     private var tyreGridCard: some View {
@@ -878,24 +957,26 @@ struct NIODashboardView: View {
         }
     }
 
-    // MARK: - 5. 特殊状态与储物 (仅在有开启时渲染，杜绝空白卡片)
+    // MARK: - 5. 特殊状态与储物空间
 
     @ViewBuilder
     private var specialStatesCard: some View {
         let box = status?.boxStatus ?? [:]
         let frdg = status?.frdgStatus ?? [:]
-        let hasBox = (box["box_open"]?.boolValue == true)
-        let hasFridge = (frdg["frdg_power"]?.boolValue == true)
+        let doors = status?.doorStatus ?? [:]
+        let isBoxOpen = (box["box_open"]?.boolValue == true || box["box_open"]?.intValue == 1)
+        let isBoxLock = (box["box_lock"]?.boolValue == true || box["box_lock"]?.intValue == 1)
+        let hasFridge = (frdg["frdg_power"]?.boolValue == true || frdg["frdg_pwr_sts"]?.intValue == 1)
+        let hoodOpen = doors["engine_hood_ajar_status"]?.intValue == 1
+        let trunkOpen = doors["tailgate_ajar_status"]?.intValue == 1
 
-        if hasBox || hasFridge {
-            card(title: "📦 储物箱与车载冰箱") {
+        if isBoxOpen || isBoxLock || hasFridge || hoodOpen || trunkOpen || !box.isEmpty {
+            card(title: "📦 储物空间与车载冰箱") {
                 VStack(spacing: 3) {
-                    if hasBox {
-                        infoRow("密码储物箱", "已开启")
-                    }
-                    if hasFridge {
-                        infoRow("车载冰箱", "制冷运行中")
-                    }
+                    if hoodOpen { infoRow("前备箱/前舱盖", "已开启 ⚠️", highlight: true) }
+                    if trunkOpen { infoRow("后备箱/电动尾门", "已开启 ⚠️", highlight: true) }
+                    if isBoxOpen { infoRow("密码储物箱", "已开启 🔓") } else if isBoxLock { infoRow("密码储物箱", "已锁定 🔒") }
+                    if hasFridge { infoRow("车载冰箱", "制冷运行中 ❄️") }
                 }
             }
         }
@@ -965,15 +1046,17 @@ struct NIODashboardView: View {
         let peUnlock = key["pe_unlock_status"]?.intValue == 1 || key["smart_key_near"]?.intValue == 1
         let handleSensor = key["handle_sensor_status"]?.intValue == 1 || key["door_handle_sensor"]?.intValue == 1
         let lvSoc = lvBatt["lv_batt_soc"]?.intValue
-        let lvVolt = lvBatt["lv_batt_volt"]?.numberValue
+        let lvVolt = lvBatt["lv_batt_volt"]?.numberValue ?? lvBatt["lv_batt_voltage"]?.numberValue
 
-        if !key.isEmpty || !lvBatt.isEmpty {
-            card(title: "🔑 钥匙感知与低压电瓶", rawData: status?.keyStatus.flatMap { try? JSONEncoder().encode($0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) }) {
+        card(title: "🔑 钥匙感知与低压电瓶", rawData: status?.keyStatus.flatMap { try? JSONEncoder().encode($0) }.flatMap { try? JSONSerialization.jsonObject(with: $0) }) {
+            VStack(spacing: 4) {
                 HStack(spacing: 6) {
                     badgeView(peUnlock ? "蓝牙靠近: 已感应" : "蓝牙靠近: 待命", active: peUnlock, activeColor: themeColor.animeOrAccent)
                     badgeView(handleSensor ? "门把手: 感应伸出" : "门把手: 收纳", active: handleSensor, activeColor: .orange)
                     if let soc = lvSoc {
                         badgeView("12V: \(soc)%" + (lvVolt != nil ? " (\(String(format: "%.1f", lvVolt!))V)" : ""), active: soc > 40, activeColor: soc > 40 ? .green : .red)
+                    } else {
+                        badgeView("12V: 待抓包同步", active: false, activeColor: .secondary)
                     }
                 }
             }

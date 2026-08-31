@@ -513,12 +513,14 @@ struct NIOExteriorStatus: Codable {
     var mileage: Double?
     var sampleTime: Int?
     var vehlMode: Int?
+    var speed: Double?
 
     enum CodingKeys: String, CodingKey {
         case vehicleState = "vehicle_state"
         case mileage
         case sampleTime = "sample_time"
         case vehlMode = "vehl_mode"
+        case speed
     }
 
     init(from decoder: Decoder) throws {
@@ -543,13 +545,19 @@ struct NIOExteriorStatus: Codable {
         if let i = try? c.decodeIfPresent(Int.self, forKey: .vehlMode) {
             vehlMode = i
         }
+        if let d = try? c.decodeIfPresent(Double.self, forKey: .speed) {
+            speed = d
+        } else if let i = try? c.decodeIfPresent(Int.self, forKey: .speed) {
+            speed = Double(i)
+        }
     }
 
-    init(vehicleState: Int? = nil, mileage: Double? = nil, sampleTime: Int? = nil, vehlMode: Int? = nil) {
+    init(vehicleState: Int? = nil, mileage: Double? = nil, sampleTime: Int? = nil, vehlMode: Int? = nil, speed: Double? = nil) {
         self.vehicleState = vehicleState
         self.mileage = mileage
         self.sampleTime = sampleTime
         self.vehlMode = vehlMode
+        self.speed = speed
     }
 }
 
@@ -607,6 +615,10 @@ struct NIOSocStatus: Codable {
     var chargingPower: Double?
     var chargerType: Int?
     var v2lStatus: Int?
+    var chargerRealCurA: Double?
+    var chargerRealVolV: Double?
+    var targetSocPercentage: Double?
+    var estimateChargeEndTime: Int?
 
     enum CodingKeys: String, CodingKey {
         case soc
@@ -619,6 +631,10 @@ struct NIOSocStatus: Codable {
         case chargingPower = "charging_power"
         case chargerType = "charger_type"
         case v2lStatus = "v2l_status"
+        case chargerRealCurA = "charger_real_cur_a"
+        case chargerRealVolV = "charger_real_vol_v"
+        case targetSocPercentage = "target_soc_percentage"
+        case estimateChargeEndTime = "estimate_charge_end_time"
     }
 
     init(from decoder: Decoder) throws {
@@ -646,9 +662,28 @@ struct NIOSocStatus: Codable {
         chargingPower = getDouble(.chargingPower)
         chargerType = getInt(.chargerType)
         v2lStatus = getInt(.v2lStatus)
+        chargerRealCurA = getDouble(.chargerRealCurA)
+        chargerRealVolV = getDouble(.chargerRealVolV)
+        targetSocPercentage = getDouble(.targetSocPercentage)
+        estimateChargeEndTime = getInt(.estimateChargeEndTime)
     }
 
-    init(soc: Double? = nil, chargeState: Int? = nil, maxSoc: Double? = nil, remainingRange: Double? = nil, remainingActualRange: Double? = nil, sampleTime: Int? = nil, lockSoc: Double? = nil, chargingPower: Double? = nil, chargerType: Int? = nil, v2lStatus: Int? = nil) {
+    init(
+        soc: Double? = nil,
+        chargeState: Int? = nil,
+        maxSoc: Double? = nil,
+        remainingRange: Double? = nil,
+        remainingActualRange: Double? = nil,
+        sampleTime: Int? = nil,
+        lockSoc: Double? = nil,
+        chargingPower: Double? = nil,
+        chargerType: Int? = nil,
+        v2lStatus: Int? = nil,
+        chargerRealCurA: Double? = nil,
+        chargerRealVolV: Double? = nil,
+        targetSocPercentage: Double? = nil,
+        estimateChargeEndTime: Int? = nil
+    ) {
         self.soc = soc
         self.chargeState = chargeState
         self.maxSoc = maxSoc
@@ -659,6 +694,10 @@ struct NIOSocStatus: Codable {
         self.chargingPower = chargingPower
         self.chargerType = chargerType
         self.v2lStatus = v2lStatus
+        self.chargerRealCurA = chargerRealCurA
+        self.chargerRealVolV = chargerRealVolV
+        self.targetSocPercentage = targetSocPercentage
+        self.estimateChargeEndTime = estimateChargeEndTime
     }
 }
 
