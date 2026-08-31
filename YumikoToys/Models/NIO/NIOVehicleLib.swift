@@ -219,19 +219,38 @@ enum NIOVehicleLib {
             }
             let cleanUrl = normalizedComponents.url?.absoluteString ?? rawUrl.trimmingCharacters(in: CharacterSet(charactersIn: "\"'`,;"))
 
-            if path.contains("widget") || host.contains("app.nio.com") {
-                res.vehicleURL = cleanUrl
-                if res.mode == nil { res.mode = "widget" }
-                res.notes.append("识别到车辆 Widget 接口，已提取 vehicle_id 与 device_id")
+            if path.contains("widget") || (host.contains("app.nio.com") && !path.contains("status")) {
+                if let vid = res.vehicleId, !vid.isEmpty {
+                    let did = res.deviceId ?? ""
+                    let sgn = res.sign ?? ""
+                    let ts = res.timestamp ?? "\(Int(Date().timeIntervalSince1970))"
+                    let appVer = extractQueryParam(from: cleanUrl, key: "app_ver") ?? "6.7.15"
+                    let synthesizedRvs = "https://icar.nio.com/api/2/rvs/vehicle/\(vid)/status?field=door_status,exterior_status,heating_status,hvac_status,position_status,soc_status,tyre_status,window_status,fota_status,light_status,offcar_mode_status,maintain_status,connection_status,special_status&app_ver=\(appVer)&device_id=\(did)&lang=zh-CN&region=cn&timestamp=\(ts)&sign=\(sgn)"
+                    res.vehicleURL = synthesizedRvs
+                    res.mode = "url"
+                    res.notes.append("已自动将 Widget 精简接口无感升级为包含胎压全量字段的 RVS 状态接口")
+                } else {
+                    res.vehicleURL = cleanUrl
+                    if res.mode == nil { res.mode = "widget" }
+                    res.notes.append("识别到车辆 Widget 接口，已提取 vehicle_id 与 device_id")
+                }
             } else if path.contains("rvs/vehicle") || path.contains("status") || host.contains("icar.nio.com") {
                 res.vehicleURL = cleanUrl
                 if res.mode == nil { res.mode = "url" }
                 res.notes.append("识别到车辆 RVS 状态接口，已提取 Vehicle ID 与 Device ID")
             } else if path.contains("gettaborder") || path.contains("serviceorder") || path.contains("service-order") {
-                res.changeURL = cleanUrl
+                var cUrl = cleanUrl
+                if cUrl.contains("app.nio.com/app/api/service_charge") {
+                    cUrl = "https://gateway-front-external.nio.com/moat/1100367/api/v1/otd/car/ext/general/serviceOrder/getTabOrder?offset=0&limit=200&orderTypes=pe_shaman,pe_shaman_change,service_pe_discharge,battery_flexible_upgrade,nsom_so_maintenance,nsom_so_chauffeur,chauffeur_vehicle_delivery,so_case_accident&hash_type=sha256&lang=zh&region=US&tz_offset=28800&app_ver=6.5.3"
+                }
+                res.changeURL = cUrl
                 res.notes.append("识别到换电 / 服务订单接口")
             } else if path.contains("award/square") || path.contains("checkin") {
-                res.checkinURL = cleanUrl
+                var ckUrl = cleanUrl
+                if ckUrl.contains("app.nio.com/app/api/users/checkin") {
+                    ckUrl = "https://gateway-front-external.nio.com/moat/10086//n/c/award/square?event=checkin&collection_id=1843940587332317185"
+                }
+                res.checkinURL = ckUrl
                 res.notes.append("识别到签到接口")
             }
         }

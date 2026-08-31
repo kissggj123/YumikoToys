@@ -287,6 +287,42 @@ final class NIOService: ObservableObject {
             let resultCode = (rawJson?["result_code"] as? String) ?? (rawJson?["resultCode"] as? String) ?? ""
             let debugMsg = (rawJson?["debug_msg"] as? String) ?? ""
 
+            // 若合成的 RVS URL 因参数 sign_failed，自动无感降级到小组件接口拉取并恢复胎压缓存
+            if (resultCode == "sign_failed" || resultCode.contains("sign")) && finalURL.host?.contains("icar.nio.com") == true && !s.nioDeviceId.isEmpty && !s.nioVehicleId.isEmpty {
+                LoggerService.shared.warning("[NIOService] RVS 签名不匹配，自动无感切换至小组件接口拉取并恢复胎压缓存...")
+                if let fallbackBuilt = NIOVehicleLib.buildWidgetURL(
+                    vehicleId: s.nioVehicleId,
+                    deviceId: s.nioDeviceId,
+                    secret: s.nioVehicleSignSecret,
+                    algo: s.nioVehicleSignAlgo.isEmpty ? "md5_append" : s.nioVehicleSignAlgo
+                ) {
+                    var fbReq = URLRequest(url: fallbackBuilt.url)
+                    fbReq.httpMethod = "GET"
+                    fbReq.setValue("application/json", forHTTPHeaderField: "Accept")
+                    fbReq.setValue("VehicleWidgetExtension/6.5.3 (com.do1.WeiLaiApp.NIOVehicleWidget; build:2612; iOS 26.5.0) Alamofire/5.9.1", forHTTPHeaderField: "User-Agent")
+                    if !token.isEmpty { fbReq.setValue(token, forHTTPHeaderField: "Authorization") }
+                    if let (fbData, fbResp) = try? await urlSession.data(for: fbReq),
+                       let fbHttp = fbResp as? HTTPURLResponse, fbHttp.statusCode == 200,
+                       let fbJson = (try? JSONSerialization.jsonObject(with: fbData, options: [])) as? [String: Any],
+                       let fbNormData = try? JSONSerialization.data(withJSONObject: RVSRormalizer.normalize(fbJson)),
+                       let fbDecoded = try? JSONDecoder().decode(NIOVehicleResponse.self, from: fbNormData) {
+                        var fbFinal = fbDecoded
+                        if let cached = self.cachedTyreStatus {
+                            fbFinal.data?.status?.tyreStatus = cached
+                        }
+                        self.vehicleData = fbFinal
+                        self.lastVehicleFetch = Date()
+                        self.lastFetchTimestamp = Date()
+                        self.lastError = nil
+                        self.is403Detected = false
+                        saveJSONAsync(fbFinal, to: vehicleFile)
+                        appendSnapshot(fbFinal)
+                        updateLog(logEntry, statusCode: 200, preview: "Widget 智能回退成功（已恢复胎压缓存）")
+                        return
+                    }
+                }
+            }
+
             // 精准区分【签名不匹配 sign_failed】与【账号 Token 被踢 auth_failed】
             if resultCode == "sign_failed" || resultCode.contains("sign") {
                 self.is403Detected = true
