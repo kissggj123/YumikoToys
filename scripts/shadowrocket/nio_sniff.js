@@ -1,17 +1,9 @@
 /**
- * 🐰 YumikoToys & NIO-Dash 蔚来车况全自动抓包脚本 (Shadowrocket / Surge / Loon / Qx 通用)
+ * 🐰 YumikoToys & NIO-Dash 蔚来车况全自动抓包脚本 (Shadowrocket / Surge / Loon 通用)
  *
- * 【功能说明】
- * 1. 自动在 iPhone 本机后台静默捕获蔚来 App 的车况凭证 (Bearer Token / Sign / Timestamp / VehicleID / DeviceID)；
- * 2. 区分并捕获【爱车主页】全量 RVS 状态（含 4 轮胎压）与【桌面小组件】Widget 请求；
- * 3. 自动生成 YumikoToys / YumikoToysRR 识别格式的完整 JSON，并发送系统通知提示。
- *
- * 【Shadowrocket 配置方法】
- * 1. 在 Shadowrocket -> 配置 -> 默认配置 (default.conf) -> 开启 HTTPS 解密 (MITM)，并安装信任证书；
- * 2. 在 [MITM] 中添加主机名：
- *    hostname = icar.nio.com, app.nio.com, gateway-front-external.nio.com
- * 3. 在 [Script] 中添加：
- *    蔚来看板抓包 = type=http-request,pattern=^https:\/\/(icar|app)\.nio\.com\/(api\/2\/rvs\/vehicle|app\/api\/icar\/v2\/widget\/info),script-path=https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/scripts/shadowrocket/nio_sniff.js,requires-body=false
+ * 【双重输出保障】
+ * 1. 📢 系统通知：捕获成功时通过 $notification.post 发送横幅（需在 iOS 设置中允许小火箭通知）；
+ * 2. 🌐 Safari 本机看板：抓包后在 Safari 打开 http://nio.local 即可直接一键复制最新配置 JSON！
  */
 
 const DEFAULT_CHANGE_URL = "https://gateway-front-external.nio.com/moat/1100367/api/v1/otd/car/ext/general/serviceOrder/getTabOrder?offset=0&limit=200&orderTypes=pe_shaman,pe_shaman_change,service_pe_discharge,battery_flexible_upgrade,nsom_so_maintenance,nsom_so_chauffeur,chauffeur_vehicle_delivery,so_case_accident&hash_type=sha256&lang=zh&region=US&tz_offset=28800&app_ver=6.5.3";
@@ -20,19 +12,106 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
 (function main() {
     const url = $request.url;
     const headers = $request.headers || {};
-    
-    // 提取 Authorization Bearer Token
+
+    // 1. 本机 Web 看板：在 Safari 打开 http://nio.local 或 http://nio.box 返回一键复制页面
+    if (url.includes("nio.local") || url.includes("nio.box")) {
+        let storedData = {};
+        try {
+            const raw = $persistentStore.read("nio_sniff_data");
+            if (raw) storedData = JSON.parse(raw);
+        } catch (e) {
+            storedData = {};
+        }
+
+        const jsonStr = JSON.stringify(storedData, null, 2);
+        const hasData = !!storedData.vehicle_token || !!storedData.vehicle_url;
+        const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>🐰 蔚来看板配置</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #0f172a; color: #f8fafc; margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+        .card {
+            background: #1e293b; border-radius: 20px; padding: 24px; width: 100%; max-width: 480px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4); border: 1px solid #334155;
+        }
+        h2 { margin: 0 0 8px 0; font-size: 20px; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        p { color: #94a3b8; font-size: 13px; margin: 0 0 16px 0; line-height: 1.5; }
+        .status-badge {
+            display: inline-block; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 600;
+            background: ${hasData ? "rgba(34, 197, 94, 0.2)" : "rgba(234, 179, 8, 0.2)"};
+            color: ${hasData ? "#4ade80" : "#facc15"}; margin-bottom: 16px;
+        }
+        textarea {
+            width: 100%; height: 220px; background: #090d16; color: #38bdf8; border: 1px solid #334155;
+            border-radius: 12px; padding: 12px; font-family: monospace; font-size: 12px; resize: none; outline: none;
+        }
+        button {
+            width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: white; border: none;
+            padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700; margin-top: 16px;
+            cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        .tip { margin-top: 16px; font-size: 12px; color: #64748b; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🐰 蔚来看板配置提取器</h2>
+        <p>免电脑提取车辆 RVS 车况、4 轮胎压与鉴权 Token</p>
+        <div class="status-badge">${hasData ? "✅ 已捕获有效配置" : "⏳ 暂未捕获，请进入蔚来 App 下拉刷新"}</div>
+        <textarea id="jsonBox" readonly>${jsonStr}</textarea>
+        <button onclick="copyConfig()">📋 一键复制配置到剪贴板</button>
+        <div class="tip">复制后回到 YumikoToys App 设置点击「剪贴板读取并识别」即可</div>
+    </div>
+    <script>
+        function copyConfig() {
+            const text = document.getElementById('jsonBox').value;
+            if (!navigator.clipboard) {
+                document.getElementById('jsonBox').select();
+                document.execCommand('copy');
+            } else {
+                navigator.clipboard.writeText(text);
+            }
+            const btn = document.querySelector('button');
+            btn.innerText = '✅ 复制成功！请切换回 YumikoToys App';
+            btn.style.background = 'linear-gradient(135deg, #16a34a, #22c55e)';
+            setTimeout(() => {
+                btn.innerText = '📋 一键复制配置到剪贴板';
+                btn.style.background = 'linear-gradient(135deg, #0284c7, #0ea5e9)';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>`;
+
+        $done({
+            response: {
+                status: 200,
+                headers: { "Content-Type": "text/html;charset=utf-8" },
+                body: html
+            }
+        });
+        return;
+    }
+
+    // 2. 捕获蔚来 API 请求
     let token = headers["Authorization"] || headers["authorization"] || "";
     if (token.startsWith("Bearer ")) {
         token = token.replace("Bearer ", "").trim();
     }
 
-    // 从 URL 中解析 query 参数
     const queryParams = parseQueryParams(url);
     const isFullRvs = url.includes("icar.nio.com") && url.includes("/status");
     const isWidget = url.includes("/widget/info");
 
-    // 读取持久化缓存，增量合并已捕获的数据
     let stored = {};
     try {
         const raw = $persistentStore.read("nio_sniff_data");
@@ -41,7 +120,6 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
         stored = {};
     }
 
-    // 提取关键字段
     if (token) stored.vehicle_token = token;
     if (queryParams["vehicle_id"]) stored.vehicle_id = queryParams["vehicle_id"];
     if (queryParams["device_id"]) stored.device_id = queryParams["device_id"];
@@ -49,7 +127,6 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
     if (queryParams["timestamp"]) stored.timestamp = queryParams["timestamp"];
     if (queryParams["sign_secret"]) stored.sign_secret = queryParams["sign_secret"];
 
-    // 默认补充换电与签到网关
     stored.change_url = DEFAULT_CHANGE_URL;
     stored.checkin_url = DEFAULT_CHECKIN_URL;
     if (token) {
@@ -69,23 +146,25 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
         }
     }
 
-    // 保存最新状态
     $persistentStore.write(JSON.stringify(stored), "nio_sniff_data");
 
-    // 当捕获到全量 RVS 状态（含胎压）或有效凭证时，发送系统横幅通知
-    if (isFullRvs) {
-        const jsonOutput = JSON.stringify(stored, null, 2);
-        $notification.post(
-            "🎉 蔚来【爱车主页】全量车况捕获成功！",
-            "已捕获 4 轮胎压 + 动态鉴权凭证",
-            "请打开 YumikoToys 并在设置中点击【剪贴板读取并识别】！\n\n" + jsonOutput
-        );
-    } else if (isWidget && !stored.tyre_ready) {
-        $notification.post(
-            "ℹ️ 已捕获小组件凭证",
-            "等待捕获 4 轮胎压数据...",
-            "请切换至蔚来 App【爱车】主页并下拉刷新一次，以捕获胎压数据！"
-        );
+    // 尝试发送通知（需 iOS 开启小火箭通知权限）
+    try {
+        if (isFullRvs && typeof $notification !== "undefined") {
+            $notification.post(
+                "🎉 蔚来【爱车主页】车况捕获成功！",
+                "包含 4 轮胎压与全能凭证",
+                "可直接打开 http://nio.local 查看或在 App 设置点击【剪贴板读取并识别】"
+            );
+        } else if (isWidget && !stored.tyre_ready && typeof $notification !== "undefined") {
+            $notification.post(
+                "ℹ️ 已捕获小组件凭证",
+                "等待捕获 4 轮胎压...",
+                "请在蔚来 App【爱车】主页下拉刷新一次"
+            );
+        }
+    } catch (err) {
+        console.log("Notification error: " + err);
     }
 
     $done({});
