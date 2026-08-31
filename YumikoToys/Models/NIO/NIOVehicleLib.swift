@@ -921,27 +921,39 @@ enum NIOVehicleLib {
         var verNum = ""
         if raw.contains("*") {
             let parts = raw.components(separatedBy: "*")
-            if parts.count > 1, let match = parts.last?.range(of: #"\d+\.\d+(\.\d+)?"#, options: .regularExpression) {
+            if parts.count > 1, let match = parts.last?.range(of: #"\d+(\.\d+)+"#, options: .regularExpression) {
                 verNum = String(parts.last![match])
             }
         }
         if verNum.isEmpty {
-            let pattern = #"\b\d+\.\d+(\.\d+)?(\.\d+)?\b"#
+            let pattern = #"\d+(\.\d+)+"#
             if let match = raw.range(of: pattern, options: .regularExpression) {
                 verNum = String(raw[match])
             }
         }
         if verNum.isEmpty {
-            verNum = raw.isEmpty ? "智能系统" : raw
+            let intPattern = #"(?:v|ver|version|V)?\s*(\d{1,2})\b"#
+            if let match = raw.range(of: intPattern, options: .regularExpression) {
+                verNum = String(raw[match])
+            }
+        }
+        if verNum.isEmpty {
+            let cleaned = raw.replacingOccurrences(of: os, with: "")
+                .replacingOccurrences(of: "智能系统", with: "")
+                .replacingOccurrences(of: "系统", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !cleaned.isEmpty {
+                verNum = cleaned
+            }
         }
 
         let fullDisplay: String
-        if verNum == "智能系统" {
-            fullDisplay = os + " 智能系统"
-        } else if raw.hasPrefix(os) {
+        if !verNum.isEmpty {
             fullDisplay = "\(os) \(verNum)"
+        } else if !raw.isEmpty && raw != "智能系统" {
+            fullDisplay = raw
         } else {
-            fullDisplay = "\(os) \(verNum)"
+            fullDisplay = "\(os) 智能系统"
         }
 
         return FotaDisplayInfo(osName: os, shortVer: verNum, fullDisplay: fullDisplay, rawVersion: raw)
@@ -1032,59 +1044,51 @@ enum NIOVehicleLib {
     }
 
     static func parseAvailableDoors(doorStatus: [String: NIOJSONValue]?, windowStatus: [String: NIOJSONValue]?) -> [ParsedDoorItem] {
-        guard let doors = doorStatus, !doors.isEmpty else { return [] }
+        let doors = doorStatus ?? [:]
         var items: [ParsedDoorItem] = []
 
         // 1. 左前门
-        if let fl = doors["door_ajar_front_left_status"]?.intValue ?? doors["front_left_door_ajar_status"]?.intValue ?? doors["door_ajr_sts_fl"]?.intValue ?? doors["door_fl"]?.intValue {
-            items.append(ParsedDoorItem(id: "door_fl", title: "左前门", isClosed: fl == 1, customClosedLabel: "关好 🐾", customOpenLabel: "未关好 ⚠️", icon: fl == 1 ? "car.side.fill" : "car.side.front.open.fill"))
-        }
+        let fl = doors["door_ajar_front_left_status"]?.intValue ?? doors["front_left_door_ajar_status"]?.intValue ?? doors["door_ajr_sts_fl"]?.intValue ?? doors["door_fl"]?.intValue ?? 1
+        items.append(ParsedDoorItem(id: "door_fl", title: "左前门", isClosed: fl == 1, customClosedLabel: "关好 🐾", customOpenLabel: "未关好 ⚠️", icon: fl == 1 ? "car.side.fill" : "car.side.front.open.fill"))
 
         // 2. 前机盖 / 机舱盖 (蔚来 ET5 等车型为机舱盖，官方仪表显示为前机盖)
-        if let hood = doors["engine_hood_ajar_status"]?.intValue ?? doors["engine_hood_sts"]?.intValue ?? doors["hood"]?.intValue {
-            items.append(ParsedDoorItem(id: "hood", title: "前机盖", isClosed: hood == 1, customClosedLabel: "关好 🔒", customOpenLabel: "未关好 ⚠️", icon: hood == 1 ? "car.side.fill" : "car.side.front.open.fill"))
-        }
+        let hood = doors["engine_hood_ajar_status"]?.intValue ?? doors["engine_hood_sts"]?.intValue ?? doors["hood"]?.intValue ?? 1
+        items.append(ParsedDoorItem(id: "hood", title: "前机盖", isClosed: hood == 1, customClosedLabel: "关好 🔒", customOpenLabel: "未关好 ⚠️", icon: hood == 1 ? "car.side.fill" : "car.side.front.open.fill"))
 
         // 3. 右前门
-        if let fr = doors["door_ajar_front_right_status"]?.intValue ?? doors["front_right_door_ajar_status"]?.intValue ?? doors["door_ajr_sts_fr"]?.intValue ?? doors["door_fr"]?.intValue {
-            items.append(ParsedDoorItem(id: "door_fr", title: "右前门", isClosed: fr == 1, customClosedLabel: "关好 🐾", customOpenLabel: "未关好 ⚠️", icon: fr == 1 ? "car.side.fill" : "car.side.front.open.fill"))
-        }
+        let fr = doors["door_ajar_front_right_status"]?.intValue ?? doors["front_right_door_ajar_status"]?.intValue ?? doors["door_ajr_sts_fr"]?.intValue ?? doors["door_fr"]?.intValue ?? 1
+        items.append(ParsedDoorItem(id: "door_fr", title: "右前门", isClosed: fr == 1, customClosedLabel: "关好 🐾", customOpenLabel: "未关好 ⚠️", icon: fr == 1 ? "car.side.fill" : "car.side.front.open.fill"))
 
         // 4. 左后门
-        if let rl = doors["door_ajar_rear_left_status"]?.intValue ?? doors["rear_left_door_ajar_status"]?.intValue ?? doors["door_ajr_sts_rl"]?.intValue ?? doors["door_rl"]?.intValue {
-            items.append(ParsedDoorItem(id: "door_rl", title: "左后门", isClosed: rl == 1, customClosedLabel: "关好 🐾", customOpenLabel: "未关好 ⚠️", icon: rl == 1 ? "car.side.fill" : "car.side.rear.open.fill"))
-        }
+        let rl = doors["door_ajar_rear_left_status"]?.intValue ?? doors["rear_left_door_ajar_status"]?.intValue ?? doors["door_ajr_sts_rl"]?.intValue ?? doors["door_rl"]?.intValue ?? 1
+        items.append(ParsedDoorItem(id: "door_rl", title: "左后门", isClosed: rl == 1, customClosedLabel: "关好 🐾", customOpenLabel: "未关好 ⚠️", icon: rl == 1 ? "car.side.fill" : "car.side.rear.open.fill"))
 
-        // 5. 后备箱 (仅当接口包含后备箱字段时展示)
-        if let trunk = doors["tailgate_ajar_status"]?.intValue ?? doors["tailgate_sts"]?.intValue ?? doors["trunk"]?.intValue {
-            items.append(ParsedDoorItem(id: "trunk", title: "后备箱", isClosed: trunk == 1, customClosedLabel: "关好 🔒", customOpenLabel: "未关好 ⚠️", icon: trunk == 1 ? "car.side.fill" : "car.side.rear.open.fill"))
-        }
+        // 5. 后尾门 / 后备箱
+        let trunk = doors["tailgate_ajar_status"]?.intValue ?? doors["tailgate_sts"]?.intValue ?? doors["trunk"]?.intValue ?? 1
+        items.append(ParsedDoorItem(id: "trunk", title: "后备箱", isClosed: trunk == 1, customClosedLabel: "关好 🔒", customOpenLabel: "未关好 ⚠️", icon: trunk == 1 ? "car.side.fill" : "car.side.rear.open.fill"))
 
         // 6. 右后门
-        if let rr = doors["door_ajar_rear_right_status"]?.intValue ?? doors["rear_right_door_ajar_status"]?.intValue ?? doors["door_ajr_sts_rr"]?.intValue ?? doors["door_rr"]?.intValue {
-            items.append(ParsedDoorItem(id: "door_rr", title: "右后门", isClosed: rr == 1, customClosedLabel: "关好 🐾", customOpenLabel: "未关好 ⚠️", icon: rr == 1 ? "car.side.fill" : "car.side.rear.open.fill"))
-        }
+        let rr = doors["door_ajar_rear_right_status"]?.intValue ?? doors["rear_right_door_ajar_status"]?.intValue ?? doors["door_ajr_sts_rr"]?.intValue ?? doors["door_rr"]?.intValue ?? 1
+        items.append(ParsedDoorItem(id: "door_rr", title: "右后门", isClosed: rr == 1, customClosedLabel: "关好 🐾", customOpenLabel: "未关好 ⚠️", icon: rr == 1 ? "car.side.fill" : "car.side.rear.open.fill"))
 
-        // 7. 充电口盖 (仅当接口包含充电口盖字段时展示)
+        // 7. 充电口盖 (如果存在字段)
         if let chrg = doors["second_charge_port_ajar_status"]?.intValue ?? doors["second_charge_port_cap"]?.intValue ?? doors["charge_port_status"]?.intValue ?? doors["charge_port"]?.intValue {
             items.append(ParsedDoorItem(id: "charge_port", title: "充电口盖", isClosed: chrg == 1, customClosedLabel: "闭好 🐾", customOpenLabel: "开启 ⚠️", icon: chrg == 1 ? "powerplug.fill" : "bolt.badge.automatic.fill"))
         }
 
         // 8. 整车车锁
-        if let lock = doors["vehicle_lock_status"]?.intValue ?? doors["lock_status"]?.intValue ?? doors["lock"]?.intValue {
-            items.append(ParsedDoorItem(id: "vehicle_lock", title: "整车车锁", isClosed: lock == 1, customClosedLabel: "雪豹守护 🐆", customOpenLabel: "未上锁 🔓", icon: lock == 1 ? "lock.shield.fill" : "lock.open.fill"))
-        }
+        let lock = doors["vehicle_lock_status"]?.intValue ?? doors["lock_status"]?.intValue ?? doors["lock"]?.intValue ?? 1
+        items.append(ParsedDoorItem(id: "vehicle_lock", title: "整车车锁", isClosed: lock == 1, customClosedLabel: "雪豹守护 🐆", customOpenLabel: "未上锁 🔓", icon: lock == 1 ? "lock.shield.fill" : "lock.open.fill"))
 
-        // 9. 车窗天窗 (仅当 windowStatus 存在时解析)
-        if let win = windowStatus, !win.isEmpty {
-            let winFL = win["win_front_left_posn"]?.intValue ?? win["win_posn_fl"]?.intValue ?? 0
-            let winFR = win["win_front_right_posn"]?.intValue ?? win["win_posn_fr"]?.intValue ?? 0
-            let winRL = win["win_rear_left_posn"]?.intValue ?? win["win_posn_rl"]?.intValue ?? 0
-            let winRR = win["win_rear_right_posn"]?.intValue ?? win["win_posn_rr"]?.intValue ?? 0
-            let sunRoof = win["sun_roof_posn"]?.intValue ?? 0
-            let anyOpen = winFL > 0 || winFR > 0 || winRL > 0 || winRR > 0 || sunRoof > 0
-            items.append(ParsedDoorItem(id: "windows", title: "车窗天窗", isClosed: !anyOpen, customClosedLabel: "海獭抱紧 🦦", customOpenLabel: "开启中 ⚠️", icon: !anyOpen ? "square.split.2x2.fill" : "square.split.2x2"))
-        }
+        // 9. 车窗天窗 (仅当 windowStatus 存在或默认解析)
+        let win = windowStatus ?? [:]
+        let winFL = win["win_front_left_posn"]?.intValue ?? win["win_posn_fl"]?.intValue ?? 0
+        let winFR = win["win_front_right_posn"]?.intValue ?? win["win_posn_fr"]?.intValue ?? 0
+        let winRL = win["win_rear_left_posn"]?.intValue ?? win["win_posn_rl"]?.intValue ?? 0
+        let winRR = win["win_rear_right_posn"]?.intValue ?? win["win_posn_rr"]?.intValue ?? 0
+        let sunRoof = win["sun_roof_posn"]?.intValue ?? 0
+        let anyOpen = winFL > 0 || winFR > 0 || winRL > 0 || winRR > 0 || sunRoof > 0
+        items.append(ParsedDoorItem(id: "windows", title: "车窗天窗", isClosed: !anyOpen, customClosedLabel: "海獭抱紧 🦦", customOpenLabel: "开启中 ⚠️", icon: !anyOpen ? "square.split.2x2.fill" : "square.split.2x2"))
 
         return items
     }
