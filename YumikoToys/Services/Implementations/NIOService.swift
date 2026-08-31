@@ -334,9 +334,14 @@ final class NIOService: ObservableObject {
                        let fbNormData = try? JSONSerialization.data(withJSONObject: RVSRormalizer.normalize(fbJson)),
                        let fbDecoded = try? JSONDecoder().decode(NIOVehicleResponse.self, from: fbNormData) {
                         var fbFinal = fbDecoded
-                        if let cached = self.cachedTyreStatus {
-                            fbFinal.data?.status?.tyreStatus = cached
-                        }
+                        if let cached = self.cachedTyreStatus { fbFinal.data?.status?.tyreStatus = cached }
+                        if let cached = self.cachedLvBattStatus { fbFinal.data?.status?.lvBattStatus = cached }
+                        if let cached = self.cachedKeyStatus { fbFinal.data?.status?.keyStatus = cached }
+                        if let cached = self.cachedHeatingStatus { fbFinal.data?.status?.heatingStatus = cached }
+                        if let cached = self.cachedWindowStatus { fbFinal.data?.status?.windowStatus = cached }
+                        if let cached = self.cachedFrdgStatus { fbFinal.data?.status?.frdgStatus = cached }
+                        if let cached = self.cachedBoxStatus { fbFinal.data?.status?.boxStatus = cached }
+                        if let cached = self.cachedLightStatus { fbFinal.data?.status?.lightStatus = cached }
                         self.vehicleData = fbFinal
                         self.lastVehicleFetch = Date()
                         self.lastFetchTimestamp = Date()
