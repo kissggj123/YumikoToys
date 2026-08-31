@@ -967,8 +967,10 @@ struct NIODashboardView: View {
         let isBoxOpen = (box["box_open"]?.boolValue == true || box["box_open"]?.intValue == 1)
         let isBoxLock = (box["box_lock"]?.boolValue == true || box["box_lock"]?.intValue == 1)
         let hasFridge = (frdg["frdg_power"]?.boolValue == true || frdg["frdg_pwr_sts"]?.intValue == 1)
-        let hoodOpen = doors["engine_hood_ajar_status"]?.intValue == 1
-        let trunkOpen = doors["tailgate_ajar_status"]?.intValue == 1
+        let hoodRaw = doors["engine_hood_ajar_status"]?.intValue ?? doors["engine_hood_sts"]?.intValue ?? doors["hood"]?.intValue
+        let hoodOpen = (hoodRaw != nil && hoodRaw != 1)
+        let trunkRaw = doors["tailgate_ajar_status"]?.intValue ?? doors["tailgate_sts"]?.intValue ?? doors["trunk"]?.intValue
+        let trunkOpen = (trunkRaw != nil && trunkRaw != 1)
 
         if isBoxOpen || isBoxLock || hasFridge || hoodOpen || trunkOpen || !box.isEmpty {
             card(title: "📦 储物空间与车载冰箱") {

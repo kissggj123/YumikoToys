@@ -1042,7 +1042,7 @@ enum NIOVehicleLib {
 
         // 2. 前机盖 / 机舱盖 (蔚来 ET5 等车型为机舱盖，官方仪表显示为前机盖)
         if let hood = doors["engine_hood_ajar_status"]?.intValue ?? doors["engine_hood_sts"]?.intValue ?? doors["hood"]?.intValue {
-            items.append(ParsedDoorItem(id: "hood", title: "前机盖", isClosed: hood == 1, customClosedLabel: "雪豹守好 🐆", customOpenLabel: "开启 ⚠️", icon: hood == 1 ? "car.side.front.open.fill" : "exclamationmark.triangle.fill"))
+            items.append(ParsedDoorItem(id: "hood", title: "前机盖", isClosed: hood == 1, customClosedLabel: "关好 🔒", customOpenLabel: "未关好 ⚠️", icon: hood == 1 ? "car.side.fill" : "car.side.front.open.fill"))
         }
 
         // 3. 右前门
@@ -1057,7 +1057,7 @@ enum NIOVehicleLib {
 
         // 5. 后备箱 (仅当接口包含后备箱字段时展示)
         if let trunk = doors["tailgate_ajar_status"]?.intValue ?? doors["tailgate_sts"]?.intValue ?? doors["trunk"]?.intValue {
-            items.append(ParsedDoorItem(id: "trunk", title: "后备箱", isClosed: trunk == 1, customClosedLabel: "雪豹守好 🐆", customOpenLabel: "开启 ⚠️", icon: trunk == 1 ? "car.side.rear.open.fill" : "exclamationmark.triangle.fill"))
+            items.append(ParsedDoorItem(id: "trunk", title: "后备箱", isClosed: trunk == 1, customClosedLabel: "关好 🔒", customOpenLabel: "未关好 ⚠️", icon: trunk == 1 ? "car.side.fill" : "car.side.rear.open.fill"))
         }
 
         // 6. 右后门
