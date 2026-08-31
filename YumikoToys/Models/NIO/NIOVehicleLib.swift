@@ -136,8 +136,13 @@ enum NIOVehicleLib {
                 if let vId = json["vehicle_id"] as? String, !vId.isEmpty { res.vehicleId = vId }
                 if let dId = json["device_id"] as? String, !dId.isEmpty { res.deviceId = dId }
                 if let s = json["sign"] as? String, !s.isEmpty { res.sign = s }
-                if let ts = json["timestamp"] as? String, !ts.isEmpty { res.timestamp = ts }
                 if let mode = json["mode"] as? String, !mode.isEmpty { res.mode = mode }
+                if let vUrl = json["vehicle_url"] as? String, !vUrl.isEmpty { res.vehicleURL = vUrl }
+                if let wUrl = json["widget_url"] as? String, !wUrl.isEmpty {
+                    if res.mode == "widget" || res.vehicleURL == nil {
+                        res.vehicleURL = wUrl
+                    }
+                }
                 if let cUrl = json["change_url"] as? String, !cUrl.isEmpty { res.changeURL = cUrl }
                 if let kUrl = json["checkin_url"] as? String, !kUrl.isEmpty { res.checkinURL = kUrl }
             }
@@ -220,24 +225,13 @@ enum NIOVehicleLib {
             let cleanUrl = normalizedComponents.url?.absoluteString ?? rawUrl.trimmingCharacters(in: CharacterSet(charactersIn: "\"'`,;"))
 
             if path.contains("widget") || (host.contains("app.nio.com") && !path.contains("status")) {
-                if let vid = res.vehicleId, !vid.isEmpty {
-                    let did = res.deviceId ?? ""
-                    let sgn = res.sign ?? ""
-                    let ts = res.timestamp ?? "\(Int(Date().timeIntervalSince1970))"
-                    let appVer = extractQueryParam(from: cleanUrl, key: "app_ver") ?? "6.7.15"
-                    let synthesizedRvs = "https://icar.nio.com/api/2/rvs/vehicle/\(vid)/status?field=door_status,exterior_status,heating_status,hvac_status,position_status,soc_status,tyre_status,window_status,fota_status,light_status,offcar_mode_status,maintain_status,connection_status,special_status&app_ver=\(appVer)&device_id=\(did)&lang=zh-CN&region=cn&timestamp=\(ts)&sign=\(sgn)"
-                    res.vehicleURL = synthesizedRvs
-                    res.mode = "url"
-                    res.notes.append("已自动将 Widget 精简接口无感升级为包含胎压全量字段的 RVS 状态接口")
-                } else {
-                    res.vehicleURL = cleanUrl
-                    if res.mode == nil { res.mode = "widget" }
-                    res.notes.append("识别到车辆 Widget 接口，已提取 vehicle_id 与 device_id")
-                }
+                res.vehicleURL = cleanUrl
+                if res.mode == nil { res.mode = "widget" }
+                res.notes.append("识别到车辆 Widget 模式接口，已提取 vehicle_id 与 device_id")
             } else if path.contains("rvs/vehicle") || path.contains("status") || host.contains("icar.nio.com") {
                 res.vehicleURL = cleanUrl
                 if res.mode == nil { res.mode = "url" }
-                res.notes.append("识别到车辆 RVS 状态接口，已提取 Vehicle ID 与 Device ID")
+                res.notes.append("识别到车辆 RVS 直连接口，已提取 Vehicle ID 与 Device ID")
             } else if path.contains("gettaborder") || path.contains("serviceorder") || path.contains("service-order") {
                 var cUrl = cleanUrl
                 if cUrl.contains("app.nio.com/app/api/service_charge") {
