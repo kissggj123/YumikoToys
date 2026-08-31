@@ -58,11 +58,14 @@ final class NIOService: ObservableObject {
     }()
 
     private var vehicleFile: URL { dataDir.appendingPathComponent("vehicle.json") }
+    private var cachedTyreFile: URL { dataDir.appendingPathComponent("cached-tyre.json") }
     private var changeFile: URL { dataDir.appendingPathComponent("change.json") }
     private var checkinFile: URL { dataDir.appendingPathComponent("checkin.json") }
     private var checkinMetaFile: URL { dataDir.appendingPathComponent("checkin-meta.json") }
     private var historyFile: URL { dataDir.appendingPathComponent("history.json") }
     private var fetchLogFile: URL { dataDir.appendingPathComponent("fetch-log.json") }
+
+    private var cachedTyreStatus: [String: NIOJSONValue]? = nil
 
     static let shared = NIOService()
 
@@ -313,22 +316,53 @@ final class NIOService: ObservableObject {
             let normalized = RVSRormalizer.normalize(rawDict)
             let normalizedData = try JSONSerialization.data(withJSONObject: normalized)
             let decoded = try JSONDecoder().decode(NIOVehicleResponse.self, from: normalizedData)
+            var finalDecoded = decoded
 
-            self.vehicleData = decoded
+            // 智能胎压继承与落盘缓存：当车辆休眠或接口未返回胎压时，自动继承上一轮有效胎压
+            if NIOVehicleLib.extractTyreInfo(finalDecoded.data?.status?.tyreStatus).hasData {
+                if let newTyre = finalDecoded.data?.status?.tyreStatus {
+                    self.cachedTyreStatus = newTyre
+                    saveJSONAsync(newTyre, to: cachedTyreFile)
+                }
+            } else {
+                if let oldTyre = self.vehicleData?.data?.status?.tyreStatus, NIOVehicleLib.extractTyreInfo(oldTyre).hasData {
+                    finalDecoded.data?.status?.tyreStatus = oldTyre
+                } else if let cached = self.cachedTyreStatus, NIOVehicleLib.extractTyreInfo(cached).hasData {
+                    finalDecoded.data?.status?.tyreStatus = cached
+                }
+            }
+
+            // 智能座舱温差继承
+            if finalDecoded.data?.status?.hvacStatus?.temperature == nil {
+                if let oldTemp = self.vehicleData?.data?.status?.hvacStatus?.temperature {
+                    if finalDecoded.data?.status?.hvacStatus != nil {
+                        finalDecoded.data?.status?.hvacStatus?.temperature = oldTemp
+                    } else {
+                        finalDecoded.data?.status?.hvacStatus = NIOHvacStatus(temperature: oldTemp)
+                    }
+                }
+            }
+            if finalDecoded.data?.status?.hvacStatus?.outsideTemperature == nil {
+                if let oldOutTemp = self.vehicleData?.data?.status?.hvacStatus?.outsideTemperature {
+                    finalDecoded.data?.status?.hvacStatus?.outsideTemperature = oldOutTemp
+                }
+            }
+
+            self.vehicleData = finalDecoded
             self.lastVehicleFetch = Date()
             self.lastFetchTimestamp = Date()
             self.lastError = nil
             self.is403Detected = false
 
             // 异步后台落盘，绝不阻塞主线程
-            saveJSONAsync(decoded, to: vehicleFile)
+            saveJSONAsync(finalDecoded, to: vehicleFile)
 
-            appendSnapshot(decoded)
+            appendSnapshot(finalDecoded)
             updateLog(logEntry, statusCode: http.statusCode, preview: String(text.prefix(200)))
 
             LoggerService.shared.info("[NIOService] 车辆拉取成功")
 
-            if let checkedIn = decoded.data?.checkedIn {
+            if let checkedIn = finalDecoded.data?.checkedIn {
                 let ci = NIOCheckinData(
                     checkedIn: checkedIn.checked ?? false,
                     continuousDays: checkedIn.days ?? 0
@@ -827,9 +861,19 @@ final class NIOService: ObservableObject {
     // MARK: - 从磁盘加载（仅在初始化时加载一次进内存）
 
     private func loadAllFromDisk() {
+        if FileManager.default.fileExists(atPath: cachedTyreFile.path),
+           let data = try? Data(contentsOf: cachedTyreFile),
+           let tyre = try? JSONDecoder().decode([String: NIOJSONValue].self, from: data) {
+            cachedTyreStatus = tyre
+        }
         if FileManager.default.fileExists(atPath: vehicleFile.path),
            let data = try? Data(contentsOf: vehicleFile) {
             vehicleData = try? JSONDecoder().decode(NIOVehicleResponse.self, from: data)
+            if vehicleData?.data?.status?.tyreStatus == nil || !NIOVehicleLib.extractTyreInfo(vehicleData?.data?.status?.tyreStatus).hasData {
+                if let cached = cachedTyreStatus {
+                    vehicleData?.data?.status?.tyreStatus = cached
+                }
+            }
         }
         if FileManager.default.fileExists(atPath: changeFile.path),
            let data = try? Data(contentsOf: changeFile),
