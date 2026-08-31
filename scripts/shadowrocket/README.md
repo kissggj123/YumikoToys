@@ -1,13 +1,12 @@
 # 🚀 Shadowrocket (小火箭) 蔚来车况一键模块配置指南
 
-支持通过 **Shadowrocket 模块 (Module)** 一键导入，无需手动编辑配置文件！
+无需电脑，在 iPhone 上使用 Shadowrocket 模块全自动捕获包含 **4 轮胎压** 的全量车况与凭证！
 
 ---
 
 ## ⚡️ 方式一：一键模块导入（最简单）
 
 ### 1. 复制模块链接
-直接复制下方模块链接：
 ```text
 https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/scripts/shadowrocket/nio_sniff.sgmodule
 ```
@@ -16,7 +15,7 @@ https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/scripts/shadowroc
 1. 打开 **Shadowrocket** -> 点击底部 **「配置」**；
 2. 滑动到下方找到 **「模块」**（或在右上角点击 **+** 号）；
 3. 在 URL 输入框中粘贴上面的链接，点击 **保存 / 下载**；
-4. 勾选启用该模块即可！
+4. 勾选启用该模块！
 
 ---
 
@@ -30,9 +29,12 @@ https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/scripts/shadowroc
 ## 🚗 如何抓取车况与 4 轮胎压
 
 1. 开启 Shadowrocket 连接；
-2. 打开手机 **蔚来 App**；
-3. 切换到底部第二个标签页 **「爱车 / 车辆」** 页面，并 **【下拉刷新一次】**；
-4. 手机顶部会立即弹出系统通知：
-   > 🎉 **蔚来【爱车主页】全量车况捕获成功！**  
-   > *已捕获 4 轮胎压 + 动态鉴权凭证*
+2. 打开手机 **蔚来 App** -> 切换到底部 **「爱车 / 车辆」** 页面 -> **【下拉刷新一次】**；
+3. 打开 Safari 浏览器访问：
+   ```text
+   http://boxjs.com
+   或
+   http://app.nio.com/dash
+   ```
+4. 点击页面上的 **「📋 一键复制配置到剪贴板」**；
 5. 打开 **YumikoToys (iOS)** 设置 -> 点击 **「📋 剪贴板读取并识别」** 即可！

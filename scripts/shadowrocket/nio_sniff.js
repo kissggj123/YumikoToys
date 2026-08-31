@@ -2,8 +2,8 @@
  * 🐰 YumikoToys & NIO-Dash 蔚来车况全自动抓包脚本 (Shadowrocket / Surge / Loon 通用)
  *
  * 【双重输出保障】
- * 1. 📢 系统通知：捕获成功时通过 $notification.post 发送横幅（需在 iOS 设置中允许小火箭通知）；
- * 2. 🌐 Safari 本机看板：抓包后在 Safari 打开 http://nio.local 即可直接一键复制最新配置 JSON！
+ * 1. 🌐 Safari 本机看板：抓包后在 Safari 打开 http://boxjs.com 或 http://app.nio.com/dash 即可直接一键复制最新配置 JSON！
+ * 2. 📢 系统通知：捕获成功时通过 $notification.post 发送横幅（需在 iOS 设置中允许小火箭通知）；
  */
 
 const DEFAULT_CHANGE_URL = "https://gateway-front-external.nio.com/moat/1100367/api/v1/otd/car/ext/general/serviceOrder/getTabOrder?offset=0&limit=200&orderTypes=pe_shaman,pe_shaman_change,service_pe_discharge,battery_flexible_upgrade,nsom_so_maintenance,nsom_so_chauffeur,chauffeur_vehicle_delivery,so_case_accident&hash_type=sha256&lang=zh&region=US&tz_offset=28800&app_ver=6.5.3";
@@ -13,8 +13,8 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
     const url = $request.url;
     const headers = $request.headers || {};
 
-    // 1. 本机 Web 看板：在 Safari 打开 http://nio.local 或 http://nio.box 返回一键复制页面
-    if (url.includes("nio.local") || url.includes("nio.box")) {
+    // 1. 本机 Web 看板：在 Safari 打开 http://boxjs.com 或 http://app.nio.com/dash 或 http://boxjs.net
+    if (url.includes("boxjs.com") || url.includes("boxjs.net") || url.includes("/dash") || url.includes("nio.toys") || url.includes("nio.local")) {
         let storedData = {};
         try {
             const raw = $persistentStore.read("nio_sniff_data");
@@ -30,7 +30,7 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>🐰 蔚来看板配置</title>
+    <title>🐰 蔚来看板配置提取器</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -40,14 +40,14 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
         }
         .card {
             background: #1e293b; border-radius: 20px; padding: 24px; width: 100%; max-width: 480px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4); border: 1px solid #334155;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4); border: 1px solid #334155; margin-top: 10px;
         }
         h2 { margin: 0 0 8px 0; font-size: 20px; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
         p { color: #94a3b8; font-size: 13px; margin: 0 0 16px 0; line-height: 1.5; }
         .status-badge {
-            display: inline-block; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 600;
+            display: inline-block; padding: 6px 12px; border-radius: 99px; font-size: 13px; font-weight: 700;
             background: ${hasData ? "rgba(34, 197, 94, 0.2)" : "rgba(234, 179, 8, 0.2)"};
-            color: ${hasData ? "#4ade80" : "#facc15"}; margin-bottom: 16px;
+            color: ${hasData ? "#4ade80" : "#facc15"}; margin-bottom: 16px; border: 1px solid ${hasData ? "rgba(34, 197, 94, 0.3)" : "rgba(234, 179, 8, 0.3)"};
         }
         textarea {
             width: 100%; height: 220px; background: #090d16; color: #38bdf8; border: 1px solid #334155;
@@ -55,7 +55,7 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
         }
         button {
             width: 100%; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: white; border: none;
-            padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700; margin-top: 16px;
+            padding: 15px; border-radius: 14px; font-size: 16px; font-weight: 700; margin-top: 16px;
             cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
         }
         button:active { transform: scale(0.98); opacity: 0.9; }
@@ -66,7 +66,7 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
     <div class="card">
         <h2>🐰 蔚来看板配置提取器</h2>
         <p>免电脑提取车辆 RVS 车况、4 轮胎压与鉴权 Token</p>
-        <div class="status-badge">${hasData ? "✅ 已捕获有效配置" : "⏳ 暂未捕获，请进入蔚来 App 下拉刷新"}</div>
+        <div class="status-badge">${hasData ? "✅ 已捕获车况凭证" : "⏳ 暂未捕获，请进入蔚来 App 下拉刷新"}</div>
         <textarea id="jsonBox" readonly>${jsonStr}</textarea>
         <button onclick="copyConfig()">📋 一键复制配置到剪贴板</button>
         <div class="tip">复制后回到 YumikoToys App 设置点击「剪贴板读取并识别」即可</div>
@@ -148,13 +148,13 @@ const DEFAULT_CHECKIN_URL = "https://gateway-front-external.nio.com/moat/10086//
 
     $persistentStore.write(JSON.stringify(stored), "nio_sniff_data");
 
-    // 尝试发送通知（需 iOS 开启小火箭通知权限）
+    // 尝试发送通知
     try {
         if (isFullRvs && typeof $notification !== "undefined") {
             $notification.post(
                 "🎉 蔚来【爱车主页】车况捕获成功！",
                 "包含 4 轮胎压与全能凭证",
-                "可直接打开 http://nio.local 查看或在 App 设置点击【剪贴板读取并识别】"
+                "请打开 http://boxjs.com 复制或在 App 点击【剪贴板读取并识别】"
             );
         } else if (isWidget && !stored.tyre_ready && typeof $notification !== "undefined") {
             $notification.post(

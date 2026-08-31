@@ -1,12 +1,12 @@
 #!name=🐰 蔚来看板车况全自动抓包模块
-#!desc=专为 YumikoToys / YumikoToysRR 打造。在 iPhone 打开蔚来 App【爱车】主页下拉刷新时，自动在后台静默抓取包含 4 轮胎压的全量 RVS 车况、小组件凭证及 Bearer Token。支持通知提醒与在 Safari 访问 http://nio.local 一键复制。
+#!desc=专为 YumikoToys / YumikoToysRR 打造。在 iPhone 打开蔚来 App【爱车】主页下拉刷新时，自动在后台静默抓取包含 4 轮胎压的全量 RVS 车况、小组件凭证及 Bearer Token。抓取后在 Safari 访问 http://boxjs.com 或 http://app.nio.com/dash 即可一键复制。
 #!author=kissggj123
 #!homepage=https://github.com/kissggj123/NIO-Dash-iOS
 #!icon=https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/wheater/Assets.xcassets/AppIcon.appiconset/AppIcon.png
-#!date=2026-08-31 18:16:00
+#!date=2026-08-31 18:23:00
 
 [Script]
-蔚来看板车况抓包 = type=http-request,pattern=^(https?:\/\/(icar|app|gateway-front-external)\.nio\.com|http:\/\/(nio\.local|nio\.box)),script-path=https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/scripts/shadowrocket/nio_sniff.js,requires-body=false
+蔚来看板车况抓包 = type=http-request,pattern=^(https?:\/\/(icar|app|gateway-front-external)\.nio\.com|http:\/\/(boxjs\.(com|net)|nio\.(toys|local|box))),script-path=https://raw.githubusercontent.com/kissggj123/NIO-Dash-iOS/main/scripts/shadowrocket/nio_sniff.js,requires-body=false
 
 [MITM]
-hostname = %APPEND% icar.nio.com, app.nio.com, gateway-front-external.nio.com, nio.local, nio.box
+hostname = %APPEND% icar.nio.com, app.nio.com, gateway-front-external.nio.com, boxjs.com, boxjs.net, nio.toys
